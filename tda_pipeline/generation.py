@@ -280,83 +280,57 @@ def _sample_avoiding_neighbors(j: int, length: int,
 
 
 # ═══════════════════════════════════════════════════════════════════════════
-# Algorithm 2: 신경망 기반 음악 생성
+# Algorithm 2: 신경망 기반 음악 생성 (수정판)
 # ═══════════════════════════════════════════════════════════════════════════
+#
+# [수정] L_encoded(7670) vs L_onehot(1088) 불일치 해결
+#   원인: 기존 코드가 sliding window로 y를 (T-1, T*N) 형태로 펼쳐서
+#         시점과 note 차원이 혼합됨
+#   수정: 시점 t의 overlap → 시점 t의 multi-hot note를 직접 매핑
+#         X: (T, C), y: (T, N) — 동일한 시간축
+#
+# [추가] Baseline DL 모델
+#   - MusicGeneratorFC: 기존 FC 구조 (수정판)
+#   - MusicGeneratorLSTM: 시계열 패턴 학습
+#   - MusicGeneratorTransformer: self-attention 기반
 
 if HAS_TORCH:
-    
-    class MusicDataset(Dataset):
+
+    # ── 학습 데이터 준비 ──────────────────────────────────────────────────
+
+    def build_onehot_matrix(music_notes: List[List[Tuple[int, int, int]]],
+                            notes_label: dict,
+                            sequence_length: int,
+                            num_notes: int = 23) -> np.ndarray:
         """
-        중첩행렬(X)과 one-hot 음악 시퀀스(y)를 배치 단위로 제공합니다.
-        기존 코드의 X, y 생성을 Dataset으로 캡슐화.
+        두 악기의 note를 시간축 기준으로 multi-hot 행렬로 변환합니다.
+        각 시점 t에서 활성화된 note를 1로 표시.
+
+        [수정] 기존 indexed_music의 두 악기 concat 문제 해결:
+        두 악기를 별도 리스트로 받아 같은 시간축에 겹쳐 기록.
+
+        Args:
+            music_notes: [inst1_notes, inst2_notes], 각 note는 (start, pitch, end)
+            notes_label: (pitch, duration) → label (1-indexed)
+            sequence_length: 시간축 길이 T (= 1088)
+            num_notes: 고유 note 수 (= 23)
+
+        Returns:
+            (T, N) multi-hot 행렬. onehot[t, n] = 1이면 시점 t에 note n이 활성.
         """
-        
-        def __init__(self, overlap_matrix: np.ndarray, 
-                     onehot_music: np.ndarray,
-                     sequence_length: int):
-            """
-            Args:
-                overlap_matrix: (T, C) 중첩행렬
-                onehot_music: (T, N) one-hot 인코딩된 음악
-                sequence_length: 입력 시퀀스 길이
-            """
-            # 주기적 확장 (periodic extension)
-            om_dup = np.concatenate([overlap_matrix, overlap_matrix], axis=0)
-            oh_dup = np.concatenate([onehot_music, onehot_music], axis=0)
-            
-            T = sequence_length
-            n_samples = T - 1
-            
-            # 슬라이딩 윈도우로 X, y 생성
-            self.X = np.stack([
-                om_dup[i:i + T].flatten() for i in range(n_samples)
-            ]).astype(np.float32)
-            
-            self.y = np.stack([
-                oh_dup[i:i + T].flatten() for i in range(n_samples)
-            ]).astype(np.int64)
-        
-        def __len__(self):
-            return len(self.X)
-        
-        def __getitem__(self, idx):
-            return torch.from_numpy(self.X[idx]), torch.from_numpy(self.y[idx])
-    
-    
-    class MusicGenerator(nn.Module):
-        """
-        중첩행렬로부터 음악을 생성하는 신경망.
-        기존 Network 클래스의 정리 버전.
-        """
-        
-        def __init__(self, dim_input: int, dim_hidden: int, 
-                     dim_output: int, num_nodes: int, dropout: float = 0.3):
-            super().__init__()
-            self.fc1 = nn.Linear(dim_input, dim_hidden)
-            self.fc2 = nn.Linear(dim_hidden, 2 * dim_hidden)
-            self.fc3 = nn.Linear(2 * dim_hidden, dim_output)
-            self.dropout = nn.Dropout(dropout)
-            self.num_nodes = num_nodes
-            
-            # 가중치 초기화
-            self._init_weights()
-        
-        def _init_weights(self):
-            for m in [self.fc1, self.fc2]:
-                fan_in = m.weight.size(0)
-                w = 2.0 / math.sqrt(fan_in)
-                m.weight.data.uniform_(-w, w)
-            self.fc3.weight.data.uniform_(-3e-3, 3e-3)
-        
-        def forward(self, x):
-            x = F.relu(self.fc1(x))
-            x = self.dropout(x)
-            x = F.relu(self.fc2(x))
-            x = self.dropout(x)
-            x = self.fc3(x)
-            return x.view(-1, self.num_nodes)
-    
-    
+        onehot = np.zeros((sequence_length, num_notes), dtype=np.float32)
+
+        for inst_notes in music_notes:
+            for start, pitch, end in inst_notes:
+                duration = end - start
+                key = (pitch, duration)
+                if key in notes_label:
+                    label = notes_label[key] - 1  # 1-indexed → 0-indexed
+                    if 0 <= start < sequence_length and 0 <= label < num_notes:
+                        onehot[start, label] = 1.0
+
+        return onehot
+
     def prepare_training_data(overlap_matrix: np.ndarray,
                               music_notes: List[List[Tuple[int, int, int]]],
                               notes_label: dict,
@@ -364,100 +338,259 @@ if HAS_TORCH:
                               num_notes: int = 23) -> Tuple[np.ndarray, np.ndarray]:
         """
         학습 데이터를 준비합니다.
-        
-        두 악기의 note를 시간축 기준으로 one-hot 행렬로 변환합니다.
-        기존 코드의 L_encoded / L_onehot 생성 로직 통합.
-        
-        Args:
-            overlap_matrix: (T, C) 중첩행렬
-            music_notes: [inst1_notes, inst2_notes]
-            notes_label: (pitch, duration) → label
-            sequence_length: 시퀀스 길이 T
-            num_notes: 고유 note 수
-        
+
+        [수정] X와 y가 동일한 시간축을 공유:
+          X[t] = overlap_matrix[t]  (C차원, 어떤 cycle이 활성인지)
+          y[t] = onehot[t]         (N차원, 어떤 note가 활성인지)
+
+        모델이 학습할 매핑: "시점 t의 위상 구조 → 시점 t의 음악"
+
         Returns:
-            (X, y) 학습용 numpy 배열 쌍
+            X: (T, C) float32, y: (T, N) float32
         """
-        # One-hot 행렬 구축 (시간 × note)
-        onehot = np.zeros((sequence_length, num_notes), dtype=np.int64)
-        
-        for inst_notes in music_notes:
-            for start, pitch, end in inst_notes:
-                duration = end - start
-                key = (pitch, duration)
-                if key in notes_label:
-                    label = notes_label[key] - 1  # 0-indexed
-                    if 0 <= start < sequence_length and 0 <= label < num_notes:
-                        onehot[start, label] = 1
-        
-        # Dataset 생성
-        dataset = MusicDataset(overlap_matrix, onehot, sequence_length)
-        return dataset.X, dataset.y
-    
-    
-    def train_model(model: MusicGenerator,
+        onehot = build_onehot_matrix(
+            music_notes, notes_label, sequence_length, num_notes
+        )
+
+        X = overlap_matrix.astype(np.float32)  # (T, C)
+        y = onehot                               # (T, N)
+
+        return X, y
+
+    # ── 모델 1: FC (기존 구조 수정판) ─────────────────────────────────────
+
+    class MusicGeneratorFC(nn.Module):
+        """
+        Fully Connected 모델 (기존 MusicGenerator 수정판).
+        시점별 독립 예측: overlap[t] → notes[t]
+
+        입력: (batch, C)  — C = cycle 수
+        출력: (batch, N)  — N = note 수 (multi-label sigmoid)
+        """
+
+        def __init__(self, num_cycles: int, num_notes: int,
+                     hidden_dim: int = 128, dropout: float = 0.3):
+            super().__init__()
+            self.net = nn.Sequential(
+                nn.Linear(num_cycles, hidden_dim),
+                nn.ReLU(),
+                nn.Dropout(dropout),
+                nn.Linear(hidden_dim, hidden_dim * 2),
+                nn.ReLU(),
+                nn.Dropout(dropout),
+                nn.Linear(hidden_dim * 2, num_notes),
+            )
+
+        def forward(self, x):
+            return self.net(x)  # (batch, N) — raw logits
+
+    # ── 모델 2: LSTM ─────────────────────────────────────────────────────
+
+    class MusicGeneratorLSTM(nn.Module):
+        """
+        LSTM 기반 시퀀스 모델.
+        overlap 시퀀스의 시간적 패턴을 학습하여 note 시퀀스를 예측.
+
+        입력: (batch, T, C)  — T 시점의 overlap 시퀀스
+        출력: (batch, T, N)  — T 시점의 note 예측
+        """
+
+        def __init__(self, num_cycles: int, num_notes: int,
+                     hidden_dim: int = 128, num_layers: int = 2,
+                     dropout: float = 0.3):
+            super().__init__()
+            self.lstm = nn.LSTM(
+                input_size=num_cycles,
+                hidden_size=hidden_dim,
+                num_layers=num_layers,
+                batch_first=True,
+                dropout=dropout if num_layers > 1 else 0.0,
+            )
+            self.fc = nn.Linear(hidden_dim, num_notes)
+
+        def forward(self, x):
+            # x: (batch, T, C)
+            out, _ = self.lstm(x)     # (batch, T, hidden)
+            return self.fc(out)       # (batch, T, N)
+
+    # ── 모델 3: Transformer ──────────────────────────────────────────────
+
+    class MusicGeneratorTransformer(nn.Module):
+        """
+        Transformer 기반 시퀀스 모델.
+        Self-attention으로 전체 시점 간 관계를 학습.
+
+        입력: (batch, T, C)
+        출력: (batch, T, N)
+        """
+
+        def __init__(self, num_cycles: int, num_notes: int,
+                     d_model: int = 128, nhead: int = 4,
+                     num_layers: int = 2, dropout: float = 0.1,
+                     max_len: int = 1088):
+            super().__init__()
+            self.input_proj = nn.Linear(num_cycles, d_model)
+
+            # 학습 가능한 positional encoding
+            self.pos_emb = nn.Parameter(torch.randn(1, max_len, d_model) * 0.02)
+
+            encoder_layer = nn.TransformerEncoderLayer(
+                d_model=d_model, nhead=nhead,
+                dim_feedforward=d_model * 4,
+                dropout=dropout, batch_first=True
+            )
+            self.transformer = nn.TransformerEncoder(
+                encoder_layer, num_layers=num_layers
+            )
+            self.fc_out = nn.Linear(d_model, num_notes)
+
+        def forward(self, x):
+            # x: (batch, T, C)
+            T = x.size(1)
+            x = self.input_proj(x) + self.pos_emb[:, :T, :]  # (batch, T, d_model)
+            x = self.transformer(x)                            # (batch, T, d_model)
+            return self.fc_out(x)                              # (batch, T, N)
+
+    # ── 학습 함수 ─────────────────────────────────────────────────────────
+
+    def train_model(model: nn.Module,
                     X_train: np.ndarray, y_train: np.ndarray,
                     X_valid: np.ndarray, y_valid: np.ndarray,
                     epochs: int = 100, lr: float = 0.001,
-                    batch_size: int = 32) -> List[dict]:
+                    batch_size: int = 32,
+                    model_type: str = 'fc') -> List[dict]:
         """
         모델을 학습합니다.
-        
-        최적화: 배치 학습 도입으로 메모리 효율 개선.
-        기존 코드는 전체 데이터를 한 번에 forward → OOM 위험.
+
+        [수정] BCEWithLogitsLoss 사용 (multi-label 문제):
+        각 시점에서 여러 note가 동시에 활성화될 수 있으므로
+        CrossEntropy(단일 클래스) 대신 BCE(다중 레이블) 사용.
+
+        Args:
+            model_type: 'fc' | 'lstm' | 'transformer'
+                fc: 시점별 독립 (X shape: T×C, y shape: T×N)
+                lstm/transformer: 시퀀스 단위 (X: 1×T×C, y: 1×T×N)
         """
-        criterion = nn.CrossEntropyLoss()
+        criterion = nn.BCEWithLogitsLoss()
         optimizer = torch.optim.Adam(model.parameters(), lr=lr)
-        
+
+        is_seq = model_type in ('lstm', 'transformer')
+
+        if is_seq:
+            # 시퀀스 모델: 전체를 하나의 시퀀스로 (1, T, C)
+            X_tr = torch.from_numpy(X_train).unsqueeze(0)  # (1, T, C)
+            y_tr = torch.from_numpy(y_train).unsqueeze(0)  # (1, T, N)
+            X_va = torch.from_numpy(X_valid).unsqueeze(0)
+            y_va = torch.from_numpy(y_valid).unsqueeze(0)
+        else:
+            X_tr = torch.from_numpy(X_train)  # (T, C)
+            y_tr = torch.from_numpy(y_train)  # (T, N)
+            X_va = torch.from_numpy(X_valid)
+            y_va = torch.from_numpy(y_valid)
+
         history = []
-        n_train = len(X_train)
-        
+
         for epoch in range(epochs):
             # ── Training ──
             model.train()
-            epoch_loss = 0.0
-            n_batches = 0
-            
-            indices = np.random.permutation(n_train)
-            
-            for start in range(0, n_train, batch_size):
-                end = min(start + batch_size, n_train)
-                batch_idx = indices[start:end]
-                
-                X_batch = torch.from_numpy(X_train[batch_idx])
-                y_batch = torch.from_numpy(y_train[batch_idx].flatten())
-                
-                y_pred = model(X_batch)
-                loss = criterion(y_pred, y_batch)
-                
+
+            if is_seq:
+                # 시퀀스 모델: 전체를 한 번에
+                y_pred = model(X_tr)
+                loss = criterion(y_pred, y_tr)
+            else:
+                # FC 모델: 미니배치
+                n = len(X_tr)
+                indices = torch.randperm(n)
+                total_loss = 0.0
+                n_batches = 0
+                for s in range(0, n, batch_size):
+                    e = min(s + batch_size, n)
+                    idx = indices[s:e]
+                    pred = model(X_tr[idx])
+                    loss_b = criterion(pred, y_tr[idx])
+                    optimizer.zero_grad()
+                    loss_b.backward()
+                    optimizer.step()
+                    total_loss += loss_b.item()
+                    n_batches += 1
+                loss = torch.tensor(total_loss / n_batches)
+
+            if is_seq:
                 optimizer.zero_grad()
                 loss.backward()
                 optimizer.step()
-                
-                epoch_loss += loss.item()
-                n_batches += 1
-            
-            avg_train_loss = epoch_loss / n_batches
-            
+
             # ── Validation ──
             model.eval()
             with torch.no_grad():
-                y_pred_val = model(torch.from_numpy(X_valid))
-                val_loss = criterion(
-                    y_pred_val, 
-                    torch.from_numpy(y_valid.flatten())
-                ).item()
-            
+                y_pred_val = model(X_va)
+                val_loss = criterion(y_pred_val, y_va).item()
+
             history.append({
                 'epoch': epoch,
-                'train_loss': avg_train_loss,
+                'train_loss': loss.item(),
                 'val_loss': val_loss
             })
-            
-            if epoch % 10 == 0:
-                print(f"[Epoch {epoch:3d}] train_loss: {avg_train_loss:.5f}  val_loss: {val_loss:.5f}")
-        
+
+            if epoch % 20 == 0 or epoch == epochs - 1:
+                print(f"  [Epoch {epoch:3d}] train={loss.item():.5f}  val={val_loss:.5f}")
+
         return history
+
+    # ── 생성 함수 ─────────────────────────────────────────────────────────
+
+    def generate_from_model(model: nn.Module,
+                            overlap_matrix: np.ndarray,
+                            notes_label: dict,
+                            model_type: str = 'fc',
+                            threshold: float = 0.5) -> List[Tuple[int, int, int]]:
+        """
+        학습된 모델로 음악을 생성합니다.
+
+        모델이 각 시점에서 sigmoid > threshold인 note를 활성화로 판정.
+        활성화된 note label → (pitch, duration) → (onset, pitch, onset+duration) 변환.
+
+        Args:
+            model: 학습된 모델
+            overlap_matrix: (T, C) 입력 중첩행렬
+            notes_label: (pitch, dur) → label dict
+            model_type: 'fc' | 'lstm' | 'transformer'
+            threshold: sigmoid 임계값
+
+        Returns:
+            [(start, pitch, end), ...] 음표 리스트
+        """
+        model.eval()
+        # label → (pitch, duration) 역매핑
+        label_to_note = {v - 1: k for k, v in notes_label.items()}  # 0-indexed
+
+        X = torch.from_numpy(overlap_matrix.astype(np.float32))
+        if model_type in ('lstm', 'transformer'):
+            X = X.unsqueeze(0)  # (1, T, C)
+
+        with torch.no_grad():
+            logits = model(X)  # FC: (T, N), seq: (1, T, N)
+            if model_type in ('lstm', 'transformer'):
+                logits = logits.squeeze(0)  # (T, N)
+            probs = torch.sigmoid(logits)   # (T, N)
+
+        generated = []
+        T, N = probs.shape
+
+        for t in range(T):
+            for n in range(N):
+                if probs[t, n] >= threshold:
+                    if n in label_to_note:
+                        pitch, duration = label_to_note[n]
+                        generated.append((t, pitch, t + duration))
+
+        return generated
+
+    # ── 기존 호환용 별칭 ──────────────────────────────────────────────────
+
+    # 기존 pipeline.py에서 참조하는 이름 유지
+    MusicGenerator = MusicGeneratorFC
 
 
 # ═══════════════════════════════════════════════════════════════════════════
