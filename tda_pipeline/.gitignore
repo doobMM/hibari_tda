@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.eggs/
+dist/
+build/
+
+# 생성된 출력물 (각자 로컬에서 생성)
+generated_output/
+test_xml/
+scale_evaluation/
+
+# 캐시
+pipeline_cache.pkl
+*.pkl
+
+# MIDI 파일 (용량이 크므로 각자 보유)
+*.mid
+*.midi
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
