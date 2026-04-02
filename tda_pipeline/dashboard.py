@@ -485,18 +485,38 @@ st.sidebar.caption(f"이 방식으로 발견된 구조 패턴: **{n_cyc}개**")
 st.sidebar.markdown("---")
 
 max_cycles = _metric_cycle_counts.get(selected_metric, total_cycles)
-k_cycles = st.sidebar.slider(
-    "사용할 구조 패턴 수",
-    min_value=3, max_value=max_cycles, value=min(17, max_cycles), step=1,
-    help=f"선택한 거리 방식으로 발견된 {max_cycles}개 패턴 중 몇 개를 사용할지."
+
+# 캐시에서 preservation curve 로드
+_pres_curve = None
+_cache_path = os.path.join(os.path.dirname(__file__), "cache", f"metric_{selected_metric}.pkl")
+if os.path.exists(_cache_path):
+    import pickle as _pkl
+    with open(_cache_path, 'rb') as _f:
+        _cached = _pkl.load(_f)
+    _pres_curve = _cached.get('preservation_curve')
+
+# % 슬라이더 → K로 변환
+target_pct = st.sidebar.slider(
+    "원곡 구조 보존도 (%)",
+    min_value=30, max_value=100, value=90, step=5,
+    help="원곡의 반복 구조를 몇 % 보존할지. 높을수록 원곡에 가깝지만 자유도가 줄어듭니다."
 )
 
-# K에 따른 보존도 근사 표시
-# 경험적으로: score ≈ 1 - (1 - K/max)^1.5 (diminishing returns 곡선)
-_approx_score = 1.0 - (1.0 - k_cycles / max_cycles) ** 1.5 if max_cycles > 0 else 1.0
-_approx_pct = min(100, int(_approx_score * 100))
-_bar_color = "🟢" if _approx_pct >= 90 else "🟡" if _approx_pct >= 70 else "🔴"
-st.sidebar.caption(f"{_bar_color} {k_cycles}/{max_cycles}개 선택 → 원곡 구조의 약 **{_approx_pct}%** 보존")
+# preservation curve에서 target_pct에 도달하는 K 찾기
+if _pres_curve and len(_pres_curve) > 0:
+    target_score = target_pct / 100.0
+    k_cycles = max_cycles  # fallback: 전체
+    for i, score in enumerate(_pres_curve):
+        if score >= target_score:
+            k_cycles = i + 1
+            break
+    actual_pct = int(_pres_curve[min(k_cycles - 1, len(_pres_curve) - 1)] * 100)
+else:
+    # curve 없으면 근사
+    k_cycles = max(3, int(max_cycles * (target_pct / 100.0)))
+    actual_pct = target_pct
+
+st.sidebar.caption(f"→ **{k_cycles}개** 패턴 사용 (실제 보존도: **{actual_pct}%**)")
 
 min_gap = st.sidebar.slider(
     "음 사이 최소 간격",

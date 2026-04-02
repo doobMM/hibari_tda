@@ -125,6 +125,12 @@ if __name__ == "__main__":
             notes_dict, notes_label, adn_i, N, T
         )
 
+        # Preservation curve 계산 (K=1~전체)
+        from cycle_selector import CycleSubsetSelector
+        selector = CycleSubsetSelector(overlap.values, cycle_labeled)
+        full_result = selector.select_fixed_size(len(cycle_labeled), verbose=False)
+        preservation_curve = full_result.preservation_curve  # [score_at_K1, ..., score_at_Kmax]
+
         dt = time.time() - t0
         pkl_path = os.path.join(cache_dir, f"metric_{name}.pkl")
         with open(pkl_path, 'wb') as f:
@@ -133,6 +139,7 @@ if __name__ == "__main__":
                 'cycle_labeled': cycle_labeled,
                 'metric': name,
                 'alpha': alpha,
+                'preservation_curve': preservation_curve,
             }, f)
 
         print(f"{len(cycle_labeled)} cycles, {overlap.shape}, {dt:.1f}s → {pkl_path}")
