@@ -438,26 +438,7 @@ if algorithm == "Algorithm 2 (DL)":
 else:
     dl_model = "FC"
 
-# 각 metric의 사전 계산된 cycle 수 (precompute_metrics.py 결과)
-_metric_cycle_counts = {
-    'frequency': 43, 'tonnetz': 46, 'voice_leading': 22, 'dft': 20
-}
-
-max_cycles = _metric_cycle_counts.get(selected_metric, total_cycles)
-k_cycles = st.sidebar.slider(
-    "사용할 구조 패턴 수",
-    min_value=3, max_value=max_cycles, value=min(17, max_cycles), step=1,
-    help=f"선택한 거리 방식으로 발견된 {max_cycles}개 패턴 중 몇 개를 사용할지."
-)
-
-min_gap = st.sidebar.slider(
-    "음 사이 최소 간격",
-    min_value=0, max_value=8, value=0, step=1,
-    help="새 음이 시작되기까지의 최소 대기 시간. 0: 제한 없음(빽빽함), 3: 1.5박 쉬고 다음 음(여유로움)"
-)
-
-tempo = st.sidebar.slider("Tempo (BPM)", 40, 120, 66)
-
+# ── 거리 함수 (metric 선택 → K 슬라이더보다 먼저) ──
 st.sidebar.markdown("---")
 st.sidebar.header("🎼 거리 함수")
 
@@ -469,8 +450,8 @@ metric_choice = st.sidebar.selectbox(
 
 metric_descriptions = {
     "빈도 (기존)": "곡에서 연달아 자주 등장한 음끼리 가깝다고 봅니다. 곡의 통계에만 의존.",
-    "Tonnetz (어울림)": "'도와 솔', '도와 미'처럼 함께 울리면 잘 어울리는 음끼리 가깝다고 봅니다. 피아노 건반 위의 화음 관계를 반영.",
-    "Voice-leading (높낮이)": "피아노 건반에서 가까이 있는 음(예: 도→레)끼리 가깝다고 봅니다. 손가락을 적게 움직이는 자연스러운 진행.",
+    "Tonnetz (어울림)": "'도와 솔', '도와 미'처럼 함께 울리면 잘 어울리는 음끼리 가깝다고 봅니다.",
+    "Voice-leading (높낮이)": "피아노 건반에서 가까이 있는 음(예: 도→레)끼리 가깝다고 봅니다.",
     "DFT (파동)": "소리의 파동(주파수) 패턴이 비슷한 음끼리 가깝다고 봅니다.",
 }
 st.sidebar.caption(metric_descriptions[metric_choice])
@@ -483,9 +464,29 @@ metric_map = {
 }
 selected_metric = metric_map[metric_choice]
 
-# 각 metric의 사전 계산된 cycle 수 표시
+_metric_cycle_counts = {
+    'frequency': 43, 'tonnetz': 46, 'voice_leading': 22, 'dft': 20
+}
 n_cyc = _metric_cycle_counts.get(selected_metric, '?')
 st.sidebar.caption(f"이 방식으로 발견된 구조 패턴: **{n_cyc}개**")
+
+# ── 패턴 수, 간격, 템포 ──
+st.sidebar.markdown("---")
+
+max_cycles = _metric_cycle_counts.get(selected_metric, total_cycles)
+k_cycles = st.sidebar.slider(
+    "사용할 구조 패턴 수",
+    min_value=3, max_value=max_cycles, value=min(17, max_cycles), step=1,
+    help=f"선택한 거리 방식으로 발견된 {max_cycles}개 패턴 중 몇 개를 사용할지."
+)
+
+min_gap = st.sidebar.slider(
+    "음 사이 최소 간격",
+    min_value=0, max_value=8, value=0, step=1,
+    help="0: 제한 없음(빽빽함), 3: 1.5박 쉬고 다음 음(여유로움)"
+)
+
+tempo = st.sidebar.slider("Tempo (BPM)", 40, 120, 66)
 
 st.sidebar.markdown("---")
 view_range = st.sidebar.slider(
