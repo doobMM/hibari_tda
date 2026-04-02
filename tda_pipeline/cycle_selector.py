@@ -306,6 +306,80 @@ class CycleSubsetSelector:
             final_score=preservation_curve[-1] if preservation_curve else 0.0
         )
 
+    def select_with_coverage(self, notes_dict: dict,
+                              target: float = 0.9,
+                              k: Optional[int] = None,
+                              verbose: bool = True) -> SelectionResult:
+        """
+        Note coverage를 분석한 후 보존도를 최적화합니다.
+
+        2단계 분석:
+          1) "고아 note" 식별 — 어떤 cycle에도 속하지 않는 note
+             → cycle 선택으로는 해결 불가, 생성 시 chord 기반 보충 필요
+          2) greedy selection 수행 후 커버리지 보고
+
+        Args:
+            notes_dict: {chord_idx: set of note labels} 화음→note 매핑
+            target: 보존도 임계값
+            k: 고정 크기 (None이면 target 사용)
+
+        Returns:
+            SelectionResult에 .orphan_notes, .orphan_chords, .coverage 추가
+        """
+        # ── 전체 note 집합 (1-indexed) ──
+        all_notes = set()
+        for key, val in notes_dict.items():
+            if isinstance(key, int):
+                all_notes |= val
+
+        # ── cycle에 포함된 note (0-indexed vertex → 1-indexed) ──
+        notes_in_any_cycle = set()
+        for c_idx, verts in self.cycle_notes.items():
+            notes_in_any_cycle |= {v + 1 for v in verts}
+
+        orphan_notes = all_notes - notes_in_any_cycle
+
+        # ── 고아 note가 속한 chord 식별 ──
+        orphan_chords = {}
+        for n in orphan_notes:
+            chords = [key for key, val in notes_dict.items()
+                      if isinstance(key, int) and n in val]
+            orphan_chords[n] = chords
+
+        if verbose:
+            if orphan_notes:
+                print(f"    [Coverage] 고아 note {len(orphan_notes)}개"
+                      f" (어떤 cycle에도 미포함): {sorted(orphan_notes)}")
+                for n, chords in sorted(orphan_chords.items()):
+                    print(f"      note {n} -> chord {chords}")
+            else:
+                print(f"    [Coverage] 모든 note가 cycle에 포함됨")
+
+        # ── greedy selection ──
+        if k is not None:
+            result = self.select_fixed_size(k, verbose=verbose)
+        else:
+            result = self.select_by_threshold(target, verbose=verbose)
+
+        # ── 선택 후 커버리지 보고 ──
+        covered = set()
+        for idx in result.selected_indices:
+            covered |= {v + 1 for v in self.cycle_notes[idx]}
+
+        total_missing = all_notes - covered
+
+        if verbose:
+            print(f"    [Coverage] {len(covered)}/{len(all_notes)} notes 커버"
+                  f" (구조적 고아 {len(orphan_notes)}개 포함하면"
+                  f" 최대 {len(notes_in_any_cycle)}/{len(all_notes)})")
+
+        # ── orphan 정보를 result에 첨부 ──
+        result.orphan_notes = orphan_notes
+        result.orphan_chords = orphan_chords
+        result.coverage = len(covered) / len(all_notes) if all_notes else 1.0
+
+        return result
+
     def rank_cycles(self) -> List[Tuple[int, float]]:
         """
         각 cycle을 단독으로 평가하여 순위를 매깁니다.

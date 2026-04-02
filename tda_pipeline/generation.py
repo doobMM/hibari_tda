@@ -130,12 +130,70 @@ class CycleSetManager:
         return self._cache_union[key]
 
 
+def build_orphan_supplement(orphan_notes: Set[int],
+                            orphan_chords: Dict[int, List[int]],
+                            notes_dict: dict,
+                            adn_whole_1: list,
+                            adn_whole_2: list,
+                            notes_label: dict,
+                            total_length: int = 1088) -> Dict[int, List[int]]:
+    """
+    고아 note를 chord 활성화 시점에 보충하는 매핑을 생성합니다.
+
+    cycle에 속하지 않는 note(고아)가 원곡에서 실제로 연주되는 시점을
+    찾아서, 해당 시점의 sampling pool에 추가할 note label 목록을 반환.
+
+    Args:
+        orphan_notes: {5, 8, 22} 등 고아 note (1-indexed)
+        orphan_chords: {note: [chord_indices]} 매핑
+        notes_dict: {chord_idx: set of note labels}
+        adn_whole_1, adn_whole_2: 악기별 전체 chord 시퀀스 (None 포함)
+        notes_label: (pitch, dur) -> label dict
+        total_length: 시간축 길이
+
+    Returns:
+        {t: [label1, label2, ...]} — 시점 t에서 보충할 note label 목록
+    """
+    # 고아 note가 속한 chord 인덱스 집합
+    orphan_chord_set = set()
+    for n, chords in orphan_chords.items():
+        orphan_chord_set.update(chords)
+
+    # label -> note_label (1-indexed) 역매핑
+    # orphan note의 label 값 (0-indexed for node_pool)
+    orphan_labels = {n - 1 for n in orphan_notes}  # 0-indexed
+
+    supplement: Dict[int, List[int]] = {}
+
+    for t in range(min(total_length, len(adn_whole_1), len(adn_whole_2))):
+        c1 = adn_whole_1[t]
+        c2 = adn_whole_2[t]
+        labels_to_add = []
+
+        for chord_idx in [c1, c2]:
+            if chord_idx is None:
+                continue
+            if chord_idx in orphan_chord_set:
+                # 이 chord에 속한 고아 note를 추가
+                chord_notes = notes_dict.get(chord_idx, set())
+                for n in chord_notes:
+                    if n in orphan_notes:
+                        labels_to_add.append(n - 1)  # 0-indexed label
+
+        if labels_to_add:
+            supplement[t] = labels_to_add
+
+    return supplement
+
+
 def algorithm1_optimized(node_pool: NodePool,
                          inst_len: List[int],
                          overlap_matrix: np.ndarray,
                          cycle_manager: CycleSetManager,
                          max_resample: int = 50,
-                         verbose: bool = False) -> List[Tuple[int, int, int]]:
+                         verbose: bool = False,
+                         orphan_supplement: Optional[Dict[int, List[int]]] = None
+                         ) -> List[Tuple[int, int, int]]:
     """
     Algorithm 1의 최적화 버전.
     
@@ -166,10 +224,32 @@ def algorithm1_optimized(node_pool: NodePool,
     for j in range(length):
         # 이 시점에서 추출할 음의 수 (동적으로 줄어들 수 있음)
         num_to_sample = max(0, inst_len[j])
-        
+
+        # 고아 note 보충: 이 시점에 chord 기반으로 추가할 note가 있으면
+        # 일정 확률로 고아 note를 먼저 배치
+        if orphan_supplement and j in orphan_supplement and num_to_sample > 0:
+            for orphan_label in orphan_supplement[j]:
+                if num_to_sample <= 0:
+                    break
+                # 30% 확률로 고아 note 삽입 (너무 많으면 부자연스러움)
+                if random.random() < 0.3:
+                    note_tuple = node_pool.label_to_note_info(orphan_label)
+                    if note_tuple:
+                        pitch, duration = note_tuple
+                        end = min(j + duration, length)
+                        n1 = (j, pitch, end)
+                        n2 = (pitch, end - j)
+                        if n2 not in onset_checker[j]:
+                            generated.append(n1)
+                            onset_checker[j].add(n2)
+                            for t in range(j + 1, min(end, length)):
+                                inst_len[t] = max(0, inst_len[t] - 1)
+                                onset_checker[t].add(n2)
+                            num_to_sample -= 1
+
         for _ in range(num_to_sample):
             flag = overlap_matrix[j, :].sum()
-            
+
             note_info = _sample_note_at_time(
                 j, length, flag, overlap_matrix,
                 node_pool, cycle_manager, onset_checker,
