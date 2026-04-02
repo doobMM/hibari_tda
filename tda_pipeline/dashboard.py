@@ -333,33 +333,33 @@ total_cycles = len(data['cycle_labeled'])
 st.sidebar.header("⚙️ Generation Parameters")
 
 algorithm = st.sidebar.selectbox(
-    "Algorithm",
+    "작곡 방식",
     ["Algorithm 1", "Algorithm 2 (DL)"],
-    help="Algorithm 1: 확률적 샘플링 (빠름)\nAlgorithm 2: 딥러닝 (느리지만 학습 기반)"
+    help="Algorithm 1: 규칙 기반 (빠름, 1~3초)\nAlgorithm 2: AI 학습 기반 (느림, 20~150초)"
 )
 
 if algorithm == "Algorithm 2 (DL)":
     dl_model = st.sidebar.selectbox("DL Model", ["FC", "LSTM", "Transformer"])
-    # 모델별 설명
+    # 모델별 설명 (비전공자용)
     model_descriptions = {
-        "FC": "**FC (Fully Connected)**: 각 시점을 독립적으로 예측. '지금 이 cycle 조합이면 이 note' 매핑을 학습. 가장 빠르고 안정적.",
-        "LSTM": "**LSTM**: 시간 순서대로 읽으면서 기억을 쌓아감. '직전에 높은 음 → 이번엔 낮은 음' 같은 시간 패턴 학습. 학습 느림.",
-        "Transformer": "**Transformer**: 곡 전체를 동시에 보고 판단. Self-attention으로 멀리 떨어진 시점 간 관계도 학습. Overfitting 주의.",
+        "FC": "**FC**: 매 순간 독립적으로 '지금 어떤 음을 칠까?' 판단합니다. 앞뒤 흐름은 모르지만 가장 빠르고 안정적입니다.",
+        "LSTM": "**LSTM**: 곡을 처음부터 순서대로 읽으면서 '직전에 높은 음을 쳤으니 다음은 낮은 음'처럼 흐름을 기억합니다. 학습이 느립니다.",
+        "Transformer": "**Transformer**: 곡 전체를 한눈에 보고 '1마디와 10마디가 비슷한 패턴이니 비슷한 음을 쓰자'처럼 먼 거리의 관계도 파악합니다.",
     }
     st.sidebar.caption(model_descriptions[dl_model])
 else:
     dl_model = "FC"
 
 k_cycles = st.sidebar.slider(
-    "Cycle 수 (K)",
+    "사용할 구조 패턴 수",
     min_value=5, max_value=total_cycles, value=17, step=1,
-    help=f"전체 {total_cycles}개 중 사용할 cycle 수. K=17이면 90% 보존도."
+    help=f"원곡에서 발견된 반복 패턴(뼈대) {total_cycles}개 중 몇 개를 사용할지. 17개면 원곡 구조의 90%를 보존합니다."
 )
 
 min_gap = st.sidebar.slider(
-    "Onset 간격 (eighth notes)",
+    "음 사이 최소 간격",
     min_value=0, max_value=8, value=0, step=1,
-    help="0: 제한 없음, 3: 1.5박 간격, 4: 2박 간격"
+    help="새 음이 시작되기까지의 최소 대기 시간. 0: 제한 없음(빽빽함), 3: 1.5박 쉬고 다음 음(여유로움)"
 )
 
 tempo = st.sidebar.slider("Tempo (BPM)", 40, 120, 66)
@@ -374,9 +374,9 @@ view_range = st.sidebar.slider(
 # ── Algorithm 설명 ──
 if algorithm == "Algorithm 1":
     st.sidebar.caption(
-        "**Algorithm 1**: 중첩행렬의 ON/OFF 패턴을 보고, "
-        "활성 cycle에 속한 note 중 빈도 기반으로 랜덤 샘플링. "
-        "빠르지만 시간적 맥락 없음."
+        "**Algorithm 1**: 원곡에서 추출한 뼈대 패턴을 보고, "
+        "'지금 이 패턴이 활성화되어 있으니 이 음들 중에서 골라라'는 "
+        "규칙으로 음을 랜덤 배치합니다. 빠르지만 앞뒤 흐름을 고려하지 않습니다."
     )
 
 # ── 생성 버튼 ──
