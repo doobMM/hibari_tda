@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TDA Music Pipeline - 위상수학으로 음악 만들기</title>
+<style>
+  :root {
+    --bg: #0f1117; --card: #1a1d28; --accent: #6c63ff;
+    --accent2: #ff6b6b; --accent3: #4ecdc4; --accent4: #ffd93d;
+    --text: #e0e0e0; --muted: #8892a0; --border: #2a2d3a;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Pretendard', -apple-system, sans-serif; background: var(--bg); color: var(--text); line-height: 1.8; }
+  .container { max-width: 900px; margin: 0 auto; padding: 20px; }
+  h1 { font-size: 2.2em; text-align: center; margin: 60px 0 10px; background: linear-gradient(135deg, var(--accent), var(--accent3)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .subtitle { text-align: center; color: var(--muted); margin-bottom: 50px; font-size: 1.1em; }
+  h2 { color: var(--accent3); margin: 50px 0 20px; font-size: 1.5em; border-left: 4px solid var(--accent3); padding-left: 12px; }
+  h3 { color: var(--accent4); margin: 30px 0 10px; }
+  p, li { margin-bottom: 12px; }
+  ul { padding-left: 20px; }
+
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin: 20px 0; }
+  .card-accent { border-left: 4px solid var(--accent); }
+  .card-warn { border-left: 4px solid var(--accent2); }
+  .card-ok { border-left: 4px solid var(--accent3); }
+
+  .step-num { display: inline-block; width: 36px; height: 36px; line-height: 36px; text-align: center; border-radius: 50%; background: var(--accent); color: #fff; font-weight: bold; margin-right: 10px; }
+
+  .diagram { background: #12141e; border-radius: 10px; padding: 20px; margin: 20px 0; text-align: center; overflow-x: auto; }
+  .diagram svg { max-width: 100%; }
+
+  .flow-arrow { display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; margin: 20px 0; }
+  .flow-box { background: var(--card); border: 2px solid var(--accent); border-radius: 8px; padding: 10px 16px; font-size: 0.9em; text-align: center; min-width: 120px; }
+  .flow-box.active { border-color: var(--accent3); background: rgba(78,205,196,0.1); }
+  .flow-sep { color: var(--accent); font-size: 1.5em; }
+
+  table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+  th, td { padding: 10px 14px; border: 1px solid var(--border); text-align: left; }
+  th { background: var(--accent); color: #fff; }
+  tr:nth-child(even) { background: rgba(255,255,255,0.03); }
+
+  .tag { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 0.85em; margin: 2px; }
+  .tag-blue { background: rgba(108,99,255,0.2); color: var(--accent); }
+  .tag-green { background: rgba(78,205,196,0.2); color: var(--accent3); }
+  .tag-red { background: rgba(255,107,107,0.2); color: var(--accent2); }
+  .tag-yellow { background: rgba(255,217,61,0.2); color: var(--accent4); }
+
+  .metric-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin: 15px 0; }
+  .metric-card { background: var(--card); border-radius: 10px; padding: 16px; text-align: center; border: 1px solid var(--border); }
+  .metric-value { font-size: 2em; font-weight: bold; }
+  .metric-label { color: var(--muted); font-size: 0.85em; }
+
+  .compare-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 15px 0; }
+  @media (max-width: 600px) { .compare-row { grid-template-columns: 1fr; } }
+
+  .code { background: #1e2130; border-radius: 6px; padding: 12px; font-family: 'Consolas', monospace; font-size: 0.85em; overflow-x: auto; margin: 10px 0; color: var(--accent3); }
+
+  .toc { background: var(--card); border-radius: 12px; padding: 20px 30px; margin: 30px 0; }
+  .toc a { color: var(--accent); text-decoration: none; }
+  .toc a:hover { text-decoration: underline; }
+  .toc li { margin: 6px 0; }
+
+  .emoji { font-size: 1.3em; }
+  .highlight { color: var(--accent4); font-weight: bold; }
+  .footnote { color: var(--muted); font-size: 0.85em; margin-top: 30px; border-top: 1px solid var(--border); padding-top: 15px; }
+</style>
+</head>
+<body>
+<div class="container">
+
+<h1>TDA Music Pipeline</h1>
+<p class="subtitle">위상수학(Topology)으로 사카모토 류이치의 "hibari"를 분석하고,<br>그 구조를 보존하는 새로운 음악을 생성하는 연구</p>
+
+<div class="toc">
+  <strong>목차</strong>
+  <ol>
+    <li><a href="#s1">핵심 아이디어: 음악의 "뼈대"를 찾는다</a></li>
+    <li><a href="#s2">Step 1: 음악을 네트워크로 바꾸기</a></li>
+    <li><a href="#s3">Step 2: Persistent Homology로 순환 구조 찾기</a></li>
+    <li><a href="#s4">Step 3: 중첩행렬 — 언제 어떤 구조가 활성화되나</a></li>
+    <li><a href="#s5">Step 4: 위상 구조 보존도와 Cycle 선택</a></li>
+    <li><a href="#s6">Step 5: 음악 생성 — 규칙 기반 vs 딥러닝</a></li>
+    <li><a href="#s7">파이프라인 전체 흐름</a></li>
+    <li><a href="#s8">실험 결과</a></li>
+    <li><a href="#s9">참고문헌</a></li>
+  </ol>
+</div>
+
+<!-- ════════════════════════════════════════════════════ -->
+<h2 id="s1"><span class="emoji">&#127925;</span> 1. 핵심 아이디어</h2>
+
+<div class="card card-accent">
+  <p>기존 AI 작곡은 <strong>대량의 곡을 학습</strong>해서 비슷한 곡을 만듭니다 (블랙박스).</p>
+  <p>이 연구는 다릅니다: <strong>단 한 곡</strong>의 수학적 구조를 분석하고, 그 구조를 보존하면서 새로운 곡을 만듭니다.</p>
+</div>
+
+<p>비유로 설명하면:</p>
+<div class="compare-row">
+  <div class="card">
+    <h3>기존 AI 작곡</h3>
+    <p>모차르트의 곡 1000개를 학습 &rarr; "모차르트 스타일"의 새 곡 생성</p>
+    <p class="tag tag-red">왜 그런 곡이 나왔는지 설명 불가</p>
+  </div>
+  <div class="card">
+    <h3>이 연구의 방법</h3>
+    <p>"hibari" 한 곡의 <strong>뼈대(위상 구조)</strong>를 추출 &rarr; 같은 뼈대 위에 새 음악 생성</p>
+    <p class="tag tag-green">왜 그런 곡이 나왔는지 설명 가능</p>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════ -->
+<h2 id="s2"><span class="emoji">&#127899;</span> 2. 음악을 네트워크로 바꾸기</h2>
+
+<h3>Note = (pitch, duration)</h3>
+<p>음악의 기본 단위는 <strong>음 높이</strong>와 <strong>음 길이</strong>의 쌍입니다. hibari에는 23종의 고유한 note가 있습니다.</p>
+
+<div class="card">
+  <p><strong>예시:</strong> 도(C4)를 1박 동안 연주 = <span class="tag tag-blue">(C4, 1)</span>, 레(D4)를 2박 = <span class="tag tag-blue">(D4, 2)</span></p>
+  <p>이 각각이 네트워크의 <strong>노드(node)</strong>가 됩니다.</p>
+</div>
+
+<h3>가중치 행렬 = 노드 간 연결 강도</h3>
+<p>두 note가 곡에서 <strong>연달아 연주되는 횟수</strong>가 가중치입니다.</p>
+
+<div class="diagram">
+  <svg width="400" height="180" viewBox="0 0 400 180">
+    <circle cx="80" cy="90" r="30" fill="none" stroke="#6c63ff" stroke-width="2"/>
+    <text x="80" y="95" text-anchor="middle" fill="#e0e0e0" font-size="13">Note A</text>
+    <circle cx="320" cy="90" r="30" fill="none" stroke="#ff6b6b" stroke-width="2"/>
+    <text x="320" y="95" text-anchor="middle" fill="#e0e0e0" font-size="13">Note B</text>
+    <line x1="110" y1="90" x2="290" y2="90" stroke="#4ecdc4" stroke-width="3"/>
+    <text x="200" y="80" text-anchor="middle" fill="#ffd93d" font-size="14" font-weight="bold">w = 15</text>
+    <text x="200" y="130" text-anchor="middle" fill="#8892a0" font-size="12">"A 다음에 B가 15번 등장"</text>
+    <text x="200" y="150" text-anchor="middle" fill="#8892a0" font-size="12">거리 = 1/15 (자주 등장 = 가까움)</text>
+  </svg>
+</div>
+
+<h3>거리 행렬</h3>
+<p>가중치의 <strong>역수</strong>가 거리입니다. 자주 연달아 나오는 note끼리는 가깝고, 한 번도 연달아 안 나오면 매우 멀리 떨어져 있습니다.</p>
+
+<!-- ════════════════════════════════════════════════════ -->
+<h2 id="s3"><span class="emoji">&#128270;</span> 3. Persistent Homology로 순환 구조 찾기</h2>
+
+<div class="card card-accent">
+  <p><strong>Persistent Homology</strong>는 데이터의 "구멍"을 찾는 수학 도구입니다.</p>
+  <p>note들을 점으로 보고, 거리가 가까운 것부터 연결하면 — 어느 순간 <strong>"루프(cycle)"</strong>가 만들어집니다.</p>
+</div>
+
+<h3>직관적 설명: 물이 차오르는 비유</h3>
+
+<div class="diagram">
+  <svg width="600" height="200" viewBox="0 0 600 200">
+    <!-- Phase 1: Points -->
+    <g transform="translate(0,0)">
+      <text x="75" y="20" text-anchor="middle" fill="#8892a0" font-size="11">r = 0 (시작)</text>
+      <circle cx="40" cy="80" r="8" fill="#6c63ff"/>
+      <circle cx="100" cy="60" r="8" fill="#ff6b6b"/>
+      <circle cx="80" cy="130" r="8" fill="#4ecdc4"/>
+      <circle cx="110" cy="120" r="8" fill="#ffd93d"/>
+      <text x="75" y="170" text-anchor="middle" fill="#8892a0" font-size="10">각 note가 고립된 점</text>
+    </g>
+    <!-- Phase 2: Some edges -->
+    <g transform="translate(170,0)">
+      <text x="75" y="20" text-anchor="middle" fill="#8892a0" font-size="11">r = 0.3</text>
+      <circle cx="40" cy="80" r="8" fill="#6c63ff"/>
+      <circle cx="100" cy="60" r="8" fill="#ff6b6b"/>
+      <circle cx="80" cy="130" r="8" fill="#4ecdc4"/>
+      <circle cx="110" cy="120" r="8" fill="#ffd93d"/>
+      <line x1="40" y1="80" x2="100" y2="60" stroke="#555" stroke-width="1.5"/>
+      <line x1="80" y1="130" x2="110" y2="120" stroke="#555" stroke-width="1.5"/>
+      <text x="75" y="170" text-anchor="middle" fill="#8892a0" font-size="10">가까운 점끼리 연결 시작</text>
+    </g>
+    <!-- Phase 3: Cycle formed! -->
+    <g transform="translate(340,0)">
+      <text x="75" y="20" text-anchor="middle" fill="#ffd93d" font-size="11" font-weight="bold">r = 0.5 (Cycle 탄생!)</text>
+      <circle cx="40" cy="80" r="8" fill="#6c63ff"/>
+      <circle cx="100" cy="60" r="8" fill="#ff6b6b"/>
+      <circle cx="80" cy="130" r="8" fill="#4ecdc4"/>
+      <circle cx="110" cy="120" r="8" fill="#ffd93d"/>
+      <line x1="40" y1="80" x2="100" y2="60" stroke="#4ecdc4" stroke-width="2"/>
+      <line x1="100" y1="60" x2="110" y2="120" stroke="#4ecdc4" stroke-width="2"/>
+      <line x1="110" y1="120" x2="80" y2="130" stroke="#4ecdc4" stroke-width="2"/>
+      <line x1="80" y1="130" x2="40" y2="80" stroke="#4ecdc4" stroke-width="2"/>
+      <text x="75" y="100" text-anchor="middle" fill="#ffd93d" font-size="20">&#9675;</text>
+      <text x="75" y="170" text-anchor="middle" fill="#4ecdc4" font-size="10" font-weight="bold">루프가 형성! = Cycle</text>
+    </g>
+  </svg>
+</div>
+
+<div class="card">
+  <h3>용어 정리</h3>
+  <table>
+    <tr><th>용어</th><th>의미</th><th>음악적 해석</th></tr>
+    <tr><td><span class="tag tag-blue">Filtration</span></td><td>거리 임계값 r을 0에서 점점 키우는 과정</td><td>연결 기준을 점점 느슨하게</td></tr>
+    <tr><td><span class="tag tag-green">Cycle (H1)</span></td><td>루프/고리 구조. 3개 이상의 note가 순환</td><td>반복 선율, 화성 패턴</td></tr>
+    <tr><td><span class="tag tag-yellow">Birth</span></td><td>cycle이 처음 나타나는 r 값</td><td>구조가 형성되는 시점</td></tr>
+    <tr><td><span class="tag tag-red">Death</span></td><td>cycle이 삼각형으로 채워져 사라지는 r 값</td><td>구조가 소멸하는 시점</td></tr>
+    <tr><td><span class="tag tag-blue">Barcode</span></td><td>각 cycle의 [birth, death] 구간 목록</td><td>곡의 위상적 지문</td></tr>
+    <tr><td><span class="tag tag-green">Betti Curve</span></td><td>각 r에서 살아있는 cycle 수의 그래프</td><td>곡의 구조적 복잡도 변화</td></tr>
+  </table>
+</div>
+
+<p>hibari를 분석하면 <span class="highlight">48개의 고유한 cycle</span>이 발견됩니다. 이것이 곡의 "위상적 뼈대"입니다.</p>
+
+<!-- ════════════════════════════════════════════════════ -->
+<h2 id="s4"><span class="emoji">&#128200;</span> 4. 중첩행렬 (Overlap Matrix)</h2>
+
+<div class="card card-accent">
+  <p>중첩행렬은 <strong>"언제 어떤 cycle이 활성화되어 있는가"</strong>를 나타내는 이진 행렬입니다.</p>
+  <p>크기: <span class="tag tag-blue">1088 시점</span> x <span class="tag tag-green">48 cycles</span></p>
+</div>
+
+<div class="diagram">
+  <svg width="500" height="220" viewBox="0 0 500 220">
+    <text x="250" y="20" text-anchor="middle" fill="#e0e0e0" font-size="13" font-weight="bold">중첩행렬 (Overlap Matrix)</text>
+    <!-- Grid -->
+    <rect x="80" y="40" width="360" height="150" fill="none" stroke="#2a2d3a" stroke-width="1"/>
+    <!-- Column labels -->
+    <text x="120" y="35" text-anchor="middle" fill="#4ecdc4" font-size="10">C0</text>
+    <text x="160" y="35" text-anchor="middle" fill="#4ecdc4" font-size="10">C1</text>
+    <text x="200" y="35" text-anchor="middle" fill="#4ecdc4" font-size="10">C2</text>
+    <text x="280" y="35" text-anchor="middle" fill="#8892a0" font-size="10">...</text>
+    <text x="400" y="35" text-anchor="middle" fill="#4ecdc4" font-size="10">C47</text>
+    <!-- Row labels -->
+    <text x="70" y="65" text-anchor="end" fill="#8892a0" font-size="10">t=0</text>
+    <text x="70" y="95" text-anchor="end" fill="#8892a0" font-size="10">t=1</text>
+    <text x="70" y="125" text-anchor="end" fill="#8892a0" font-size="10">t=2</text>
+    <text x="70" y="155" text-anchor="end" fill="#8892a0" font-size="10">...</text>
+    <text x="70" y="180" text-anchor="end" fill="#8892a0" font-size="10">t=1087</text>
+    <!-- Cells: 1 = filled, 0 = empty -->
+    <rect x="105" y="50" width="30" height="20" fill="#6c63ff" opacity="0.7" rx="3"/>
+    <rect x="185" y="50" width="30" height="20" fill="#6c63ff" opacity="0.7" rx="3"/>
+    <rect x="105" y="80" width="30" height="20" fill="#6c63ff" opacity="0.7" rx="3"/>
+    <rect x="145" y="80" width="30" height="20" fill="#6c63ff" opacity="0.7" rx="3"/>
+    <rect x="185" y="80" width="30" height="20" fill="#6c63ff" opacity="0.7" rx="3"/>
+    <rect x="385" y="80" width="30" height="20" fill="#6c63ff" opacity="0.7" rx="3"/>
+    <rect x="145" y="110" width="30" height="20" fill="#6c63ff" opacity="0.7" rx="3"/>
+    <rect x="385" y="110" width="30" height="20" fill="#6c63ff" opacity="0.7" rx="3"/>
+    <rect x="105" y="165" width="30" height="20" fill="#6c63ff" opacity="0.7" rx="3"/>
+    <rect x="185" y="165" width="30" height="20" fill="#6c63ff" opacity="0.7" rx="3"/>
+    <rect x="385" y="165" width="30" height="20" fill="#6c63ff" opacity="0.7" rx="3"/>
+    <!-- Labels -->
+    <text x="250" y="210" text-anchor="middle" fill="#ffd93d" font-size="11">보라 = 1 (cycle 활성) | 검정 = 0 (비활성)</text>
+  </svg>
+</div>
+
+<p>이 행렬이 음악 생성의 <strong>seed(씨앗)</strong>입니다. 각 시점에서 어떤 cycle이 활성화되어 있으면, 그 cycle에 속한 note 중에서 연주할 음을 고릅니다.</p>
+
+<!-- ════════════════════════════════════════════════════ -->
+<h2 id="s5"><span class="emoji">&#127919;</span> 5. 위상 구조 보존도와 Cycle 선택</h2>
+
+<p>48개 cycle 전부를 사용할 필요는 없습니다. <strong>어떤 subset이 원곡의 구조를 가장 잘 보존하는가?</strong></p>
+
+<div class="card">
+  <h3>보존도 = 3가지 지표의 가중 평균</h3>
+  <table>
+    <tr><th>지표</th><th>가중치</th><th>측정 대상</th></tr>
+    <tr><td><span class="tag tag-blue">Note Pool Jaccard</span></td><td>50%</td><td>각 시점에서 연주 가능한 note 집합의 유사도</td></tr>
+    <tr><td><span class="tag tag-green">Overlap Correlation</span></td><td>30%</td><td>시간에 따른 활성 패턴의 상관관계</td></tr>
+    <tr><td><span class="tag tag-yellow">Betti Curve 유사도</span></td><td>20%</td><td>위상적 복잡도의 시간적 변화 유사도</td></tr>
+  </table>
+</div>
+
+<div class="metric-grid">
+  <div class="metric-card">
+    <div class="metric-value" style="color: var(--accent3);">17</div>
+    <div class="metric-label">90% 보존도에 필요한 cycle 수</div>
+  </div>
+  <div class="metric-card">
+    <div class="metric-value" style="color: var(--accent);">48</div>
+    <div class="metric-label">전체 발견된 cycle 수</div>
+  </div>
+  <div class="metric-card">
+    <div class="metric-value" style="color: var(--accent4);">35%</div>
+    <div class="metric-label">17/48 = 필요한 비율</div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════ -->
+<h2 id="s6"><span class="emoji">&#129302;</span> 6. 음악 생성</h2>
+
+<div class="compare-row">
+  <div class="card">
+    <h3>Algorithm 1: 확률적 샘플링</h3>
+    <p>각 시점에서 활성 cycle의 note 중 <strong>랜덤으로 선택</strong></p>
+    <ul>
+      <li>빠르고 간단</li>
+      <li>앞뒤 맥락 무시</li>
+      <li>빈도수 높은 note가 더 자주 선택</li>
+    </ul>
+    <p class="tag tag-yellow">규칙 기반</p>
+  </div>
+  <div class="card">
+    <h3>Algorithm 2: 딥러닝</h3>
+    <p>중첩행렬 &rarr; 원곡 매핑을 <strong>신경망이 학습</strong></p>
+    <ul>
+      <li>FC: 시점별 독립 예측</li>
+      <li>LSTM: 시간 패턴 학습</li>
+      <li>Transformer: 장거리 관계 학습</li>
+    </ul>
+    <p class="tag tag-green">학습 기반</p>
+  </div>
+</div>
+
+<h3>Data Augmentation (10x 증강)</h3>
+<div class="card">
+  <table>
+    <tr><th>전략</th><th>효과</th></tr>
+    <tr><td><span class="tag tag-blue">Subset Augmentation</span></td><td>K=10,15,20,30의 overlap &rarr; 불완전한 정보에서도 복원 학습</td></tr>
+    <tr><td><span class="tag tag-green">Circular Shift</span></td><td>시작점 이동 &rarr; 위치 편향 제거</td></tr>
+    <tr><td><span class="tag tag-yellow">Noise Injection</span></td><td>3% bit flip &rarr; overfitting 방지</td></tr>
+  </table>
+</div>
+
+<!-- ════════════════════════════════════════════════════ -->
+<h2 id="s7"><span class="emoji">&#9881;</span> 7. 파이프라인 전체 흐름</h2>
+
+<div class="flow-arrow">
+  <div class="flow-box"><strong>MIDI</strong><br><small>hibari.mid</small></div>
+  <div class="flow-sep">&rarr;</div>
+  <div class="flow-box"><strong>전처리</strong><br><small>8분음표 양자화<br>23 notes, 17 chords</small></div>
+  <div class="flow-sep">&rarr;</div>
+  <div class="flow-box"><strong>거리 행렬</strong><br><small>가중치 &rarr; 역수</small></div>
+  <div class="flow-sep">&rarr;</div>
+  <div class="flow-box active"><strong>Persistent<br>Homology</strong><br><small>48 cycles 발견</small></div>
+  <div class="flow-sep">&rarr;</div>
+  <div class="flow-box"><strong>중첩행렬</strong><br><small>1088 x 48</small></div>
+  <div class="flow-sep">&rarr;</div>
+  <div class="flow-box"><strong>Cycle 선택</strong><br><small>K=17 (90%)</small></div>
+  <div class="flow-sep">&rarr;</div>
+  <div class="flow-box active"><strong>음악 생성</strong><br><small>Algo1 / DL</small></div>
+</div>
+
+<!-- ════════════════════════════════════════════════════ -->
+<h2 id="s8"><span class="emoji">&#128202;</span> 8. 실험 결과</h2>
+
+<h3>Barcode 계산 최적화</h3>
+<table>
+  <tr><th>방법</th><th>속도 (ms/call)</th><th>배율</th></tr>
+  <tr><td>기존 (professor.py)</td><td>72</td><td>1x</td></tr>
+  <tr><td>Numpy 벡터화</td><td>29</td><td>2.5x</td></tr>
+  <tr><td><strong>Ripser (C++)</strong></td><td><strong>1.6</strong></td><td><strong>45x</strong></td></tr>
+</table>
+
+<h3>Cycle Subset 선택 효과</h3>
+<table>
+  <tr><th>K (cycle 수)</th><th>보존도</th><th>생성 Notes</th></tr>
+  <tr><td>10</td><td>0.799</td><td>1,673</td></tr>
+  <tr><td>17</td><td>0.903</td><td>1,711</td></tr>
+  <tr><td>48 (전체)</td><td>1.000</td><td>1,676</td></tr>
+</table>
+
+<h3>DL 모델 비교 (50 epochs, 10x augmentation)</h3>
+<table>
+  <tr><th>Model</th><th>Val Loss</th><th>Notes</th><th>Pitches</th></tr>
+  <tr><td><strong>FC</strong></td><td><strong>0.282</strong></td><td>3,756</td><td>17</td></tr>
+  <tr><td>LSTM</td><td>0.385</td><td>3,753</td><td>17</td></tr>
+  <tr><td>Transformer</td><td>0.676</td><td>3,753</td><td>17</td></tr>
+</table>
+
+<!-- ════════════════════════════════════════════════════ -->
+<h2 id="s9"><span class="emoji">&#128218;</span> 9. 참고문헌</h2>
+
+<div class="card">
+  <ul>
+    <li>이동진, Mai Lan Tran, 정재훈, "국악의 기하학적 구조와 인공지능 작곡", 2024</li>
+    <li>Mai Lan Tran, et al., "Topological Data Analysis of Korean Music in Jeongganbo: A Cycle Structure", arXiv:2103.06620, 2021</li>
+    <li>Mai Lan Tran, et al., "Machine Composition of Korean Music via Topological Data Analysis and Artificial Neural Network", arXiv:2211.17298, 2024</li>
+    <li>Gunnar Carlsson, "Topology and data", Bull. AMS 46(2), 2009</li>
+  </ul>
+</div>
+
+<div class="footnote">
+  <p>이 문서는 TDA Music Pipeline (<a href="https://github.com/doobMM/hibari_tda" style="color:var(--accent)">github.com/doobMM/hibari_tda</a>)의 연구 과정을 설명합니다.</p>
+  <p>Generated with Claude Code, 2026.</p>
+</div>
+
+</div>
+</body>
+</html>
