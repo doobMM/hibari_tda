@@ -438,7 +438,12 @@ if algorithm == "Algorithm 2 (DL)":
 else:
     dl_model = "FC"
 
-max_cycles = metric_cycle_counts.get(selected_metric, total_cycles)
+# 각 metric의 사전 계산된 cycle 수 (precompute_metrics.py 결과)
+_metric_cycle_counts = {
+    'frequency': 43, 'tonnetz': 46, 'voice_leading': 22, 'dft': 20
+}
+
+max_cycles = _metric_cycle_counts.get(selected_metric, total_cycles)
 k_cycles = st.sidebar.slider(
     "사용할 구조 패턴 수",
     min_value=3, max_value=max_cycles, value=min(17, max_cycles), step=1,
@@ -479,10 +484,7 @@ metric_map = {
 selected_metric = metric_map[metric_choice]
 
 # 각 metric의 사전 계산된 cycle 수 표시
-metric_cycle_counts = {
-    'frequency': 43, 'tonnetz': 46, 'voice_leading': 22, 'dft': 20
-}
-n_cyc = metric_cycle_counts.get(selected_metric, '?')
+n_cyc = _metric_cycle_counts.get(selected_metric, '?')
 st.sidebar.caption(f"이 방식으로 발견된 구조 패턴: **{n_cyc}개**")
 
 st.sidebar.markdown("---")
