@@ -491,6 +491,13 @@ k_cycles = st.sidebar.slider(
     help=f"선택한 거리 방식으로 발견된 {max_cycles}개 패턴 중 몇 개를 사용할지."
 )
 
+# K에 따른 보존도 근사 표시
+# 경험적으로: score ≈ 1 - (1 - K/max)^1.5 (diminishing returns 곡선)
+_approx_score = 1.0 - (1.0 - k_cycles / max_cycles) ** 1.5 if max_cycles > 0 else 1.0
+_approx_pct = min(100, int(_approx_score * 100))
+_bar_color = "🟢" if _approx_pct >= 90 else "🟡" if _approx_pct >= 70 else "🔴"
+st.sidebar.caption(f"{_bar_color} {k_cycles}/{max_cycles}개 선택 → 원곡 구조의 약 **{_approx_pct}%** 보존")
+
 min_gap = st.sidebar.slider(
     "음 사이 최소 간격",
     min_value=0, max_value=8, value=0, step=1,
