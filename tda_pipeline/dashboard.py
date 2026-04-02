@@ -195,8 +195,83 @@ def make_comparison_roll(orig_notes_list, gen_notes, xlim=None):
 # 음악 생성 함수
 # ═══════════════════════════════════════════════════════════════════════════
 
+def _rebuild_overlap_with_metric(data, metric_info):
+    """musical metric을 적용하여 PH를 재탐색하고 새 overlap을 반환합니다."""
+    from weights import (compute_intra_weights, compute_inter_weights,
+                         compute_distance_matrix, compute_out_of_reach)
+    from overlap import (group_rBD_by_homology, label_cycles_from_persistence,
+                         build_activation_matrix, build_overlap_matrix)
+    from topology import generate_barcode_numpy
+    from musical_metrics import (compute_note_distance_matrix,
+                                  compute_hybrid_distance,
+                                  compute_multi_hybrid_distance)
+    import pandas as pd
+
+    adn_i = data['adn_i']
+    notes_dict = data['notes_dict']
+    notes_label = data['notes_label']
+    N = len(notes_label)
+    T = data['T']
+    mi = metric_info
+
+    w1 = compute_intra_weights(adn_i[1][0])
+    w2 = compute_intra_weights(adn_i[2][0])
+    intra = w1 + w2
+    inter = compute_inter_weights(adn_i[1][1], adn_i[2][1], lag=1)
+    oor = compute_out_of_reach(inter, power=-2)
+
+    # 음악적 거리 사전 계산
+    if mi['metric'] == 'hybrid':
+        m_names = mi.get('hybrid_metrics', ['tonnetz'])
+        m_weights = mi.get('hybrid_weights')
+    else:
+        m_names = [mi['metric']]
+        alpha = mi.get('alpha', 0.5)
+        m_weights = [alpha, 1.0 - alpha]
+
+    # rate sweep (coarse: power=-2, step=0.01, 150 evaluations)
+    profile = []
+    step = 0.01
+    rate = 0.0
+    while rate <= 1.5 + 1e-10:
+        r = round(rate, 2)
+        tw = intra + r * inter
+        freq_dist = compute_distance_matrix(tw, notes_dict, oor, num_notes=N).values
+
+        if mi['metric'] == 'hybrid':
+            final = compute_multi_hybrid_distance(freq_dist, notes_label, m_names, m_weights)
+        else:
+            m_dist = compute_note_distance_matrix(notes_label, metric=mi['metric'])
+            final = compute_hybrid_distance(freq_dist, m_dist, alpha=mi.get('alpha', 0.5))
+
+        bd = generate_barcode_numpy(mat=final, listOfDimension=[1],
+                                     exactStep=True, birthDeathSimplex=False, sortDimension=False)
+        profile.append((r, bd))
+        rate += step
+
+    persistence = group_rBD_by_homology(profile, dim=1)
+    cycle_labeled = label_cycles_from_persistence(persistence)
+
+    # Overlap matrix 재구축
+    from preprocessing import simul_chord_lists, simul_union_by_dict
+    chord_pairs = simul_chord_lists(adn_i[1][-1], adn_i[2][-1])
+    note_sets = simul_union_by_dict(chord_pairs, notes_dict)
+    nodes_list = list(range(1, N + 1))
+    ntd = np.zeros((T, len(nodes_list)), dtype=int)
+    for t in range(min(T, len(note_sets))):
+        if note_sets[t] is not None:
+            for n in note_sets[t]:
+                if n in nodes_list:
+                    ntd[t, nodes_list.index(n)] = 1
+    note_time_df = pd.DataFrame(ntd, columns=nodes_list)
+    activation = build_activation_matrix(note_time_df, cycle_labeled)
+    overlap = build_overlap_matrix(activation, cycle_labeled, threshold=0.35, total_length=T)
+
+    return overlap, cycle_labeled
+
+
 def generate_music(data, algorithm, k_cycles, min_gap, dl_model_type='fc',
-                    progress_callback=None):
+                    progress_callback=None, metric_info=None):
     """파라미터에 따라 음악을 생성합니다."""
     from cycle_selector import CycleSubsetSelector
     from generation import (
@@ -204,8 +279,16 @@ def generate_music(data, algorithm, k_cycles, min_gap, dl_model_type='fc',
         build_orphan_supplement, notes_to_xml
     )
 
-    overlap_df = data['overlap']
-    cycle_labeled = data['cycle_labeled']
+    _p = progress_callback
+    mi = metric_info or {'metric': 'frequency'}
+
+    # metric이 frequency가 아니면 PH를 재탐색하여 새 overlap 생성
+    if mi['metric'] != 'frequency':
+        if _p: _p.progress(5, text=f"거리 함수({mi['metric']}) 적용 → PH 재탐색...")
+        overlap_df, cycle_labeled = _rebuild_overlap_with_metric(data, mi)
+    else:
+        overlap_df = data['overlap']
+        cycle_labeled = data['cycle_labeled']
     notes_label = data['notes_label']
     notes_counts = data['notes_counts']
     notes_dict = data['notes_dict']
@@ -229,8 +312,6 @@ def generate_music(data, algorithm, k_cycles, min_gap, dl_model_type='fc',
         sel_overlap = overlap_df.values
         score = 1.0
         supplement = None
-
-    _p = progress_callback
 
     if algorithm == "Algorithm 1":
         if _p: _p.progress(30, text="Algorithm 1: 확률적 샘플링 중...")
@@ -365,6 +446,75 @@ min_gap = st.sidebar.slider(
 tempo = st.sidebar.slider("Tempo (BPM)", 40, 120, 66)
 
 st.sidebar.markdown("---")
+st.sidebar.header("🎼 거리 함수")
+
+metric_choice = st.sidebar.selectbox(
+    "음의 거리 측정 방식",
+    ["빈도 (기존)", "Tonnetz (화성)", "Voice-leading (선율)", "DFT (주파수)", "혼합 (직접 설정)"],
+    help="음들 사이의 '거리'를 어떻게 측정할지. 거리 정의에 따라 발견되는 구조가 달라집니다."
+)
+
+metric_descriptions = {
+    "빈도 (기존)": "곡에서 연달아 자주 나온 음일수록 가깝게. 순수 통계적.",
+    "Tonnetz (화성)": "장3도·완전5도 관계의 음이 가까운 격자 위 거리. 화성 구조 반영.",
+    "Voice-leading (선율)": "반음 차이가 적은 음일수록 가까움. 선율적 흐름 반영.",
+    "DFT (주파수)": "Fourier 변환 후 주파수 공간에서의 거리. 음향적 유사도.",
+    "혼합 (직접 설정)": "여러 거리를 원하는 비율로 섞어서 사용.",
+}
+st.sidebar.caption(metric_descriptions[metric_choice])
+
+# metric 설정값 변환
+metric_map = {
+    "빈도 (기존)": "frequency",
+    "Tonnetz (화성)": "tonnetz",
+    "Voice-leading (선율)": "voice_leading",
+    "DFT (주파수)": "dft",
+    "혼합 (직접 설정)": "hybrid",
+}
+selected_metric = metric_map[metric_choice]
+
+hybrid_metrics = []
+hybrid_weights = None
+metric_alpha = 0.5
+
+if selected_metric == "hybrid":
+    st.sidebar.markdown("**혼합할 거리 선택:**")
+    use_tonnetz = st.sidebar.checkbox("Tonnetz (화성)", value=True)
+    use_vl = st.sidebar.checkbox("Voice-leading (선율)", value=False)
+    use_dft = st.sidebar.checkbox("DFT (주파수)", value=False)
+
+    hybrid_metrics = []
+    if use_tonnetz: hybrid_metrics.append('tonnetz')
+    if use_vl: hybrid_metrics.append('voice_leading')
+    if use_dft: hybrid_metrics.append('dft')
+
+    if not hybrid_metrics:
+        hybrid_metrics = ['tonnetz']
+        st.sidebar.warning("최소 1개 선택 필요. Tonnetz로 설정됨.")
+
+    metric_alpha = st.sidebar.slider(
+        "빈도 거리 비중",
+        min_value=0.0, max_value=1.0, value=0.4, step=0.1,
+        help="빈도 거리가 차지하는 비율. 나머지가 선택한 음악적 거리에 균등 배분됩니다."
+    )
+    # 나머지를 균등 배분
+    rest = 1.0 - metric_alpha
+    per_metric = rest / len(hybrid_metrics) if hybrid_metrics else 0
+    hybrid_weights = [metric_alpha] + [per_metric] * len(hybrid_metrics)
+
+    weight_str = f"빈도 {metric_alpha:.0%}"
+    for m, w in zip(hybrid_metrics, hybrid_weights[1:]):
+        weight_str += f" + {m} {w:.0%}"
+    st.sidebar.caption(f"배합: {weight_str}")
+
+elif selected_metric != "frequency":
+    metric_alpha = st.sidebar.slider(
+        "빈도 거리 비중 (alpha)",
+        min_value=0.0, max_value=1.0, value=0.5, step=0.1,
+        help="빈도 거리와 음악적 거리를 섞는 비율. 0.5 = 반반."
+    )
+
+st.sidebar.markdown("---")
 view_range = st.sidebar.slider(
     "Piano Roll 표시 범위",
     min_value=0, max_value=1088, value=(0, 200), step=8,
@@ -385,11 +535,18 @@ if st.sidebar.button("🎹 음악 생성", type="primary", use_container_width=T
 
     t0 = time.time()
 
-    # 단계별 진행도 표시
+    # metric 정보 전달
+    metric_info = {
+        'metric': selected_metric,
+        'alpha': metric_alpha,
+        'hybrid_metrics': hybrid_metrics,
+        'hybrid_weights': hybrid_weights,
+    }
+
     progress.progress(10, text="Cycle 선택 중...")
     generated, score = generate_music(
         data, algorithm, k_cycles, min_gap, dl_model,
-        progress_callback=progress
+        progress_callback=progress, metric_info=metric_info
     )
     dt = time.time() - t0
 
@@ -400,7 +557,8 @@ if st.sidebar.button("🎹 음악 생성", type="primary", use_container_width=T
     st.session_state['gen_time'] = dt
     st.session_state['gen_params'] = {
         'algorithm': algorithm, 'k': k_cycles,
-        'gap': min_gap, 'model': dl_model
+        'gap': min_gap, 'model': dl_model,
+        'metric': metric_choice
     }
 
 # ── 결과 표시 ──

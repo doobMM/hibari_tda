@@ -28,6 +28,28 @@ class MIDIConfig:
 
 
 @dataclass
+class MetricConfig:
+    """거리 함수 설정
+
+    metric: 사용할 거리 함수
+      - 'frequency': 기존 빈도 역수 (기본값, alpha=1.0과 동일)
+      - 'tonnetz': Tonnetz 격자 거리
+      - 'voice_leading': pitch 차이 (반음 수)
+      - 'dft': Fourier 공간 거리
+      - 'hybrid': 빈도 + 음악적 거리 혼합 (alpha로 비율 조절)
+
+    hybrid_metrics: hybrid 모드에서 섞을 metric 목록
+      예: ['tonnetz', 'dft'] → 빈도 + tonnetz + dft 3개를 혼합
+    hybrid_weights: 각 metric의 가중치 (빈도 포함)
+      예: [0.4, 0.3, 0.3] → 빈도 40%, tonnetz 30%, dft 30%
+    """
+    metric: str = 'frequency'
+    alpha: float = 0.5                  # hybrid에서 빈도 거리 비중
+    hybrid_metrics: List[str] = field(default_factory=lambda: ['tonnetz'])
+    hybrid_weights: Optional[List[float]] = None  # None이면 균등 배분
+
+
+@dataclass
 class HomologyConfig:
     """Persistent Homology 탐색 설정"""
     max_lag: int = 4           # inter-weight lag 최대값
@@ -63,6 +85,7 @@ class GenerationConfig:
 class PipelineConfig:
     """전체 파이프라인 설정"""
     midi: MIDIConfig = field(default_factory=MIDIConfig)
+    metric: MetricConfig = field(default_factory=MetricConfig)
     homology: HomologyConfig = field(default_factory=HomologyConfig)
     overlap: OverlapConfig = field(default_factory=OverlapConfig)
     generation: GenerationConfig = field(default_factory=GenerationConfig)

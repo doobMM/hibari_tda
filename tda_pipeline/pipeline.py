@@ -168,25 +168,48 @@ class TDAMusicPipeline:
         t0 = time.time()
         cfg = self.config.homology
         
-        print(f"[Stage 2] Homology 탐색: type={search_type}, dim={dimension}, lag={lag}")
-        
+        mcfg = self.config.metric
+        metric_label = mcfg.metric if mcfg.metric != 'hybrid' else f"hybrid({'+'.join(mcfg.hybrid_metrics)})"
+        print(f"[Stage 2] Homology 탐색: type={search_type}, dim={dimension},"
+              f" lag={lag}, metric={metric_label}")
+
         adn_i = self._cache['adn_i']
         notes_dict = self._cache['notes_dict']
-        
+        notes_label = self._cache['notes_label']
+
         # Barcode 생성: topology.py의 numpy 최적화 버전 (기존 대비 ~2.5x)
         from topology import generate_barcode_numpy as generateBarcode
-        
+
+        # Musical metric 사전 계산 (frequency가 아닌 경우)
+        musical_dist = None
+        if mcfg.metric != 'frequency':
+            from musical_metrics import (compute_note_distance_matrix,
+                                          compute_multi_hybrid_distance)
+            if mcfg.metric == 'hybrid':
+                # 다중 혼합: 빈도 + 여러 metric
+                # musical_dist는 rate loop 안에서 빈도 거리와 합성
+                musical_dist = 'hybrid'  # 마커 — loop 안에서 처리
+            else:
+                # 단일 metric (tonnetz / voice_leading / dft)
+                musical_dist = compute_note_distance_matrix(
+                    notes_label, metric=mcfg.metric
+                )
+
+        # _apply_metric을 search 함수에 전달
         if search_type == 'timeflow':
             profile, oor = self._search_timeflow(
-                adn_i, notes_dict, lag, dimension, cfg, generateBarcode
+                adn_i, notes_dict, lag, dimension, cfg, generateBarcode,
+                musical_dist=musical_dist
             )
         elif search_type == 'simul':
             profile, oor = self._search_simul(
-                adn_i, notes_dict, dimension, cfg, generateBarcode
+                adn_i, notes_dict, dimension, cfg, generateBarcode,
+                musical_dist=musical_dist
             )
         elif search_type == 'complex':
             profile, oor = self._search_complex(
-                adn_i, notes_dict, lag, dimension, rate_t, rate_s, cfg, generateBarcode
+                adn_i, notes_dict, lag, dimension, rate_t, rate_s, cfg, generateBarcode,
+                musical_dist=musical_dist
             )
         else:
             raise ValueError(f"Unknown search_type: {search_type}")
@@ -204,38 +227,62 @@ class TDAMusicPipeline:
         
         return self
     
-    def _search_timeflow(self, adn_i, notes_dict, lag, dim, cfg, generateBarcode):
+    def _apply_metric(self, freq_dist_values):
+        """빈도 거리 행렬에 musical metric을 적용합니다."""
+        mcfg = self.config.metric
+        if mcfg.metric == 'frequency':
+            return freq_dist_values
+
+        from musical_metrics import (compute_hybrid_distance,
+                                      compute_multi_hybrid_distance,
+                                      compute_note_distance_matrix)
+        notes_label = self._cache['notes_label']
+
+        if mcfg.metric == 'hybrid':
+            return compute_multi_hybrid_distance(
+                freq_dist_values, notes_label,
+                metric_names=mcfg.hybrid_metrics,
+                weights=mcfg.hybrid_weights
+            )
+        else:
+            m_dist = compute_note_distance_matrix(notes_label, metric=mcfg.metric)
+            return compute_hybrid_distance(freq_dist_values, m_dist, alpha=mcfg.alpha)
+
+    def _search_timeflow(self, adn_i, notes_dict, lag, dim, cfg, generateBarcode,
+                         musical_dist=None):
         """Timeflow homology 탐색"""
-        # Intra weights
         w1 = compute_intra_weights(adn_i[1][0])
         w2 = compute_intra_weights(adn_i[2][0])
         intra = w1 + w2
-        
-        # Inter weight
+
         inter = compute_inter_weights(adn_i[1][lag], adn_i[2][lag], lag=lag)
         oor = compute_out_of_reach(inter, power=cfg.power)
-        
+
         step = 10 ** cfg.power
         profile = []
-        
+
         for a in range(int(cfg.rate_start / step), int(cfg.rate_end / step)):
             rate = round(a * step, -cfg.power)
-            
+
             timeflow_w = intra + rate * inter
             dist = compute_distance_matrix(
-                timeflow_w, notes_dict, oor, 
+                timeflow_w, notes_dict, oor,
                 num_notes=self.config.midi.num_notes
             )
-            
+
+            # Musical metric 적용
+            final_dist = self._apply_metric(dist.values)
+
             bd = generateBarcode(
-                mat=dist.values, listOfDimension=[dim],
+                mat=final_dist, listOfDimension=[dim],
                 exactStep=True, birthDeathSimplex=False, sortDimension=False
             )
             profile.append((rate, bd))
-        
+
         return profile, oor
     
-    def _search_simul(self, adn_i, notes_dict, dim, cfg, generateBarcode):
+    def _search_simul(self, adn_i, notes_dict, dim, cfg, generateBarcode,
+                      musical_dist=None):
         """Simul homology 탐색"""
         simul_intra, simul_inter = compute_simul_weights(
             adn_i[1][-1], adn_i[2][-1], notes_dict
@@ -256,15 +303,18 @@ class TDAMusicPipeline:
                 refine=False
             )
             
+            final_dist = self._apply_metric(dist.values)
+
             bd = generateBarcode(
-                mat=dist.values, listOfDimension=[dim],
+                mat=final_dist, listOfDimension=[dim],
                 exactStep=True, birthDeathSimplex=False, sortDimension=False
             )
             profile.append((rate, bd))
-        
+
         return profile, oor
-    
-    def _search_complex(self, adn_i, notes_dict, lag, dim, rate_t, rate_s, cfg, generateBarcode):
+
+    def _search_complex(self, adn_i, notes_dict, lag, dim, rate_t, rate_s, cfg, generateBarcode,
+                         musical_dist=None):
         """Complex homology 탐색"""
         # Timeflow 부분
         w1 = compute_intra_weights(adn_i[1][0])
@@ -302,14 +352,16 @@ class TDAMusicPipeline:
             dist = weight_to_distance(complex_w, oor)
             dist = symmetrize_upper_to_full(dist)
             
+            final_dist = self._apply_metric(dist.values)
+
             bd = generateBarcode(
-                mat=dist.values, listOfDimension=[dim],
+                mat=final_dist, listOfDimension=[dim],
                 exactStep=True, birthDeathSimplex=False, sortDimension=False
             )
             profile.append((rate, bd))
-        
+
         return profile, oor
-    
+
     # ═══════════════════════════════════════════════════════════════════════
     # Stage 3: 중첩행렬 구축
     # ═══════════════════════════════════════════════════════════════════════

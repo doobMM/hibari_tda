@@ -266,3 +266,60 @@ def compute_hybrid_distance(freq_distance: np.ndarray,
     m_norm = normalize(musical_distance)
 
     return alpha * f_norm + (1 - alpha) * m_norm
+
+
+def compute_multi_hybrid_distance(freq_distance: np.ndarray,
+                                   notes_label: dict,
+                                   metric_names: list,
+                                   weights: Optional[list] = None) -> np.ndarray:
+    """
+    빈도 거리 + 여러 음악적 거리를 가중 혼합합니다.
+
+    예: metric_names=['tonnetz', 'dft'], weights=[0.4, 0.3, 0.3]
+    → 40% 빈도 + 30% Tonnetz + 30% DFT
+
+    weights의 첫 번째 값이 빈도 거리 비중,
+    나머지가 metric_names 순서대로의 비중.
+    weights가 None이면 모든 metric에 균등 배분.
+
+    Args:
+        freq_distance: (N, N) 빈도 기반 거리
+        notes_label: note label dict
+        metric_names: ['tonnetz'], ['tonnetz', 'dft'], ['tonnetz', 'voice_leading', 'dft'] 등
+        weights: [freq_w, metric1_w, metric2_w, ...] 합 = 1.0
+
+    Returns:
+        (N, N) 혼합 거리 행렬
+    """
+    n_metrics = len(metric_names)
+
+    if weights is None:
+        # 균등 배분: 빈도 + n개 metric = 총 (n+1)개
+        w = 1.0 / (n_metrics + 1)
+        weights = [w] * (n_metrics + 1)
+
+    assert len(weights) == n_metrics + 1, \
+        f"weights 길이({len(weights)})가 metric 수+1({n_metrics+1})과 불일치"
+
+    # 정규화 함수
+    def normalize(m):
+        mask = m > 0
+        if not mask.any():
+            return m
+        min_val = m[mask].min()
+        max_val = m[mask].max()
+        if max_val == min_val:
+            return np.where(mask, 0.5, 0)
+        result = np.zeros_like(m)
+        result[mask] = (m[mask] - min_val) / (max_val - min_val)
+        return result
+
+    # 빈도 거리 (정규화)
+    result = weights[0] * normalize(freq_distance)
+
+    # 각 음악적 거리 추가
+    for i, name in enumerate(metric_names):
+        m_dist = compute_note_distance_matrix(notes_label, metric=name)
+        result += weights[i + 1] * normalize(m_dist)
+
+    return result
