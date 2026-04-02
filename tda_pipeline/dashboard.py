@@ -195,7 +195,8 @@ def make_comparison_roll(orig_notes_list, gen_notes, xlim=None):
 # 음악 생성 함수
 # ═══════════════════════════════════════════════════════════════════════════
 
-def generate_music(data, algorithm, k_cycles, min_gap, dl_model_type='fc'):
+def generate_music(data, algorithm, k_cycles, min_gap, dl_model_type='fc',
+                    progress_callback=None):
     """파라미터에 따라 음악을 생성합니다."""
     from cycle_selector import CycleSubsetSelector
     from generation import (
@@ -229,7 +230,10 @@ def generate_music(data, algorithm, k_cycles, min_gap, dl_model_type='fc'):
         score = 1.0
         supplement = None
 
+    _p = progress_callback
+
     if algorithm == "Algorithm 1":
+        if _p: _p.progress(30, text="Algorithm 1: 확률적 샘플링 중...")
         pool = NodePool(notes_label, notes_counts, num_modules=65)
         manager = CycleSetManager(sel_labeled)
         modules = [4,4,4,3,4,3,4,3,4,3,3,3,3,3,3,3,
@@ -238,6 +242,7 @@ def generate_music(data, algorithm, k_cycles, min_gap, dl_model_type='fc'):
             pool, list(modules), sel_overlap, manager,
             orphan_supplement=supplement, min_onset_gap=min_gap
         )
+        if _p: _p.progress(90, text="MusicXML 변환 중...")
     else:
         # Algorithm 2 (DL)
         from generation import (
@@ -245,6 +250,7 @@ def generate_music(data, algorithm, k_cycles, min_gap, dl_model_type='fc'):
             MusicGeneratorFC, MusicGeneratorLSTM, MusicGeneratorTransformer,
             train_model, generate_from_model
         )
+        if _p: _p.progress(20, text="학습 데이터 준비 중...")
         T, C = sel_overlap.shape[0], sel_overlap.shape[1]
         N = len(notes_label)
 
@@ -252,6 +258,7 @@ def generate_music(data, algorithm, k_cycles, min_gap, dl_model_type='fc'):
             sel_overlap, [data['inst1_real'], data['inst2_real']],
             notes_label, T, N
         )
+        if _p: _p.progress(30, text="Data augmentation (10x) 중...")
         X_aug, y_aug = augment_training_data(
             X, y, sel_overlap, sel_labeled,
             k_values=[10, 20], n_shifts=2, n_noise_copies=1
@@ -269,14 +276,17 @@ def generate_music(data, algorithm, k_cycles, min_gap, dl_model_type='fc'):
             model = MusicGeneratorTransformer(C, N, d_model=64, nhead=4, num_layers=2, dropout=0.3)
 
         mtype = dl_model_type.lower()
+        if _p: _p.progress(40, text=f"{dl_model_type} 모델 학습 중 (50 epochs)...")
         import io as _io, contextlib
         with contextlib.redirect_stdout(_io.StringIO()):
             train_model(model, X_aug[idx[:split]], y_aug[idx[:split]],
                         X_aug[idx[split:]], y_aug[idx[split:]],
                         epochs=50, lr=0.001, batch_size=64, model_type=mtype, seq_len=T)
 
+        if _p: _p.progress(80, text="학습 완료! 음악 생성 중...")
         generated = generate_from_model(model, sel_overlap, notes_label,
                                          model_type=mtype, min_onset_gap=min_gap)
+        if _p: _p.progress(90, text="MusicXML 변환 중...")
 
     return generated, score
 
@@ -330,6 +340,13 @@ algorithm = st.sidebar.selectbox(
 
 if algorithm == "Algorithm 2 (DL)":
     dl_model = st.sidebar.selectbox("DL Model", ["FC", "LSTM", "Transformer"])
+    # 모델별 설명
+    model_descriptions = {
+        "FC": "**FC (Fully Connected)**: 각 시점을 독립적으로 예측. '지금 이 cycle 조합이면 이 note' 매핑을 학습. 가장 빠르고 안정적.",
+        "LSTM": "**LSTM**: 시간 순서대로 읽으면서 기억을 쌓아감. '직전에 높은 음 → 이번엔 낮은 음' 같은 시간 패턴 학습. 학습 느림.",
+        "Transformer": "**Transformer**: 곡 전체를 동시에 보고 판단. Self-attention으로 멀리 떨어진 시점 간 관계도 학습. Overfitting 주의.",
+    }
+    st.sidebar.caption(model_descriptions[dl_model])
 else:
     dl_model = "FC"
 
@@ -354,14 +371,29 @@ view_range = st.sidebar.slider(
     help="표시할 시간 범위 (eighth notes)"
 )
 
+# ── Algorithm 설명 ──
+if algorithm == "Algorithm 1":
+    st.sidebar.caption(
+        "**Algorithm 1**: 중첩행렬의 ON/OFF 패턴을 보고, "
+        "활성 cycle에 속한 note 중 빈도 기반으로 랜덤 샘플링. "
+        "빠르지만 시간적 맥락 없음."
+    )
+
 # ── 생성 버튼 ──
 if st.sidebar.button("🎹 음악 생성", type="primary", use_container_width=True):
-    with st.spinner(f"생성 중... ({algorithm}, K={k_cycles}, gap={min_gap})"):
-        t0 = time.time()
-        generated, score = generate_music(
-            data, algorithm, k_cycles, min_gap, dl_model
-        )
-        dt = time.time() - t0
+    progress = st.progress(0, text="준비 중...")
+
+    t0 = time.time()
+
+    # 단계별 진행도 표시
+    progress.progress(10, text="Cycle 선택 중...")
+    generated, score = generate_music(
+        data, algorithm, k_cycles, min_gap, dl_model,
+        progress_callback=progress
+    )
+    dt = time.time() - t0
+
+    progress.progress(100, text=f"완료! ({dt:.1f}s)")
 
     st.session_state['generated'] = generated
     st.session_state['score'] = score
