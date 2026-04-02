@@ -398,7 +398,7 @@ def _find_death_edge(mat: np.ndarray, death_val: float,
     # 거리 행렬에서 death_val과 일치하는 모든 edge를 수집
     for i in range(n):
         for j in range(i + 1, n):
-            if abs(mat[i, j] - death_val) < 1e-12:
+            if abs(mat[i, j] - death_val) < 1e-8:
                 candidates.append((i, j))
     return candidates
 
@@ -487,7 +487,8 @@ def generate_barcode_ripser(mat: np.ndarray,
                             annotate: bool = True,
                             birthDeathSimplex: bool = False,
                             sortDimension: bool = False,
-                            onlyFiniteInterval: bool = False
+                            onlyFiniteInterval: bool = False,
+                            **kwargs  # exactStep 등 numpy 버전 전용 인자 무시
                             ) -> list:
     """
     ripser(C++) 기반 persistent homology 계산.

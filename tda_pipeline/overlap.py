@@ -246,40 +246,73 @@ def group_rBD_by_homology(homology_profile: list, dim: int = 1) -> dict:
 
 
 def _parse_cycle_1d(edges_str: str) -> Optional[tuple]:
-    """1차 호몰로지 (cycle) 파싱"""
-    edges = re.findall(r'([+-])\s*\(\s*(\d+)\s*,\s*(\d+)\)', edges_str)
+    """1차 호몰로지 (cycle) 파싱.
+
+    numpy 버전: " - (5, 19) + (9, 18) + ..." (부호 + edge)
+    ripser 버전: "(5, 9) + (5, 16) + ..." (부호 없을 수 있음, 중복 가능)
+    둘 다 처리합니다.
+    """
+    edges = re.findall(r'([+-])?\s*\(\s*(\d+)\s*,\s*(\d+)\)', edges_str)
     if not edges:
         return None
-    
+
     edge_list = []
     for sign, v1, v2 in edges:
+        a, b = int(v1), int(v2)
         if sign == '-':
-            edge_list.append((int(v2), int(v1)))
+            edge_list.append((b, a))
         else:
-            edge_list.append((int(v1), int(v2)))
-    
+            edge_list.append((a, b))
+
+    # 중복 edge 제거 (ripser BFS에서 발생 가능)
+    seen = set()
+    unique_edges = []
+    for e in edge_list:
+        normalized = (min(e), max(e))
+        if normalized not in seen:
+            seen.add(normalized)
+            unique_edges.append(e)
+    edge_list = unique_edges
+
+    if not edge_list:
+        return None
+
+    # edge가 1개뿐이면 cycle이 아님 → vertex set으로 fallback
+    if len(edge_list) == 1:
+        return tuple(sorted(set(edge_list[0])))
+
     # 연결 순서대로 vertex 나열
     cycle_repr = []
     start_tuple = min(edge_list)
     cycle_repr.append(start_tuple[0])
     cycle_repr.append(start_tuple[1])
     remaining = [e for e in edge_list if e != start_tuple]
-    
+
     while remaining:
         last = cycle_repr[-1]
         found = False
         for e in remaining:
+            # 양방향 연결 허용 (ripser BFS는 방향이 다를 수 있음)
             if e[0] == last and e[1] not in cycle_repr:
                 cycle_repr.append(e[1])
                 remaining.remove(e)
                 found = True
                 break
+            elif e[1] == last and e[0] not in cycle_repr:
+                cycle_repr.append(e[0])
+                remaining.remove(e)
+                found = True
+                break
         if not found:
-            break
-    
+            # 연결이 안 되면 vertex set으로 fallback
+            all_verts = set()
+            for e in edge_list:
+                all_verts.update(e)
+            return tuple(sorted(all_verts))
+
     if cycle_repr and cycle_repr[0] == cycle_repr[-1]:
         cycle_repr.pop()
-    
+
     return tuple(cycle_repr)
 
 

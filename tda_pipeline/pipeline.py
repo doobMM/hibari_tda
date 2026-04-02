@@ -177,8 +177,12 @@ class TDAMusicPipeline:
         notes_dict = self._cache['notes_dict']
         notes_label = self._cache['notes_label']
 
-        # Barcode 생성: topology.py의 numpy 최적화 버전 (기존 대비 ~2.5x)
-        from topology import generate_barcode_numpy as generateBarcode
+        # Barcode 생성 함수 선택: ripser(45x) > numpy(2.5x)
+        from topology import _check_ripser
+        if _check_ripser():
+            from topology import generate_barcode_ripser as generateBarcode
+        else:
+            from topology import generate_barcode_numpy as generateBarcode
 
         # Musical metric 사전 계산 (frequency가 아닌 경우)
         musical_dist = None
