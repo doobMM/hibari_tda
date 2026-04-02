@@ -281,14 +281,21 @@ def generate_music(data, algorithm, k_cycles, min_gap, dl_model_type='fc',
 
     _p = progress_callback
     mi = metric_info or {'metric': 'frequency'}
+    metric_key = mi['metric']
+    if metric_key == 'hybrid':
+        metric_key = 'tonnetz'  # hybrid는 현재 tonnetz 캐시 사용
 
-    # metric이 frequency가 아니면 PH를 재탐색하여 새 overlap 생성
-    if mi['metric'] != 'frequency':
-        if _p: _p.progress(5, text=f"거리 함수({mi['metric']}) 적용 → PH 재탐색...")
-        overlap_df, cycle_labeled = _rebuild_overlap_with_metric(data, mi)
+    # 캐시에서 로드 (즉시), 없으면 PH 재탐색 (느림)
+    cache_path = os.path.join(os.path.dirname(__file__), "cache", f"metric_{metric_key}.pkl")
+    if os.path.exists(cache_path):
+        import pickle
+        with open(cache_path, 'rb') as f:
+            cached = pickle.load(f)
+        overlap_df = cached['overlap']
+        cycle_labeled = cached['cycle_labeled']
     else:
-        overlap_df = data['overlap']
-        cycle_labeled = data['cycle_labeled']
+        if _p: _p.progress(5, text=f"캐시 없음 → PH 재탐색 중 (~10초)...")
+        overlap_df, cycle_labeled = _rebuild_overlap_with_metric(data, mi)
     notes_label = data['notes_label']
     notes_counts = data['notes_counts']
     notes_dict = data['notes_dict']
@@ -431,10 +438,11 @@ if algorithm == "Algorithm 2 (DL)":
 else:
     dl_model = "FC"
 
+max_cycles = metric_cycle_counts.get(selected_metric, total_cycles)
 k_cycles = st.sidebar.slider(
     "사용할 구조 패턴 수",
-    min_value=5, max_value=total_cycles, value=17, step=1,
-    help=f"원곡에서 발견된 반복 패턴(뼈대) {total_cycles}개 중 몇 개를 사용할지. 17개면 원곡 구조의 90%를 보존합니다."
+    min_value=3, max_value=max_cycles, value=min(17, max_cycles), step=1,
+    help=f"선택한 거리 방식으로 발견된 {max_cycles}개 패턴 중 몇 개를 사용할지."
 )
 
 min_gap = st.sidebar.slider(
@@ -450,69 +458,32 @@ st.sidebar.header("🎼 거리 함수")
 
 metric_choice = st.sidebar.selectbox(
     "음의 거리 측정 방식",
-    ["빈도 (기존)", "Tonnetz (화성)", "Voice-leading (선율)", "DFT (주파수)", "혼합 (직접 설정)"],
-    help="음들 사이의 '거리'를 어떻게 측정할지. 거리 정의에 따라 발견되는 구조가 달라집니다."
+    ["빈도 (기존)", "Tonnetz (어울림)", "Voice-leading (높낮이)", "DFT (파동)"],
+    help="음들 사이의 '가까움'을 어떻게 정의할지. 정의에 따라 발견되는 반복 구조가 달라집니다."
 )
 
 metric_descriptions = {
-    "빈도 (기존)": "곡에서 연달아 자주 나온 음일수록 가깝게. 순수 통계적.",
-    "Tonnetz (화성)": "장3도·완전5도 관계의 음이 가까운 격자 위 거리. 화성 구조 반영.",
-    "Voice-leading (선율)": "반음 차이가 적은 음일수록 가까움. 선율적 흐름 반영.",
-    "DFT (주파수)": "Fourier 변환 후 주파수 공간에서의 거리. 음향적 유사도.",
-    "혼합 (직접 설정)": "여러 거리를 원하는 비율로 섞어서 사용.",
+    "빈도 (기존)": "곡에서 연달아 자주 등장한 음끼리 가깝다고 봅니다. 곡의 통계에만 의존.",
+    "Tonnetz (어울림)": "'도와 솔', '도와 미'처럼 함께 울리면 잘 어울리는 음끼리 가깝다고 봅니다. 피아노 건반 위의 화음 관계를 반영.",
+    "Voice-leading (높낮이)": "피아노 건반에서 가까이 있는 음(예: 도→레)끼리 가깝다고 봅니다. 손가락을 적게 움직이는 자연스러운 진행.",
+    "DFT (파동)": "소리의 파동(주파수) 패턴이 비슷한 음끼리 가깝다고 봅니다.",
 }
 st.sidebar.caption(metric_descriptions[metric_choice])
 
-# metric 설정값 변환
 metric_map = {
     "빈도 (기존)": "frequency",
-    "Tonnetz (화성)": "tonnetz",
-    "Voice-leading (선율)": "voice_leading",
-    "DFT (주파수)": "dft",
-    "혼합 (직접 설정)": "hybrid",
+    "Tonnetz (어울림)": "tonnetz",
+    "Voice-leading (높낮이)": "voice_leading",
+    "DFT (파동)": "dft",
 }
 selected_metric = metric_map[metric_choice]
 
-hybrid_metrics = []
-hybrid_weights = None
-metric_alpha = 0.5
-
-if selected_metric == "hybrid":
-    st.sidebar.markdown("**혼합할 거리 선택:**")
-    use_tonnetz = st.sidebar.checkbox("Tonnetz (화성)", value=True)
-    use_vl = st.sidebar.checkbox("Voice-leading (선율)", value=False)
-    use_dft = st.sidebar.checkbox("DFT (주파수)", value=False)
-
-    hybrid_metrics = []
-    if use_tonnetz: hybrid_metrics.append('tonnetz')
-    if use_vl: hybrid_metrics.append('voice_leading')
-    if use_dft: hybrid_metrics.append('dft')
-
-    if not hybrid_metrics:
-        hybrid_metrics = ['tonnetz']
-        st.sidebar.warning("최소 1개 선택 필요. Tonnetz로 설정됨.")
-
-    metric_alpha = st.sidebar.slider(
-        "빈도 거리 비중",
-        min_value=0.0, max_value=1.0, value=0.4, step=0.1,
-        help="빈도 거리가 차지하는 비율. 나머지가 선택한 음악적 거리에 균등 배분됩니다."
-    )
-    # 나머지를 균등 배분
-    rest = 1.0 - metric_alpha
-    per_metric = rest / len(hybrid_metrics) if hybrid_metrics else 0
-    hybrid_weights = [metric_alpha] + [per_metric] * len(hybrid_metrics)
-
-    weight_str = f"빈도 {metric_alpha:.0%}"
-    for m, w in zip(hybrid_metrics, hybrid_weights[1:]):
-        weight_str += f" + {m} {w:.0%}"
-    st.sidebar.caption(f"배합: {weight_str}")
-
-elif selected_metric != "frequency":
-    metric_alpha = st.sidebar.slider(
-        "빈도 거리 비중 (alpha)",
-        min_value=0.0, max_value=1.0, value=0.5, step=0.1,
-        help="빈도 거리와 음악적 거리를 섞는 비율. 0.5 = 반반."
-    )
+# 각 metric의 사전 계산된 cycle 수 표시
+metric_cycle_counts = {
+    'frequency': 43, 'tonnetz': 46, 'voice_leading': 22, 'dft': 20
+}
+n_cyc = metric_cycle_counts.get(selected_metric, '?')
+st.sidebar.caption(f"이 방식으로 발견된 구조 패턴: **{n_cyc}개**")
 
 st.sidebar.markdown("---")
 view_range = st.sidebar.slider(
@@ -535,13 +506,7 @@ if st.sidebar.button("🎹 음악 생성", type="primary", use_container_width=T
 
     t0 = time.time()
 
-    # metric 정보 전달
-    metric_info = {
-        'metric': selected_metric,
-        'alpha': metric_alpha,
-        'hybrid_metrics': hybrid_metrics,
-        'hybrid_weights': hybrid_weights,
-    }
+    metric_info = {'metric': selected_metric}
 
     progress.progress(10, text="Cycle 선택 중...")
     generated, score = generate_music(
