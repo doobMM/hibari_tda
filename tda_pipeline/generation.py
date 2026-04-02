@@ -633,7 +633,8 @@ if HAS_TORCH:
                     epochs: int = 100, lr: float = 0.001,
                     batch_size: int = 32,
                     model_type: str = 'fc',
-                    seq_len: int = 1088) -> List[dict]:
+                    seq_len: int = 1088,
+                    epoch_callback=None) -> List[dict]:
         """
         모델을 학습합니다.
 
@@ -734,6 +735,10 @@ if HAS_TORCH:
 
             if epoch % 20 == 0 or epoch == epochs - 1:
                 print(f"  [Epoch {epoch:3d}] train={avg_loss:.5f}  val={val_loss:.5f}")
+
+            # 대시보드 등에서 epoch별 진행도 표시용 콜백
+            if epoch_callback is not None:
+                epoch_callback(epoch, epochs, avg_loss, val_loss)
 
         return history
 

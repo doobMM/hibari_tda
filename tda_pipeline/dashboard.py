@@ -364,12 +364,23 @@ def generate_music(data, algorithm, k_cycles, min_gap, dl_model_type='fc',
             model = MusicGeneratorTransformer(C, N, d_model=64, nhead=4, num_layers=2, dropout=0.3)
 
         mtype = dl_model_type.lower()
-        if _p: _p.progress(40, text=f"{dl_model_type} 모델 학습 중 (50 epochs)...")
+        total_epochs = 50
+
+        # epoch별 progress 콜백
+        def on_epoch(epoch, total, train_loss, val_loss):
+            if _p:
+                pct = 40 + int(40 * (epoch + 1) / total)  # 40%~80% 구간
+                _p.progress(pct,
+                    text=f"{dl_model_type} 학습: epoch {epoch+1}/{total}"
+                         f" (loss: {val_loss:.4f})")
+
         import io as _io, contextlib
         with contextlib.redirect_stdout(_io.StringIO()):
             train_model(model, X_aug[idx[:split]], y_aug[idx[:split]],
                         X_aug[idx[split:]], y_aug[idx[split:]],
-                        epochs=50, lr=0.001, batch_size=64, model_type=mtype, seq_len=T)
+                        epochs=total_epochs, lr=0.001, batch_size=64,
+                        model_type=mtype, seq_len=T,
+                        epoch_callback=on_epoch)
 
         if _p: _p.progress(80, text="학습 완료! 음악 생성 중...")
         generated = generate_from_model(model, sel_overlap, notes_label,
