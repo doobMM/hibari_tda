@@ -10,13 +10,21 @@ from typing import List, Optional
 
 @dataclass
 class MIDIConfig:
-    """MIDI 전처리 관련 설정"""
+    """MIDI 전처리 관련 설정
+
+    [일반화] auto_detect=True이면 MIDI 파일에서 파라미터를 자동 감지.
+    아래 값들은 hibari 기준 fallback으로만 사용됩니다.
+    """
     file_name: str = "Ryuichi_Sakamoto_-_hibari.mid"
-    inst1_end_idx: int = 2006  # inst 1 끝 인덱스
-    solo_bars: int = 59        # 솔로 구간 (8분음표 단위, 4마디 × 8 + 마지막 비트 보정 등)
-    eighth_per_bar: int = 8    # 한 마디당 8분음표 수
-    num_chords: int = 17       # 고유 화음 수
-    num_notes: int = 23        # 고유 note (pitch, duration) 수
+    auto_detect: bool = True     # True면 아래 값 대신 MIDI에서 자동 감지
+
+    # ── Fallback 값 (auto_detect=False일 때만 사용) ──
+    inst1_end_idx: int = 2006    # inst 1 끝 인덱스
+    solo_notes: int = 59         # 솔로 구간 note 수 (구: solo_bars)
+    solo_timepoints: int = 32    # 솔로 구간 시간 길이
+    num_chords: int = 17         # 고유 화음 수
+    num_notes: int = 23          # 고유 note (pitch, duration) 수
+    quantize_unit: Optional[float] = None  # None = 8분음표 자동
 
 
 @dataclass

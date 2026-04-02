@@ -73,18 +73,34 @@ class TDAMusicPipeline:
         print(f"[Stage 1] 전처리 시작: {fpath}")
         
         # MIDI 로드 및 양자화
-        adjusted_notes, tempo, boundaries = load_and_quantize(fpath)
+        adjusted_notes, tempo, boundaries = load_and_quantize(
+            fpath, quantize_unit=self.config.midi.quantize_unit
+        )
         self._cache['tempo'] = tempo
-        
+
+        # 자동 감지 모드: MIDI에서 파라미터 추출
+        if self.config.midi.auto_detect:
+            from preprocessing import analyze_midi
+            detected = analyze_midi(fpath, self.config.midi.quantize_unit)
+            # 자동 감지 가능한 값 업데이트
+            self.config.midi.inst1_end_idx = detected['inst1_end_idx']
+            self.config.midi.num_notes = detected['num_notes']
+            self.config.midi.num_chords = detected['num_chords']
+            self.config.overlap.total_length = detected['total_timepoints']
+            # solo는 자동 감지가 어려우므로 감지값이 0이면 config fallback 유지
+            if detected['solo_notes'] > 0:
+                self.config.midi.solo_notes = detected['solo_notes']
+                self.config.midi.solo_timepoints = detected['solo_timepoints']
+
         # 두 악기 분리
         inst1_notes, inst2_notes = split_instruments(
             adjusted_notes, boundaries[0]
         )
-        
+
         # 솔로 구간 제거
-        solo = self.config.midi.solo_bars
-        inst1_real = inst1_notes[:-solo]
-        inst2_real = inst2_notes[solo:]
+        solo = self.config.midi.solo_notes
+        inst1_real = inst1_notes[:-solo] if solo > 0 else inst1_notes
+        inst2_real = inst2_notes[solo:] if solo > 0 else inst2_notes
         self._cache['inst1_real'] = inst1_real
         self._cache['inst2_real'] = inst2_real
         
@@ -111,9 +127,11 @@ class TDAMusicPipeline:
         self._cache['notes_dict'] = notes_dict
         
         # lag별 시퀀스 준비
+        # solo_timepoints는 solo_notes와 다름 (시간 길이 vs note 수)
+        solo_tp = self.config.midi.solo_timepoints
         adn_i = prepare_lag_sequences(
             chord_seq1, chord_seq2,
-            solo_timepoints=solo,
+            solo_timepoints=solo_tp,
             max_lag=self.config.homology.max_lag
         )
         self._cache['adn_i'] = adn_i
