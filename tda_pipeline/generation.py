@@ -192,7 +192,8 @@ def algorithm1_optimized(node_pool: NodePool,
                          cycle_manager: CycleSetManager,
                          max_resample: int = 50,
                          verbose: bool = False,
-                         orphan_supplement: Optional[Dict[int, List[int]]] = None
+                         orphan_supplement: Optional[Dict[int, List[int]]] = None,
+                         min_onset_gap: int = 0
                          ) -> List[Tuple[int, int, int]]:
     """
     Algorithm 1의 최적화 버전.
@@ -216,12 +217,19 @@ def algorithm1_optimized(node_pool: NodePool,
     """
     length = len(inst_len)
     inst_len = list(inst_len)  # 방어적 복사
-    
+
     generated = []
     onset_checker: Dict[int, Set[Tuple[int, int]]] = {i: set() for i in range(length)}
     resample_count = 0
-    
+    last_onset_time = -min_onset_gap  # onset gap 추적 (첫 시점은 항상 허용)
+
     for j in range(length):
+        # ── onset 간격 제약 ──
+        # min_onset_gap > 0이면 이전 onset으로부터 최소 gap만큼 간격을 둠
+        # 예: min_onset_gap=3이면 "3 eighth notes = 1.5박" 동안 새 타건 없음
+        if min_onset_gap > 0 and (j - last_onset_time) < min_onset_gap:
+            continue  # 이 시점 건너뜀 (이전 note가 아직 sustain 중)
+
         # 이 시점에서 추출할 음의 수 (동적으로 줄어들 수 있음)
         num_to_sample = max(0, inst_len[j])
 
@@ -263,7 +271,8 @@ def algorithm1_optimized(node_pool: NodePool,
             n1, n2 = note_info
             generated.append(n1)
             onset_checker[j].add(n2)
-            
+            last_onset_time = j  # onset gap 추적 갱신
+
             # 활성화 구간에서 inst_len 감소
             for t in range(j + 1, min(n1[2], length)):
                 inst_len[t] = max(0, inst_len[t] - 1)
@@ -735,7 +744,8 @@ if HAS_TORCH:
                             notes_label: dict,
                             model_type: str = 'fc',
                             threshold: float = 0.5,
-                            adaptive_threshold: bool = True) -> List[Tuple[int, int, int]]:
+                            adaptive_threshold: bool = True,
+                            min_onset_gap: int = 0) -> List[Tuple[int, int, int]]:
         """
         학습된 모델로 음악을 생성합니다.
 
@@ -779,12 +789,23 @@ if HAS_TORCH:
             threshold = max(topk_val, 0.1)  # 최소 0.1
 
         generated = []
+        last_onset = -min_onset_gap  # onset gap 추적
+
         for t in range(T_out):
+            # onset gap 제약: 이전 onset으로부터 min_onset_gap 미만이면 건너뜀
+            if min_onset_gap > 0 and (t - last_onset) < min_onset_gap:
+                continue
+
+            onset_at_t = False
             for n in range(N_out):
                 if probs[t, n] >= threshold:
                     if n in label_to_note:
                         pitch, duration = label_to_note[n]
                         generated.append((t, pitch, t + duration))
+                        onset_at_t = True
+
+            if onset_at_t:
+                last_onset = t
 
         return generated
 
