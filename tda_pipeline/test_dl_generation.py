@@ -105,13 +105,13 @@ def build_data():
 if __name__ == "__main__":
     import torch
     from generation import (
-        prepare_training_data, build_onehot_matrix,
+        prepare_training_data, build_onehot_matrix, augment_training_data,
         MusicGeneratorFC, MusicGeneratorLSTM, MusicGeneratorTransformer,
         train_model, generate_from_model, notes_to_xml
     )
 
     print("=" * 60)
-    print("  Deep Learning 음악 생성 모델 검증")
+    print("  Deep Learning 음악 생성 모델 검증 (Augmented)")
     print("=" * 60)
 
     # ── 데이터 준비 ──
@@ -121,37 +121,51 @@ if __name__ == "__main__":
     overlap = data['overlap']       # (T=1088, C=48)
     music_notes = [data['inst1_real'], data['inst2_real']]
     notes_label = data['notes_label']
+    cycle_labeled = data['cycle_labeled']
     T, C = overlap.shape
     N = data['num_notes']
 
     print(f"  Overlap: ({T}, {C})")
     print(f"  Notes: {N}종")
 
-    # ── 데이터 정합성 검증 ──
+    # ── 원본 데이터 ──
+    X_orig, y_orig = prepare_training_data(overlap, music_notes, notes_label, T, N)
+    print(f"  원본: X={X_orig.shape}, y={y_orig.shape}")
+
+    # ── Data Augmentation ──
     print(f"\n{'='*60}")
-    print("  데이터 정합성 검증")
+    print("  Data Augmentation")
     print("=" * 60)
 
-    X, y = prepare_training_data(overlap, music_notes, notes_label, T, N)
+    X_aug, y_aug = augment_training_data(
+        X_orig, y_orig,
+        overlap_full=overlap,
+        cycle_labeled=cycle_labeled,
+        k_values=[10, 15, 20, 30],   # 4가지 subset
+        n_shifts=3,                    # 3가지 circular shift
+        noise_prob=0.03,               # 3% bit flip
+        n_noise_copies=2               # 2가지 noise 복사
+    )
 
-    print(f"  X shape: {X.shape}  (expected: ({T}, {C}))")
-    print(f"  y shape: {y.shape}  (expected: ({T}, {N}))")
-
-    assert X.shape == (T, C), f"X shape 불일치: {X.shape} != ({T}, {C})"
-    assert y.shape == (T, N), f"y shape 불일치: {y.shape} != ({T}, {N})"
-    print(f"  ✓ X와 y가 동일한 시간축 T={T} 공유")
-
-    # 활성 비율 확인
-    x_on = (X > 0).sum() / X.size
-    y_on = (y > 0).sum() / y.size
-    print(f"  X ON ratio: {x_on:.4f}")
-    print(f"  y ON ratio: {y_on:.4f}")
+    aug_ratio = len(X_aug) / len(X_orig)
+    print(f"  원본: {len(X_orig)} steps")
+    print(f"  증강 후: {len(X_aug)} steps ({aug_ratio:.1f}x)")
+    print(f"    - 원본: 1088")
+    print(f"    - Subset (K=10,15,20,30): +{1088 * 4}")
+    print(f"    - Circular shift (3회): +{1088 * 3}")
+    print(f"    - Noise injection (2회): +{1088 * 2}")
 
     # ── Train/Valid 분할 ──
-    split = int(T * 0.7)
-    X_train, X_valid = X[:split], X[split:]
-    y_train, y_valid = y[:split], y[split:]
-    print(f"  Train: {split} steps, Valid: {T - split} steps")
+    # 증강 데이터를 섞은 후 70/30 분할
+    n_total = len(X_aug)
+    indices = np.random.permutation(n_total)
+    split = int(n_total * 0.7)
+
+    X_train = X_aug[indices[:split]]
+    y_train = y_aug[indices[:split]]
+    X_valid = X_aug[indices[split:]]
+    y_valid = y_aug[indices[split:]]
+    print(f"  Train: {len(X_train)}, Valid: {len(X_valid)}")
 
     # ── 3개 모델 학습 + 생성 ──
     models_config = [

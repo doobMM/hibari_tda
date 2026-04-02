@@ -357,6 +357,91 @@ if HAS_TORCH:
 
         return X, y
 
+    # ── Data Augmentation ─────────────────────────────────────────────────
+
+    def augment_training_data(X: np.ndarray, y: np.ndarray,
+                              overlap_full: np.ndarray,
+                              cycle_labeled: dict,
+                              k_values: List[int] = [10, 15, 20, 30],
+                              n_shifts: int = 3,
+                              noise_prob: float = 0.03,
+                              n_noise_copies: int = 2) -> Tuple[np.ndarray, np.ndarray]:
+        """
+        3가지 전략으로 학습 데이터를 증강합니다.
+
+        1) Subset Augmentation:
+           cycle_selector로 다양한 K값의 overlap을 생성.
+           동일한 y(원곡)에 대해 다른 X(위상 구조)를 학습 →
+           "불완전한 위상 정보에서도 원곡을 복원"하는 강건한 모델.
+
+        2) Circular Shift:
+           시작점을 랜덤 이동하여 시퀀스를 회전.
+           [A B C D] → [C D A B]. 같은 패턴이지만 모델이
+           다른 시퀀스로 인식 → 위치 편향 방지.
+
+        3) Noise Injection:
+           overlap에 소량의 bit flip을 추가.
+           입력에 노이즈가 있어도 올바른 note를 예측하도록 학습 →
+           overfitting 방지 + 정규화 효과.
+
+        Args:
+            X: (T, C) 원본 overlap (전체 cycle)
+            y: (T, N) 원본 note multi-hot
+            overlap_full: (T, C_full) cycle selection 이전의 전체 overlap
+            cycle_labeled: 전체 cycle labeled dict
+            k_values: subset augmentation에 사용할 K 리스트
+            n_shifts: circular shift 횟수
+            noise_prob: noise injection에서 bit flip 확률
+            n_noise_copies: noise 복사본 수
+
+        Returns:
+            (X_aug, y_aug): 증강된 학습 데이터
+        """
+        from cycle_selector import CycleSubsetSelector
+
+        T, C = X.shape
+        N = y.shape[1]
+
+        all_X = [X]     # 원본 포함
+        all_y = [y]
+
+        # ── 1) Subset Augmentation ──
+        # 다양한 K값의 overlap matrix를 생성하여 같은 y에 매핑
+        selector = CycleSubsetSelector(overlap_full, cycle_labeled)
+        for k in k_values:
+            if k >= overlap_full.shape[1]:
+                continue
+            result = selector.select_fixed_size(k, verbose=False)
+            X_sub = overlap_full[:, result.selected_indices].astype(np.float32)
+            # C가 다르므로 전체 C 크기로 zero-padding
+            X_padded = np.zeros((T, C), dtype=np.float32)
+            X_padded[:, :X_sub.shape[1]] = X_sub
+            all_X.append(X_padded)
+            all_y.append(y.copy())
+
+        # ── 2) Circular Shift ──
+        # 시작점을 랜덤으로 이동하여 시퀀스 회전
+        for _ in range(n_shifts):
+            shift = np.random.randint(1, T)
+            X_shifted = np.roll(X, shift, axis=0)
+            y_shifted = np.roll(y, shift, axis=0)
+            all_X.append(X_shifted)
+            all_y.append(y_shifted)
+
+        # ── 3) Noise Injection ──
+        # overlap에 소량의 bit flip 추가
+        for _ in range(n_noise_copies):
+            noise_mask = np.random.random(X.shape) < noise_prob
+            X_noisy = X.copy()
+            X_noisy[noise_mask] = 1.0 - X_noisy[noise_mask]  # 0→1 또는 1→0
+            all_X.append(X_noisy.astype(np.float32))
+            all_y.append(y.copy())
+
+        X_aug = np.concatenate(all_X, axis=0)
+        y_aug = np.concatenate(all_y, axis=0)
+
+        return X_aug, y_aug
+
     # ── 모델 1: FC (기존 구조 수정판) ─────────────────────────────────────
 
     class MusicGeneratorFC(nn.Module):
@@ -458,83 +543,108 @@ if HAS_TORCH:
                     X_valid: np.ndarray, y_valid: np.ndarray,
                     epochs: int = 100, lr: float = 0.001,
                     batch_size: int = 32,
-                    model_type: str = 'fc') -> List[dict]:
+                    model_type: str = 'fc',
+                    seq_len: int = 1088) -> List[dict]:
         """
         모델을 학습합니다.
 
-        [수정] BCEWithLogitsLoss 사용 (multi-label 문제):
+        BCEWithLogitsLoss 사용 (multi-label 문제):
         각 시점에서 여러 note가 동시에 활성화될 수 있으므로
         CrossEntropy(단일 클래스) 대신 BCE(다중 레이블) 사용.
 
         Args:
             model_type: 'fc' | 'lstm' | 'transformer'
-                fc: 시점별 독립 (X shape: T×C, y shape: T×N)
-                lstm/transformer: 시퀀스 단위 (X: 1×T×C, y: 1×T×N)
+                fc: 시점별 독립 미니배치 학습
+                lstm/transformer: seq_len 단위로 시퀀스를 잘라서 배치 학습
+            seq_len: 시퀀스 모델에서 한 시퀀스의 길이 (기본 1088)
         """
         criterion = nn.BCEWithLogitsLoss()
         optimizer = torch.optim.Adam(model.parameters(), lr=lr)
 
         is_seq = model_type in ('lstm', 'transformer')
 
-        if is_seq:
-            # 시퀀스 모델: 전체를 하나의 시퀀스로 (1, T, C)
-            X_tr = torch.from_numpy(X_train).unsqueeze(0)  # (1, T, C)
-            y_tr = torch.from_numpy(y_train).unsqueeze(0)  # (1, T, N)
-            X_va = torch.from_numpy(X_valid).unsqueeze(0)
-            y_va = torch.from_numpy(y_valid).unsqueeze(0)
-        else:
-            X_tr = torch.from_numpy(X_train)  # (T, C)
-            y_tr = torch.from_numpy(y_train)  # (T, N)
-            X_va = torch.from_numpy(X_valid)
-            y_va = torch.from_numpy(y_valid)
+        # 데이터를 텐서로 변환
+        X_tr_all = torch.from_numpy(X_train)
+        y_tr_all = torch.from_numpy(y_train)
+        X_va_all = torch.from_numpy(X_valid)
+        y_va_all = torch.from_numpy(y_valid)
 
         history = []
 
         for epoch in range(epochs):
-            # ── Training ──
             model.train()
 
             if is_seq:
-                # 시퀀스 모델: 전체를 한 번에
-                y_pred = model(X_tr)
-                loss = criterion(y_pred, y_tr)
+                # 시퀀스 모델: seq_len 단위로 잘라서 배치 구성
+                # augmented 데이터는 [seq1 | seq2 | ...] 형태로 concat되어 있음
+                # → seq_len 단위로 잘라서 (n_seqs, seq_len, C) 배치 구성
+                n_total = len(X_tr_all)
+                n_seqs = n_total // seq_len
+                if n_seqs == 0:
+                    n_seqs = 1
+                    actual_len = n_total
+                else:
+                    actual_len = seq_len
+
+                X_seqs = X_tr_all[:n_seqs * actual_len].view(n_seqs, actual_len, -1)
+                y_seqs = y_tr_all[:n_seqs * actual_len].view(n_seqs, actual_len, -1)
+
+                # 배치 단위 학습
+                seq_indices = torch.randperm(n_seqs)
+                total_loss = 0.0
+                n_batches = 0
+                for s in range(0, n_seqs, max(1, batch_size // actual_len)):
+                    e = min(s + max(1, batch_size // actual_len), n_seqs)
+                    idx = seq_indices[s:e]
+                    pred = model(X_seqs[idx])       # (batch, seq_len, N)
+                    loss_b = criterion(pred, y_seqs[idx])
+                    optimizer.zero_grad()
+                    loss_b.backward()
+                    optimizer.step()
+                    total_loss += loss_b.item()
+                    n_batches += 1
+                avg_loss = total_loss / max(n_batches, 1)
             else:
-                # FC 모델: 미니배치
-                n = len(X_tr)
+                # FC 모델: 시점별 미니배치
+                n = len(X_tr_all)
                 indices = torch.randperm(n)
                 total_loss = 0.0
                 n_batches = 0
                 for s in range(0, n, batch_size):
                     e = min(s + batch_size, n)
                     idx = indices[s:e]
-                    pred = model(X_tr[idx])
-                    loss_b = criterion(pred, y_tr[idx])
+                    pred = model(X_tr_all[idx])
+                    loss_b = criterion(pred, y_tr_all[idx])
                     optimizer.zero_grad()
                     loss_b.backward()
                     optimizer.step()
                     total_loss += loss_b.item()
                     n_batches += 1
-                loss = torch.tensor(total_loss / n_batches)
-
-            if is_seq:
-                optimizer.zero_grad()
-                loss.backward()
-                optimizer.step()
+                avg_loss = total_loss / max(n_batches, 1)
 
             # ── Validation ──
             model.eval()
             with torch.no_grad():
-                y_pred_val = model(X_va)
-                val_loss = criterion(y_pred_val, y_va).item()
+                if is_seq:
+                    n_va = len(X_va_all)
+                    n_va_seqs = max(1, n_va // seq_len)
+                    va_len = min(seq_len, n_va)
+                    X_va_seq = X_va_all[:n_va_seqs * va_len].view(n_va_seqs, va_len, -1)
+                    y_va_seq = y_va_all[:n_va_seqs * va_len].view(n_va_seqs, va_len, -1)
+                    val_pred = model(X_va_seq)
+                    val_loss = criterion(val_pred, y_va_seq).item()
+                else:
+                    val_pred = model(X_va_all)
+                    val_loss = criterion(val_pred, y_va_all).item()
 
             history.append({
                 'epoch': epoch,
-                'train_loss': loss.item(),
+                'train_loss': avg_loss,
                 'val_loss': val_loss
             })
 
             if epoch % 20 == 0 or epoch == epochs - 1:
-                print(f"  [Epoch {epoch:3d}] train={loss.item():.5f}  val={val_loss:.5f}")
+                print(f"  [Epoch {epoch:3d}] train={avg_loss:.5f}  val={val_loss:.5f}")
 
         return history
 
@@ -544,19 +654,21 @@ if HAS_TORCH:
                             overlap_matrix: np.ndarray,
                             notes_label: dict,
                             model_type: str = 'fc',
-                            threshold: float = 0.5) -> List[Tuple[int, int, int]]:
+                            threshold: float = 0.5,
+                            adaptive_threshold: bool = True) -> List[Tuple[int, int, int]]:
         """
         학습된 모델로 음악을 생성합니다.
 
         모델이 각 시점에서 sigmoid > threshold인 note를 활성화로 판정.
         활성화된 note label → (pitch, duration) → (onset, pitch, onset+duration) 변환.
 
+        adaptive_threshold=True이면 모델 출력의 분포를 보고
+        threshold를 자동 조정합니다. LSTM처럼 sigmoid 값이
+        전체적으로 낮은 모델에서 0개 생성을 방지.
+
         Args:
-            model: 학습된 모델
-            overlap_matrix: (T, C) 입력 중첩행렬
-            notes_label: (pitch, dur) → label dict
-            model_type: 'fc' | 'lstm' | 'transformer'
-            threshold: sigmoid 임계값
+            threshold: sigmoid 임계값 (adaptive=False일 때 사용)
+            adaptive_threshold: True면 y의 ON ratio에 맞춰 threshold 자동 결정
 
         Returns:
             [(start, pitch, end), ...] 음표 리스트
@@ -575,11 +687,20 @@ if HAS_TORCH:
                 logits = logits.squeeze(0)  # (T, N)
             probs = torch.sigmoid(logits)   # (T, N)
 
-        generated = []
-        T, N = probs.shape
+        T_out, N_out = probs.shape
 
-        for t in range(T):
-            for n in range(N):
+        # Adaptive threshold: 원곡의 ON ratio(~15%)에 맞춰 threshold 자동 결정
+        # 상위 15%의 확률값을 기준점으로 사용
+        if adaptive_threshold:
+            target_on_ratio = 0.15  # 원곡의 대략적 ON ratio
+            k = max(1, int(T_out * N_out * target_on_ratio))
+            flat = probs.flatten()
+            topk_val = torch.topk(flat, k).values[-1].item()
+            threshold = max(topk_val, 0.1)  # 최소 0.1
+
+        generated = []
+        for t in range(T_out):
+            for n in range(N_out):
                 if probs[t, n] >= threshold:
                     if n in label_to_note:
                         pitch, duration = label_to_note[n]
