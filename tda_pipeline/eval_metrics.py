@@ -116,6 +116,61 @@ def duration_diversity(generated: List[Tuple[int, int, int]],
     }
 
 
+def transition_matrix_similarity(generated: List[Tuple[int, int, int]],
+                                  original: List[Tuple[int, int, int]],
+                                  ) -> Dict[str, float]:
+    """
+    선율 진행(다음 음이 뭐가 올까)의 유사도를 측정합니다.
+
+    각 곡에서 "note A 다음에 B가 올 확률" transition matrix를 구축하고
+    두 행렬 간 JS divergence를 계산합니다.
+
+    이것이 JS divergence(pitch 빈도)와 다른 점:
+    - pitch JS: "어떤 음이 얼마나 자주 나왔나" (시간 순서 무시)
+    - transition JS: "어떤 음 다음에 어떤 음이 왔나" (시간 순서 반영)
+
+    Returns:
+        {'transition_js': float, 'common_transitions': int}
+    """
+    def build_transition(notes):
+        # 시점 순 정렬 후 연속 pitch 쌍 수집
+        sorted_notes = sorted(notes, key=lambda x: x[0])
+        pitches = [p for _, p, _ in sorted_notes]
+        trans = Counter()
+        for i in range(len(pitches) - 1):
+            trans[(pitches[i], pitches[i+1])] += 1
+        return trans
+
+    orig_flat = original if isinstance(original[0], tuple) else []
+    if not orig_flat:
+        for inst in original:
+            orig_flat.extend(inst)
+
+    t_orig = build_transition(orig_flat)
+    t_gen = build_transition(generated)
+
+    # 모든 transition 합집합
+    all_trans = set(t_orig.keys()) | set(t_gen.keys())
+    if not all_trans:
+        return {'transition_js': 0.0, 'common_transitions': 0}
+
+    orig_total = sum(t_orig.values())
+    gen_total = sum(t_gen.values())
+    eps = 1e-10
+
+    p = np.array([t_orig.get(k, 0) / orig_total + eps for k in sorted(all_trans)])
+    q = np.array([t_gen.get(k, 0) / gen_total + eps for k in sorted(all_trans)])
+    p /= p.sum()
+    q /= q.sum()
+
+    m = 0.5 * (p + q)
+    js = 0.5 * np.sum(p * np.log(p / m)) + 0.5 * np.sum(q * np.log(q / m))
+
+    common = len(set(t_orig.keys()) & set(t_gen.keys()))
+
+    return {'transition_js': float(js), 'common_transitions': common}
+
+
 def evaluate_generation(generated: List[Tuple[int, int, int]],
                         original_notes: List[List[Tuple[int, int, int]]],
                         notes_label: dict,
