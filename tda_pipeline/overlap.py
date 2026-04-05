@@ -54,29 +54,53 @@ def get_cycle_stats(cycle_labeled: dict, notes_dict: dict) -> Tuple[list, list, 
 
 # ─── 중첩행렬 구축 (핵심 최적화) ──────────────────────────────────────────
 
-def build_activation_matrix(df: pd.DataFrame, 
-                            cycle_labeled: Union[dict, list]) -> pd.DataFrame:
+def build_activation_matrix(df: pd.DataFrame,
+                            cycle_labeled: Union[dict, list],
+                            continuous: bool = False) -> pd.DataFrame:
     """
-    원곡의 note-time 행렬에서 각 사이클의 시점별 활성화 여부를 계산합니다.
-    기존 get_scattered_cycles_df의 최적화 버전.
-    
-    최적화: numpy boolean 배열로 일괄 처리
-    - 기존: 각 행을 lambda로 순회 → O(T * C * N)
-    - 개선: numpy any() 연산 → O(T * C) with vectorization
+    원곡의 note-time 행렬에서 각 사이클의 시점별 활성화를 계산합니다.
+
+    continuous=False (기존): 이진 0/1. 하나라도 활성화되면 1.
+    continuous=True (신규): 연속값 0~1.
+      활성 note 비율에 희귀도 가중치를 적용:
+      - 많은 cycle에 등장하는 흔한 note → 낮은 가중치
+      - 적은 cycle에만 등장하는 희귀 note → 높은 가중치
+      효과: 색채음 같은 희귀 note가 활성화되면 overlap 값이 더 높아짐
     """
     df_values = df.values  # (T, N_notes) numpy array
     columns = list(df.columns)
-    
+
     if isinstance(cycle_labeled, dict):
         items = list(cycle_labeled.items())
     else:
         items = list(enumerate(cycle_labeled))
-    
+
     n_cycles = len(items)
     n_times = df_values.shape[0]
-    activation = np.zeros((n_times, n_cycles), dtype=int)
-    
+    dtype = float if continuous else int
+    activation = np.zeros((n_times, n_cycles), dtype=dtype)
+
     col_to_idx = {col: i for i, col in enumerate(columns)}
+    col_to_idx_inv = {i: col for col, i in col_to_idx.items()}
+
+    # 희귀도 계산: note_rarity[col_idx] = 1 / (해당 note가 등장하는 cycle 수)
+    note_rarity = {}
+    if continuous:
+        from collections import Counter
+        note_cycle_count = Counter()
+        for _, (label, cycle) in enumerate(items):
+            verts = set()
+            if isinstance(cycle, frozenset):
+                for s in cycle:
+                    verts.update(s) if isinstance(s, tuple) else verts.add(s)
+            else:
+                verts = set(cycle)
+            for v in verts:
+                if (v + 1) in col_to_idx:
+                    note_cycle_count[col_to_idx[v + 1]] += 1
+        # rarity = 1/count (등장 cycle이 적을수록 높은 가중치)
+        for col_idx, count in note_cycle_count.items():
+            note_rarity[col_idx] = 1.0 / count
     
     for c_idx, (label, cycle) in enumerate(items):
         # cycle의 vertex 추출 (dim=1: tuple of ints, dim=2: frozenset of tuples)
@@ -93,10 +117,19 @@ def build_activation_matrix(df: pd.DataFrame,
         note_indices = [col_to_idx[v + 1] for v in vertices if (v + 1) in col_to_idx]
         
         if note_indices:
-            # 해당 note 중 하나라도 활성화된 시점 = 1
             sub = df_values[:, note_indices]
-            activation[:, c_idx] = np.any(sub > 0, axis=1).astype(int)
-    
+            if continuous:
+                # 연속값 모드: 활성 note 비율 + 희귀 note 가중치
+                # note_rarity[n] = 1 / (해당 note가 등장하는 cycle 수)
+                # 희귀 note가 활성화되면 기여도가 높음
+                weights = np.array([note_rarity.get(col_to_idx_inv.get(ni, 0), 1.0)
+                                    for ni in note_indices])
+                weighted_active = (sub > 0).astype(float) * weights[np.newaxis, :]
+                activation[:, c_idx] = weighted_active.sum(axis=1) / weights.sum()
+            else:
+                # 이진 모드 (기존): 하나라도 활성화되면 1
+                activation[:, c_idx] = np.any(sub > 0, axis=1).astype(int)
+
     result = pd.DataFrame(activation, columns=[item[0] for item in items])
     return result
 
