@@ -1,27 +1,125 @@
 """
 build_academic_pdf.py — academic_paper_step*.md → PDF 변환
 
-Markdown + LaTeX 수식을 reportlab으로 직접 렌더링.
-복잡한 수식은 텍스트 블록으로 표시 (한글 폰트 사용).
+LaTeX 수식을 matplotlib mathtext로 PNG 렌더링하여 PDF에 이미지로 삽입.
+한글 본문은 맑은고딕, 수식은 실제 수학 표기로 표시.
 """
-import os, re, sys
+import os, re, sys, hashlib, io
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+from matplotlib import rcParams
+
 from reportlab.lib.pagesizes import A4
-from reportlab.lib.units import mm, cm
+from reportlab.lib.units import mm, cm, inch
 from reportlab.lib.styles import ParagraphStyle
 from reportlab.lib.enums import TA_LEFT, TA_JUSTIFY, TA_CENTER
 from reportlab.platypus import (
     SimpleDocTemplate, Paragraph, Spacer, HRFlowable, PageBreak,
-    KeepTogether, Preformatted
+    Image, Preformatted, KeepTogether
 )
 from reportlab.lib.colors import HexColor, white
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 
+# 폰트
 pdfmetrics.registerFont(TTFont('Malgun', 'C:/Windows/Fonts/malgun.ttf'))
 pdfmetrics.registerFont(TTFont('MalgunBd', 'C:/Windows/Fonts/malgunbd.ttf'))
 pdfmetrics.registerFont(TTFont('Consolas', 'C:/Windows/Fonts/consola.ttf'))
 
-# 스타일
+# matplotlib mathtext 설정 (Computer Modern 비슷하게)
+rcParams['mathtext.fontset'] = 'cm'
+rcParams['font.family'] = 'serif'
+
+# 수식 캐시 디렉토리
+EQ_CACHE_DIR = os.path.join(os.path.dirname(__file__), '_eq_cache')
+os.makedirs(EQ_CACHE_DIR, exist_ok=True)
+
+
+def render_equation(latex_str, display=True, fontsize=14):
+    """LaTeX 수식을 PNG로 렌더링하여 파일 경로 반환.
+
+    display=True: 블록 수식 (큰 크기, 가운데)
+    display=False: 인라인 수식 (작은 크기)
+    """
+    # 캐시 키
+    key = hashlib.md5(f"{latex_str}|{display}|{fontsize}".encode()).hexdigest()
+    cache_path = os.path.join(EQ_CACHE_DIR, f"eq_{key}.png")
+
+    if os.path.exists(cache_path):
+        return cache_path
+
+    # matplotlib mathtext 렌더링
+    fig = plt.figure(figsize=(0.01, 0.01), dpi=200)
+    fig.patch.set_alpha(0)
+    try:
+        # mathtext에 호환되는 형태로 변환
+        tex = clean_latex_for_mathtext(latex_str)
+        text = fig.text(0, 0, f'${tex}$', fontsize=fontsize,
+                        color='black', ha='left', va='bottom')
+
+        # 텍스트 크기 측정
+        fig.canvas.draw()
+        bbox = text.get_window_extent()
+        w_in = bbox.width / 200 + 0.1
+        h_in = bbox.height / 200 + 0.1
+        fig.set_size_inches(w_in, h_in)
+
+        plt.savefig(cache_path, dpi=200, bbox_inches='tight',
+                    transparent=True, pad_inches=0.05)
+    except Exception as e:
+        # mathtext 렌더링 실패 시 plain text fallback
+        print(f"  수식 렌더링 실패: {latex_str[:50]}... ({e})")
+        plt.close(fig)
+        return None
+    plt.close(fig)
+    return cache_path
+
+
+def clean_latex_for_mathtext(s):
+    """matplotlib mathtext가 지원하는 형식으로 LaTeX 정리.
+
+    mathtext가 지원하지 않는 것들을 unicode 또는 호환 명령어로 변환.
+    """
+    # \begin{cases}...\end{cases} → 단순한 표현으로
+    s = re.sub(
+        r'\\begin\{cases\}(.+?)\\end\{cases\}',
+        lambda m: m.group(1).replace('\\\\', ', ').replace('&', ' '),
+        s, flags=re.DOTALL
+    )
+
+    replacements = [
+        # \text → \mathrm
+        (r'\\text\{([^}]*)\}', r'\\mathrm{\1}'),
+        # 부등호: mathtext가 \le, \ge 미지원 → unicode
+        (r'\\le\b', r'\\leq'),
+        (r'\\ge\b', r'\\geq'),
+        (r'\\ne\b', r'\\neq'),
+        # 공백
+        (r'\\quad', r'\\ \\ '),
+        (r'\\;', r'\\,'),
+        (r'\\!', ''),
+        # |, ||
+        (r'\\middle\\\|', '|'),
+        (r'\\middle\|', '|'),
+        (r'\\big\\\|', r'\\|'),
+        (r'\\Big\\\|', r'\\|'),
+        (r'\\big\|', '|'),
+        (r'\\Big\|', '|'),
+        # \left, \right
+        (r'\\left', ''),
+        (r'\\right', ''),
+        # 기타
+        (r'\\hat\{([^}]*)\}', r'\\hat{\1}'),
+        (r'\\widehat\{([^}]*)\}', r'\\hat{\1}'),
+        (r'\\bar\{([^}]*)\}', r'\\bar{\1}'),
+    ]
+    for pat, rep in replacements:
+        s = re.sub(pat, rep, s)
+    return s
+
+
+# ── 스타일 ──
 s_title = ParagraphStyle('T', fontName='MalgunBd', fontSize=15, leading=20,
     spaceAfter=10, alignment=TA_CENTER)
 s_meta = ParagraphStyle('M', fontName='Malgun', fontSize=9.5, leading=12,
@@ -34,118 +132,93 @@ s_h3 = ParagraphStyle('H3', fontName='MalgunBd', fontSize=10, leading=13,
     spaceBefore=8, spaceAfter=4, textColor=HexColor('#5d6d7e'))
 s_body = ParagraphStyle('B', fontName='Malgun', fontSize=9.5, leading=14,
     alignment=TA_JUSTIFY, spaceAfter=5)
-s_bold_inline = ParagraphStyle('BI', fontName='MalgunBd', fontSize=9.5, leading=14)
-s_math = ParagraphStyle('Math', fontName='Consolas', fontSize=9.5, leading=14,
-    alignment=TA_CENTER, spaceBefore=4, spaceAfter=4,
-    textColor=HexColor('#000088'), backColor=HexColor('#f5f5f5'),
-    leftIndent=20, rightIndent=20, borderPadding=6)
-s_inline_math = ParagraphStyle('IM', fontName='Consolas', fontSize=9.5, leading=14)
 s_code = ParagraphStyle('C', fontName='Consolas', fontSize=8.5, leading=11,
     leftIndent=15, backColor=HexColor('#f0f0f0'), borderPadding=4,
     spaceBefore=4, spaceAfter=4)
 s_bullet = ParagraphStyle('BL', fontName='Malgun', fontSize=9.5, leading=13.5,
     leftIndent=18, bulletIndent=6, spaceAfter=3, alignment=TA_JUSTIFY)
-s_quote = ParagraphStyle('Q', fontName='Malgun', fontSize=9, leading=12,
-    leftIndent=20, rightIndent=20, textColor=HexColor('#555'),
-    spaceBefore=4, spaceAfter=4)
 
 
-def latex_to_text(latex_str):
-    """LaTeX 수식을 가독성 있는 plain text로 변환 (간단한 케이스)"""
-    s = latex_str.strip()
+def parse_inline_with_math(text):
+    """
+    인라인 수식 ($...$)을 추출하여 텍스트 + Image의 sequence로 변환.
+    bold/italic/code 마크업도 처리.
 
-    # 자주 쓰는 LaTeX 명령어 → unicode
-    replacements = [
-        (r'\\text\{([^}]*)\}', r'\1'),
-        (r'\\mathbb\{R\}', 'R'),
-        (r'\\mathbb\{Z\}', 'Z'),
-        (r'\\mathcal\{L\}', 'L'),
-        (r'\\varepsilon', 'ε'),
-        (r'\\epsilon', 'ε'),
-        (r'\\alpha', 'α'),
-        (r'\\beta', 'β'),
-        (r'\\sigma', 'σ'),
-        (r'\\Sigma', 'Σ'),
-        (r'\\partial', '∂'),
-        (r'\\subseteq', '⊆'),
-        (r'\\subset', '⊂'),
-        (r'\\in\b', '∈'),
-        (r'\\forall', '∀'),
-        (r'\\exists', '∃'),
-        (r'\\rightarrow', '→'),
-        (r'\\to\b', '→'),
-        (r'\\leftarrow', '←'),
-        (r'\\Rightarrow', '⇒'),
-        (r'\\le\b', '≤'),
-        (r'\\ge\b', '≥'),
-        (r'\\ne\b', '≠'),
-        (r'\\approx', '≈'),
-        (r'\\sum', 'Σ'),
-        (r'\\prod', 'Π'),
-        (r'\\infty', '∞'),
-        (r'\\hat\{([^}]*)\}', r'\1̂'),
-        (r'\\frac\{([^}]*)\}\{([^}]*)\}', r'(\1)/(\2)'),
-        (r'\\sqrt\{([^}]*)\}', r'√(\1)'),
-        (r'\\cdot', '·'),
-        (r'\\times', '×'),
-        (r'\\quad', '  '),
-        (r'\\,', ' '),
-        (r'\\;', ' '),
-        (r'\\!', ''),
-        (r'\\left', ''),
-        (r'\\right', ''),
-        (r'\\big', ''),
-        (r'\\Big', ''),
-        (r'\\,\\middle\\\|', ' | '),
-        (r'\\middle\|', ' | '),
-        (r'\\\|', '||'),
-        (r'\\langle', '⟨'),
-        (r'\\rangle', '⟩'),
-        (r'\\emptyset', '∅'),
-        (r'\\cup', '∪'),
-        (r'\\cap', '∩'),
-        (r'\\setminus', '\\\\'),
-        (r'\\circ', '∘'),
-        (r'\\ker', 'ker'),
-        (r'\\text\{im\}', 'im'),
-        (r'\\text\{rank\}', 'rank'),
-        (r'\\binom\{([^}]*)\}\{([^}]*)\}', r'C(\1,\2)'),
-        (r'\\mathbb\{1\}', '𝟙'),
-        (r'\\quantile', 'quantile'),
-        (r'\\theta', 'θ'),
-        (r'\\Delta', 'Δ'),
-        (r'\\delta', 'δ'),
-        (r'\\lambda', 'λ'),
-        (r'\\ell\b', 'ℓ'),
-        (r'\\min\b', 'min'),
-        (r'\\max\b', 'max'),
-        (r'\\argmax', 'argmax'),
-        (r'\\log\b', 'log'),
-        (r'_\{([^}]*)\}', r'_\1'),  # subscript: x_{abc} → x_abc
-        (r'\^\{([^}]*)\}', r'^\1'),
-        (r'\{|\}', ''),
-        (r'\\\\', '\n'),
-    ]
-    for pat, rep in replacements:
-        s = re.sub(pat, rep, s)
-    return s
+    Returns: list of (type, content) where type ∈ ('text', 'inline_eq')
+    """
+    parts = []
+    pos = 0
+    # $...$ 패턴 찾기 (단, $$는 제외)
+    pattern = re.compile(r'(?<!\$)\$([^$]+)\$(?!\$)')
+
+    for m in pattern.finditer(text):
+        if m.start() > pos:
+            parts.append(('text', text[pos:m.start()]))
+        parts.append(('inline_eq', m.group(1)))
+        pos = m.end()
+    if pos < len(text):
+        parts.append(('text', text[pos:]))
+
+    return parts
 
 
-def parse_inline(text):
-    """**bold**, $math$, `code` 등 인라인 마크업 처리"""
-    # $...$ 인라인 수식
-    text = re.sub(r'\$([^$]+)\$', lambda m: f'<font name="Consolas" color="#000088">{latex_to_text(m.group(1))}</font>', text)
-    # **bold**
+def parse_inline_markup(text):
+    """**bold**, *italic*, `code` → reportlab markup"""
     text = re.sub(r'\*\*([^*]+)\*\*', r'<b>\1</b>', text)
-    # *italic*
     text = re.sub(r'(?<![*])\*([^*]+)\*(?![*])', r'<i>\1</i>', text)
-    # `code`
     text = re.sub(r'`([^`]+)`', r'<font name="Consolas" color="#aa0000">\1</font>', text)
     return text
 
 
+def make_paragraph_with_inline_math(text, style):
+    """
+    인라인 수식이 포함된 텍스트를 Paragraph로 만든다.
+    수식 부분은 작은 이미지를 inline으로 삽입.
+
+    reportlab의 Paragraph는 <img/> 태그로 인라인 이미지를 지원한다.
+    """
+    parts = parse_inline_with_math(text)
+    result = ''
+    for ptype, content in parts:
+        if ptype == 'text':
+            result += parse_inline_markup(content)
+        else:
+            # 인라인 수식 → 작은 PNG → <img/> 태그
+            img_path = render_equation(content, display=False, fontsize=11)
+            if img_path:
+                # reportlab Paragraph inline image
+                result += f'<img src="{img_path}" valign="-3"/>'
+            else:
+                result += f'<font name="Consolas" color="#000088">{content}</font>'
+    return Paragraph(result, style)
+
+
+def make_block_equation(latex_str):
+    """블록 수식 → 큰 PNG → 가운데 정렬 Image"""
+    img_path = render_equation(latex_str, display=True, fontsize=15)
+    if img_path is None:
+        return Paragraph(f'<font name="Consolas">{latex_str}</font>', s_body)
+
+    # 이미지 크기 측정
+    from PIL import Image as PILImage
+    pil = PILImage.open(img_path)
+    w_px, h_px = pil.size
+    # 200 DPI로 저장했으므로 inch로 변환
+    w_in = w_px / 200
+    h_in = h_px / 200
+    # 최대 너비 제한
+    max_w = 14 * cm / inch
+    if w_in > max_w:
+        scale = max_w / w_in
+        w_in *= scale
+        h_in *= scale
+
+    img = Image(img_path, width=w_in*inch, height=h_in*inch)
+    img.hAlign = 'CENTER'
+    return img
+
+
 def md_to_pdf(md_path, pdf_path):
-    """Markdown 파일을 PDF로 변환"""
     with open(md_path, 'r', encoding='utf-8') as f:
         lines = f.readlines()
 
@@ -163,26 +236,41 @@ def md_to_pdf(md_path, pdf_path):
     while i < len(lines):
         line = lines[i].rstrip()
 
-        # 수식 블록 ($$...$$)
+        # 블록 수식 ($$...$$)
         if line.strip().startswith('$$'):
+            content_after = line.strip()[2:]
+            if content_after.endswith('$$'):
+                # 한 줄 블록 수식
+                story.append(Spacer(1, 2*mm))
+                story.append(make_block_equation(content_after[:-2]))
+                story.append(Spacer(1, 2*mm))
+                i += 1
+                continue
             if in_math_block:
-                # 종료
                 math_text = '\n'.join(math_buf)
-                story.append(Paragraph(latex_to_text(math_text), s_math))
+                story.append(Spacer(1, 2*mm))
+                story.append(make_block_equation(math_text))
+                story.append(Spacer(1, 2*mm))
                 math_buf = []
                 in_math_block = False
             else:
                 in_math_block = True
-                # 같은 줄에 끝나는 경우
-                content = line.strip().strip('$')
-                if content and line.count('$$') >= 2:
-                    story.append(Paragraph(latex_to_text(content), s_math))
-                    in_math_block = False
+                if content_after:
+                    math_buf.append(content_after)
             i += 1
             continue
 
         if in_math_block:
-            math_buf.append(line)
+            if line.strip().endswith('$$'):
+                math_buf.append(line.strip()[:-2])
+                math_text = '\n'.join(math_buf)
+                story.append(Spacer(1, 2*mm))
+                story.append(make_block_equation(math_text))
+                story.append(Spacer(1, 2*mm))
+                math_buf = []
+                in_math_block = False
+            else:
+                math_buf.append(line)
             i += 1
             continue
 
@@ -218,24 +306,21 @@ def md_to_pdf(md_path, pdf_path):
 
         # 헤더
         if line.startswith('# '):
-            story.append(Paragraph(parse_inline(line[2:]), s_title))
+            story.append(make_paragraph_with_inline_math(line[2:], s_title))
         elif line.startswith('## '):
-            story.append(Paragraph(parse_inline(line[3:]), s_h1))
+            story.append(make_paragraph_with_inline_math(line[3:], s_h1))
         elif line.startswith('### '):
-            story.append(Paragraph(parse_inline(line[4:]), s_h2))
+            story.append(make_paragraph_with_inline_math(line[4:], s_h2))
         elif line.startswith('#### '):
-            story.append(Paragraph(parse_inline(line[5:]), s_h3))
-        # 메타 정보 (**저자:** 등)
+            story.append(make_paragraph_with_inline_math(line[5:], s_h3))
         elif line.startswith('**저자:**') or line.startswith('**지도:**') or line.startswith('**작성일:**'):
-            story.append(Paragraph(parse_inline(line), s_meta))
-        # 불릿
+            story.append(make_paragraph_with_inline_math(line, s_meta))
         elif line.startswith('- '):
-            story.append(Paragraph('• ' + parse_inline(line[2:]), s_bullet))
+            story.append(make_paragraph_with_inline_math('• ' + line[2:], s_bullet))
         elif re.match(r'^\d+\.\s', line):
-            story.append(Paragraph(parse_inline(line), s_bullet))
-        # 본문
+            story.append(make_paragraph_with_inline_math(line, s_bullet))
         else:
-            story.append(Paragraph(parse_inline(line), s_body))
+            story.append(make_paragraph_with_inline_math(line, s_body))
 
         i += 1
 
@@ -248,7 +333,6 @@ if __name__ == "__main__":
     if len(sys.argv) > 1:
         md_files = [sys.argv[1]]
     else:
-        # 모든 academic_paper_step*.md 변환
         import glob
         md_files = sorted(glob.glob(os.path.join(docs_dir, 'academic_paper_step*.md')))
 
