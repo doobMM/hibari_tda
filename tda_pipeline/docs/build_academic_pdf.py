@@ -22,9 +22,25 @@ from reportlab.lib.colors import HexColor, white
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 
-# 폰트
-pdfmetrics.registerFont(TTFont('Malgun', 'C:/Windows/Fonts/malgun.ttf'))
-pdfmetrics.registerFont(TTFont('MalgunBd', 'C:/Windows/Fonts/malgunbd.ttf'))
+# 폰트 — 나눔고딕 사용
+from reportlab.pdfbase.pdfmetrics import registerFontFamily
+
+NANUM_REGULAR = 'C:/Users/82104/AppData/Local/Microsoft/Windows/Fonts/NanumGothic.ttf'
+# Bold는 docs/ 폴더에 다운로드된 Google Fonts 버전 사용
+_BOLD_LOCAL = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'NanumGothic-Bold.ttf')
+NANUM_BOLD = _BOLD_LOCAL if os.path.exists(_BOLD_LOCAL) else NANUM_REGULAR
+
+pdfmetrics.registerFont(TTFont('Nanum', NANUM_REGULAR))
+pdfmetrics.registerFont(TTFont('NanumBd', NANUM_BOLD))
+
+# <b>...</b> 태그가 자동으로 NanumBd를 쓰도록 family 등록
+registerFontFamily('Nanum', normal='Nanum', bold='NanumBd', italic='Nanum', boldItalic='NanumBd')
+
+# 호환을 위해 Malgun이라는 이름으로도 등록 (기존 코드 호환)
+pdfmetrics.registerFont(TTFont('Malgun', NANUM_REGULAR))
+pdfmetrics.registerFont(TTFont('MalgunBd', NANUM_BOLD))
+registerFontFamily('Malgun', normal='Malgun', bold='MalgunBd', italic='Malgun', boldItalic='MalgunBd')
+
 pdfmetrics.registerFont(TTFont('Consolas', 'C:/Windows/Fonts/consola.ttf'))
 
 # matplotlib mathtext 설정 (Computer Modern 비슷하게)
@@ -134,22 +150,22 @@ def clean_latex_for_mathtext(s):
 
 
 # ── 스타일 ──
-s_title = ParagraphStyle('T', fontName='MalgunBd', fontSize=15, leading=20,
+s_title = ParagraphStyle('T', fontName='NanumBd', fontSize=15, leading=20,
     spaceAfter=10, alignment=TA_CENTER)
-s_meta = ParagraphStyle('M', fontName='Malgun', fontSize=9.5, leading=12,
+s_meta = ParagraphStyle('M', fontName='Nanum', fontSize=9.5, leading=12,
     alignment=TA_CENTER, textColor=HexColor('#555'))
-s_h1 = ParagraphStyle('H1', fontName='MalgunBd', fontSize=13, leading=17,
+s_h1 = ParagraphStyle('H1', fontName='NanumBd', fontSize=13, leading=17,
     spaceBefore=14, spaceAfter=7, textColor=HexColor('#1a5276'))
-s_h2 = ParagraphStyle('H2', fontName='MalgunBd', fontSize=11, leading=14,
+s_h2 = ParagraphStyle('H2', fontName='NanumBd', fontSize=11, leading=14,
     spaceBefore=10, spaceAfter=5, textColor=HexColor('#2c3e50'))
-s_h3 = ParagraphStyle('H3', fontName='MalgunBd', fontSize=10, leading=13,
+s_h3 = ParagraphStyle('H3', fontName='NanumBd', fontSize=10, leading=13,
     spaceBefore=8, spaceAfter=4, textColor=HexColor('#5d6d7e'))
-s_body = ParagraphStyle('B', fontName='Malgun', fontSize=9.5, leading=14,
+s_body = ParagraphStyle('B', fontName='Nanum', fontSize=9.5, leading=14,
     alignment=TA_JUSTIFY, spaceAfter=5)
 s_code = ParagraphStyle('C', fontName='Consolas', fontSize=8.5, leading=11,
     leftIndent=15, backColor=HexColor('#f0f0f0'), borderPadding=4,
     spaceBefore=4, spaceAfter=4)
-s_bullet = ParagraphStyle('BL', fontName='Malgun', fontSize=9.5, leading=13.5,
+s_bullet = ParagraphStyle('BL', fontName='Nanum', fontSize=9.5, leading=13.5,
     leftIndent=18, bulletIndent=6, spaceAfter=3, alignment=TA_JUSTIFY)
 
 
