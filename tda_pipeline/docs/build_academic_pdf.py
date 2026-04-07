@@ -37,43 +37,57 @@ os.makedirs(EQ_CACHE_DIR, exist_ok=True)
 
 
 def render_equation(latex_str, display=True, fontsize=14):
-    """LaTeX 수식을 PNG로 렌더링하여 파일 경로 반환.
+    """LaTeX 수식을 PNG로 렌더링하여 (경로, width_pt, height_pt) 반환.
 
     display=True: 블록 수식 (큰 크기, 가운데)
     display=False: 인라인 수식 (작은 크기)
+
+    width/height는 PDF의 point 단위로 반환되어, reportlab img 태그에서 직접 사용 가능.
     """
-    # 캐시 키
+    DPI = 200
     key = hashlib.md5(f"{latex_str}|{display}|{fontsize}".encode()).hexdigest()
     cache_path = os.path.join(EQ_CACHE_DIR, f"eq_{key}.png")
+    meta_path = cache_path + '.meta'
 
-    if os.path.exists(cache_path):
-        return cache_path
+    if os.path.exists(cache_path) and os.path.exists(meta_path):
+        with open(meta_path) as f:
+            w_pt, h_pt = map(float, f.read().split(','))
+        return cache_path, w_pt, h_pt
 
-    # matplotlib mathtext 렌더링
-    fig = plt.figure(figsize=(0.01, 0.01), dpi=200)
+    fig = plt.figure(figsize=(0.01, 0.01), dpi=DPI)
     fig.patch.set_alpha(0)
     try:
-        # mathtext에 호환되는 형태로 변환
         tex = clean_latex_for_mathtext(latex_str)
         text = fig.text(0, 0, f'${tex}$', fontsize=fontsize,
                         color='black', ha='left', va='bottom')
 
-        # 텍스트 크기 측정
         fig.canvas.draw()
         bbox = text.get_window_extent()
-        w_in = bbox.width / 200 + 0.1
-        h_in = bbox.height / 200 + 0.1
+        w_px = bbox.width + 8
+        h_px = bbox.height + 8
+        w_in = w_px / DPI
+        h_in = h_px / DPI
         fig.set_size_inches(w_in, h_in)
 
-        plt.savefig(cache_path, dpi=200, bbox_inches='tight',
-                    transparent=True, pad_inches=0.05)
+        plt.savefig(cache_path, dpi=DPI, bbox_inches='tight',
+                    transparent=True, pad_inches=0.02)
     except Exception as e:
-        # mathtext 렌더링 실패 시 plain text fallback
         print(f"  수식 렌더링 실패: {latex_str[:50]}... ({e})")
         plt.close(fig)
-        return None
+        return None, 0, 0
     plt.close(fig)
-    return cache_path
+
+    # 저장된 PNG의 실제 크기로 PDF point 환산 (1 inch = 72 pt)
+    from PIL import Image as PILImage
+    pil = PILImage.open(cache_path)
+    actual_w, actual_h = pil.size
+    w_pt = actual_w / DPI * 72
+    h_pt = actual_h / DPI * 72
+
+    with open(meta_path, 'w') as f:
+        f.write(f"{w_pt},{h_pt}")
+
+    return cache_path, w_pt, h_pt
 
 
 def clean_latex_for_mathtext(s):
@@ -173,21 +187,36 @@ def parse_inline_markup(text):
 def make_paragraph_with_inline_math(text, style):
     """
     인라인 수식이 포함된 텍스트를 Paragraph로 만든다.
-    수식 부분은 작은 이미지를 inline으로 삽입.
+    수식 부분은 PDF point 단위로 명시적 width/height를 지정한 이미지로 삽입.
 
-    reportlab의 Paragraph는 <img/> 태그로 인라인 이미지를 지원한다.
+    인라인 수식의 fontsize는 본문 폰트와 균형을 맞춤.
     """
+    # 본문 스타일의 폰트 크기에 맞춰 인라인 수식 크기 결정
+    body_size = style.fontSize  # pt
+    # mathtext의 fontsize=10이 대략 본문 9.5pt와 균형
+    inline_fontsize = body_size + 0.5
+
     parts = parse_inline_with_math(text)
     result = ''
     for ptype, content in parts:
         if ptype == 'text':
             result += parse_inline_markup(content)
         else:
-            # 인라인 수식 → 작은 PNG → <img/> 태그
-            img_path = render_equation(content, display=False, fontsize=11)
-            if img_path:
-                # reportlab Paragraph inline image
-                result += f'<img src="{img_path}" valign="-3"/>'
+            res = render_equation(content, display=False, fontsize=inline_fontsize)
+            if res and res[0]:
+                img_path, w_pt, h_pt = res
+                # 인라인 수식의 표시 높이를 본문 줄높이에 맞게 제한
+                target_h = body_size * 1.4  # 본문 폰트의 약 1.4배 높이로 제한
+                if h_pt > target_h:
+                    scale = target_h / h_pt
+                    w_pt *= scale
+                    h_pt *= scale
+                # reportlab img 태그에 width/height 명시 (pt 단위)
+                # valign으로 baseline 조정
+                vshift = -h_pt * 0.20
+                result += (f'<img src="{img_path}" '
+                           f'width="{w_pt:.1f}" height="{h_pt:.1f}" '
+                           f'valign="{vshift:.1f}"/>')
             else:
                 result += f'<font name="Consolas" color="#000088">{content}</font>'
     return Paragraph(result, style)
@@ -195,25 +224,19 @@ def make_paragraph_with_inline_math(text, style):
 
 def make_block_equation(latex_str):
     """블록 수식 → 큰 PNG → 가운데 정렬 Image"""
-    img_path = render_equation(latex_str, display=True, fontsize=15)
-    if img_path is None:
+    res = render_equation(latex_str, display=True, fontsize=14)
+    if res is None or res[0] is None:
         return Paragraph(f'<font name="Consolas">{latex_str}</font>', s_body)
+    img_path, w_pt, h_pt = res
 
-    # 이미지 크기 측정
-    from PIL import Image as PILImage
-    pil = PILImage.open(img_path)
-    w_px, h_px = pil.size
-    # 200 DPI로 저장했으므로 inch로 변환
-    w_in = w_px / 200
-    h_in = h_px / 200
-    # 최대 너비 제한
-    max_w = 14 * cm / inch
-    if w_in > max_w:
-        scale = max_w / w_in
-        w_in *= scale
-        h_in *= scale
+    # 최대 너비 제한 (페이지 본문 폭의 약 90%)
+    max_w_pt = 14 * cm / inch * 72  # cm → pt
+    if w_pt > max_w_pt:
+        scale = max_w_pt / w_pt
+        w_pt *= scale
+        h_pt *= scale
 
-    img = Image(img_path, width=w_in*inch, height=h_in*inch)
+    img = Image(img_path, width=w_pt, height=h_pt)
     img.hAlign = 'CENTER'
     return img
 
