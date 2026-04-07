@@ -14,144 +14,130 @@
 
 ### 2.1 Vietoris-Rips Complex
 
-**정의 2.1.** 거리 공간 $(X, d)$와 양의 실수 $\varepsilon > 0$이 주어졌을 때, **Vietoris-Rips complex** $\text{VR}_\varepsilon(X)$는 다음과 같이 정의되는 추상 단체 복합체(abstract simplicial complex)이다:
+**정의 2.1.** 거리 공간 $(X, d)$와 양의 실수 $\varepsilon > 0$이 주어졌을 때, **Vietoris-Rips complex** $\text{VR}_\varepsilon(X)$는 다음과 같이 정의되는 복합체(simplicial complex)이다:
 
 $$
 \text{VR}_\varepsilon(X) = \left\{ \sigma \subseteq X \,\middle|\, \forall x_i, x_j \in \sigma,\ d(x_i, x_j) \le \varepsilon \right\}
 $$
 
-즉, 부분집합 $\sigma$에 속한 모든 점 쌍 사이의 거리가 $\varepsilon$ 이하이면 $\sigma$를 단체(simplex)로 포함시킨다.
+즉, 부분집합 $\sigma$에 속한 모든 점 쌍 사이의 거리가 $\varepsilon$ 이하이면 $\sigma$를 심플렉스(simplex)로 포함시킨다.
 
 **구성 요소:**
-- 0-단체(vertex): 각 점 $x_i \in X$
-- 1-단체(edge): $d(x_i, x_j) \le \varepsilon$인 쌍 $\{x_i, x_j\}$
-- 2-단체(triangle): 세 점이 모두 $\varepsilon$ 이내인 삼각형
-- $k$-단체: $k+1$개의 점이 모두 $\varepsilon$ 이내인 부분집합
+- 0-simplex (vertex): 각 점 $x_i \in X$
+- 1-simplex (edge): $d(x_i, x_j) \le \varepsilon$인 쌍 $\{x_i, x_j\}$
+- 2-simplex (triangle): 세 점이 모두 $\varepsilon$ 이내인 삼각형
+- $k$-simplex: $k+1$개의 점이 모두 $\varepsilon$ 이내인 부분집합
 
-**Filtration 구조:** $\varepsilon_1 < \varepsilon_2$이면 $\text{VR}_{\varepsilon_1}(X) \subseteq \text{VR}_{\varepsilon_2}(X)$이므로, $\varepsilon$를 0부터 점진적으로 키우면 단체 복합체의 nested sequence가 만들어진다:
+**Filtration 구조:** $\varepsilon$ 값을 0부터 연속적으로 키우면, 어떤 임계값들을 지날 때마다 새로운 심플렉스가 추가되어 복합체의 위상이 변한다. 이 변화 임계값들을 $\varepsilon_0 < \varepsilon_1 < \varepsilon_2 < \cdots$로 두면, 다음의 nested sequence가 만들어진다:
 
 $$
-\emptyset = K_0 \subseteq K_1 \subseteq K_2 \subseteq \cdots \subseteq K_n = \text{VR}_\infty(X)
+\emptyset \subseteq \text{VR}_{\varepsilon_0}(X) \subseteq \text{VR}_{\varepsilon_1}(X) \subseteq \text{VR}_{\varepsilon_2}(X) \subseteq \cdots \subseteq \text{VR}_{\varepsilon_n}(X)
 $$
 
-이를 **filtration**이라 부른다.
+표기 편의를 위해 $K_{\varepsilon_i} := \text{VR}_{\varepsilon_i}(X)$로 두면:
 
-**본 연구에서의 사용:** $X = \{n_1, n_2, \ldots, n_{23}\}$은 hibari에 등장하는 23개의 고유 note이며, $d(n_i, n_j)$는 두 note 간 거리이다. $\varepsilon$를 점진적으로 증가시키며 단체 복합체의 변화를 추적하여, 어떤 거리 척도에서 어떤 위상 구조가 출현·소멸하는지를 분석한다.
+$$
+\emptyset \subseteq K_{\varepsilon_0} \subseteq K_{\varepsilon_1} \subseteq K_{\varepsilon_2} \subseteq \cdots \subseteq K_{\varepsilon_n}
+$$
+
+이를 **filtration**이라 부르며, 변화가 일어나는 미지수 $\varepsilon_i$들이 곧 위상 구조의 birth/death 시점이 된다.
+
+**본 연구에서의 사용:** $X = \{n_1, n_2, \ldots, n_{23}\}$은 hibari에 등장하는 23개의 고유 note이며, $d(n_i, n_j)$는 두 note 간 거리이다. $\varepsilon$를 점진적으로 증가시키며 simplex complex의 변화를 추적하여, 어떤 거리 척도에서 어떤 위상 구조가 출현·소멸하는지를 분석한다.
 
 ---
 
 ### 2.2 Simplicial Homology
 
-**정의 2.2.** 단체 복합체 $K$에 대해, 차원 $n$의 **chain group** $C_n(K)$는 $K$의 모든 $n$-단체들이 생성하는 자유 abelian group이다 (계수는 $\mathbb{Z}$ 또는 $\mathbb{Z}/2$):
-
-$$
-C_n(K) = \mathbb{Z}\langle \sigma_1^{(n)}, \sigma_2^{(n)}, \ldots \rangle
-$$
-
-**경계 연산자(boundary operator)** $\partial_n : C_n(K) \to C_{n-1}(K)$는 $n$-단체 $\sigma = [v_0, v_1, \ldots, v_n]$에 대해 다음과 같이 정의된다:
-
-$$
-\partial_n \sigma = \sum_{i=0}^{n} (-1)^i [v_0, \ldots, \hat{v_i}, \ldots, v_n]
-$$
-
-여기서 $\hat{v_i}$는 해당 꼭짓점을 제외함을 의미한다. 핵심 성질은 $\partial_{n-1} \circ \partial_n = 0$이다.
-
-**$n$차 호몰로지 군(homology group):**
-
-$$
-H_n(K) = \frac{\ker \partial_n}{\text{im } \partial_{n+1}} = \frac{Z_n(K)}{B_n(K)}
-$$
-
-여기서 $Z_n = \ker \partial_n$은 **cycle**의 집합, $B_n = \text{im } \partial_{n+1}$은 **boundary**의 집합이다. 직관적으로:
+**정의 2.2.** Simplex complex $K$에 대해 **$n$차 호몰로지 군**(homology group) $H_n(K)$는 $K$ 안에 존재하는 $n$차원 "구멍"의 대수적 표현이다. 직관적으로:
 
 - $H_0(K)$: 연결 성분(connected components)의 개수
-- $H_1(K)$: 1차원 구멍(loop, cycle)의 개수
+- $H_1(K)$: cycle의 개수 (1차원 구멍)
 - $H_2(K)$: 2차원 빈 공간(void)의 개수
 
-**Betti number** $\beta_n = \text{rank}(H_n(K))$는 $n$차원 위상 특징의 개수를 나타낸다.
+**Betti number** $\beta_n = \text{rank}(H_n(K))$는 $n$차원 위상 특징의 개수를 나타낸다. 예컨대 $\beta_1 = 3$이면 이 simplex complex 안에 서로 독립적인 cycle이 3개 있다는 뜻이다.
 
-**본 연구에서의 사용:** 본 연구는 주로 $H_1$(1차 호몰로지)을 다룬다. 이는 음악 네트워크에서 **순환적으로 연결된 note 그룹**, 즉 서로 가까운 note들이 만드는 닫힌 고리(cycle)를 포착한다.
+**본 연구에서의 사용:** 본 연구는 주로 $H_1$ (1차 호몰로지)을 다룬다. 이는 음악 네트워크에서 서로 가까운 note들이 만드는 **닫힌 cycle**, 즉 순환적으로 연결된 note 그룹을 포착한다. 발견된 각 cycle은 곡의 구조적 반복 단위로 해석된다.
 
 ---
 
 ### 2.3 Persistent Homology
 
-**정의 2.3.** Filtration $K_0 \subseteq K_1 \subseteq \cdots \subseteq K_n$에 대해, 각 단계의 호몰로지 군들은 포함 함수에 의해 induced된 사상을 통해 연결된다:
+Filtration $K_{\varepsilon_0} \subseteq K_{\varepsilon_1} \subseteq \cdots \subseteq K_{\varepsilon_n}$에서, 각 단계마다 $H_1$의 cycle 구조가 달라진다. **Persistent homology**는 이 과정에서 각 cycle이 어느 $\varepsilon_i$에서 처음 나타나고(**birth**) 어느 $\varepsilon_j$에서 사라지는지(**death**)를 추적하는 이론이다.
 
-$$
-H_p(K_0) \to H_p(K_1) \to H_p(K_2) \to \cdots \to H_p(K_n)
-$$
+**Birth와 death의 음악적 의미:**
+- **Birth** $b$: 거리 임계값 $\varepsilon$가 충분히 커져서 새로운 cycle이 형성되는 순간. 음악적으로는 "이 거리 척도에서 처음으로 닫힌 반복 구조가 발견되는 시점".
+- **Death** $d$: 더 큰 $\varepsilon$에서 그 cycle 내부가 더 작은 simplex들로 채워져 cycle이 더 이상 독립적이지 않게 되는 순간. 음악적으로는 "거리 척도가 너무 느슨해져서 이 cycle이 다른 구조에 흡수되는 시점".
 
-**Persistent homology**는 이 sequence에서 각 위상 특징이 **언제 태어나고(birth) 언제 죽는지(death)**를 추적하는 이론이다.
+각 cycle은 $(b, d)$ 쌍으로 기록되며, 본 연구에서는 이 쌍의 모음을 곡의 **위상적 지문(topological signature)**으로 사용한다.
 
-구체적으로, 어떤 호몰로지 클래스 $[\alpha] \in H_p(K_i)$가 처음 등장하면 그 단계 $i$가 **birth time**이고, 더 큰 단계 $j$에서 다른 클래스에 흡수되거나 boundary가 되어 사라지면 $j$가 **death time**이다. 각 특징은 $(\text{birth}, \text{death})$ 쌍으로 표현되며, 이를 모은 것을 **persistence diagram** 또는 **barcode**라 한다.
-
-**Persistence:** $\text{pers}(\alpha) = \text{death}(\alpha) - \text{birth}(\alpha)$. 큰 persistence를 갖는 특징은 다양한 스케일에서 살아남으므로 **위상적으로 안정한 구조**로 간주된다.
+**Persistence:** $\text{pers}(\text{cycle}) = d - b$. (death가 birth보다 항상 크므로 양수.) 큰 persistence를 갖는 cycle은 다양한 거리 척도에서 살아남으므로 **위상적으로 안정한 구조**이며, 작은 persistence는 일시적이거나 노이즈에 가까운 구조이다.
 
 **알고리즘적 측면:** Persistent homology는 boundary matrix $D$를 구성하고 column reduction을 수행하여 계산한다. 본 연구에서는 두 가지 구현을 사용하였다:
 
 1. **pHcol algorithm** (정재훈 외, 2024): 순수 Python 구현
 2. **Ripser** (Bauer, 2021): C++ 기반 최적화 구현, 약 45배 빠름
 
-**본 연구에서의 사용:** 거리 행렬 $D \in \mathbb{R}^{23 \times 23}$로부터 Vietoris-Rips filtration을 구성하고, 각 rate parameter $r$ (가중치 비율, 후술)에서의 H₁ persistence를 계산한다. 발견된 모든 (birth, death) 쌍을 모아 곡의 **위상적 지문(topological signature)**으로 사용한다.
+**본 연구에서의 사용:** 거리 행렬 $D \in \mathbb{R}^{23 \times 23}$로부터 Vietoris-Rips filtration을 구성하고, 각 rate parameter $r$ (가중치 비율, 후술)에서의 $H_1$ persistence를 계산한다. 발견된 모든 $(b, d)$ 쌍이 cycle 집합을 정의하며, 이 cycle들이 다음 절의 중첩행렬 구축에 사용된다.
 
 ---
 
-### 2.4 Barcode Diagram
+### 2.4 Tonnetz와 음악적 거리 함수
 
-**정의 2.4.** Persistent homology의 결과를 시각화하는 두 가지 동등한 표현이 있다:
+**Pitch class 개념.** Tonnetz를 정의하기에 앞서, **pitch class**는 옥타브 차이를 무시한 음의 동치류이다. 예컨대 C4 (가운데 도)와 C5 (한 옥타브 위 도), C3 등은 모두 같은 pitch class "C"에 속한다. 12음 평균율(12-TET)에서는 한 옥타브 안에 12개의 pitch class가 있으며, 이를 정수 $\{0, 1, 2, \ldots, 11\}$에 대응시켜 $\mathbb{Z}/12\mathbb{Z}$로 표기한다 (0=C, 1=C♯, 2=D, ..., 11=B).
 
-1. **Persistence diagram**: 평면 $\mathbb{R}^2$ 위의 점들로 표현. 각 점 $(b_i, d_i)$는 한 특징의 birth-death 쌍이다. $d_i > b_i$이므로 모든 점은 대각선 위에 위치한다.
+**정의 2.4.** **Tonnetz**(또는 tone-network)는 pitch class 집합 $\mathbb{Z}/12\mathbb{Z}$를 평면 격자에 배치한 구조이다. 두 pitch class가 격자 위에서 가까운 것은 음악 이론적으로 어울리는 음(consonant)임을 의미한다.
 
-2. **Barcode**: 각 특징을 구간 $[b_i, d_i]$로 표현한 수평 막대들의 집합. 막대 길이가 길수록 위상적으로 안정한 특징이다.
+**Tonnetz의 격자 구조:** pitch class $p \in \mathbb{Z}/12$를 좌표 $(x, y)$에 배치하되, 다음 관계를 만족시킨다:
+- **가로 이동** (+1 in $x$): 완전5도 (perfect fifth, +7 semitones)
+- **대각선 이동** (+1 in $y$): 장3도 (major third, +4 semitones)
 
-**음악적 해석:** 본 연구에서 hibari의 H₁ barcode는 곡 안에서 발견되는 반복 구조의 "수명"을 나타낸다. 짧은 막대는 특정 거리 임계값 근처에서만 일시적으로 나타나는 패턴이고, 긴 막대는 광범위한 임계값에서 일관되게 존재하는 핵심 구조이다.
+이렇게 배치하면 자연스럽게 단3도(+3 semitones) 관계도 다른 대각선 방향으로 형성되어 삼각형 격자가 만들어진다. 그림 2.1은 hibari의 C장조 음역에 해당하는 일부분을 보여준다.
 
-**본 연구에서의 사용:** 각 cycle의 (birth, death)를 추출하여, **중첩행렬(overlap matrix)** 구축의 기본 자료로 사용한다 (2.6절).
+![Tonnetz 격자 다이어그램](tonnetz_lattice.png)
 
----
+*그림 2.1. Tonnetz 격자 구조. 가로 방향은 완전5도(C→G→D→A→E…), 대각선 방향은 장3도(C→E→G♯…)와 단3도(C→A→F♯…)로 이동한다. 삼각형 하나는 하나의 장3화음(major triad) 또는 단3화음(minor triad)에 대응된다.*
 
-### 2.5 Tonnetz와 음악적 거리 함수
-
-**정의 2.5.** **Tonnetz** (또는 tone-network)는 12음 평균율(12-TET)의 pitch class 집합 $\mathbb{Z}/12\mathbb{Z}$를 평면 격자에 배치한 구조이다. 두 pitch class가 가까운 것은 음악 이론적으로 어울리는 음(consonant)임을 의미한다.
-
-**Tonnetz의 격자 구조:** 한 가지 표준 정의에서, pitch class $p \in \mathbb{Z}/12$를 좌표 $(x, y)$에 배치하되 다음 관계를 만족시킨다:
-- 가로 이동 (+1 in $x$): 완전5도 (perfect fifth, +7 semitones)
-- 세로 이동 (+1 in $y$): 장3도 (major third, +4 semitones)
-
-이 격자에서 두 pitch class $p_1, p_2$ 사이의 **Tonnetz 거리** $d_T(p_1, p_2)$는 격자 위 최단 경로 길이로 정의된다:
+**Tonnetz 거리.** 두 pitch class $p_1, p_2$ 사이의 **Tonnetz 거리** $d_T(p_1, p_2)$는 격자 위 최단 경로 길이로 정의된다:
 
 $$
-d_T(p_1, p_2) = \min \left\{ |x_1 - x_2| + |y_1 - y_2| \,\middle|\, (x_i, y_i) \text{ represents } p_i \right\}
+d_T(p_1, p_2) = \min \left\{ |x_1 - x_2| + |y_1 - y_2| \,\middle|\, (x_i, y_i)\ \text{represents}\ p_i \right\}
 $$
 
-본 연구에서는 BFS(너비 우선 탐색)로 이 거리를 계산한다. 12개 pitch class 모두에 대해 사전 계산된 $12 \times 12$ 거리 테이블을 사용한다.
+본 연구에서는 BFS(너비 우선 탐색)로 이 거리를 계산하며, 12개 pitch class 모두에 대해 사전 계산된 $12 \times 12$ 거리 테이블을 사용한다.
 
-**기타 음악적 거리 함수:**
+**빈도 기반 거리 $d_{\text{freq}}$.** 본 연구의 기준 거리는 두 note의 **인접도(adjacency)**의 역수로 정의된다. 인접도 $w(n_i, n_j)$는 곡 안에서 두 note가 시간적으로 연달아 등장한 횟수이다:
+
+$$
+w(n_i, n_j) = \#\{t : (n_i\ \text{at time}\ t) \wedge (n_j\ \text{at time}\ t+1)\}
+$$
+
+거리는 $d_{\text{freq}}(n_i, n_j) = 1/w(n_i, n_j)$로 정의되며 (인접도가 0인 경우는 도달 불가능한 큰 값으로 처리), 자주 연달아 등장하는 음일수록 가까워진다. 이는 곡의 통계적 흐름만 반영하며 화성 관계는 직접 포착하지 못한다는 한계가 있다.
+
+**그 외의 음악적 거리 함수.**
 
 1. **Voice-leading distance** (Tymoczko, 2008):
 $$d_V(p_1, p_2) = |p_1 - p_2|$$
 즉, 두 음의 반음 차이. 피아노 건반에서 가까운 음일수록 거리가 짧다.
 
-2. **DFT distance** (Tymoczko, 2008):
+2. **DFT distance** (Tymoczko, 2008): pitch class 집합을 12차원 indicator vector로 표현한 후 **이산 푸리에 변환**(Discrete Fourier Transform)을 적용하여 푸리에 공간(Fourier space)으로 옮긴 뒤, 그 공간에서의 $L_2$ 거리를 측정한다:
 $$d_F(p_1, p_2) = \left\| \hat{f}(p_1) - \hat{f}(p_2) \right\|_2$$
-여기서 $\hat{f}(p)$는 pitch class indicator vector를 12차원 DFT 변환한 결과이다. 각 Fourier 계수는 음악적 속성(반음계성, 온음계성 등)에 대응된다.
+여기서 $\hat{f}(p)$는 pitch class $p$의 indicator vector $e_p \in \mathbb{R}^{12}$를 DFT 변환한 결과이다. 각 푸리에 계수는 음악적 속성에 대응되는데, 예컨대 $|\hat{f}(3)|$은 단3도 대칭성, $|\hat{f}(5)|$는 온음계성(diatonicity)과 연관된다 (Tymoczko, 2008).
 
-**복합 거리(Hybrid distance):** 본 연구는 빈도 기반 거리 $d_{\text{freq}}$와 음악적 거리 $d_{\text{music}}$를 선형 결합한다:
+**복합 거리(Hybrid distance).** 본 연구는 빈도 기반 거리 $d_{\text{freq}}$와 음악적 거리 $d_{\text{music}}$ (Tonnetz, Voice-leading, DFT 중 하나)을 선형 결합한다:
 
 $$
 d_{\text{hybrid}}(n_i, n_j) = \alpha \cdot d_{\text{freq}}(n_i, n_j) + (1 - \alpha) \cdot d_{\text{music}}(n_i, n_j)
 $$
 
-여기서 $\alpha \in [0, 1]$은 두 거리의 비중을 조절하는 파라미터이다. Grid search 결과, hibari에 대해서는 $\alpha = 0.3$ (Tonnetz 거리 70% + 빈도 거리 30%)이 최적임을 확인하였다 (실험 결과 표 X 참조).
+여기서 $\alpha \in [0, 1]$은 두 거리의 비중을 조절하는 파라미터이다. Grid search 결과, hibari에 대해서는 $\alpha = 0.3$ (음악적 거리 70% + 빈도 거리 30%)이 최적임을 확인하였다 (실험 결과 표 X 참조).
 
 **본 연구에서의 사용:** 거리 함수의 선택은 발견되는 cycle 구조에 직접적으로 영향을 미친다. 빈도 기반 거리만 사용하면 곡의 통계적 특성만 반영되어 화성적·선율적 의미가 있는 구조를 포착하지 못한다. Tonnetz 거리를 도입함으로써 hibari의 C장조/A단조 화성 구조와 정합적인 cycle을 발견할 수 있었다.
 
 ---
 
-### 2.6 중첩행렬(Overlap Matrix)
+### 2.5 중첩행렬(Overlap Matrix)
 
-**정의 2.6.** 음악의 시간축 길이를 $T$, 발견된 cycle의 수를 $C$라 하자. **중첩행렬** $O \in \{0, 1\}^{T \times C}$는 다음과 같이 정의된다:
+**정의 2.5.** 음악의 시간축 길이를 $T$, 발견된 cycle의 수를 $C$라 하자. **중첩행렬** $O \in \{0, 1\}^{T \times C}$는 다음과 같이 정의된다:
 
 $$
 O[t, c] = \begin{cases} 1 & \text{if cycle } c \text{ is active at time } t \\ 0 & \text{otherwise} \end{cases}
@@ -179,9 +165,9 @@ $$
 
 ---
 
-### 2.7 Kullback-Leibler Divergence와 Jensen-Shannon Divergence
+### 2.6 Kullback-Leibler Divergence와 Jensen-Shannon Divergence
 
-**정의 2.7 (KL Divergence).** 두 이산 확률 분포 $P$와 $Q$에 대해, **Kullback-Leibler divergence**는 다음과 같이 정의된다:
+**정의 2.6 (KL Divergence).** 두 이산 확률 분포 $P$와 $Q$에 대해, **Kullback-Leibler divergence**는 다음과 같이 정의된다:
 
 $$
 D_{\text{KL}}(P \,\|\, Q) = \sum_{i} P(i) \log \frac{P(i)}{Q(i)}
@@ -191,7 +177,7 @@ $$
 
 **비대칭성:** $D_{\text{KL}}(P \,\|\, Q) \ne D_{\text{KL}}(Q \,\|\, P)$. 예를 들어, $P$에는 자주 나오는 사건이 $Q$에는 거의 없으면 $D_{\text{KL}}(P \,\|\, Q)$는 매우 크지만 그 반대는 작을 수 있다.
 
-**정의 2.8 (Jensen-Shannon Divergence).** KL의 대칭화 버전으로, **JS divergence**는 다음과 같이 정의된다:
+**정의 2.7 (Jensen-Shannon Divergence).** KL의 대칭화 버전으로, **JS divergence**는 다음과 같이 정의된다:
 
 $$
 D_{\text{JS}}(P \,\|\, Q) = \frac{1}{2} D_{\text{KL}}(P \,\|\, M) + \frac{1}{2} D_{\text{KL}}(Q \,\|\, M)
@@ -214,9 +200,9 @@ $$
 
 ---
 
-### 2.8 Greedy Forward Selection과 Submodularity
+### 2.7 Greedy Forward Selection과 Submodularity
 
-**정의 2.9.** 유한 집합 $V$에 대한 함수 $f : 2^V \to \mathbb{R}$이 **submodular**라 함은, 모든 $A \subseteq B \subseteq V$와 $x \in V \setminus B$에 대해 다음이 성립한다는 것이다:
+**정의 2.8.** 유한 집합 $V$에 대한 함수 $f : 2^V \to \mathbb{R}$이 **submodular**라 함은, 모든 $A \subseteq B \subseteq V$와 $x \in V \setminus B$에 대해 다음이 성립한다는 것이다:
 
 $$
 f(A \cup \{x\}) - f(A) \ge f(B \cup \{x\}) - f(B)
@@ -257,9 +243,9 @@ $$
 
 ---
 
-### 2.9 Multi-label Binary Cross-Entropy Loss
+### 2.8 Multi-label Binary Cross-Entropy Loss
 
-**정의 2.10.** Multi-label classification 문제에서, 각 예측 단위마다 여러 클래스가 동시에 정답일 수 있다. 모델 출력 $\hat{y} \in \mathbb{R}^N$을 sigmoid 함수로 [0, 1] 범위로 변환한 후, 각 클래스마다 독립적인 binary cross-entropy를 계산한다:
+**정의 2.9.** Multi-label classification 문제에서, 각 예측 단위마다 여러 클래스가 동시에 정답일 수 있다. 모델 출력 $\hat{y} \in \mathbb{R}^N$을 sigmoid 함수로 [0, 1] 범위로 변환한 후, 각 클래스마다 독립적인 binary cross-entropy를 계산한다:
 
 $$
 \sigma(z) = \frac{1}{1 + e^{-z}}
@@ -283,9 +269,9 @@ $$
 
 ---
 
-### 2.10 음악 네트워크 구축과 가중치 분리
+### 2.9 음악 네트워크 구축과 가중치 분리
 
-**정의 2.11.** 음악 네트워크 $G = (V, E)$는 다음과 같이 정의된다:
+**정의 2.10.** 음악 네트워크 $G = (V, E)$는 다음과 같이 정의된다:
 - **Vertex set** $V$: 곡에 등장하는 모든 고유 (pitch, duration) 쌍. hibari의 경우 $|V| = 23$.
 - **Edge set** $E$: 두 vertex가 곡에서 인접하여 등장한 경우 연결.
 - **Weight function** $w : E \to \mathbb{R}_{\ge 0}$: 인접 등장 빈도.

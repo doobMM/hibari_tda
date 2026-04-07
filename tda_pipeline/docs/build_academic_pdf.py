@@ -327,6 +327,31 @@ def md_to_pdf(md_path, pdf_path):
             i += 1
             continue
 
+        # 마크다운 이미지 ![alt](path)
+        img_match = re.match(r'!\[([^\]]*)\]\(([^)]+)\)', line.strip())
+        if img_match:
+            alt = img_match.group(1)
+            img_path = img_match.group(2)
+            # 상대 경로면 md 파일과 같은 폴더 기준
+            if not os.path.isabs(img_path):
+                img_path = os.path.join(os.path.dirname(md_path), img_path)
+            if os.path.exists(img_path):
+                from PIL import Image as PILImage
+                pil = PILImage.open(img_path)
+                w_px, h_px = pil.size
+                # 페이지 폭의 80%를 최대로
+                max_w_pt = doc.width * 0.85
+                aspect = h_px / w_px
+                w_pt = min(max_w_pt, w_px * 72 / 200)
+                h_pt = w_pt * aspect
+                img_obj = Image(img_path, width=w_pt, height=h_pt)
+                img_obj.hAlign = 'CENTER'
+                story.append(Spacer(1, 3*mm))
+                story.append(img_obj)
+                story.append(Spacer(1, 1*mm))
+            i += 1
+            continue
+
         # 헤더
         if line.startswith('# '):
             story.append(make_paragraph_with_inline_math(line[2:], s_title))
