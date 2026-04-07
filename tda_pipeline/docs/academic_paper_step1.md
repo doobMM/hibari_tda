@@ -135,28 +135,48 @@ $$
 
 ---
 
-### 2.5 중첩행렬(Overlap Matrix)
+### 2.5 활성화 행렬과 중첩행렬
 
-**정의 2.5.** 음악의 시간축 길이를 $T$, 발견된 cycle의 수를 $C$라 하자. **중첩행렬** $O \in \{0, 1\}^{T \times C}$는 다음과 같이 정의된다:
+본 연구에서는 곡의 시간축 위에서 cycle 구조가 어떻게 전개되는지를 두 단계의 행렬로 표현한다. 첫 단계는 **활성화 행렬(activation matrix)**, 두 번째 단계는 그것을 가공한 **중첩행렬(overlap matrix)**이다.
+
+**정의 2.5 (활성화 행렬).** 음악의 시간축 길이를 $T$, 발견된 cycle의 수를 $C$라 하자. 활성화 행렬 $A \in \{0, 1\}^{T \times C}$는 raw 활성 정보를 담는다:
+
+시점 $t$에서 cycle $c$를 구성하는 note 중 **적어도 하나가 원곡에서 연주되고 있으면** $A[t, c] = 1$, 아니면 $A[t, c] = 0$이다. 형식적으로:
 
 $$
-O[t, c] = \begin{cases} 1 & \text{if cycle } c \text{ is active at time } t \\ 0 & \text{otherwise} \end{cases}
+A[t, c] = \mathbb{1}\!\left[\,\exists\, n \in V(c)\ \text{s.t.}\ n\ \text{is played at time}\ t\,\right]
 $$
 
-여기서 "cycle $c$가 시점 $t$에서 활성화되어 있다"는 의미는, **cycle $c$를 구성하는 note 중 적어도 하나가 시점 $t$에 원곡에서 연주되고 있다**는 것이다.
+여기서 $V(c)$는 cycle $c$의 vertex(=note) 집합이며, $\mathbb{1}[\cdot]$은 indicator function이다. 활성화 행렬은 산발적인 단일 시점 활성화까지 모두 포함하므로 노이즈가 많다.
+
+**정의 2.6 (중첩행렬).** 중첩행렬 $O \in \{0, 1\}^{T \times C}$는 활성화 행렬에서 **연속적이고 충분히 긴 활성 구간만 남긴 것**이다.
+
+$$
+O[t, c] = \mathbb{1}\!\left[\,t \in R(c)\,\right], \qquad R(c) = \bigcup_{i} [s_i, s_i + L_i]
+$$
+
+여기서 $R(c)$는 cycle $c$의 "지속 활성 구간(sustained intervals)"의 합집합이며, 각 구간 $[s_i, s_i + L_i]$는 활성화 행렬 $A[\cdot, c]$에서 길이가 임계값 $\text{scale}(c)$ 이상인 연속 1의 구간이다. 즉, 중첩행렬은 활성화 행렬을 시간 방향 morphological filtering한 결과이다.
+
+**활성화 행렬과 중첩행렬의 차이.**
+- $A[t, c]$: 시점 $t$에 cycle $c$의 note가 단 한 번이라도 울리면 1. **순간적 활성을 모두 잡음.**
+- $O[t, c]$: cycle $c$의 활성이 일정 시간 이상 **지속되는 구간**에서만 1. 산발적 노이즈 제거됨.
+
+본 연구에서 중첩행렬을 음악 생성의 seed로 사용하는 이유는, 잠시 스쳐가는 활성보다 일정 시간 유지되는 cycle만이 곡의 구조적 단위로 의미 있다고 보기 때문이다.
 
 **구축 과정:**
 
-1. **활성화 행렬(activation matrix)** 계산: 각 cycle의 vertex 집합에 속한 note가 원곡의 어느 시점에서 연주되는지 확인하여 이진 행렬을 만든다.
+1. **활성화 행렬 계산**: 위 정의 2.5에 따라 $A \in \{0,1\}^{T \times C}$를 구한다.
 
-2. **연속 활성 구간 추출**: 산발적인 단일 시점 활성화는 의미가 약하므로, 연속적으로 활성화된 길이가 임계값(scale) 이상인 구간만 남긴다.
+2. **연속 활성 구간 추출**: 각 cycle $c$에 대해 길이 $\ge \text{scale}(c)$인 연속 1 구간을 모두 찾는다.
 
-3. **Scale 동적 조정**: 각 cycle마다 scale을 조정하여 ON 비율(전체 시점 중 활성 시점의 비율)이 목표치(35%)에 가까워지도록 한다.
+3. **Scale 동적 조정**: cycle마다 ON 비율 $\rho(c) = |R(c)|/T$가 목표치 $\rho^* = 0.35$에 근접하도록 $\text{scale}(c)$를 조정한다 (구간이 너무 많으면 scale을 키우고, 너무 적으면 줄인다).
 
-**연속값 확장:** 본 연구에서는 이진 중첩행렬 외에 연속값 버전도 도입하였다:
+**목표 ON 비율 $\rho^* = 0.35$의 근거.** 이 값은 본 연구에서 새로 결정한 것이 아니라 선행연구(정재훈 외, 2024)에서 사용된 휴리스틱 값을 계승한 것이다. 직관적으로 한 cycle이 곡 전체의 약 1/3 정도 활성화되면 "그 cycle이 곡의 구조적 모티프로서 충분히 자주 등장하면서도, 모든 시점을 점유하지 않아 다른 cycle과 구분된다"는 균형을 만든다. 이 값의 최적성은 본 연구에서 정량적으로 검증하지 않았으며, 향후 다른 곡으로 확장할 때 재검토되어야 할 파라미터이다.
+
+**연속값 확장.** 본 연구에서는 이진 중첩행렬 외에, cycle의 활성 정도를 [0,1] 사이의 실수값으로 표현하는 연속값 버전도 도입하였다:
 
 $$
-O_{\text{cont}}[t, c] = \frac{\sum_{n \in V(c)} w(n) \cdot \mathbb{1}[n \text{ active at } t]}{\sum_{n \in V(c)} w(n)}
+O_{\text{cont}}[t, c] = \frac{\sum_{n \in V(c)} w(n) \cdot \mathbb{1}\!\left[n\ \text{is played at time}\ t\right]}{\sum_{n \in V(c)} w(n)}
 $$
 
 여기서 $V(c)$는 cycle $c$의 vertex 집합, $w(n) = 1 / N_{\text{cyc}}(n)$은 note $n$의 **희귀도 가중치**이며 $N_{\text{cyc}}(n)$은 note $n$이 등장하는 cycle의 개수이다. 적은 cycle에만 등장하는 희귀한 note가 활성화되면 더 큰 가중치를 받는다.
@@ -167,17 +187,17 @@ $$
 
 ### 2.6 Kullback-Leibler Divergence와 Jensen-Shannon Divergence
 
-**정의 2.6 (KL Divergence).** 두 이산 확률 분포 $P$와 $Q$에 대해, **Kullback-Leibler divergence**는 다음과 같이 정의된다:
+**정의 2.7 (KL Divergence).** 두 이산 확률 분포 $P$와 $Q$에 대해, **Kullback-Leibler divergence**는 다음과 같이 정의된다:
 
 $$
 D_{\text{KL}}(P \,\|\, Q) = \sum_{i} P(i) \log \frac{P(i)}{Q(i)}
 $$
 
-이는 분포 $Q$를 사용하여 분포 $P$를 부호화할 때 발생하는 **추가 정보량(extra bits)**으로 해석된다. 항상 $D_{\text{KL}}(P \,\|\, Q) \ge 0$이며, 등호는 $P = Q$일 때만 성립한다 (Gibbs' inequality).
+직관적으로 $D_{\text{KL}}(P \,\|\, Q)$는 "참 분포가 $P$인데 우리가 $Q$로 잘못 알고 있을 때 발생하는 정보 손실(information loss)"의 평균으로 해석된다. 두 분포가 똑같으면 손실이 없으므로 $D_{\text{KL}} = 0$이고, 분포의 차이가 클수록 값이 커진다. 항상 $D_{\text{KL}}(P \,\|\, Q) \ge 0$이며, 등호는 $P = Q$일 때만 성립한다 (Gibbs' inequality).
 
-**비대칭성:** $D_{\text{KL}}(P \,\|\, Q) \ne D_{\text{KL}}(Q \,\|\, P)$. 예를 들어, $P$에는 자주 나오는 사건이 $Q$에는 거의 없으면 $D_{\text{KL}}(P \,\|\, Q)$는 매우 크지만 그 반대는 작을 수 있다.
+**비대칭성:** $D_{\text{KL}}(P \,\|\, Q) \ne D_{\text{KL}}(Q \,\|\, P)$. 예를 들어, $P$에는 자주 나오는 사건이 $Q$에는 거의 없으면 $D_{\text{KL}}(P \,\|\, Q)$는 매우 크지만 그 반대는 작을 수 있다. 이 비대칭성 때문에 두 곡을 "공정하게" 비교하기 위해서는 대칭화된 지표가 필요하다.
 
-**정의 2.7 (Jensen-Shannon Divergence).** KL의 대칭화 버전으로, **JS divergence**는 다음과 같이 정의된다:
+**정의 2.8 (Jensen-Shannon Divergence).** KL을 대칭화한 지표로, **JS divergence**는 다음과 같이 정의된다:
 
 $$
 D_{\text{JS}}(P \,\|\, Q) = \frac{1}{2} D_{\text{KL}}(P \,\|\, M) + \frac{1}{2} D_{\text{KL}}(Q \,\|\, M)
@@ -188,21 +208,37 @@ $$
 **핵심 성질:**
 - 대칭성: $D_{\text{JS}}(P \,\|\, Q) = D_{\text{JS}}(Q \,\|\, P)$
 - 유계성: $0 \le D_{\text{JS}}(P \,\|\, Q) \le \log 2$ ($\log_2$ 사용 시 최대값 1)
-- 평방근 $\sqrt{D_{\text{JS}}}$는 metric (삼각 부등식 성립)
+- $D_{\text{JS}}$ 자체는 metric은 아니지만, $\sqrt{D_{\text{JS}}}$는 삼각 부등식까지 만족하는 metric이다 (Endres & Schindelin, 2003)
 
-**본 연구에서의 사용:** 생성된 음악과 원곡의 유사도를 평가하는 주요 지표로 사용한다. 구체적으로:
+**본 연구에서의 사용:** 생성된 음악과 원곡의 유사도를 평가하는 주요 지표로 사용한다. 두 가지 분포를 비교한다.
 
-1. **Pitch distribution JS divergence**: 원곡과 생성곡 각각에서 등장하는 pitch의 빈도 분포를 계산하고 그 사이의 JS divergence를 측정한다. 값이 낮을수록 두 곡의 음 사용이 유사하다.
+**(1) Pitch 빈도 분포.** 곡에 등장하는 모든 note에 대해, 그 pitch 값의 출현 횟수를 세어 정규화한 확률 분포이다. 곡의 모든 note 집합을 $\mathcal{N} = \{(s_k, p_k, e_k)\}_{k=1}^{K}$ ($s_k$=시작, $p_k$=pitch, $e_k$=종료)라 하면:
 
-2. **Transition matrix JS divergence** (확장 지표): note $A$ 다음에 어떤 note가 오는지의 transition 빈도 분포를 비교한다. pitch JS가 "어떤 음이 자주 나왔는가"라면, transition JS는 "어떤 순서로 나왔는가"를 측정한다.
+$$
+P_{\text{pitch}}(p) = \frac{|\{k : p_k = p\}|}{K}
+$$
 
-수치적으로, 본 연구의 최우수 결과는 JS divergence $\approx 0.002$이다. 이는 원곡과 생성곡의 pitch 분포가 거의 동일함을 의미한다 (최대값 1의 0.2% 수준).
+원곡과 생성곡 각각에서 이 분포를 계산하고 둘 사이의 JS divergence를 측정한다. 값이 0에 가까울수록 두 곡의 pitch 사용 비율이 일치한다.
+
+**(2) Transition 빈도 분포.** 시간 순서대로 인접한 두 note 쌍 $(p_k, p_{k+1})$의 출현 횟수를 세어 정규화한 분포이다. note들을 시작 시점 $s_k$ 순으로 정렬하여 pitch 시퀀스 $(p_1, p_2, \ldots, p_K)$를 만들고:
+
+$$
+P_{\text{trans}}(a, b) = \frac{|\{k : p_k = a,\ p_{k+1} = b\}|}{K - 1}
+$$
+
+이는 $|P| \times |P|$ 크기의 transition matrix를 정규화한 것과 동일하다. 원곡과 생성곡의 transition 분포 간 JS divergence는 "어떤 음 다음에 어떤 음이 오는가"의 패턴이 얼마나 유사한지를 측정한다.
+
+**두 지표의 차이.**
+- $D_{\text{JS}}(P_{\text{pitch}}^{\text{orig}} \,\|\, P_{\text{pitch}}^{\text{gen}})$: 음의 사용 비율 (시간 순서 무시)
+- $D_{\text{JS}}(P_{\text{trans}}^{\text{orig}} \,\|\, P_{\text{trans}}^{\text{gen}})$: 음의 진행 패턴 (시간 순서 반영)
+
+본 연구의 최우수 조합(Tonnetz hybrid + FC, $\alpha = 0.3$)에서 pitch JS divergence는 $D_{\text{JS}} \approx 0.002$를 달성하였다. 이는 가능한 최댓값 $\log 2 \approx 0.693$ (자연로그 기준)의 약 $0.3\%$에 해당하는 값이다.
 
 ---
 
 ### 2.7 Greedy Forward Selection과 Submodularity
 
-**정의 2.8.** 유한 집합 $V$에 대한 함수 $f : 2^V \to \mathbb{R}$이 **submodular**라 함은, 모든 $A \subseteq B \subseteq V$와 $x \in V \setminus B$에 대해 다음이 성립한다는 것이다:
+**정의 2.9.** 유한 집합 $V$에 대한 함수 $f : 2^V \to \mathbb{R}$이 **submodular**라 함은, 모든 $A \subseteq B \subseteq V$와 $x \in V \setminus B$에 대해 다음이 성립한다는 것이다:
 
 $$
 f(A \cup \{x\}) - f(A) \ge f(B \cup \{x\}) - f(B)
@@ -245,7 +281,7 @@ $$
 
 ### 2.8 Multi-label Binary Cross-Entropy Loss
 
-**정의 2.9.** Multi-label classification 문제에서, 각 예측 단위마다 여러 클래스가 동시에 정답일 수 있다. 모델 출력 $\hat{y} \in \mathbb{R}^N$을 sigmoid 함수로 [0, 1] 범위로 변환한 후, 각 클래스마다 독립적인 binary cross-entropy를 계산한다:
+**정의 2.10.** Multi-label classification 문제에서, 각 예측 단위마다 여러 클래스가 동시에 정답일 수 있다. 모델 출력 $\hat{y} \in \mathbb{R}^N$을 sigmoid 함수로 [0, 1] 범위로 변환한 후, 각 클래스마다 독립적인 binary cross-entropy를 계산한다:
 
 $$
 \sigma(z) = \frac{1}{1 + e^{-z}}
@@ -271,7 +307,7 @@ $$
 
 ### 2.9 음악 네트워크 구축과 가중치 분리
 
-**정의 2.10.** 음악 네트워크 $G = (V, E)$는 다음과 같이 정의된다:
+**정의 2.11.** 음악 네트워크 $G = (V, E)$는 다음과 같이 정의된다:
 - **Vertex set** $V$: 곡에 등장하는 모든 고유 (pitch, duration) 쌍. hibari의 경우 $|V| = 23$.
 - **Edge set** $E$: 두 vertex가 곡에서 인접하여 등장한 경우 연결.
 - **Weight function** $w : E \to \mathbb{R}_{\ge 0}$: 인접 등장 빈도.
@@ -315,5 +351,6 @@ $$
 - Bauer, U. (2021). "Ripser: efficient computation of Vietoris–Rips persistence barcodes". *Journal of Applied and Computational Topology*, 5, 391–423.
 - Nemhauser, G. L., Wolsey, L. A., & Fisher, M. L. (1978). "An analysis of approximations for maximizing submodular set functions". *Mathematical Programming*, 14(1), 265–294.
 - Nielsen, F. (2019). "On the Jensen–Shannon symmetrization of distances". *Entropy*, 21(5), 485.
+- Endres, D. M., & Schindelin, J. E. (2003). "A new metric for probability distributions". *IEEE Transactions on Information Theory*, 49(7), 1858–1860.
 - Tran, M. L., Park, C., & Jung, J.-H. (2021). "Topological Data Analysis of Korean Music in Jeongganbo". arXiv:2103.06620.
 - 이동진, Tran, M. L., 정재훈 (2024). "국악의 기하학적 구조와 인공지능 작곡".
