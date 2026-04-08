@@ -122,29 +122,31 @@ def main():
     print(f"\n  Tonnetz: {K} cycles, overlap shape {overlap_full.shape}")
 
     # ── Prototype module overlap ──
-    # 옵션 A (naive): 첫 32 행만 사용  ← 이전 접근
-    # 옵션 B (union): 33개 모듈의 OR  ← 더 풍부
-    # 옵션 C (mean):  33개 모듈의 평균 (연속값) 후 이진화
+    # 전략 비교 (run_module_generation_v2.py, N=10):
+    #   P0 OR (99.9% 셀 활성) : JS 0.094 ± 0.028  — 사실상 random sampling에 가까움
+    #   P1 mean → τ=0.5 (16%) : JS 0.113 ± 0.029  — §4.3a 의 최적 τ 와 일치
+    #   P3 median module (38%): JS 0.106 ± 0.029  — 실제 한 모듈 선택
     #
-    # 본 실험은 옵션 B (union) 를 사용한다. 이유: 각 cycle이
-    # 곡 전체에서 한 번이라도 활성화된 정보를 모두 수집하여,
-    # "가능한 모든 구조적 다양성"을 갖춘 prototype 모듈을 만든다.
+    # 평균 JS는 세 전략이 비슷하지만, 전략별 의미가 다르다:
+    #   OR은 "모든 cycle이 모든 시점에 활성" = 본질적으로 random sampling.
+    #   P1은 "33개 모듈 중 절반 이상에서 활성인 cell만" = 선택적 prototype.
+    # 본 스크립트는 P1 (mean → τ=0.5) 를 기본으로 채택한다 — §4.3a 의
+    # 발견과 일치하며 density가 의미 있는 수준 (16%)이다.
 
     n_mod_full = N_INST1_COPIES  # = 33
     total_usable = n_mod_full * MODULE_LEN  # 33 * 32 = 1056
     if total_usable > overlap_full.shape[0]:
-        # overlap이 1088이면 1056까지만 사용
         total_usable = overlap_full.shape[0] // MODULE_LEN * MODULE_LEN
-    # reshape to (n_mod, 32, K)
     usable = overlap_full[:total_usable].reshape(
-        total_usable // MODULE_LEN, MODULE_LEN, K)
-    overlap_mod_union = usable.max(axis=0)  # (32, K) — 각 셀별 OR
-    overlap_mod = overlap_mod_union.astype(np.float32)
-    print(f"  Prototype module overlap (union over 33 modules) shape: "
+        total_usable // MODULE_LEN, MODULE_LEN, K).astype(float)
+
+    mean_activation = usable.mean(axis=0)  # (32, K) 각 셀의 33 모듈 평균
+    overlap_mod = (mean_activation >= 0.5).astype(np.float32)
+    print(f"  Prototype module overlap (mean → τ=0.5) shape: "
           f"{overlap_mod.shape}")
-    print(f"  Active cells: naive first-32 = "
-          f"{(overlap_full[:MODULE_LEN] > 0).sum()},  "
-          f"union = {(overlap_mod > 0).sum()} / {overlap_mod.size}")
+    print(f"  Density: naive first-32 = "
+          f"{(overlap_full[:MODULE_LEN] > 0).mean():.3f},  "
+          f"P1 selective = {(overlap_mod > 0).mean():.3f}")
 
     # 원곡 평가를 위한 기준: hibari 전체
     original = [inst1, inst2]

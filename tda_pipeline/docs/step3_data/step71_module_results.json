@@ -9,68 +9,68 @@
     "inst2_initial_offset": 33,
     "inst2_rest_gap": 1,
     "js_divergence": {
-      "mean": 0.07382948214490866,
-      "std": 0.024901407134162477,
-      "min": 0.030125683724134253,
-      "max": 0.10071960268282622
+      "mean": 0.11026660517861371,
+      "std": 0.03129981322664292,
+      "min": 0.06827809854079125,
+      "max": 0.1628243940375539
     },
     "kl_divergence": {
-      "mean": 1.6751302638850638,
-      "std": 1.0263757004094072,
-      "min": 0.1310582044926489,
-      "max": 3.4135014118610734
+      "mean": 2.9689409384789918,
+      "std": 1.4520199722988512,
+      "min": 0.8695666837800814,
+      "max": 5.513633869581225
     },
     "note_coverage": {
-      "mean": 0.8304347826086957,
-      "std": 0.05957914432201293,
-      "min": 0.782608695652174,
-      "max": 0.9565217391304348
+      "mean": 0.7913043478260869,
+      "std": 0.05344663453503124,
+      "min": 0.6956521739130435,
+      "max": 0.8695652173913043
     },
     "total_notes": {
-      "mean": 3555.5,
-      "std": 261.88897138545815,
-      "min": 3250.0,
-      "max": 3900.0
+      "mean": 3139.5,
+      "std": 221.0637163052016,
+      "min": 2860.0,
+      "max": 3575.0
     },
     "pitch_count": {
-      "mean": 15.4,
-      "std": 1.0749676997731399,
-      "min": 14.0,
-      "max": 17.0
+      "mean": 14.3,
+      "std": 0.9486832980505138,
+      "min": 13.0,
+      "max": 16.0
     },
     "elapsed_s": {
-      "mean": 0.0009234905242919922,
-      "std": 0.00022938114799873132,
-      "min": 0.0005087852478027344,
-      "max": 0.001224517822265625
+      "mean": 0.0019600391387939453,
+      "std": 0.0006480642595115924,
+      "min": 0.0010006427764892578,
+      "max": 0.003030538558959961
     },
-    "best_seed": 7106,
-    "best_js": 0.030125683724134253
+    "best_seed": 7108,
+    "best_js": 0.06827809854079125
   },
   "trials": [
     {
       "seed": 7100,
-      "module_note_count": 60,
-      "inst1_rep_count": 1980,
-      "inst2_rep_count": 1920,
-      "total_notes": 3900,
-      "js_divergence": 0.05260480877776126,
-      "kl_divergence": 1.1028458198626159,
-      "note_coverage": 0.782608695652174,
-      "pitch_count": 16,
-      "elapsed_s": 0.0005087852478027344
-    },
-    {
-      "seed": 7101,
       "module_note_count": 52,
       "inst1_rep_count": 1716,
       "inst2_rep_count": 1664,
       "total_notes": 3380,
-      "js_divergence": 0.06475041018353367,
-      "kl_divergence": 2.056526647548312,
-      "note_coverage": 0.8695652173913043,
-      "pitch_count": 15,
-      "elapsed_s": 0.0009992122650146484
+      "js_divergence": 0.12294615728334005,
+      "kl_divergence": 2.8786157232402387,
+      "note_coverage": 0.6956521739130435,
+      "pitch_count": 14,
+      "elapsed_s": 0.0010006427764892578
+    },
+    {
+      "seed": 7101,
+      "module_note_count": 49,
+      "inst1_rep_count": 1617,
+      "inst2_rep_count": 1568,
+      "total_notes": 3185,
+      "js_divergence": 0.1457787701654272,
+      "kl_divergence": 3.2780447443351264,
+      "note_coverage": 0.7391304347826086,
+      "pitch_count": 14,
+      "elapsed_s": 0.0010178089141845703
     },
     {
       "seed": 7102,
@@ -78,95 +78,95 @@
       "inst1_rep_count": 1650,
       "inst2_rep_count": 1600,
       "total_notes": 3250,
-      "js_divergence": 0.09094135268437892,
-      "kl_divergence": 2.423120664452904,
+      "js_divergence": 0.12132339157819805,
+      "kl_divergence": 3.8224930955950542,
       "note_coverage": 0.8260869565217391,
       "pitch_count": 14,
-      "elapsed_s": 0.0010018348693847656
+      "elapsed_s": 0.002002716064453125
     },
     {
       "seed": 7103,
-      "module_note_count": 56,
-      "inst1_rep_count": 1848,
-      "inst2_rep_count": 1792,
-      "total_notes": 3640,
-      "js_divergence": 0.09837196349864205,
-      "kl_divergence": 0.42964010792849106,
-      "note_coverage": 0.8695652173913043,
-      "pitch_count": 17,
-      "elapsed_s": 0.0010001659393310547
+      "module_note_count": 49,
+      "inst1_rep_count": 1617,
+      "inst2_rep_count": 1568,
+      "total_notes": 3185,
+      "js_divergence": 0.07478735284055796,
+      "kl_divergence": 1.4681011932452894,
+      "note_coverage": 0.8260869565217391,
+      "pitch_count": 15,
+      "elapsed_s": 0.0016775131225585938
     },
     {
       "seed": 7104,
-      "module_note_count": 59,
-      "inst1_rep_count": 1947,
-      "inst2_rep_count": 1888,
-      "total_notes": 3835,
-      "js_divergence": 0.04507014624843844,
-      "kl_divergence": 0.7652540985614965,
-      "note_coverage": 0.8695652173913043,
-      "pitch_count": 16,
-      "elapsed_s": 0.0010199546813964844
+      "module_note_count": 46,
+      "inst1_rep_count": 1518,
+      "inst2_rep_count": 1472,
+      "total_notes": 2990,
+      "js_divergence": 0.10296636477674861,
+      "kl_divergence": 1.9150122808158643,
+      "note_coverage": 0.8260869565217391,
+      "pitch_count": 15,
+      "elapsed_s": 0.002002239227294922
     },
     {
       "seed": 7105,
-      "module_note_count": 50,
-      "inst1_rep_count": 1650,
-      "inst2_rep_count": 1600,
-      "total_notes": 3250,
-      "js_divergence": 0.09941897930842684,
-      "kl_divergence": 2.2078501214102206,
+      "module_note_count": 45,
+      "inst1_rep_count": 1485,
+      "inst2_rep_count": 1440,
+      "total_notes": 2925,
+      "js_divergence": 0.1268921567395936,
+      "kl_divergence": 4.743496352172162,
       "note_coverage": 0.782608695652174,
-      "pitch_count": 15,
-      "elapsed_s": 0.001224517822265625
+      "pitch_count": 13,
+      "elapsed_s": 0.0020170211791992188
     },
     {
       "seed": 7106,
-      "module_note_count": 56,
-      "inst1_rep_count": 1848,
-      "inst2_rep_count": 1792,
-      "total_notes": 3640,
-      "js_divergence": 0.030125683724134253,
-      "kl_divergence": 0.1310582044926489,
-      "note_coverage": 0.9565217391304348,
-      "pitch_count": 17,
-      "elapsed_s": 0.0009770393371582031
+      "module_note_count": 47,
+      "inst1_rep_count": 1551,
+      "inst2_rep_count": 1504,
+      "total_notes": 3055,
+      "js_divergence": 0.07828909266637807,
+      "kl_divergence": 2.1124062534191252,
+      "note_coverage": 0.8695652173913043,
+      "pitch_count": 15,
+      "elapsed_s": 0.002003192901611328
     },
     {
       "seed": 7107,
-      "module_note_count": 51,
-      "inst1_rep_count": 1683,
-      "inst2_rep_count": 1632,
-      "total_notes": 3315,
-      "js_divergence": 0.10071960268282622,
-      "kl_divergence": 3.4135014118610734,
+      "module_note_count": 44,
+      "inst1_rep_count": 1452,
+      "inst2_rep_count": 1408,
+      "total_notes": 2860,
+      "js_divergence": 0.1628243940375539,
+      "kl_divergence": 5.513633869581225,
       "note_coverage": 0.782608695652174,
-      "pitch_count": 14,
-      "elapsed_s": 0.0005106925964355469
+      "pitch_count": 13,
+      "elapsed_s": 0.002033233642578125
     },
     {
       "seed": 7108,
-      "module_note_count": 60,
-      "inst1_rep_count": 1980,
-      "inst2_rep_count": 1920,
-      "total_notes": 3900,
-      "js_divergence": 0.07771641967289869,
-      "kl_divergence": 2.1142053339970475,
-      "note_coverage": 0.782608695652174,
-      "pitch_count": 15,
-      "elapsed_s": 0.0009958744049072266
+      "module_note_count": 46,
+      "inst1_rep_count": 1518,
+      "inst2_rep_count": 1472,
+      "total_notes": 2990,
+      "js_divergence": 0.06827809854079125,
+      "kl_divergence": 0.8695666837800814,
+      "note_coverage": 0.8260869565217391,
+      "pitch_count": 16,
+      "elapsed_s": 0.0028154850006103516
     },
     {
       "seed": 7109,
-      "module_note_count": 53,
-      "inst1_rep_count": 1749,
-      "inst2_rep_count": 1696,
-      "total_notes": 3445,
-      "js_divergence": 0.07857545466804625,
-      "kl_divergence": 2.107300228735827,
-      "note_coverage": 0.782608695652174,
-      "pitch_count": 15,
-      "elapsed_s": 0.0009968280792236328
+      "module_note_count": 55,
+      "inst1_rep_count": 1815,
+      "inst2_rep_count": 1760,
+      "total_notes": 3575,
+      "js_divergence": 0.09858027315754847,
+      "kl_divergence": 3.08803918860575,
+      "note_coverage": 0.7391304347826086,
+      "pitch_count": 14,
+      "elapsed_s": 0.003030538558959961
     }
   ]
 }
