@@ -46,7 +46,7 @@ def main():
          'text': '가중치 행렬 →\nrefine → 거리\n행렬 → Vietoris-\nRips → barcode',
          'color': '#e1f5fe'},
         {'title': 'Stage 3', 'name': 'Overlap Matrix',
-         'text': 'cycle 활성화 판정\n→ scale 조정 →\n이진 $O \\in \\{0,1\\}^{T\\times K}$\n또는 연속값\n$O_{cont} \\in [0,1]^{T\\times K}$',
+         'text': 'cycle 활성화 판정\n→ scale 조정 →\n이진 중첩행렬\n$O \\in \\{0,1\\}^{T\\times K}$\n(연속값 변형 가능)',
          'color': '#e8f5e9'},
         {'title': 'Stage 4', 'name': 'Generation',
          'text': 'Algorithm 1\n(확률적 샘플링)\n또는\nAlgorithm 2\n(FC / LSTM /\nTransformer)',

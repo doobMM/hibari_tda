@@ -1,12 +1,12 @@
 """
 Figure 4 — Persistence Barcode Diagram.
-기존 pkl의 (cycle, birth, death) 기록으로 barcode 시각화.
+탐색 구간 [0, 1.5] 내에서 살아있는 cycle을 시각화.
 
-개선사항:
-- 7개의 "영속 cycle" (death = 10001)은 death를 rate 최대값 1.5로 capping
-- 전체 48개 cycle 모두 표시
-- lifespan 기준 내림차순 정렬 → 위쪽에 긴 cycle
-- 영속 cycle은 우측에 화살표로 "→ ∞" 표시
+개선사항 (v3):
+- 탐색 상한 1.5를 넘어가는 모든 cycle (총 11개)을 일관되게 "탐색 범위 초과"로 처리
+- 두 가지 색만 사용 (빨강 = 범위 초과, 파랑 = 범위 내 소멸) — viridis gradient 제거
+- xlim을 1.5 + 작은 여유로 정확히 자름
+- 범위 초과 cycle은 우측 끝에 ∞ 표기
 """
 import os, sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -15,84 +15,86 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 
-RATE_MAX = 1.5  # 탐색 상한
+RATE_MAX = 1.5
 
 def main():
     pkl_path = os.path.abspath(os.path.join(
         os.path.dirname(__file__), '..', '..',
         'pickle', 'h1_rBD_t_notes1_1e-4_0.0~1.5.pkl'))
     df = pd.read_pickle(pkl_path)
-    print(f"Loaded {len(df)} rows from {pkl_path}")
+    print(f"Loaded {len(df)} rows")
 
-    # per cycle birth / death 집계
     rows = []
-    for cycle_id, grp in df.groupby('cycle'):
-        b = grp['birth'].min()
-        d = grp['death'].max()
-        rows.append({'cycle': cycle_id, 'birth': b, 'death': d})
-
+    for cid, grp in df.groupby('cycle'):
+        rows.append({'cycle': cid,
+                     'birth': grp['birth'].min(),
+                     'death': grp['death'].max()})
     bars = pd.DataFrame(rows)
-    # 10001 같은 infty placeholder를 RATE_MAX + 작은 여유로 clip
-    EPS = 0.0
-    bars['infinite'] = bars['death'] >= RATE_MAX * 2  # 영속 여부 플래그
-    bars.loc[bars['infinite'], 'death'] = RATE_MAX + EPS
-    bars['lifespan_vis'] = bars['death'] - bars['birth']
 
-    # lifespan 기준 내림차순 정렬
-    bars = bars.sort_values('lifespan_vis', ascending=False).reset_index(drop=True)
+    # 탐색 범위 [0, 1.5]를 넘어가는 cycle = beyond_range
+    bars['beyond'] = bars['death'] > RATE_MAX
+    # 시각화용 death (clip)
+    bars['death_vis'] = bars['death'].clip(upper=RATE_MAX)
+    bars['lifespan_vis'] = bars['death_vis'] - bars['birth']
+
+    # lifespan_vis 내림차순 정렬: 위쪽 = 오래 살아남은
+    bars = bars.sort_values(['beyond', 'lifespan_vis'],
+                            ascending=[False, False]).reset_index(drop=True)
     n_bars = len(bars)
-    print(f"Total cycles: {n_bars},  infinite: {bars['infinite'].sum()}")
+    n_beyond = int(bars['beyond'].sum())
+    print(f"Total cycles: {n_bars},  beyond range: {n_beyond}")
 
-    fig, ax = plt.subplots(figsize=(12, 9))
+    fig, ax = plt.subplots(figsize=(11, 9))
     fig.patch.set_facecolor('white')
 
-    cmap_finite = plt.cm.viridis
-    max_finite_life = bars[~bars['infinite']]['lifespan_vis'].max()
+    color_beyond = '#e74c3c'   # 빨강
+    color_finite = '#3498db'   # 파랑
 
     for i, row in bars.iterrows():
-        if row['infinite']:
-            color = '#e74c3c'  # 빨강 — 영속 cycle
-        else:
-            t = row['lifespan_vis'] / max_finite_life if max_finite_life > 0 else 0
-            color = cmap_finite(t)
-        # y는 위에서부터(긴 cycle이 위)
+        color = color_beyond if row['beyond'] else color_finite
         y = n_bars - 1 - i
-        width = row['death'] - row['birth']
+        width = row['death_vis'] - row['birth']
         ax.barh(y, width, left=row['birth'], height=0.72,
                 color=color, edgecolor='#2c3e50', linewidth=0.4)
-        # 영속 cycle 화살표
-        if row['infinite']:
-            ax.annotate('∞', xy=(RATE_MAX + 0.01, y), xytext=(RATE_MAX + 0.05, y),
-                        ha='left', va='center', fontsize=12, color='#c0392b',
-                        fontweight='bold')
+        if row['beyond']:
+            ax.annotate('∞', xy=(RATE_MAX + 0.005, y),
+                        ha='left', va='center', fontsize=13,
+                        color='#c0392b', fontweight='bold')
+
+    # 두 그룹의 경계선 (시각적 구분)
+    if n_beyond > 0 and n_beyond < n_bars:
+        boundary_y = n_bars - n_beyond - 0.5
+        ax.axhline(y=boundary_y, color='#7f8c8d',
+                   linestyle=':', linewidth=1.0, alpha=0.5)
+        ax.text(RATE_MAX + 0.05, boundary_y - 0.5, '↓ 탐색 범위 내 소멸',
+                fontsize=8, color='#7f8c8d', va='top')
+        ax.text(RATE_MAX + 0.05, boundary_y + 0.5, '↑ 탐색 범위 초과',
+                fontsize=8, color='#7f8c8d', va='bottom')
 
     ax.set_xlabel('Rate parameter $r_t$  (filtration scale)',
                   fontsize=12, color='#2c3e50')
-    ax.set_ylabel('Cycle index (sorted by lifespan, top = longest)',
+    ax.set_ylabel('Cycle index (sorted by lifespan)',
                   fontsize=12, color='#2c3e50')
-    ax.set_title('Figure 4. Persistence Barcode — hibari H$_1$ cycles (모든 48개)\n'
-                 '빨강 = 탐색 구간 $[0, 1.5]$ 내에서 소멸하지 않은 영속 cycle\n'
-                 'viridis = 유한 lifespan에 비례 (보라 → 노랑)',
+    ax.set_title('Figure 4. Persistence Barcode — hibari $H_1$ cycles (전체 48개)\n'
+                 f'빨강 = 탐색 범위 $[0, {RATE_MAX}]$를 넘어 살아남는 cycle ({n_beyond}개)\n'
+                 f'파랑 = 범위 내에서 birth/death 모두 발생하는 유한 cycle ({n_bars - n_beyond}개)',
                  fontsize=11, color='#2c3e50', pad=12)
 
-    ax.set_xlim(-0.03, RATE_MAX + 0.2)
+    ax.set_xlim(-0.03, RATE_MAX + 0.18)
     ax.set_ylim(-0.8, n_bars - 0.2)
     ax.grid(axis='x', alpha=0.3, linestyle='--')
     ax.spines['top'].set_visible(False)
     ax.spines['right'].set_visible(False)
 
-    # 영속/유한 범례
     from matplotlib.patches import Patch
     legend_elems = [
-        Patch(facecolor='#e74c3c', edgecolor='#2c3e50',
-              label=f'영속 cycle ({int(bars["infinite"].sum())}개)'),
-        Patch(facecolor=cmap_finite(0.9), edgecolor='#2c3e50',
-              label='유한 cycle (lifespan 긴 쪽)'),
-        Patch(facecolor=cmap_finite(0.1), edgecolor='#2c3e50',
-              label='유한 cycle (lifespan 짧은 쪽)'),
+        Patch(facecolor=color_beyond, edgecolor='#2c3e50',
+              label=f'탐색 범위 초과 ({n_beyond}개)'),
+        Patch(facecolor=color_finite, edgecolor='#2c3e50',
+              label=f'범위 내 유한 cycle ({n_bars - n_beyond}개)'),
     ]
     ax.legend(handles=legend_elems, loc='lower right',
-              fontsize=9, framealpha=0.95)
+              fontsize=10, framealpha=0.95)
 
     out = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                        'fig4_barcode.png')
