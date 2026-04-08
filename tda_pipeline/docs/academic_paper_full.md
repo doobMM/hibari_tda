@@ -841,6 +841,65 @@ __해석 9 — Tonnetz + FC 조합의 최고 성능.__ Tonnetz hybrid distance (
 
 ---
 
+## 3.4a Experiment 4 — 개선 F: Continuous overlap + Algorithm 2 (FC)
+
+§7.1.5 에서 제안된 개선 F — *continuous activation matrix 를 Algorithm 2 (DL) 의 입력으로 직접 사용* — 를 구현 및 검증한다. §3.3a 에서 Algorithm 1 에 대해 continuous 변형이 $11\%$ 개선을 주었음을 확인한 바 있는데, 본 절은 *동일한 아이디어를 FC 모델에 적용했을 때 얼마나 더 큰 효과가 있는가* 를 정량화한다. 실험 러너는 `tda_pipeline/run_improvement_F.py`, 결과는 `docs/step3_data/step_improvementF_results.json` 에 저장되어 있다.
+
+### 실험 설계
+
+FC 모델 (§3.4 최우수 아키텍처: 2-layer, hidden 128, dropout 0.3) 을 고정하고, **학습 입력 데이터만** 두 가지로 바꾸어 비교한다.
+
+__F-bin (baseline)__: 기존 §3.4 와 동일. `build_activation_matrix(continuous=False)` 로 얻은 이진 활성행렬 $X_{\text{bin}} \in \{0,1\}^{T \times K}$ 를 FC 의 입력으로 사용.
+
+__F-cont__: 희귀도 가중치가 적용된 연속값 활성행렬 $X_{\text{cont}} \in [0,1]^{T \times K}$ 를 사용. 구체적으로 $X_{\text{cont}}[t, c] = a_{c,t}$ (§4.3a 에서 정의한 $a_{c,t}$, $w(n) = 1/N_{\text{cyc}}(n)$ 의 희귀도 가중치). 모든 다른 조건 — 모델 아키텍처, learning rate, epochs, batch size, train/valid split — 는 F-bin 과 완전히 동일.
+
+__핵심 관찰__: FC 의 입력층은 `nn.Linear` 이므로 binary 와 continuous 입력 양쪽 모두를 자연스럽게 처리할 수 있다. 즉 본 실험은 *모델 변경 없이 데이터 표현만 바꾸었을 때의 효과* 를 측정하며, 이는 continuous 버전의 정보 이득을 isolated 하게 평가한다.
+
+각 설정에 대해 서로 다른 torch seed ($8100, 8107, 8114, 8121, 8128$) 로 $N = 5$ 회 학습 + 생성 + JS 측정.
+
+### 결과
+
+| 설정 | JS (mean ± std) | best | validation loss (mean) | coverage |
+|---|---|---|---|---|
+| __F-bin__ (기존 §3.4) | $0.0017 \pm 0.0005$ | $0.0012$ | $0.0929$ | $0.954$ |
+| __F-cont__ ★ | $\mathbf{0.0004 \pm 0.0001}$ | $\mathbf{0.0003}$ | $\mathbf{0.0401}$ | $\mathbf{1.000}$ |
+
+__핵심 발견 1: JS divergence 약 $4.25$배 감소.__ F-cont 의 평균 JS $0.0004$ 는 F-bin 의 $0.0017$ 대비 약 $76\%$ 감소이다. §3.1 에서 distance function 교체 (frequency $\to$ Tonnetz) 가 $47\%$ 감소, §3.3a 에서 $\tau = 0.5$ 이진화가 추가 $11\%$ 감소를 주었다면, 본 개선 F 는 그 위에 또 한 단계 개선을 쌓아 **$0.0017 \to 0.0004$ 라는 본 연구 최저값** 을 달성한다.
+
+__핵심 발견 2: 분산도 대폭 감소 ($\sim 5$배).__ F-bin 의 표준편차 $0.0005$ 대비 F-cont 는 $0.0001$. 즉 seed 별 결과의 일관성도 크게 개선되었다.
+
+__핵심 발견 3: Validation loss 도 $2.3$배 낮음 ($0.093 \to 0.040$).__ 이는 모델이 *학습 자체를 더 잘* 한다는 뜻으로, 연속값 표현이 이진화 대비 학습 신호가 더 풍부하고 gradient landscape 이 더 부드러움을 시사한다.
+
+__핵심 발견 4: Note coverage 가 $0.954 \to 1.000$ 으로 완전화.__ F-bin 에서는 일부 rare note 가 생성되지 않는 경우가 있었지만, F-cont 에서는 전체 $23$개 note 가 항상 생성된다. 이는 희귀도 가중치 ($w(n) = 1/N_{\text{cyc}}(n)$) 가 의도한 효과 — 희귀 note 에 더 큰 학습 신호 — 가 실제로 작동함을 뒷받침한다.
+
+### 왜 이렇게 큰 개선이 나오는가 — 음악적 해석
+
+__이진화는 "있다/없다" 만 말하지만, 연속값은 "얼마나 확신하는가" 를 말한다.__ 이진 $X_{\text{bin}}[t, c]$ 는 "시점 $t$ 에 cycle $c$ 의 vertex 중 *하나라도* 울리면 $1$"이다. 이것은 cycle $c$ 의 활성 여부에 대해 이진 판정만 내린다. 반면 연속값 $X_{\text{cont}}[t, c] = a_{c, t}$ 는 "cycle $c$ 의 vertex 중 *희귀도 가중치 기준으로 몇 퍼센트가* 활성인가" 를 $[0, 1]$ 실수로 표현한다. 즉 "이 시점에 이 cycle 이 어떤 종류의 note 조합으로 부분적으로 활성화되어 있는가" 라는 훨씬 풍부한 정보를 전달한다.
+
+FC 모델 입장에서 이 차이는 결정적이다. 이진 입력에서 한 cycle 의 활성은 "on/off" 두 상태뿐이지만, 연속 입력에서는 "오직 common note 2 개만 활성 (낮은 값)" vs "rare note 포함 전체가 활성 (높은 값)" 같은 구별이 가능해진다. FC 가 이 구별을 학습하여 output note 분포를 조정할 수 있기 때문에, 원곡의 pitch 분포에 더 가까운 결과가 나온다.
+
+### 기존 모든 결과와의 통합 비교
+
+| 실험 | 설정 | JS divergence | 출처 |
+|---|---|---|---|
+| §3.1 Algo 1 | frequency baseline | $0.0753$ | §3.1 |
+| §3.1 Algo 1 | Tonnetz hybrid | $0.0398$ | §3.1 |
+| §3.3a Algo 1 | Tonnetz + continuous $\tau=0.5$ | $0.0343$ | §3.3a |
+| §7.1.6 Algo 1 | P4 + C (module-level) | $0.0590$ | §7.1.6 |
+| §7.1.8 Algo 1 | P4 + C, best trial (seed 9302) | $\mathbf{0.0258}$ | §7.1.8 |
+| §3.4 Algo 2 FC | Tonnetz binary | $0.0017$ | §3.4a (본 절) |
+| __§3.4a Algo 2 FC__ | __Tonnetz continuous__ | $\mathbf{0.0004 \pm 0.0001}$ | __본 절 ★__ |
+
+**§3.4a (개선 F) 는 본 연구 전체에서 관측된 최저 JS divergence** 이며, 이론적 최댓값 $\log 2 \approx 0.693$ 의 약 $0.06\%$ 에 해당한다. 이는 §2.6 JS divergence 절에서 보고한 "$0.002$, 가능한 최댓값의 $0.3\%$" 수치보다도 5배 낮다.
+
+### 한계 및 후속 과제
+
+1. __학습 시 분산이 충분히 측정되었는가__: $N = 5$ 는 §3.1 의 $N = 20$ 에 비해 적다. FC 학습이 빠르므로 $N = 20$ 재확장이 비교적 쉽게 가능하다.
+2. __LSTM / Transformer 에도 F-cont 적용__: 본 절은 FC 만 다루었다. §3.4 에서 관찰한 "FC > LSTM/Transformer" 패턴이 continuous 입력에서도 유지되는지 검증해야 한다.
+3. __Continuous + module-local (P4)__: §7.1 의 P4 + C 와 개선 F 를 결합하여 "module-local continuous activation 을 FC 에 입력" 하는 실험도 의미가 있다.
+
+---
+
 ## 4.5 종합 논의
 
 __(1) 음악이론적 거리 함수의 중요성.__ Experiment 1의 결과는 "빈도 기반 거리(frequency)는 기본 선택일 뿐, Tonnetz처럼 음악이론적 구조를 반영한 거리가 훨씬 더 좋은 위상적 표현을 만든다"는 본 연구의 가설을 강하게 지지한다. frequency → Tonnetz 전환만으로 JS divergence가 $47\%$ 감소했다.
