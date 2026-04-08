@@ -78,6 +78,7 @@ def main():
     s2 = strip_references(strip_title(read('academic_paper_step2.md')))
     s3 = strip_references(strip_title(read('academic_paper_step3.md')))
     s4 = strip_references(strip_title(read('academic_paper_step4.md')))
+    s71 = strip_references(strip_title(read('academic_paper_step71.md')))
     back = read('_paper_back.md')
 
     # Step1 메인 섹션은 이미 ## 2. 수학적 배경
@@ -85,8 +86,11 @@ def main():
     s2 = renumber_sections_step2(s2)
     s3 = renumber_sections_step3(s3)
     s4 = renumber_sections_step4(s4)
+    # §7.1 report → Appendix (부록) A
+    s71 = s71.replace('## 모듈 단위 생성 + 구조적 재배치',
+                      '## 부록 A. §7.1 구현 보고 — 모듈 단위 생성 + 구조적 재배치')
 
-    parts = [front, s1, s2, s3, s4, back]
+    parts = [front, s1, s2, s3, s4, back, s71]
     merged = '\n\n'.join(p.rstrip() for p in parts) + '\n'
 
     out_path = os.path.join(DOCS, 'academic_paper_full.md')

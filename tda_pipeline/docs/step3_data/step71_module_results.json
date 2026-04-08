@@ -1,0 +1,172 @@
+{
+  "summary": {
+    "n_repeats": 10,
+    "method": "§7.1 module-level generation + structural rearrangement",
+    "cycle_source": "Tonnetz (full-song PH), sliced to first 32 rows",
+    "module_len": 32,
+    "n_inst1_copies": 33,
+    "n_inst2_copies": 32,
+    "inst2_initial_offset": 33,
+    "inst2_rest_gap": 1,
+    "js_divergence": {
+      "mean": 0.07382948214490866,
+      "std": 0.024901407134162477,
+      "min": 0.030125683724134253,
+      "max": 0.10071960268282622
+    },
+    "kl_divergence": {
+      "mean": 1.6751302638850638,
+      "std": 1.0263757004094072,
+      "min": 0.1310582044926489,
+      "max": 3.4135014118610734
+    },
+    "note_coverage": {
+      "mean": 0.8304347826086957,
+      "std": 0.05957914432201293,
+      "min": 0.782608695652174,
+      "max": 0.9565217391304348
+    },
+    "total_notes": {
+      "mean": 3555.5,
+      "std": 261.88897138545815,
+      "min": 3250.0,
+      "max": 3900.0
+    },
+    "pitch_count": {
+      "mean": 15.4,
+      "std": 1.0749676997731399,
+      "min": 14.0,
+      "max": 17.0
+    },
+    "elapsed_s": {
+      "mean": 0.0009234905242919922,
+      "std": 0.00022938114799873132,
+      "min": 0.0005087852478027344,
+      "max": 0.001224517822265625
+    },
+    "best_seed": 7106,
+    "best_js": 0.030125683724134253
+  },
+  "trials": [
+    {
+      "seed": 7100,
+      "module_note_count": 60,
+      "inst1_rep_count": 1980,
+      "inst2_rep_count": 1920,
+      "total_notes": 3900,
+      "js_divergence": 0.05260480877776126,
+      "kl_divergence": 1.1028458198626159,
+      "note_coverage": 0.782608695652174,
+      "pitch_count": 16,
+      "elapsed_s": 0.0005087852478027344
+    },
+    {
+      "seed": 7101,
+      "module_note_count": 52,
+      "inst1_rep_count": 1716,
+      "inst2_rep_count": 1664,
+      "total_notes": 3380,
+      "js_divergence": 0.06475041018353367,
+      "kl_divergence": 2.056526647548312,
+      "note_coverage": 0.8695652173913043,
+      "pitch_count": 15,
+      "elapsed_s": 0.0009992122650146484
+    },
+    {
+      "seed": 7102,
+      "module_note_count": 50,
+      "inst1_rep_count": 1650,
+      "inst2_rep_count": 1600,
+      "total_notes": 3250,
+      "js_divergence": 0.09094135268437892,
+      "kl_divergence": 2.423120664452904,
+      "note_coverage": 0.8260869565217391,
+      "pitch_count": 14,
+      "elapsed_s": 0.0010018348693847656
+    },
+    {
+      "seed": 7103,
+      "module_note_count": 56,
+      "inst1_rep_count": 1848,
+      "inst2_rep_count": 1792,
+      "total_notes": 3640,
+      "js_divergence": 0.09837196349864205,
+      "kl_divergence": 0.42964010792849106,
+      "note_coverage": 0.8695652173913043,
+      "pitch_count": 17,
+      "elapsed_s": 0.0010001659393310547
+    },
+    {
+      "seed": 7104,
+      "module_note_count": 59,
+      "inst1_rep_count": 1947,
+      "inst2_rep_count": 1888,
+      "total_notes": 3835,
+      "js_divergence": 0.04507014624843844,
+      "kl_divergence": 0.7652540985614965,
+      "note_coverage": 0.8695652173913043,
+      "pitch_count": 16,
+      "elapsed_s": 0.0010199546813964844
+    },
+    {
+      "seed": 7105,
+      "module_note_count": 50,
+      "inst1_rep_count": 1650,
+      "inst2_rep_count": 1600,
+      "total_notes": 3250,
+      "js_divergence": 0.09941897930842684,
+      "kl_divergence": 2.2078501214102206,
+      "note_coverage": 0.782608695652174,
+      "pitch_count": 15,
+      "elapsed_s": 0.001224517822265625
+    },
+    {
+      "seed": 7106,
+      "module_note_count": 56,
+      "inst1_rep_count": 1848,
+      "inst2_rep_count": 1792,
+      "total_notes": 3640,
+      "js_divergence": 0.030125683724134253,
+      "kl_divergence": 0.1310582044926489,
+      "note_coverage": 0.9565217391304348,
+      "pitch_count": 17,
+      "elapsed_s": 0.0009770393371582031
+    },
+    {
+      "seed": 7107,
+      "module_note_count": 51,
+      "inst1_rep_count": 1683,
+      "inst2_rep_count": 1632,
+      "total_notes": 3315,
+      "js_divergence": 0.10071960268282622,
+      "kl_divergence": 3.4135014118610734,
+      "note_coverage": 0.782608695652174,
+      "pitch_count": 14,
+      "elapsed_s": 0.0005106925964355469
+    },
+    {
+      "seed": 7108,
+      "module_note_count": 60,
+      "inst1_rep_count": 1980,
+      "inst2_rep_count": 1920,
+      "total_notes": 3900,
+      "js_divergence": 0.07771641967289869,
+      "kl_divergence": 2.1142053339970475,
+      "note_coverage": 0.782608695652174,
+      "pitch_count": 15,
+      "elapsed_s": 0.0009958744049072266
+    },
+    {
+      "seed": 7109,
+      "module_note_count": 53,
+      "inst1_rep_count": 1749,
+      "inst2_rep_count": 1696,
+      "total_notes": 3445,
+      "js_divergence": 0.07857545466804625,
+      "kl_divergence": 2.107300228735827,
+      "note_coverage": 0.782608695652174,
+      "pitch_count": 15,
+      "elapsed_s": 0.0009968280792236328
+    }
+  ]
+}
