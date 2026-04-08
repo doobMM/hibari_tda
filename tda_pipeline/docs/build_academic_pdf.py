@@ -167,7 +167,7 @@ s_code = ParagraphStyle('C', fontName='Consolas', fontSize=8.5, leading=11,
     spaceBefore=4, spaceAfter=4)
 s_bullet = ParagraphStyle('BL', fontName='Nanum', fontSize=9.5, leading=13.5,
     leftIndent=18, bulletIndent=6, spaceAfter=3, alignment=TA_JUSTIFY)
-s_table_cell = ParagraphStyle('TC', fontName='Nanum', fontSize=8.5, leading=11,
+s_table_cell = ParagraphStyle('TC', fontName='Nanum', fontSize=9.5, leading=12.5,
     alignment=TA_CENTER, spaceAfter=0, spaceBefore=0)
 
 
@@ -195,8 +195,9 @@ def parse_inline_with_math(text):
 
 
 def parse_inline_markup(text):
-    """**bold**, *italic*, `code` → reportlab markup"""
+    """**bold**, __bold__, *italic*, `code` → reportlab markup"""
     text = re.sub(r'\*\*([^*]+)\*\*', r'<b>\1</b>', text)
+    text = re.sub(r'__([^_]+)__', r'<b>\1</b>', text)
     text = re.sub(r'(?<![*])\*([^*]+)\*(?![*])', r'<i>\1</i>', text)
     text = re.sub(r'`([^`]+)`', r'<font name="Consolas" color="#aa0000">\1</font>', text)
     return text
@@ -214,11 +215,15 @@ def make_paragraph_with_inline_math(text, style):
     # mathtext의 fontsize=10이 대략 본문 9.5pt와 균형
     inline_fontsize = body_size + 0.5
 
+    # ** bold **가 인라인 수식($...$)을 가로지를 수 있으므로
+    # 먼저 전체 텍스트에 마크다운을 적용한 뒤 수식을 분리한다.
+    text = parse_inline_markup(text)
+
     parts = parse_inline_with_math(text)
     result = ''
     for ptype, content in parts:
         if ptype == 'text':
-            result += parse_inline_markup(content)
+            result += content
         else:
             res = render_equation(content, display=False, fontsize=inline_fontsize)
             if res and res[0]:
@@ -361,10 +366,26 @@ def md_to_pdf(md_path, pdf_path):
                 # 두 번째 줄이 구분선이면 (| --- | --- |) 표로 인정
                 sep = table_lines[1]
                 if re.match(r'^\|[\s:|-]+\|$', sep):
-                    # 셀 파싱
+                    # 셀 파싱 — $...$ 안의 |는 split 대상에서 제외
                     def parse_row(row):
-                        # 양쪽 | 제거 후 split
-                        cells = [c.strip() for c in row.strip().strip('|').split('|')]
+                        inner = row.strip()
+                        if inner.startswith('|'):
+                            inner = inner[1:]
+                        if inner.endswith('|'):
+                            inner = inner[:-1]
+                        cells = []
+                        buf = ''
+                        in_math = False
+                        for ch in inner:
+                            if ch == '$':
+                                in_math = not in_math
+                                buf += ch
+                            elif ch == '|' and not in_math:
+                                cells.append(buf.strip())
+                                buf = ''
+                            else:
+                                buf += ch
+                        cells.append(buf.strip())
                         return cells
 
                     header = parse_row(table_lines[0])
@@ -390,7 +411,7 @@ def md_to_pdf(md_path, pdf_path):
                         ('TEXTCOLOR', (0, 0), (-1, 0), HexColor('#1a2942')),
                         ('FONTNAME', (0, 0), (-1, 0), 'NanumBd'),
                         ('FONTNAME', (0, 1), (-1, -1), 'Nanum'),
-                        ('FONTSIZE', (0, 0), (-1, -1), 9),
+                        ('FONTSIZE', (0, 0), (-1, -1), 9.5),
                         ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
                         ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
                         ('GRID', (0, 0), (-1, -1), 0.4, HexColor('#888')),
