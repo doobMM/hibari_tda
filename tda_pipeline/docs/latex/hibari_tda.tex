@@ -1,0 +1,510 @@
+%%
+%% hibari_tda.tex — Topological Data Analysis of Ryuichi Sakamoto's "hibari"
+%% IEEEtran class. Compile with pdflatex or xelatex (xelatex recommended for
+%% Korean / Unicode support via fontspec).
+%%
+%% To compile (xelatex recommended):
+%%   xelatex hibari_tda.tex
+%%   bibtex hibari_tda     (optional, if adding .bib)
+%%   xelatex hibari_tda
+%%   xelatex hibari_tda
+%%
+
+\documentclass[conference,10pt,a4paper]{IEEEtran}
+
+% ── Packages ─────────────────────────────────────────────────────────────
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{url}
+\usepackage{cite}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{hyperref}
+\usepackage{color}
+\usepackage{xcolor}
+
+% For Korean support when using xelatex, uncomment:
+% \usepackage{fontspec}
+% \usepackage{xeCJK}
+% \setCJKmainfont{NanumGothic}
+
+% ── Theorem environments ─────────────────────────────────────────────────
+\newtheorem{definition}{Definition}
+\newtheorem{theorem}{Theorem}
+\newtheorem{remark}{Remark}
+
+% ── Paths ────────────────────────────────────────────────────────────────
+\graphicspath{{../figures/}}
+
+% ── Title ────────────────────────────────────────────────────────────────
+\title{Topological Data Analysis of Ryuichi Sakamoto's \emph{hibari}:\\
+       A Persistent Homology Pipeline for Structure-Preserving Music Generation}
+
+\author{\IEEEauthorblockN{Author Name}
+\IEEEauthorblockA{Department of Environmental Studies\\
+Seoul National University Graduate School\\
+Seoul, Republic of Korea\\
+Email: author@institution.ac.kr}
+}
+
+\begin{document}
+
+\maketitle
+
+% ── Abstract ────────────────────────────────────────────────────────────
+\begin{abstract}
+We present a computational pipeline that extracts the topological structure
+of a musical composition via persistent homology and re-synthesizes new
+musical pieces that preserve that structure. Applied to Ryuichi Sakamoto's
+\emph{hibari} (from the 2009 album \emph{out of noise}), the pipeline (i)
+constructs a weighted note-network from the MIDI quantization, (ii) computes
+$H_1$ persistent homology under four different distance functions
+(frequency, Tonnetz, voice-leading, DFT), (iii) builds an overlap matrix
+recording cycle activations across the timeline, and (iv) generates new
+music via either probabilistic sampling (Algorithm~1) or deep learning
+(Algorithm~2; FC / LSTM / Transformer).
+Over $N=20$ independent trials per configuration, the Tonnetz distance
+reduces the pitch Jensen--Shannon divergence from $0.0753 \pm 0.0033$
+(frequency baseline) to $0.0398 \pm 0.0031$, a $47\%$ improvement
+(Welch $t = 35.1$, $p < 10^{-20}$, Cohen's $d = 11.1$). Surprisingly,
+the simplest FC model outperforms LSTM and Transformer, which we
+interpret as an artifact of \emph{hibari}'s aesthetic design that
+privileges spatial placement of notes over temporal causality.
+\end{abstract}
+
+\begin{IEEEkeywords}
+Persistent homology, Topological data analysis, Music generation,
+Tonnetz, Jensen--Shannon divergence, Multi-label classification,
+Vietoris--Rips complex.
+\end{IEEEkeywords}
+
+% ── Section I: Introduction ─────────────────────────────────────────────
+\section{Introduction}
+\label{sec:intro}
+
+Topological Data Analysis (TDA) offers a principled way to extract
+geometric structure from data that is robust to noise and scale
+\cite{carlsson2009,edelsbrunner2010}. In this work, we apply TDA to
+a specific musical composition---Ryuichi Sakamoto's \emph{hibari}---and
+ask whether the topological invariants (specifically, the first
+persistent homology group $H_1$) can serve as a structural seed for
+generating new, stylistically faithful music.
+
+\textbf{Motivation.} Existing structure-preserving music generation
+approaches either rely on symbolic grammars or on deep generative models
+trained on large corpora. Neither approach cleanly separates
+``what structure is preserved'' from ``how new tokens are produced.''
+Persistent homology provides such a separation: the cycles discovered
+in the note-network are a compact invariant, and the overlap matrix
+tracking their temporal activation serves as a decoupled seed for
+downstream generation.
+
+\textbf{Contributions.}
+\begin{enumerate}
+\item A four-stage pipeline (preprocessing, homology, overlap, generation)
+      with two alternative generators (probabilistic vs neural).
+\item A systematic comparison of four distance functions
+      (frequency, Tonnetz, voice-leading, DFT) with $N=20$ statistical
+      repetitions, establishing Tonnetz as the strongest choice for
+      \emph{hibari}.
+\item An ablation over cycle subset size $K \in \{10, 17, 46\}$
+      demonstrating monotone improvement with diminishing returns.
+\item A qualitative interpretation of the FC model's unexpected dominance
+      over sequence models, situated in the aesthetic context of the
+      \emph{out of noise} album.
+\end{enumerate}
+
+% ── Section II: Background ─────────────────────────────────────────────
+\section{Mathematical Background}
+\label{sec:background}
+
+\subsection{Vietoris--Rips Complex and Persistent Homology}
+\label{subsec:vr}
+
+Given a finite metric space $(X, d)$ and a scale parameter
+$\varepsilon \ge 0$, the Vietoris--Rips complex
+$\mathrm{VR}_\varepsilon(X)$ is the simplicial complex whose simplices
+are subsets $\sigma \subseteq X$ with pairwise distances at most
+$\varepsilon$. As $\varepsilon$ increases from $0$, the resulting
+family $\{\mathrm{VR}_{\varepsilon_i}\}_{i=0}^{m}$ forms a filtration,
+and persistent homology tracks the birth and death of homology classes
+along this filtration \cite{edelsbrunner2010}.
+
+\subsection{Simplicial Homology}
+\label{subsec:simplicial}
+
+For an oriented simplicial complex $K$ and a field $\mathbb{F}_2$,
+the chain group $C_n(K)$ is freely generated by the $n$-simplices.
+The boundary map $\partial_n : C_n \to C_{n-1}$ sends each simplex to
+the formal sum of its faces. The $n$-th homology group is
+\begin{equation}
+H_n(K) = \ker \partial_n \,/\, \mathrm{im}\, \partial_{n+1}.
+\end{equation}
+In this paper, we focus on $H_1$, whose generators correspond to
+topological cycles in the note-network.
+
+\subsection{Musical Distance Functions}
+\label{subsec:distances}
+
+We compare four distance functions between notes
+$n_i = (p_i, d_i)$ (pitch, duration):
+
+\paragraph{Frequency distance (baseline)} $d_{\mathrm{freq}}(n_i, n_j) =
+1 / w(n_i, n_j)$, where $w$ is the adjacency frequency.
+
+\paragraph{Tonnetz distance} Pitch classes are embedded in a hexagonal
+lattice with neighbors at $\pm 3, \pm 4, \pm 7$ semitones
+(minor 3rd, major 3rd, perfect 5th). The distance between two pitch
+classes is the shortest path in this graph, pre-computed via
+breadth-first search into a $12 \times 12$ table \cite{tymoczko2012}.
+
+\paragraph{Voice-leading distance} The unsigned semitone difference
+$|p_i - p_j|$ plus a duration term.
+
+\paragraph{DFT distance} Pitch classes are mapped to indicator
+vectors in $\mathbb{R}^{12}$; the Euclidean distance between the
+magnitudes of their first six Fourier coefficients defines the
+distance \cite{tymoczko2008}.
+
+\subsection{Overlap Matrix}
+
+Let $\{c_1, \ldots, c_K\}$ be the cycles discovered under a given
+distance function, and let $V(c)$ denote the vertex (note-label) set
+of cycle $c$. The \emph{overlap matrix}
+$O \in \{0,1\}^{T \times K}$ is defined by
+\begin{equation}
+O[t, c] = \mathbb{1}\Big[\,|V(c) \cap A_t| \ge \tau \cdot |V(c)|\,\Big],
+\end{equation}
+where $A_t$ is the set of notes active at time $t$ and $\tau = 0.35$
+is the threshold. This $O$ is the seed consumed by both generators.
+
+\subsection{Jensen--Shannon Divergence}
+
+For two discrete distributions $P, Q$, the Jensen--Shannon divergence
+is the symmetrized Kullback--Leibler divergence
+\begin{equation}
+D_{\mathrm{JS}}(P \,\|\, Q) = \frac{1}{2} D_{\mathrm{KL}}(P \,\|\, M) +
+                              \frac{1}{2} D_{\mathrm{KL}}(Q \,\|\, M),
+\end{equation}
+where $M = (P + Q)/2$. It is bounded above by $\log 2 \approx 0.693$,
+achieved when $P, Q$ have disjoint support.
+
+% ── Section III: Pipeline ───────────────────────────────────────────────
+\section{Pipeline Overview}
+\label{sec:pipeline}
+
+Figure~\ref{fig:pipeline} summarizes the four stages of our pipeline.
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=0.96\textwidth]{fig1_pipeline.png}
+\caption{Four-stage pipeline: preprocessing, persistent homology,
+overlap matrix construction, and generation.}
+\label{fig:pipeline}
+\end{figure*}
+
+\subsection{Stage 1 --- Preprocessing}
+The MIDI file is quantized to 8th-note units ($T = 1088$ timepoints).
+The two instruments are separated, and each unique (pitch, duration)
+pair is assigned a 1-indexed label. For \emph{hibari}, this yields
+$N = 23$ distinct notes and $C = 17$ distinct chord labels.
+
+\subsection{Stage 2 --- Persistent Homology}
+A weighted note-network is constructed from the chord sequence, and
+a distance matrix is derived via the chosen distance function. The
+Vietoris--Rips filtration and $H_1$ computation are performed over a
+grid of rate parameters $r_t \in [0, 1.5]$, using the
+\texttt{professor.py} reference implementation validated against
+\texttt{ripser} \cite{bauer2021}.
+
+\subsection{Stage 3 --- Overlap Matrix}
+For each discovered cycle $c$, an activation row is produced for
+every timepoint and thresholded to obtain the binary overlap matrix.
+
+\subsection{Stage 4 --- Generation}
+Either Algorithm~1 (probabilistic sampling, Section~\ref{subsec:algo1})
+or Algorithm~2 (neural, Section~\ref{subsec:algo2}) consumes the
+overlap matrix and outputs a MusicXML-compatible note list.
+
+% ── Section IV: Algorithms ──────────────────────────────────────────────
+\section{Generation Algorithms}
+\label{sec:algorithms}
+
+\subsection{Algorithm 1 --- Topological Sampling}
+\label{subsec:algo1}
+
+For each timepoint $t$, if any cycle is active
+($\sum_c O[t,c] > 0$), a note is sampled uniformly from the
+\emph{intersection} of vertex sets of the active cycles. Otherwise,
+a note is sampled from the complement of the \emph{union} of
+vertex sets of neighboring active cycles, to avoid topological
+``bleeding.'' Collisions in note placement trigger up to
+$R = 50$ re-sampling attempts.
+
+\subsection{Algorithm 2 --- Neural Sequence Models}
+\label{subsec:algo2}
+
+We train three architectures on the mapping
+$f_\theta : O[t,:] \mapsto y[t,:]$, where $y$ is the multi-hot
+note vector of the original piece at time $t$:
+\begin{itemize}
+\item \textbf{FC} --- a two-layer fully connected network with
+      hidden dimension $H = 128$, processing each timepoint
+      independently.
+\item \textbf{LSTM} --- a 2-layer LSTM capturing forward sequential
+      context.
+\item \textbf{Transformer} --- a 2-layer, 4-head Transformer encoder
+      with learned positional embeddings.
+\end{itemize}
+All models are trained with \texttt{BCEWithLogitsLoss} (multi-label
+binary cross-entropy with integrated sigmoid) and data augmentation
+via cycle-subset sampling, circular time-axis shifting, and bit-flip
+noise injection. At inference time, an \emph{adaptive threshold}
+$\theta = \mathrm{quantile}(P, 1 - \rho_{\mathrm{on}})$ matches the
+original piece's ON ratio $\rho_{\mathrm{on}} \approx 0.15$.
+
+% ── Section V: Experiments ──────────────────────────────────────────────
+\section{Experiments}
+\label{sec:experiments}
+
+\subsection{Setup}
+All experiments use the same chord-height pattern, the same random seed
+scheme, and $N = 20$ independent repetitions per configuration. The
+main metric is pitch JS divergence against the original; note coverage
+and KL divergence are reported as auxiliary signals. All results are
+stored in \texttt{docs/step3\_data/step3\_results.json}.
+
+\subsection{Distance Function Baselines}
+
+Table~\ref{tab:baselines} reports the JS divergence achieved by
+Algorithm~1 under each of the four distance functions. The Tonnetz
+distance is strongest, reducing the baseline (frequency) JS divergence
+by roughly $47\%$.
+
+\begin{table}[t]
+\centering
+\caption{JS divergence of Algorithm~1 under four distance functions
+($N=20$ trials each).}
+\label{tab:baselines}
+\begin{tabular}{lcc}
+\toprule
+Distance & \#Cycles & JS (mean $\pm$ std) \\
+\midrule
+frequency (baseline) & 43 & $0.0753 \pm 0.0033$ \\
+\textbf{Tonnetz}     & 46 & $\mathbf{0.0398 \pm 0.0031}$ \\
+voice-leading        & 22 & $0.0891 \pm 0.0048$ \\
+DFT                  & 20 & $0.0511 \pm 0.0029$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Cycle Subset Ablation}
+
+Fixing the Tonnetz distance, we vary the cycle count
+$K \in \{10, 17, 46\}$. As shown in Table~\ref{tab:ablation}, JS
+divergence decreases monotonically with $K$, but with diminishing
+returns --- the gain from $K: 17 \to 46$ ($\Delta = 0.034$ for 29
+additional cycles) is only marginally larger than that from
+$K: 10 \to 17$ ($\Delta = 0.025$ for 7 additional cycles).
+
+\begin{table}[t]
+\centering
+\caption{Cycle subset ablation (Tonnetz, $N=20$).}
+\label{tab:ablation}
+\begin{tabular}{ccc}
+\toprule
+$K$ & JS (mean $\pm$ std) & Note Coverage \\
+\midrule
+10  & $0.0991 \pm 0.0038$ & $0.980$ \\
+17  & $0.0740 \pm 0.0038$ & $0.996$ \\
+46  & $\mathbf{0.0397 \pm 0.0025}$ & $\mathbf{1.000}$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Statistical Significance}
+
+Applying Welch's $t$-test to the frequency-vs-Tonnetz comparison:
+\begin{equation}
+t = \frac{\bar{x}_1 - \bar{x}_2}
+         {\sqrt{s_1^2/n_1 + s_2^2/n_2}}
+  \approx 35.1,
+\end{equation}
+with Welch--Satterthwaite degrees of freedom $\nu \approx 38$, giving
+$p < 10^{-20}$. Cohen's effect size is $d \approx 11.1$, an order of
+magnitude beyond the conventional ``large effect'' threshold of $0.8$.
+We use Welch's variant (rather than Student's) because the equal-variance
+assumption is not justified a priori.
+
+\subsection{Deep Learning Model Comparison}
+
+Table~\ref{tab:dl} summarizes the results from a single-run
+hyperparameter grid search over 30 configurations
+(FC / LSTM / Transformer $\times$ hidden dim $\times$ learning rate
+$\times$ dropout $\times$ augmentation). The simplest FC model
+achieves the lowest JS divergence ($0.0015$). We interpret this as
+consistent with the aesthetic of \emph{hibari}'s parent album,
+\emph{out of noise}, which deliberately blurs the line between noise
+and melody by emphasizing spatial note placement over temporal
+causality. A model that ignores time context (FC) thus aligns
+better with the compositional design than one that imposes it
+(LSTM, Transformer).
+
+\begin{table}[t]
+\centering
+\caption{Best DL configurations by model (single run each).}
+\label{tab:dl}
+\begin{tabular}{lccc}
+\toprule
+Model & Val Loss & JS Div. & Gen. Notes \\
+\midrule
+FC (hd=256, lr=0.001, do=0.3) & $0.282$ & $\mathbf{0.0015}$ & $3{,}754$ \\
+LSTM (2-layer, hd=128)         & $0.385$ & $0.0448$          & $3{,}753$ \\
+Transformer (2-layer, 4-head)  & $0.676$ & $0.0104$          & $3{,}753$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Visualization}
+
+Figures~\ref{fig:cycles3d}--\ref{fig:jscurve} provide visual evidence
+for the numerical results. Figure~\ref{fig:tonnetz} shows the seven
+pitch classes of \emph{hibari} (C major scale) embedded on the
+Tonnetz lattice, revealing their dense topological connectivity.
+Figure~\ref{fig:barcode} presents the persistence barcode;
+Figure~\ref{fig:pianoroll} compares the piano roll of the original
+to that of a Tonnetz-based Algorithm~1 generation.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.99\columnwidth]{fig2_cycle3d.png}
+\caption{Top-12 cycles of the Tonnetz-based filtration embedded in 3D.
+Each colored polygon is one cycle; $z$-offset is for visual separation.}
+\label{fig:cycles3d}
+\end{figure}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.99\columnwidth]{fig3_tonnetz_hibari.png}
+\caption{Tonnetz lattice with the seven pitch classes used in
+\emph{hibari} highlighted in blue; red edges indicate direct
+Tonnetz adjacency between used pcs.}
+\label{fig:tonnetz}
+\end{figure}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.99\columnwidth]{fig4_barcode.png}
+\caption{Persistence barcode diagram of $H_1$ cycles. Bar color
+encodes lifespan; stars mark the longest-lived cycles.}
+\label{fig:barcode}
+\end{figure}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.99\columnwidth]{fig5_pianoroll.png}
+\caption{Piano roll comparison. (a)--(b) Original \emph{hibari}
+instruments 1 and 2; (c) generated by Algorithm~1 with Tonnetz
+distance.}
+\label{fig:pianoroll}
+\end{figure}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.99\columnwidth]{fig6_js_curve.png}
+\caption{JS divergence against training epoch for FC, LSTM,
+and Transformer. Dashed line is the theoretical maximum $\log 2$.}
+\label{fig:jscurve}
+\end{figure}
+
+% ── Section VI: Discussion ──────────────────────────────────────────────
+\section{Discussion}
+\label{sec:discussion}
+
+\textbf{Music-theoretic distance matters.} The $47\%$ reduction in JS
+divergence from frequency to Tonnetz confirms that encoding
+music-theoretic structure into the distance function changes the
+topological invariants that are discovered, and these invariants
+translate into better generation.
+
+\textbf{Diminishing returns of cycle count.} Tripling the cycle set
+($K: 17 \to 46$) only improves JS divergence by a factor comparable
+to adding seven cycles ($K: 10 \to 17$). This justifies the
+greedy-forward-selection strategy (Section~\ref{subsec:vr}).
+
+\textbf{Aesthetics constrain model choice.} The dominance of FC over
+sequence models is not a universal property of music generation;
+rather, it reflects \emph{hibari}'s non-sequential compositional
+character. A corpus whose melody depends on time causality would
+likely invert this ranking.
+
+\textbf{Future work.} (i) Re-running DL experiments with $N \ge 5$
+repetitions; (ii) greedy-selected subsets in the ablation study;
+(iii) grid search over Tonnetz hybrid's $\alpha$ parameter;
+(iv) generalization to other pieces from \emph{out of noise} and
+to corpora with stronger temporal dependencies.
+
+% ── Bibliography ────────────────────────────────────────────────────────
+\begin{thebibliography}{99}
+
+\bibitem{carlsson2009}
+G.~Carlsson, ``Topology and data,''
+\emph{Bulletin of the American Mathematical Society}, vol.~46, no.~2,
+pp.~255--308, 2009.
+
+\bibitem{edelsbrunner2010}
+H.~Edelsbrunner and J.~Harer,
+\emph{Computational Topology: An Introduction}.
+AMS, 2010.
+
+\bibitem{tymoczko2012}
+D.~Tymoczko, ``The generalized Tonnetz,''
+\emph{Journal of Music Theory}, vol.~56, no.~1, 2012.
+
+\bibitem{tymoczko2008}
+D.~Tymoczko, ``Set-class similarity, voice leading, and the Fourier
+transform,''
+\emph{Journal of Music Theory}, vol.~52, no.~2, 2008.
+
+\bibitem{bauer2021}
+U.~Bauer, ``Ripser: Efficient computation of Vietoris--Rips persistence
+barcodes,''
+\emph{Journal of Applied and Computational Topology}, vol.~5,
+pp.~391--423, 2021.
+
+\bibitem{tran2021}
+M.~L. Tran, C.~Park, and J.-H. Jung, ``Topological data analysis of
+Korean music in Jeongganbo,'' \emph{arXiv:2103.06620}, 2021.
+
+\bibitem{nemhauser1978}
+G.~L. Nemhauser, L.~A. Wolsey, and M.~L. Fisher, ``An analysis of
+approximations for maximizing submodular set functions,''
+\emph{Mathematical Programming}, vol.~14, no.~1, pp.~265--294, 1978.
+
+\bibitem{welch1947}
+B.~L. Welch, ``The generalization of `Student's' problem when several
+different population variances are involved,''
+\emph{Biometrika}, vol.~34, pp.~28--35, 1947.
+
+\bibitem{cohen1988}
+J.~Cohen, \emph{Statistical Power Analysis for the Behavioral Sciences},
+2nd~ed. Lawrence Erlbaum, 1988.
+
+\bibitem{hochreiter1997}
+S.~Hochreiter and J.~Schmidhuber, ``Long short-term memory,''
+\emph{Neural Computation}, vol.~9, no.~8, pp.~1735--1780, 1997.
+
+\bibitem{vaswani2017}
+A.~Vaswani \emph{et al.}, ``Attention is all you need,'' in
+\emph{Proc. NeurIPS}, 2017.
+
+\bibitem{sakamoto2009}
+R.~Sakamoto, \emph{out of noise} [Album]. commmons, 2009.
+
+\end{thebibliography}
+
+\end{document}
