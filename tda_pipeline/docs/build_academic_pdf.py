@@ -16,7 +16,7 @@ from reportlab.lib.styles import ParagraphStyle
 from reportlab.lib.enums import TA_LEFT, TA_JUSTIFY, TA_CENTER
 from reportlab.platypus import (
     SimpleDocTemplate, Paragraph, Spacer, HRFlowable, PageBreak,
-    Image, Preformatted, KeepTogether
+    Image, Preformatted, KeepTogether, Table, TableStyle
 )
 from reportlab.lib.colors import HexColor, white
 from reportlab.pdfbase import pdfmetrics
@@ -167,6 +167,8 @@ s_code = ParagraphStyle('C', fontName='Consolas', fontSize=8.5, leading=11,
     spaceBefore=4, spaceAfter=4)
 s_bullet = ParagraphStyle('BL', fontName='Nanum', fontSize=9.5, leading=13.5,
     leftIndent=18, bulletIndent=6, spaceAfter=3, alignment=TA_JUSTIFY)
+s_table_cell = ParagraphStyle('TC', fontName='Nanum', fontSize=8.5, leading=11,
+    alignment=TA_CENTER, spaceAfter=0, spaceBefore=0)
 
 
 def parse_inline_with_math(text):
@@ -342,6 +344,66 @@ def md_to_pdf(md_path, pdf_path):
             story.append(Spacer(1, 3*mm))
             i += 1
             continue
+
+        # 마크다운 표 — | col | col | 줄이 연속으로 나오면 표로 처리
+        if line.strip().startswith('|') and line.strip().endswith('|'):
+            # 표 라인 모으기
+            table_lines = []
+            j = i
+            while j < len(lines):
+                ln = lines[j].rstrip()
+                if ln.strip().startswith('|') and ln.strip().endswith('|'):
+                    table_lines.append(ln.strip())
+                    j += 1
+                else:
+                    break
+            if len(table_lines) >= 2:
+                # 두 번째 줄이 구분선이면 (| --- | --- |) 표로 인정
+                sep = table_lines[1]
+                if re.match(r'^\|[\s:|-]+\|$', sep):
+                    # 셀 파싱
+                    def parse_row(row):
+                        # 양쪽 | 제거 후 split
+                        cells = [c.strip() for c in row.strip().strip('|').split('|')]
+                        return cells
+
+                    header = parse_row(table_lines[0])
+                    body_rows = [parse_row(r) for r in table_lines[2:]]
+                    n_cols = len(header)
+
+                    def cell_to_flowable(text):
+                        return make_paragraph_with_inline_math(text, s_table_cell)
+
+                    data = [[cell_to_flowable(c) for c in header]]
+                    for row in body_rows:
+                        # 칸 수 보정
+                        while len(row) < n_cols:
+                            row.append('')
+                        data.append([cell_to_flowable(c) for c in row[:n_cols]])
+
+                    # 컬럼 너비: 페이지 폭을 균등 분배
+                    avail = doc.width
+                    col_w = avail / n_cols
+                    tbl = Table(data, colWidths=[col_w] * n_cols, hAlign='CENTER')
+                    tbl.setStyle(TableStyle([
+                        ('BACKGROUND', (0, 0), (-1, 0), HexColor('#eef2f7')),
+                        ('TEXTCOLOR', (0, 0), (-1, 0), HexColor('#1a2942')),
+                        ('FONTNAME', (0, 0), (-1, 0), 'NanumBd'),
+                        ('FONTNAME', (0, 1), (-1, -1), 'Nanum'),
+                        ('FONTSIZE', (0, 0), (-1, -1), 9),
+                        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+                        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                        ('GRID', (0, 0), (-1, -1), 0.4, HexColor('#888')),
+                        ('LEFTPADDING', (0, 0), (-1, -1), 4),
+                        ('RIGHTPADDING', (0, 0), (-1, -1), 4),
+                        ('TOPPADDING', (0, 0), (-1, -1), 3),
+                        ('BOTTOMPADDING', (0, 0), (-1, -1), 3),
+                    ]))
+                    story.append(Spacer(1, 2*mm))
+                    story.append(tbl)
+                    story.append(Spacer(1, 2*mm))
+                    i = j
+                    continue
 
         # 마크다운 이미지 ![alt](path)
         img_match = re.match(r'!\[([^\]]*)\]\(([^)]+)\)', line.strip())
