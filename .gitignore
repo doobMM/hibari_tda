@@ -5,11 +5,26 @@ __pycache__/
 .eggs/
 dist/
 build/
-*.pkl
-*.mid
-*.musicxml
-*.xml
-output/
-.claude/
 *.log
 .env
+.claude/
+
+# ── 대용량 바이너리 (재생성 가능) ──
+*.pkl
+*.mid
+*.midi
+*.musicxml
+*.xml
+*.wav
+*.mp3
+*.pt
+*.npy
+output/
+generated_output/
+
+# ── 빌드 캐시 ──
+tda_pipeline/docs/_eq_cache/
+tda_pipeline/cache/models/
+
+# ── 폰트 미리보기 (선택 완료) ──
+tda_pipeline/docs/font_preview_*.pdf
