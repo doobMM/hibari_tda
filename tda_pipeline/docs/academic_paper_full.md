@@ -918,6 +918,75 @@ __(5) 향후 과제.__
 
 ---
 
+## 3.6 곡 고유 구조 분석 — hibari 의 수학적 불변량
+
+본 절은 hibari 가 가지는 수학적 고유 성질을 분석하고, 이 성질들이 본 연구의 실험 결과와 어떻게 연결되는지를 서술한다. 비교 대상으로 사카모토의 다른 곡인 solari 와 aqua 를 함께 분석한다.
+
+### 3.6.1 Deep Scale Property — hibari 의 pitch class 집합이 갖는 대수적 고유성
+
+hibari 가 사용하는 7개 pitch class 는 $\{0, 2, 4, 5, 7, 9, 11\} \subset \mathbb{Z}/12\mathbb{Z}$이다 (C major / A natural minor scale). 이 집합의 **interval vector** — 각 음정 클래스(1~6 반음)가 집합 안에서 몇 번 등장하는지를 센 벡터 — 는 $[2, 5, 4, 3, 6, 1]$이다.
+
+이 벡터의 6개 성분이 __모두 다른 수__이다 ($\{1, 2, 3, 4, 5, 6\}$의 순열). 이것을 **deep scale property** 라 한다 (Gamer & Wilson, 2003). 이 성질을 갖는 7-note subset 은 $\binom{12}{7} = 792$개 중 __diatonic scale 류 (장/단음계, 교회 선법) 뿐__이다. 즉 hibari 가 7개 PC 를 선택한 것은 임의가 아니라, 12음 체계에서 __각 음정 클래스가 고르게 (그러면서도 모두 다른 횟수로) 등장하는 유일한 부분집합__을 선택한 것이다.
+
+또한 7개 PC 사이의 간격 패턴은 $[2, 2, 1, 2, 2, 2, 1]$로, 오직 $\{1, 2\}$ 두 종류의 간격만으로 구성된다. 이것은 __maximal evenness__ — 12개 칸 위에 7개 점을 가능한 한 균등하게 배치한 상태 — 를 의미한다 (Clough & Douthett, 1991). deep scale 과 maximal evenness 는 모두 diatonic scale 의 고유 성질이다.
+
+solari 와 aqua 는 12개 PC 모두를 사용하므로 이 성질이 적용되지 않는다.
+
+### 3.6.2 근균등 Pitch 분포 — Pitch Entropy
+
+| 곡 | 사용 pitch 수 | 정규화 pitch entropy | 해석 |
+|---|---|---|---|
+| __hibari__ | $17$ | $\mathbf{0.974}$ | 거의 완전 균등 |
+| solari | $34$ | $0.905$ | 덜 균등 |
+| aqua | $51$ | $0.891$ | 가장 치우침 |
+
+pitch entropy 는 곡 안에서 사용된 모든 pitch 의 빈도 분포에 대한 Shannon entropy 를 계산하고, 이론적 최댓값 $\log_2(\text{unique pitch count})$ 로 나눠 정규화한 것이다. $1.0$이면 모든 pitch 가 완전히 동일한 빈도로 등장하고, $0$에 가까우면 한두 개 pitch 가 지배적이다.
+
+hibari 의 $0.974$ 는 __"모든 pitch 를 거의 같은 빈도로 사용"__한다는 뜻이며, 전통 조성 음악에서는 매우 드문 수치이다 (으뜸음이 지배적인 것이 보통). 이 성질은 __§3.4 의 "FC 모델 우위"를 수학적으로 설명__한다. pitch 분포가 거의 균등하면, 시간 순서를 무시하고 그 분포에서 독립적으로 뽑는 것 (FC 의 행동) 이 이미 원곡의 분포에 가깝다. 반면 solari 같이 특정 pitch 가 더 자주 나오는 곡에서는 시간 맥락 (Transformer) 이 그 편향을 학습해야 하므로 FC 가 불리하다.
+
+### 3.6.3 Tonnetz 구별력과 Pitch Class 수의 관계
+
+hibari 의 7개 PC 는 Tonnetz 위에서 __하나의 연결 성분__을 이루며, 평균 degree 가 $3.71/6 = 62\%$이다. 이것은 7개 PC 안에서 Tonnetz 이웃 관계가 매우 밀집되어 있다는 뜻이다.
+
+그런데 왜 이것이 중요한가? Tonnetz 거리의 핵심은 "이 두 음이 화성적으로 얼마나 가까운가"를 숫자로 말해주는 것이다. 이 구별력은 __PC 수가 적을수록 강해진다__. 다음 비유가 도움이 된다:
+
+> 7명이 모여 사는 작은 마을에서 "누구와 누가 친한가"를 물으면 의미 있는 답이 나온다 (어떤 쌍은 친하고, 어떤 쌍은 아니므로). 그러나 12명이 모두 사는 세계에서 "누구와 누가 친한가"를 물으면 "다 친하다" 에 가까운 답이 나온다.
+
+구체적으로:
+- __hibari (7 PC)__: Tonnetz 거리가 $1 \sim 4$ 범위로 분포하여, "가까운 쌍"과 "먼 쌍"이 명확히 구별됨 → Tonnetz 가 위상 구조를 선명하게 포착
+- __solari / aqua (12 PC)__: 모든 PC 가 Tonnetz 에 있으므로 대부분의 쌍이 거리 $1 \sim 2$ 안에 있어 구별력이 사라짐 → voice-leading (반음 거리) 같은 더 세밀한 거리가 유효
+
+이것이 __"hibari 에서 Tonnetz 최적, solari 에서 voice-leading 최적"__(§3.1 vs §7.2)의 구조적 근거이다.
+
+### 3.6.4 Cycle 교차 밀도 — $77\%$
+
+Tonnetz 기반으로 발견된 46개 $H_1$ cycle 중, 쌍별 교집합을 계산하면 $\binom{46}{2} = 1{,}035$ 쌍 가운데 $797$ 쌍 ($77\%$) 이 적어도 하나의 vertex 를 공유한다. 즉 cycle 들이 독립적으로 흩어져 있는 것이 아니라 __"그물처럼 촘촘히 엮여 있다"__.
+
+이 높은 교차 밀도는 두 가지 실험 결과와 직접 연결된다.
+
+__(a) Greedy selection 의 효과.__ 46개 cycle 이 서로 많은 vertex 를 공유하므로, 소수의 cycle 만 선택해도 전체 note pool 의 대부분을 커버할 수 있다. 실제로 §2.7 에서 15개 cycle ($\sim 33\%$) 만으로 $90\%$ 보존도를 달성한 것이 이 구조적 중복성 덕분이다.
+
+__(b) Algorithm 1 의 교집합 규칙이 잘 작동하는 이유.__ Algorithm 1 은 "활성 cycle 들의 교집합"에서 음을 뽑는데 (§2.10 규칙 1), 만약 cycle 들이 vertex 를 거의 공유하지 않으면 교집합이 항상 빈 집합이 되어 이 규칙이 작동하지 않는다. $77\%$ 의 쌍이 vertex 를 공유하므로 교집합이 비어있지 않을 확률이 높고, 교집합에서 뽑힌 음은 "여러 cycle 이 공통으로 중요하게 여기는 음"이라는 구조적 의미를 갖는다.
+
+### 3.6.5 세 곡의 비교 요약
+
+| 불변량 | hibari | solari | aqua | 실험적 결과 연결 |
+|---|---|---|---|---|
+| Deep scale | __YES__ | no | no | — (diatonic 고유) |
+| Maximal evenness | __YES__ | no | no | — (diatonic 고유) |
+| 정규화 pitch entropy | __$0.974$__ | $0.905$ | $0.891$ | FC 우위 (hibari) vs Transformer 우위 (solari) |
+| Tonnetz 평균 degree (7-PC 한정) | __$3.71/6$__ | (trivial) | (trivial) | Tonnetz 최적 (hibari) vs voice-leading 최적 (solari) |
+| Cycle 교차 밀도 | __$77\%$__ | (미측정) | (미측정) | Greedy 효율 + 교집합 규칙 작동 |
+
+__핵심 주장.__ hibari 의 수학적 고유성은 크게 두 축으로 이뤄진다.
+
+1. __선택의 절제__ — 12개 PC 중 7개만 쓰되, 그 7개가 deep scale + maximal evenness 를 만족하는 유일한 부분집합
+2. __사용의 균등__ — 선택된 7개 안에서 어느 하나를 중심으로 두지 않고 거의 동등하게 사용 (entropy $0.974$)
+
+이 두 축이 "*out of noise*" 의 기획 의도 — "소음과 음악의 경계" — 를 정확히 수학적으로 구현한다. 소음은 모든 주파수가 동등한 것이고, 전통 음악은 으뜸음이 지배하는 것인데, hibari 는 __diatonic 구조 안에서 가능한 한 균등한 중간 지점__에 위치한다. 그리고 이 위치가 본 연구의 모든 실험 결과 — Tonnetz 우위, FC 우위, 높은 cycle 교차 밀도 — 의 구조적 원인이다.
+
+---
+
 ## 5. 시각자료 (Figures)
 
 본 장은 논문 본문에 삽입될 정적 figure 6개와 보충자료(supplementary material)로 제공되는 1개의 interactive figure를 모아서 제시한다.
