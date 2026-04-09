@@ -1,0 +1,137 @@
+{
+  "hibari (baseline)": {
+    "file": "Ryuichi_Sakamoto_-_hibari.mid",
+    "T": 1088,
+    "N": 23,
+    "C": 17,
+    "inst1_n": 2006,
+    "inst2_n": 1947,
+    "frequency": {
+      "error": "list index out of range"
+    },
+    "tonnetz": {
+      "error": "list index out of range"
+    },
+    "improvement_pct": null
+  },
+  "aqua": {
+    "file": "aqua-ryuichi-sakamoto-ryuichi-sakamoto.mid",
+    "T": 539,
+    "N": 157,
+    "C": 165,
+    "inst1_n": 351,
+    "inst2_n": 306,
+    "frequency": {
+      "error": "list index out of range"
+    },
+    "tonnetz": {
+      "error": "list index out of range"
+    },
+    "improvement_pct": null
+  },
+  "a flower is not a flower": {
+    "file": "a-flower-is-not-a-flower-ryuichi-sakamoto.mid",
+    "T": 441,
+    "N": 152,
+    "C": 192,
+    "inst1_n": 250,
+    "inst2_n": 219,
+    "frequency": {
+      "error": "list index out of range"
+    },
+    "tonnetz": {
+      "error": "list index out of range"
+    },
+    "improvement_pct": null
+  },
+  "bibo no aozora": {
+    "file": "bibo-no-aozora-solo-piano.mid",
+    "T": 768,
+    "N": 243,
+    "C": 390,
+    "inst1_n": 440,
+    "inst2_n": 682,
+    "frequency": {
+      "error": "list index out of range"
+    },
+    "tonnetz": {
+      "error": "list index out of range"
+    },
+    "improvement_pct": null
+  },
+  "energy flow": {
+    "file": "energy-flow-ryuichi-sakamoto.mid",
+    "T": 751,
+    "N": 183,
+    "C": 263,
+    "inst1_n": 647,
+    "inst2_n": 499,
+    "frequency": {
+      "error": "list index out of range"
+    },
+    "tonnetz": {
+      "error": "list index out of range"
+    },
+    "improvement_pct": null
+  },
+  "merry christmas Mr Lawrence": {
+    "file": "merry-christmas-mr-lawrence.mid",
+    "T": 1062,
+    "N": 200,
+    "C": 300,
+    "inst1_n": 991,
+    "inst2_n": 766,
+    "frequency": {
+      "error": "list index out of range"
+    },
+    "tonnetz": {
+      "error": "list index out of range"
+    },
+    "improvement_pct": null
+  },
+  "solari": {
+    "file": "ryuichi-sakamoto-solari.mid",
+    "T": 224,
+    "N": 58,
+    "C": 81,
+    "inst1_n": 53,
+    "inst2_n": 351,
+    "frequency": {
+      "error": "list index out of range"
+    },
+    "tonnetz": {
+      "error": "list index out of range"
+    },
+    "improvement_pct": null
+  },
+  "the last emperor theme": {
+    "file": "the-last-emperor-theme-the-last-emperor-ryuichi-sakamoto.mid",
+    "T": 802,
+    "N": 231,
+    "C": 459,
+    "inst1_n": 849,
+    "inst2_n": 879,
+    "frequency": {
+      "error": "list index out of range"
+    },
+    "tonnetz": {
+      "error": "list index out of range"
+    },
+    "improvement_pct": null
+  },
+  "tong poo (solo)": {
+    "file": "tong-poo-solo-ver.mid",
+    "T": 1330,
+    "N": 237,
+    "C": 372,
+    "inst1_n": 969,
+    "inst2_n": 971,
+    "frequency": {
+      "error": "list index out of range"
+    },
+    "tonnetz": {
+      "error": "list index out of range"
+    },
+    "improvement_pct": null
+  }
+}
