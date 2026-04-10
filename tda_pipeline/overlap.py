@@ -81,7 +81,6 @@ def build_activation_matrix(df: pd.DataFrame,
     activation = np.zeros((n_times, n_cycles), dtype=dtype)
 
     col_to_idx = {col: i for i, col in enumerate(columns)}
-    col_to_idx_inv = {i: col for col, i in col_to_idx.items()}
 
     # 희귀도 계산: note_rarity[col_idx] = 1 / (해당 note가 등장하는 cycle 수)
     note_rarity = {}
@@ -122,7 +121,7 @@ def build_activation_matrix(df: pd.DataFrame,
                 # 연속값 모드: 활성 note 비율 + 희귀 note 가중치
                 # note_rarity[n] = 1 / (해당 note가 등장하는 cycle 수)
                 # 희귀 note가 활성화되면 기여도가 높음
-                weights = np.array([note_rarity.get(col_to_idx_inv.get(ni, 0), 1.0)
+                weights = np.array([note_rarity.get(ni, 1.0)
                                     for ni in note_indices])
                 weighted_active = (sub > 0).astype(float) * weights[np.newaxis, :]
                 activation[:, c_idx] = weighted_active.sum(axis=1) / weights.sum()
@@ -232,9 +231,9 @@ def build_overlap_matrix(activation_df: pd.DataFrame,
         )
         
         for run in runs:
-            for idx in run:
-                if idx < total_length:
-                    overlap[idx, c_idx] = 1
+            indices = np.array(run)
+            indices = indices[indices < total_length]
+            overlap[indices, c_idx] = 1
     
     columns = [item[0] for item in items]
     return pd.DataFrame(overlap, columns=columns)

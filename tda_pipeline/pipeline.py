@@ -521,6 +521,34 @@ class TDAMusicPipeline:
         return self
 
     # ═══════════════════════════════════════════════════════════════════════
+    # Stage 3.5: 시간 재배치 (방향 B)
+    # ═══════════════════════════════════════════════════════════════════════
+
+    def run_temporal_reorder(self, strategy: str = 'segment_shuffle',
+                             seed: int = 42, **kwargs):
+        """
+        중첩행렬의 시간축을 재배치한다 (cycle 보존, 선율 변화).
+
+        Args:
+            strategy: 'segment_shuffle' | 'block_permute' | 'markov_resample'
+            seed: 랜덤 시드
+        """
+        from temporal_reorder import reorder_overlap_matrix
+
+        print(f"[Stage 3.5] 시간 재배치 ({strategy})")
+        overlap = self._cache['overlap_matrix']
+        self._cache['overlap_matrix_original'] = overlap
+
+        reordered, info = reorder_overlap_matrix(
+            overlap.values, strategy=strategy, seed=seed, **kwargs
+        )
+        self._cache['overlap_matrix'] = pd.DataFrame(
+            reordered, columns=overlap.columns
+        )
+        print(f"  전략: {strategy}, segments/blocks: {info.get('n_segments', info.get('n_blocks', info.get('n_unique_patterns', '?')))}")
+        return info
+
+    # ═══════════════════════════════════════════════════════════════════════
     # Stage 4: 음악 생성
     # ═══════════════════════════════════════════════════════════════════════
 

@@ -1,0 +1,175 @@
+{
+  "track": "hibari",
+  "metric": "tonnetz",
+  "n_cycles": 16,
+  "T": 1088,
+  "N": 17,
+  "epochs": 50,
+  "experiments": {
+    "baseline_lstm": {
+      "val_loss": 0.4948,
+      "n_notes": 2774,
+      "pitch_js": 0.310974,
+      "transition_js": 0.533997,
+      "dtw": 2.05125,
+      "ncd": 0.945614
+    },
+    "baseline_transformer": {
+      "val_loss": 0.5263,
+      "n_notes": 2774,
+      "pitch_js": 0.016277,
+      "transition_js": 0.118325,
+      "dtw": 1.844,
+      "ncd": 0.93756
+    },
+    "tonnetz_wide_lstm": {
+      "val_loss": 0.4946,
+      "n_notes": 2774,
+      "vs_original": {
+        "pitch_js": 0.4983,
+        "transition_js": 0.686569,
+        "dtw": 2.31125,
+        "ncd": 0.957895
+      },
+      "vs_remapped": {
+        "pitch_js": 0.317079,
+        "transition_js": 0.620974,
+        "dtw": 2.5165,
+        "ncd": 0.936953
+      },
+      "note_dist_error": 4.4587,
+      "cycle_dist_error": 1.1809,
+      "new_pitches": [
+        48,
+        52,
+        56,
+        57,
+        58,
+        59,
+        61,
+        62,
+        64,
+        68,
+        69,
+        70,
+        74,
+        80,
+        81,
+        83,
+        84
+      ]
+    },
+    "tonnetz_wide_transformer": {
+      "val_loss": 0.4935,
+      "n_notes": 2774,
+      "vs_original": {
+        "pitch_js": 0.362488,
+        "transition_js": 0.60196,
+        "dtw": 2.261,
+        "ncd": 1.018484
+      },
+      "vs_remapped": {
+        "pitch_js": 0.011236,
+        "transition_js": 0.115922,
+        "dtw": 2.21575,
+        "ncd": 0.951017
+      },
+      "note_dist_error": 4.4587,
+      "cycle_dist_error": 1.1809,
+      "new_pitches": [
+        48,
+        52,
+        56,
+        57,
+        58,
+        59,
+        61,
+        62,
+        64,
+        68,
+        69,
+        70,
+        74,
+        80,
+        81,
+        83,
+        84
+      ]
+    },
+    "tonnetz_vwide_lstm": {
+      "val_loss": 0.4944,
+      "n_notes": 2774,
+      "vs_original": {
+        "pitch_js": 0.440662,
+        "transition_js": 0.684383,
+        "dtw": 2.00625,
+        "ncd": 0.961404
+      },
+      "vs_remapped": {
+        "pitch_js": 0.317134,
+        "transition_js": 0.52356,
+        "dtw": 3.54475,
+        "ncd": 0.933798
+      },
+      "note_dist_error": 4.4765,
+      "cycle_dist_error": 1.0634,
+      "new_pitches": [
+        40,
+        43,
+        44,
+        46,
+        47,
+        51,
+        54,
+        56,
+        57,
+        64,
+        65,
+        68,
+        72,
+        75,
+        76,
+        80,
+        87
+      ]
+    },
+    "tonnetz_vwide_transformer": {
+      "val_loss": 0.511,
+      "n_notes": 2774,
+      "vs_original": {
+        "pitch_js": 0.425741,
+        "transition_js": 0.632305,
+        "dtw": 3.09225,
+        "ncd": 1.017495
+      },
+      "vs_remapped": {
+        "pitch_js": 0.006042,
+        "transition_js": 0.107123,
+        "dtw": 2.8665,
+        "ncd": 0.951197
+      },
+      "note_dist_error": 4.4765,
+      "cycle_dist_error": 1.0634,
+      "new_pitches": [
+        40,
+        43,
+        44,
+        46,
+        47,
+        51,
+        54,
+        56,
+        57,
+        64,
+        65,
+        68,
+        72,
+        75,
+        76,
+        80,
+        87
+      ]
+    }
+  },
+  "elapsed_s": 120.2
+}

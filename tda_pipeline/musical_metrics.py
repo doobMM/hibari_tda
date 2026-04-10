@@ -143,6 +143,20 @@ def voice_leading_note_distance(note1: Tuple[int, int], note2: Tuple[int, int],
 # 3. DFT (Discrete Fourier Transform) 거리
 # ═══════════════════════════════════════════════════════════════════════════
 
+_DFT_CACHE = None
+
+
+def _build_dft_cache() -> np.ndarray:
+    """12개 pitch class의 DFT 계수를 미리 계산합니다."""
+    cache = np.zeros((12, 6))
+    for pc in range(12):
+        indicator = np.zeros(12)
+        indicator[pc] = 1.0
+        fft = np.fft.fft(indicator)
+        cache[pc] = np.abs(fft[1:7])
+    return cache
+
+
 def pitch_class_dft(pc: int) -> np.ndarray:
     """
     단일 pitch class를 12차원 indicator로 변환 후 DFT.
@@ -150,11 +164,10 @@ def pitch_class_dft(pc: int) -> np.ndarray:
     Returns:
         6개의 Fourier 계수 크기 (|f̂(1)|, ..., |f̂(6)|)
     """
-    indicator = np.zeros(12)
-    indicator[pc % 12] = 1.0
-    fft = np.fft.fft(indicator)
-    # 대칭이므로 1~6번 계수만 (0번은 총합 = 1)
-    return np.abs(fft[1:7])
+    global _DFT_CACHE
+    if _DFT_CACHE is None:
+        _DFT_CACHE = _build_dft_cache()
+    return _DFT_CACHE[pc % 12]
 
 
 def dft_note_distance(note1: Tuple[int, int], note2: Tuple[int, int],

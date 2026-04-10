@@ -134,7 +134,7 @@ def compute_ph(data, metric):
     for t in range(min(T, len(ns))):
         if ns[t]:
             for n in ns[t]:
-                if n in nodes: ntd[t, nodes.index(n)] = 1
+                if 1 <= n <= N: ntd[t, n - 1] = 1
     ntd_df = pd.DataFrame(ntd, columns=nodes)
     act = build_activation_matrix(ntd_df, cl)
     ov = build_overlap_matrix(act, cl, threshold=0.35, total_length=T)

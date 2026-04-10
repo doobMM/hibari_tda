@@ -1,0 +1,86 @@
+{
+  "track": "hibari",
+  "metric": "tonnetz",
+  "n_cycles": 18,
+  "T": 1088,
+  "N": 17,
+  "epochs": 50,
+  "experiments": {
+    "orig_binary": {
+      "val_loss": 0.5313,
+      "n_notes": 2774,
+      "overlap_type": "binary",
+      "note_set": "original",
+      "vs_original": {
+        "pitch_js": 0.009503,
+        "transition_js": 0.117643,
+        "dtw": 1.79975,
+        "ncd": 0.942043
+      },
+      "vs_ref": {
+        "pitch_js": 0.009503,
+        "transition_js": 0.117643,
+        "dtw": 1.79975,
+        "ncd": 0.942043
+      },
+      "elapsed_s": 31.2
+    },
+    "orig_continuous": {
+      "val_loss": 0.1019,
+      "n_notes": 2774,
+      "overlap_type": "continuous",
+      "note_set": "original",
+      "vs_original": {
+        "pitch_js": 0.012288,
+        "transition_js": 0.110242,
+        "dtw": 1.51175,
+        "ncd": 0.870728
+      },
+      "vs_ref": {
+        "pitch_js": 0.012288,
+        "transition_js": 0.110242,
+        "dtw": 1.51175,
+        "ncd": 0.870728
+      },
+      "elapsed_s": 29.2
+    },
+    "major_binary": {
+      "val_loss": 0.524,
+      "n_notes": 2774,
+      "overlap_type": "binary",
+      "note_set": "scale_major",
+      "vs_original": {
+        "pitch_js": 0.099863,
+        "transition_js": 0.261855,
+        "dtw": 2.313,
+        "ncd": 0.978763
+      },
+      "vs_ref": {
+        "pitch_js": 0.009039,
+        "transition_js": 0.108142,
+        "dtw": 2.2505,
+        "ncd": 0.944598
+      },
+      "elapsed_s": 29.7
+    },
+    "major_continuous": {
+      "val_loss": 0.107,
+      "n_notes": 2774,
+      "overlap_type": "continuous",
+      "note_set": "scale_major",
+      "vs_original": {
+        "pitch_js": 0.124885,
+        "transition_js": 0.307584,
+        "dtw": 2.33925,
+        "ncd": 0.943925
+      },
+      "vs_ref": {
+        "pitch_js": 0.009771,
+        "transition_js": 0.108249,
+        "dtw": 1.96975,
+        "ncd": 0.850467
+      },
+      "elapsed_s": 30.3
+    }
+  }
+}

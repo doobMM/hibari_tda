@@ -601,9 +601,10 @@ if HAS_TORCH:
         def __init__(self, num_cycles: int, num_notes: int,
                      d_model: int = 128, nhead: int = 4,
                      num_layers: int = 2, dropout: float = 0.1,
-                     max_len: int = 1088):
+                     max_len: int = 1088, use_pos_emb: bool = True):
             super().__init__()
             self.input_proj = nn.Linear(num_cycles, d_model)
+            self.use_pos_emb = use_pos_emb
 
             # 학습 가능한 positional encoding
             self.pos_emb = nn.Parameter(torch.randn(1, max_len, d_model) * 0.02)
@@ -621,7 +622,9 @@ if HAS_TORCH:
         def forward(self, x):
             # x: (batch, T, C)
             T = x.size(1)
-            x = self.input_proj(x) + self.pos_emb[:, :T, :]  # (batch, T, d_model)
+            x = self.input_proj(x)
+            if self.use_pos_emb:
+                x = x + self.pos_emb[:, :T, :]
             x = self.transformer(x)                            # (batch, T, d_model)
             return self.fc_out(x)                              # (batch, T, N)
 

@@ -44,15 +44,19 @@ def compute_inter_weights(seq_a: list, seq_b: list,
     n = len(seq_a) - lag
     
     for i in range(n):
-        # a[i] → b[i+lag]
-        if seq_b[i + lag] is None:
-            # 기존 코드: b[i+lag]가 None이면 두 번째 업데이트도 건너뜀
-            continue
-        weights[seq_a[i], seq_b[i + lag]] += 1
+        a_i = seq_a[i]
+        b_i_lag = seq_b[i + lag]
 
-        # b[i] → a[i+lag] (양방향) - b[i+lag]가 유효할 때만 실행
-        if seq_b[i] is not None:
-            weights[seq_b[i], seq_a[i + lag]] += 1
+        # a[i] → b[i+lag]
+        if a_i is None or b_i_lag is None:
+            continue
+        weights[a_i, b_i_lag] += 1
+
+        # b[i] → a[i+lag] (양방향)
+        b_i = seq_b[i]
+        a_i_lag = seq_a[i + lag]
+        if b_i is not None and a_i_lag is not None:
+            weights[b_i, a_i_lag] += 1
     
     return pd.DataFrame(weights)
 

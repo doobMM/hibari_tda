@@ -406,13 +406,14 @@ def _find_death_edge(mat: np.ndarray, death_val: float,
 def _find_shortest_path_bfs(adj: Dict[int, list], src: int,
                             dst: int) -> Optional[List[int]]:
     """BFS로 src → dst 최단 경로를 찾습니다."""
+    from collections import deque as _deque
     if src == dst:
         return [src]
     visited = {src}
-    queue = [(src, [src])]
+    queue = _deque([(src, [src])])
     # 너비 우선 탐색: 최단 경로를 보장
     while queue:
-        node, path = queue.pop(0)
+        node, path = queue.popleft()
         for neighbor in adj.get(node, []):
             if neighbor == dst:
                 return path + [dst]

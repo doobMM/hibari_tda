@@ -1,0 +1,175 @@
+{
+  "track": "hibari",
+  "metric": "tonnetz",
+  "n_cycles": 16,
+  "T": 1088,
+  "N": 17,
+  "epochs": 50,
+  "models": {
+    "lstm": {
+      "val_loss": 0.4948,
+      "strategies": {
+        "baseline": {
+          "n_notes": 2774,
+          "pitch_js": 0.28483,
+          "transition_js": 0.545693,
+          "dtw": 2.03625,
+          "ncd": 0.936842
+        },
+        "segment_shuffle": {
+          "n_notes": 2774,
+          "pitch_js": 0.297378,
+          "transition_js": 0.550252,
+          "dtw": 2.03825,
+          "ncd": 0.961404,
+          "delta_pct": {
+            "pitch_js": 4.4,
+            "transition_js": 0.8,
+            "dtw": 0.1,
+            "ncd": 2.6
+          },
+          "verdict": "△ 보통"
+        },
+        "block_permute_block_size32": {
+          "n_notes": 2774,
+          "pitch_js": 0.296682,
+          "transition_js": 0.55003,
+          "dtw": 2.04625,
+          "ncd": 0.938596,
+          "delta_pct": {
+            "pitch_js": 4.2,
+            "transition_js": 0.8,
+            "dtw": 0.5,
+            "ncd": 0.2
+          },
+          "verdict": "△ 보통"
+        },
+        "block_permute_block_size64": {
+          "n_notes": 2774,
+          "pitch_js": 0.28483,
+          "transition_js": 0.545693,
+          "dtw": 2.0345,
+          "ncd": 0.938596,
+          "delta_pct": {
+            "pitch_js": 0.0,
+            "transition_js": 0.0,
+            "dtw": -0.1,
+            "ncd": 0.2
+          },
+          "verdict": "△ 보통"
+        },
+        "markov_resample_temperature1.0": {
+          "n_notes": 2774,
+          "pitch_js": 0.287468,
+          "transition_js": 0.542521,
+          "dtw": 2.03475,
+          "ncd": 0.942105,
+          "delta_pct": {
+            "pitch_js": 0.9,
+            "transition_js": -0.6,
+            "dtw": -0.1,
+            "ncd": 0.6
+          },
+          "verdict": "△ 보통"
+        },
+        "markov_resample_temperature1.5": {
+          "n_notes": 2774,
+          "pitch_js": 0.288688,
+          "transition_js": 0.547334,
+          "dtw": 2.043,
+          "ncd": 0.947368,
+          "delta_pct": {
+            "pitch_js": 1.4,
+            "transition_js": 0.3,
+            "dtw": 0.3,
+            "ncd": 1.1
+          },
+          "verdict": "△ 보통"
+        }
+      }
+    },
+    "transformer": {
+      "val_loss": 0.4554,
+      "strategies": {
+        "baseline": {
+          "n_notes": 2774,
+          "pitch_js": 0.006083,
+          "transition_js": 0.101692,
+          "dtw": 1.79175,
+          "ncd": 0.945055
+        },
+        "segment_shuffle": {
+          "n_notes": 2774,
+          "pitch_js": 0.005705,
+          "transition_js": 0.122971,
+          "dtw": 1.896,
+          "ncd": 0.962544,
+          "delta_pct": {
+            "pitch_js": -6.2,
+            "transition_js": 20.9,
+            "dtw": 5.8,
+            "ncd": 1.9
+          },
+          "verdict": "△ 보통"
+        },
+        "block_permute_block_size32": {
+          "n_notes": 2774,
+          "pitch_js": 0.006486,
+          "transition_js": 0.103916,
+          "dtw": 1.856,
+          "ncd": 0.950368,
+          "delta_pct": {
+            "pitch_js": 6.6,
+            "transition_js": 2.2,
+            "dtw": 3.6,
+            "ncd": 0.6
+          },
+          "verdict": "△ 보통"
+        },
+        "block_permute_block_size64": {
+          "n_notes": 2774,
+          "pitch_js": 0.005337,
+          "transition_js": 0.10665,
+          "dtw": 1.84275,
+          "ncd": 0.951686,
+          "delta_pct": {
+            "pitch_js": -12.3,
+            "transition_js": 4.9,
+            "dtw": 2.8,
+            "ncd": 0.7
+          },
+          "verdict": "△ 보통"
+        },
+        "markov_resample_temperature1.0": {
+          "n_notes": 2774,
+          "pitch_js": 0.00821,
+          "transition_js": 0.103752,
+          "dtw": 1.83975,
+          "ncd": 0.942912,
+          "delta_pct": {
+            "pitch_js": 35.0,
+            "transition_js": 2.0,
+            "dtw": 2.7,
+            "ncd": -0.2
+          },
+          "verdict": "✗ 분포 붕괴"
+        },
+        "markov_resample_temperature1.5": {
+          "n_notes": 2774,
+          "pitch_js": 0.004016,
+          "transition_js": 0.103315,
+          "dtw": 1.831,
+          "ncd": 0.949027,
+          "delta_pct": {
+            "pitch_js": -34.0,
+            "transition_js": 1.6,
+            "dtw": 2.2,
+            "ncd": 0.4
+          },
+          "verdict": "△ 보통"
+        }
+      }
+    }
+  },
+  "elapsed_s": 76.9
+}

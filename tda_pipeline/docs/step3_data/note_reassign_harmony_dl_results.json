@@ -1,0 +1,186 @@
+{
+  "track": "hibari",
+  "metric": "tonnetz",
+  "n_cycles": 18,
+  "T": 1088,
+  "N": 17,
+  "epochs": 50,
+  "experiments": {
+    "original_transformer": {
+      "val_loss": 0.5236,
+      "n_notes": 2774,
+      "pitch_js": 0.009254,
+      "transition_js": 0.111351,
+      "dtw": 1.80175,
+      "ncd": 0.95155
+    },
+    "baseline_transformer": {
+      "val_loss": 0.4965,
+      "n_notes": 2774,
+      "vs_original": {
+        "pitch_js": 0.600273,
+        "transition_js": 0.674831,
+        "dtw": 3.458,
+        "ncd": 1.036111
+      },
+      "vs_remapped": {
+        "pitch_js": 0.007405,
+        "transition_js": 0.11324,
+        "dtw": 2.931,
+        "ncd": 0.943519
+      },
+      "note_dist_error": 4.3451,
+      "cycle_dist_error": 1.3491,
+      "consonance_score": 0.0,
+      "interval_error": 0.0,
+      "new_pitches": [
+        41,
+        44,
+        51,
+        52,
+        55,
+        58,
+        64,
+        66,
+        68,
+        70,
+        73,
+        75,
+        82,
+        84,
+        85,
+        86,
+        88
+      ],
+      "n_pitch_classes": 10,
+      "best_scale_match": "C# major",
+      "harmony_mode": null
+    },
+    "scale_major_transformer": {
+      "val_loss": 0.492,
+      "n_notes": 2774,
+      "vs_original": {
+        "pitch_js": 0.097256,
+        "transition_js": 0.26232,
+        "dtw": 2.34975,
+        "ncd": 0.987073
+      },
+      "vs_remapped": {
+        "pitch_js": 0.003395,
+        "transition_js": 0.11083,
+        "dtw": 2.26175,
+        "ncd": 0.958449
+      },
+      "note_dist_error": 3.5169,
+      "cycle_dist_error": 1.4771,
+      "consonance_score": 0.0,
+      "interval_error": 0.0,
+      "new_pitches": [
+        40,
+        41,
+        47,
+        52,
+        59,
+        60,
+        62,
+        64,
+        65,
+        67,
+        69,
+        71,
+        72,
+        74,
+        76,
+        77,
+        81
+      ],
+      "n_pitch_classes": 7,
+      "best_scale_match": "C major",
+      "harmony_mode": "scale"
+    },
+    "scale_penta_transformer": {
+      "val_loss": 0.487,
+      "n_notes": 2774,
+      "vs_original": {
+        "pitch_js": 0.259388,
+        "transition_js": 0.523944,
+        "dtw": 3.369,
+        "ncd": 1.001883
+      },
+      "vs_remapped": {
+        "pitch_js": 0.008761,
+        "transition_js": 0.124013,
+        "dtw": 3.03825,
+        "ncd": 0.950094
+      },
+      "note_dist_error": 4.3168,
+      "cycle_dist_error": 1.4839,
+      "consonance_score": 0.0,
+      "interval_error": 0.0,
+      "new_pitches": [
+        40,
+        43,
+        45,
+        48,
+        50,
+        52,
+        55,
+        57,
+        60,
+        69,
+        72,
+        74,
+        76,
+        79,
+        81,
+        86,
+        88
+      ],
+      "n_pitch_classes": 5,
+      "best_scale_match": "C major",
+      "harmony_mode": "scale"
+    },
+    "all_penta_transformer": {
+      "val_loss": 0.5205,
+      "n_notes": 2774,
+      "vs_original": {
+        "pitch_js": 0.256881,
+        "transition_js": 0.537327,
+        "dtw": 3.37825,
+        "ncd": 1.001905
+      },
+      "vs_remapped": {
+        "pitch_js": 0.006282,
+        "transition_js": 0.116984,
+        "dtw": 3.05625,
+        "ncd": 0.945714
+      },
+      "note_dist_error": 4.3168,
+      "cycle_dist_error": 1.4839,
+      "consonance_score": 0.2135,
+      "interval_error": 0.8235,
+      "new_pitches": [
+        40,
+        43,
+        45,
+        48,
+        50,
+        52,
+        55,
+        57,
+        60,
+        69,
+        72,
+        74,
+        76,
+        79,
+        81,
+        86,
+        88
+      ],
+      "n_pitch_classes": 5,
+      "best_scale_match": "C major",
+      "harmony_mode": "all"
+    }
+  }
+}

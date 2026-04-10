@@ -1,0 +1,201 @@
+{
+  "track": "hibari",
+  "metric": "tonnetz",
+  "n_cycles": 18,
+  "T": 1088,
+  "N": 17,
+  "epochs": 50,
+  "scale_root": "C",
+  "experiments": {
+    "orig_none": {
+      "val_loss": 0.0907,
+      "n_notes": 2774,
+      "note_set": "orig",
+      "reorder": "none",
+      "vs_original": {
+        "pitch_js": 0.013822,
+        "transition_js": 0.116831,
+        "dtw": 1.5215,
+        "ncd": 0.865471
+      },
+      "vs_ref": {
+        "pitch_js": 0.013822,
+        "transition_js": 0.116831,
+        "dtw": 1.5215,
+        "ncd": 0.865471
+      },
+      "elapsed_s": 34.0
+    },
+    "orig_segment_shuffle": {
+      "val_loss": 0.715,
+      "n_notes": 2774,
+      "note_set": "orig",
+      "reorder": "segment_shuffle",
+      "vs_original": {
+        "pitch_js": 0.007256,
+        "transition_js": 0.101362,
+        "dtw": 1.868,
+        "ncd": 0.934315
+      },
+      "vs_ref": {
+        "pitch_js": 0.007256,
+        "transition_js": 0.101362,
+        "dtw": 1.868,
+        "ncd": 0.934315
+      },
+      "elapsed_s": 29.3
+    },
+    "orig_block32": {
+      "val_loss": 0.6058,
+      "n_notes": 2774,
+      "note_set": "orig",
+      "reorder": "block32",
+      "vs_original": {
+        "pitch_js": 0.005257,
+        "transition_js": 0.092869,
+        "dtw": 1.843,
+        "ncd": 0.945874
+      },
+      "vs_ref": {
+        "pitch_js": 0.005257,
+        "transition_js": 0.092869,
+        "dtw": 1.843,
+        "ncd": 0.945874
+      },
+      "elapsed_s": 29.2
+    },
+    "orig_block64": {
+      "val_loss": 0.5655,
+      "n_notes": 2774,
+      "note_set": "orig",
+      "reorder": "block64",
+      "vs_original": {
+        "pitch_js": 0.006174,
+        "transition_js": 0.09036,
+        "dtw": 1.88925,
+        "ncd": 0.953069
+      },
+      "vs_ref": {
+        "pitch_js": 0.006174,
+        "transition_js": 0.09036,
+        "dtw": 1.88925,
+        "ncd": 0.953069
+      },
+      "elapsed_s": 33.0
+    },
+    "orig_markov_t1.0": {
+      "val_loss": 0.6959,
+      "n_notes": 2774,
+      "note_set": "orig",
+      "reorder": "markov_t1.0",
+      "vs_original": {
+        "pitch_js": 0.008607,
+        "transition_js": 0.092715,
+        "dtw": 1.84675,
+        "ncd": 0.922018
+      },
+      "vs_ref": {
+        "pitch_js": 0.008607,
+        "transition_js": 0.092715,
+        "dtw": 1.84675,
+        "ncd": 0.922018
+      },
+      "elapsed_s": 28.4
+    },
+    "major_none": {
+      "val_loss": 0.1051,
+      "n_notes": 2774,
+      "note_set": "major",
+      "reorder": "none",
+      "vs_original": {
+        "pitch_js": 0.124605,
+        "transition_js": 0.305188,
+        "dtw": 2.38275,
+        "ncd": 0.95022
+      },
+      "vs_ref": {
+        "pitch_js": 0.009619,
+        "transition_js": 0.106547,
+        "dtw": 2.01075,
+        "ncd": 0.877013
+      },
+      "elapsed_s": 26.6
+    },
+    "major_segment_shuffle": {
+      "val_loss": 0.7638,
+      "n_notes": 2774,
+      "note_set": "major",
+      "reorder": "segment_shuffle",
+      "vs_original": {
+        "pitch_js": 0.117013,
+        "transition_js": 0.269959,
+        "dtw": 2.45375,
+        "ncd": 0.97642
+      },
+      "vs_ref": {
+        "pitch_js": 0.011855,
+        "transition_js": 0.096018,
+        "dtw": 2.3055,
+        "ncd": 0.93462
+      },
+      "elapsed_s": 24.9
+    },
+    "major_block32": {
+      "val_loss": 0.6148,
+      "n_notes": 2774,
+      "note_set": "major",
+      "reorder": "block32",
+      "vs_original": {
+        "pitch_js": 0.099855,
+        "transition_js": 0.251221,
+        "dtw": 2.374,
+        "ncd": 0.989257
+      },
+      "vs_ref": {
+        "pitch_js": 0.002081,
+        "transition_js": 0.094168,
+        "dtw": 2.3015,
+        "ncd": 0.950761
+      },
+      "elapsed_s": 25.1
+    },
+    "major_block64": {
+      "val_loss": 0.5797,
+      "n_notes": 2774,
+      "note_set": "major",
+      "reorder": "block64",
+      "vs_original": {
+        "pitch_js": 0.109452,
+        "transition_js": 0.269938,
+        "dtw": 2.35375,
+        "ncd": 0.983592
+      },
+      "vs_ref": {
+        "pitch_js": 0.009589,
+        "transition_js": 0.103392,
+        "dtw": 2.261,
+        "ncd": 0.946217
+      },
+      "elapsed_s": 24.8
+    },
+    "major_markov_t1.0": {
+      "val_loss": 0.7071,
+      "n_notes": 2774,
+      "note_set": "major",
+      "reorder": "markov_t1.0",
+      "vs_original": {
+        "pitch_js": 0.112215,
+        "transition_js": 0.262878,
+        "dtw": 2.468,
+        "ncd": 0.969565
+      },
+      "vs_ref": {
+        "pitch_js": 0.005418,
+        "transition_js": 0.086382,
+        "dtw": 2.29275,
+        "ncd": 0.927174
+      },
+      "elapsed_s": 29.0
+    }
+  }
+}

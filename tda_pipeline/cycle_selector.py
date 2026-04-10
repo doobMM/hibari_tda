@@ -118,6 +118,51 @@ class PreservationMetrics:
 
         return total_j / count if count > 0 else 0.0
 
+    # ── Incremental Jaccard (greedy 최적화용) ──
+
+    def init_incremental(self) -> List[Set[int]]:
+        """greedy 시작 전 호출. 시점별 빈 sub_pool 초기화."""
+        return [set() for _ in range(self.T)]
+
+    def jaccard_with_candidate(self, sub_pools: List[Set[int]],
+                               candidate_c: int) -> float:
+        """
+        기존 sub_pools에 candidate_c를 추가했을 때의 Jaccard를
+        sub_pools를 변경하지 않고 계산합니다.
+        """
+        if not self._active_times:
+            return 1.0
+
+        c_notes = self.cycle_notes.get(candidate_c, set())
+        total_j = 0.0
+        count = 0
+
+        for t in self._active_times:
+            full_pool = self._full_pools[t]
+            if not full_pool:
+                continue
+
+            if self.overlap[t, candidate_c]:
+                sub_pool = sub_pools[t] | c_notes
+            else:
+                sub_pool = sub_pools[t]
+
+            intersection = len(full_pool & sub_pool)
+            union = len(full_pool | sub_pool)
+            if union > 0:
+                total_j += intersection / union
+                count += 1
+
+        return total_j / count if count > 0 else 0.0
+
+    def commit_candidate(self, sub_pools: List[Set[int]],
+                         candidate_c: int) -> None:
+        """선택 확정: sub_pools에 candidate_c의 note를 반영합니다."""
+        c_notes = self.cycle_notes.get(candidate_c, set())
+        for t in range(self.T):
+            if self.overlap[t, candidate_c]:
+                sub_pools[t] |= c_notes
+
     def overlap_correlation(self, subset: List[int]) -> float:
         """
         전체 vs subset의 temporal profile에 대한 Pearson 상관계수.
@@ -177,6 +222,23 @@ class PreservationMetrics:
         j = self.note_pool_jaccard(subset)
         c = self.overlap_correlation(subset)
         b = self.betti_curve_score(subset)
+
+        score = self.w_jaccard * j + self.w_corr * c + self.w_betti * b
+        components = {'jaccard': j, 'correlation': c, 'betti': b}
+        return score, components
+
+    def composite_score_incremental(self, subset: List[int],
+                                    candidate_c: int,
+                                    sub_pools: List[Set[int]]
+                                    ) -> Tuple[float, Dict[str, float]]:
+        """
+        incremental Jaccard + 기존 correlation/betti로 composite score 계산.
+        greedy 루프에서 subset 전체를 매번 재순회하지 않아 빠릅니다.
+        """
+        candidate = subset + [candidate_c]
+        j = self.jaccard_with_candidate(sub_pools, candidate_c)
+        c = self.overlap_correlation(candidate)
+        b = self.betti_curve_score(candidate)
 
         score = self.w_jaccard * j + self.w_corr * c + self.w_betti * b
         components = {'jaccard': j, 'correlation': c, 'betti': b}
@@ -245,14 +307,14 @@ class CycleSubsetSelector:
 
     def _greedy_select(self, stop_fn, verbose: bool) -> SelectionResult:
         """
-        Greedy forward selection 공통 로직.
+        Greedy forward selection 공통 로직 (incremental Jaccard 최적화).
 
         빈 집합에서 시작하여 매 단계마다:
           1. 아직 선택되지 않은 모든 cycle을 후보로 시도
           2. 각 후보를 현재 선택 집합에 추가했을 때의 composite score 계산
+             — Jaccard는 incremental: 이전 sub_pools 캐시에 후보만 추가하여 평가
           3. 가장 높은 score를 주는 cycle을 선택 집합에 확정
           4. stop_fn 조건(크기 K 도달 또는 목표 score 달성)이면 종료
-        이 방식은 최적해를 보장하지는 않지만 O(C^2) 평가로 실용적.
         """
         selected: List[int] = []
         remaining = set(range(self.C))
@@ -260,6 +322,9 @@ class CycleSubsetSelector:
         component_curves: Dict[str, List[float]] = {
             'jaccard': [], 'correlation': [], 'betti': []
         }
+
+        # incremental Jaccard용 시점별 sub_pool 캐시
+        sub_pools = self.metrics.init_incremental()
 
         step = 0
         while remaining:
@@ -269,16 +334,17 @@ class CycleSubsetSelector:
 
             # 남은 후보 중 추가 시 score가 최대인 cycle 탐색
             for c in remaining:
-                candidate = selected + [c]
-                score, comp = self.metrics.composite_score(candidate)
+                score, comp = self.metrics.composite_score_incremental(
+                    selected, c, sub_pools)
                 if score > best_score:
                     best_score = score
                     best_c = c
                     best_comp = comp
 
-            # 최선의 cycle을 선택 집합에 추가
+            # 최선의 cycle을 선택 집합에 추가 + sub_pools 갱신
             selected.append(best_c)
             remaining.remove(best_c)
+            self.metrics.commit_candidate(sub_pools, best_c)
             preservation_curve.append(best_score)
             for key in component_curves:
                 component_curves[key].append(best_comp[key])
