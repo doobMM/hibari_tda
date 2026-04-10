@@ -90,33 +90,37 @@ def refine_connectedness_fast(weight_matrix: pd.DataFrame,
     원리:
     - W[i,j] (화음 i→j 가중치)를 화음 i에 속한 모든 note와
       화음 j에 속한 모든 note 쌍에 분배
-    - E = expansion matrix, W = weight matrix (상삼각)
-    - refined = E^T @ W_upper @ E (상삼각 부분만 취함)
+    - E = expansion matrix
+    - refined = E^T @ W_full @ E  (전체 행렬에서 연산 후 상삼각 추출)
 
-    rounding_digits: 부동소수점 오차 방지용 반올림 자릿수 (기존 코드의 round(v, -power))
+    [BUG FIX 2026-04-10]
+    기존 로직: W 를 먼저 upper triangular 로 변환한 뒤 E^T @ W_upper @ E.
+    문제: chord i→j 전이에서 note_a ∈ chord_i, note_b ∈ chord_j 일 때,
+    chord 번호 i < j 이지만 note 번호 note_a > note_b 인 경우
+    W_upper 에서 i→j 방향 값은 있지만 E 경로가 note_a→note_b 로
+    하삼각 위치를 요구하여 누락됨.
+    수정: W 를 대칭화(symmetric)한 전체 행렬로 refine 후 상삼각 추출.
+    원본 util.py:142 의 `if note_j >= note_i` 조건과 동일한 문제.
     """
     W = weight_matrix.values.astype(float)
 
-    # 상삼각으로 변환 (대각선 제외)
-    W_upper = np.triu(W, k=0) + np.triu(W.T, k=1)
-    np.fill_diagonal(W_upper, np.diag(W))
-    # 하삼각 → 상삼각으로 옮기기
-    for i in range(W.shape[0]):
-        for j in range(i):
-            W_upper[j, i] += W[i, j]
-    W_upper = np.triu(W_upper)
+    # W 를 대칭 행렬로 만듦: W_sym[i,j] = W[i,j] + W[j,i]
+    # (chord i→j 와 j→i 전이를 모두 하나의 undirected 연결로)
+    W_sym = W + W.T
+    # 대각선은 원본 유지 (중복 합산 방지)
+    np.fill_diagonal(W_sym, np.diag(W))
 
     # 확장 행렬
     E = _build_expansion_matrix(notes_dict, num_notes)
 
-    # 행렬 곱으로 refine: R = E^T @ W_upper @ E
-    refined = E.T @ W_upper @ E
+    # 전체 행렬에서 refine: R = E^T @ W_sym @ E
+    refined = E.T @ W_sym @ E
 
-    # 부동소수점 오차 보정 (기존 코드와 일치)
+    # 부동소수점 오차 보정
     if rounding_digits is not None:
         refined = np.round(refined, rounding_digits)
 
-    # 상삼각만 유지
+    # 상삼각만 유지 (distance 변환에 필요)
     refined = np.triu(refined)
 
     # DataFrame으로 변환 (1-indexed note labels)
