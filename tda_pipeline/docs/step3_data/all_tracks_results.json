@@ -1,0 +1,33 @@
+{
+  "merry-christmas-mr-lawrence": {
+    "T": 1062,
+    "N": 48,
+    "num_chords": 134,
+    "inst1_n": 991,
+    "inst2_n": 766,
+    "frequency": {
+      "n_cycles": 28,
+      "ph_time_s": 12.6,
+      "js_mean": 0.1044,
+      "js_std": 0.003,
+      "js_min": 0.1007
+    },
+    "tonnetz": {
+      "n_cycles": 75,
+      "ph_time_s": 25.7,
+      "js_mean": 0.1107,
+      "js_std": 0.0035,
+      "js_min": 0.1072
+    },
+    "voice_leading": {
+      "n_cycles": 25,
+      "ph_time_s": 32.2,
+      "js_mean": 0.1727,
+      "js_std": 0.0038,
+      "js_min": 0.1666
+    },
+    "best_metric": "frequency",
+    "best_js": 0.1044,
+    "tonnetz_improvement": -6.0
+  }
+}
