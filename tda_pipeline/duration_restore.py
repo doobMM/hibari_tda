@@ -69,11 +69,93 @@ def compute_smoothed_duration(original_notes: List[Tuple[int, int, int]],
     return np.clip(np.round(smoothed).astype(int), 1, 20)
 
 
+def restore_durations_probabilistic(
+        generated_notes: List[Tuple[int, int, int]],
+        original_notes: List[Tuple[int, int, int]],
+        T: int,
+        seed: Optional[int] = None) -> List[Tuple[int, int, int]]:
+    """
+    확률적 duration 복원 — 원곡의 pitch 별 duration 분포에서 샘플링.
+
+    원리:
+      1. 원곡에서 각 pitch 가 실제로 쓰인 duration 의 빈도 분포를 구함
+         예: C4 → {dur=1: 10회, dur=2: 20회, dur=3: 30회, dur=4: 40회}
+      2. Algorithm 1 이 (start, C4, start+1) 을 생성하면,
+         위 분포에서 가중 랜덤 추출 → 40% 확률로 dur=4 선택
+      3. 선택된 duration 만큼 해당 pitch 를 유지
+         → 그 동안 같은 pitch 의 새 onset 은 허용하지 않음
+
+    이 방식이 기존 median/smoothed 보다 나은 이유:
+      - median 은 "평균적 길이"를 할당하지만 분포의 다양성이 사라짐
+      - 확률적 샘플링은 원곡의 duration 다양성을 그대로 재현
+
+    Args:
+        generated_notes: Algorithm 1/2 가 생성한 [(start, pitch, end), ...]
+        original_notes: 원곡의 [(start, pitch, end), ...]
+        T: 전체 시간 길이
+        seed: 재현성을 위한 random seed (None 이면 비결정적)
+
+    Returns:
+        duration 이 확률적으로 복원된 note 리스트
+    """
+    import random as rng
+    if seed is not None:
+        rng.seed(seed)
+
+    # 1. pitch 별 duration 분포 구축
+    pitch_dur_dist: dict = defaultdict(Counter)
+    for s, p, e in original_notes:
+        d = e - s
+        if d > 0:
+            pitch_dur_dist[p][d] += 1
+
+    # 가중 랜덤 추출용 사전 계산
+    pitch_dur_choices: dict = {}
+    for p, counter in pitch_dur_dist.items():
+        durs = list(counter.keys())
+        weights = list(counter.values())
+        pitch_dur_choices[p] = (durs, weights)
+
+    # fallback: 전체 duration 분포
+    all_durs_counter = Counter()
+    for c in pitch_dur_dist.values():
+        all_durs_counter.update(c)
+    fallback_durs = list(all_durs_counter.keys())
+    fallback_weights = list(all_durs_counter.values())
+
+    # 2. 시간순 정렬 + duration 할당
+    sorted_notes = sorted(generated_notes, key=lambda x: (x[0], x[1]))
+    restored = []
+    pitch_end: dict = {}  # pitch → 가장 빠른 허용 onset 시점
+
+    for s, p, e in sorted_notes:
+        # 같은 pitch 가 아직 울리고 있으면 건너뜀
+        if p in pitch_end and s < pitch_end[p]:
+            continue
+
+        # duration 샘플링
+        if p in pitch_dur_choices:
+            durs, weights = pitch_dur_choices[p]
+            d = rng.choices(durs, weights=weights, k=1)[0]
+        else:
+            d = rng.choices(fallback_durs, weights=fallback_weights, k=1)[0]
+
+        new_end = min(s + d, T)
+        if new_end <= s:
+            continue
+
+        restored.append((s, p, new_end))
+        pitch_end[p] = new_end
+
+    return restored
+
+
 def restore_durations(generated_notes: List[Tuple[int, int, int]],
                        original_notes: List[Tuple[int, int, int]],
                        T: int,
-                       method: str = 'hybrid',
-                       window: int = 16) -> List[Tuple[int, int, int]]:
+                       method: str = 'probabilistic',
+                       window: int = 16,
+                       seed: Optional[int] = None) -> List[Tuple[int, int, int]]:
     """생성된 note 의 duration 을 원곡 패턴으로 복원.
 
     Args:
@@ -90,25 +172,24 @@ def restore_durations(generated_notes: List[Tuple[int, int, int]],
     Returns:
         duration 이 복원된 note 리스트 (onset overlap 방지 적용)
     """
+    # probabilistic 이 기본 (신규 추천)
+    if method == 'probabilistic':
+        return restore_durations_probabilistic(
+            generated_notes, original_notes, T, seed=seed)
+
     pitch_dur = compute_pitch_duration_map(original_notes, method='median')
     smoothed_dur = compute_smoothed_duration(original_notes, T, window)
 
-    # pitch 별 duration 이 없는 경우의 fallback
     global_median = max(1, int(np.median([e-s for s,_,e in original_notes if e > s])))
 
     restored = []
-    # onset 별로 정렬
     sorted_notes = sorted(generated_notes, key=lambda x: (x[0], x[1]))
-
-    # pitch 별 마지막 onset + duration 추적 (같은 pitch 겹침 방지)
-    pitch_end = {}  # pitch → earliest allowed next onset
+    pitch_end = {}
 
     for s, p, e in sorted_notes:
-        # 이미 이 pitch 가 울리고 있으면 건너뜀
         if p in pitch_end and s < pitch_end[p]:
             continue
 
-        # duration 결정
         if method == 'per_pitch':
             d = pitch_dur.get(p, global_median)
         elif method == 'smoothed':
@@ -116,7 +197,6 @@ def restore_durations(generated_notes: List[Tuple[int, int, int]],
         elif method == 'hybrid':
             d_pitch = pitch_dur.get(p, global_median)
             d_smooth = int(smoothed_dur[min(s, T - 1)]) if s < T else global_median
-            # pitch 고유 duration 과 시점 duration 의 가중 평균
             d = max(1, round(0.6 * d_pitch + 0.4 * d_smooth))
         else:
             d = 1
