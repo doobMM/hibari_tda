@@ -30,7 +30,7 @@
    Algorithm 2: FC / LSTM / Transformer 신경망 (학습 기반, ~30s-3min)
 ```
 
-## 현재 상태 (2026-04-10 기준)
+## 현재 상태 (2026-04-13 기준)
 
 ### 완료된 주요 실험
 
@@ -41,8 +41,15 @@
 | §3.4a 개선 F (N=5) | Continuous + FC → JS 0.0004 ★ 본 연구 최저 |
 | §3.6 곡 고유 구조 | deep scale, entropy 0.974, phase shifting |
 | §7.1 모듈 단위 생성 | P4+C best JS 0.0258, 첫 모듈 정당성 |
-| §7.2 aqua 일반화 | Tonnetz +26.3%, pitch-only N=51 |
-| §7.2 solari 일반화 | hibari 반대: voice_leading + Transformer 최적 |
+| §7.2 aqua/solari/Bach/Ravel 일반화 | 곡 성격이 최적 도구 결정 |
+| §7.7 Continuous 정교화 3종 | per-cycle τ +48.6%, soft Algo2 +64.3% |
+| §7.8 α grid search (N=20) | α=0.0(순수 Tonnetz) 최적 |
+| octave_weight 튜닝 (N=10) | ow=0.3 최적, JS -18.8% |
+| 감쇄 lag 가중치 (lag 1~4) | hibari Tonnetz JS -70% |
+| 방향 A: note 재분배 | Tonnetz 매칭, DTW +61.4% |
+| 방향 B: 시간 재배치 | pitch↔선율 딜레마, 단독 한계 |
+| Barcode Wasserstein 모듈 선택 | Pearson(W,JS)=0.503 |
+| Wasserstein 제약 note 재분배 | 계수 무관, 효과 제한적 |
 
 ### 핵심 발견 — 곡의 성격이 최적 도구를 결정한다
 
@@ -51,12 +58,22 @@
 | hibari | 7 (diatonic) | Tonnetz | FC | 공간적 배치, entropy 0.974 |
 | solari | 12 (chromatic) | voice_leading | Transformer | 선율적 진행 |
 | aqua | 12 (chromatic) | Tonnetz | (미실행) | Tonnetz +26.3% |
+| Bach Fugue | 12 (chromatic) | Tonnetz | — | 대위법인데 Tonnetz 최적 (-54.8%) |
+| Ravel Pavane | 12 (N=49) | frequency | FC | 풍부한 분포 → 빈도 가중 유리 |
 
-### 다음 할 작업
+### hibari 현재 최적 설정
 
-1. 나머지 6곡 실험 (`run_any_track.py --all`)
-2. 비전공자용 보고서에 solari 대비 + §3.6 반영
-3. LaTeX 원고 최종 업데이트
+```
+거리 함수: Tonnetz (α=0.0, octave_weight=0.3)
+Lag: 감쇄 가중 (lag 1~4, w=[0.4, 0.3, 0.2, 0.1])
+중첩행렬: continuous activation + per-cycle τ_c 이진화
+생성 모델: FC (soft activation 입력)
+온도: T=3.0 (빈도 스케일링)
+```
+
+### 다음 할 작업 (세션별)
+
+아래 "다음 우선 작업" 섹션 참조.
 
 ## 폴더 구조
 
@@ -149,8 +166,26 @@ cd docs && python build_academic_pdf.py academic_paper_full.md
 | **B. 디버그** | 코드 수정, diagnose.py | 소스코드 전체 | docs/, 결과 해석 |
 | **C. 감상** | WAV 청취 평가, 방향 논의 | output/, 생성 결과 요약 | 소스코드 내부 |
 | **D. 보고서** | md/LaTeX, 도표, 수치 | docs/, step3_data/ | 소스코드 내부 |
+| **E. Control Tower** | 전체 추적, 우선순위, 커밋 | memory/, CLAUDE.md, git log | 소스코드·논문 내부 |
 
 **세션 간 인터페이스 = 파일**: A→json→D, A→wav→C, B→코드수정→A, C→방향→memory→A/B
+
+### E. Control Tower 역할
+
+A~D 세션의 상위 조율자. 어떤 세션에도 속하지 않으며, 세션 간 정보 흐름을 추적한다.
+
+**주요 책임:**
+1. **작업 추적** — 오늘/최근 세션에서 수행된 실험·코드수정·논문작업을 종합 파악
+2. **우선순위 조정** — A~D 세션별 다음 작업을 중요도·의존성 기준으로 정렬
+3. **커밋 관리** — 미커밋 작업 감지, 적절한 단위로 커밋 생성
+4. **memory 갱신** — 세션 결과를 memory에 기록하여 세션 간 정보 전달
+5. **흐름도 유지** — `docs/research_flow_diagram.html` 업데이트
+6. **피드백 추적** — `docs/260*피드백*.txt` → 미반영 항목 식별 → 세션 배정
+
+**사용 시점:** 세션 간 전환이 잦거나, 전체 진행 현황을 파악할 때. "control tower야"로 선언.
+
+**읽는 것:** memory/, CLAUDE.md, git log/status, 피드백 txt, step3_data/ JSON (수치만)
+**안 읽는 것:** 소스코드 내부, 논문 본문 (구조만 파악)
 
 ### Skills (자동 로드)
 - `/run-experiment` — MIDI 파이프라인 실행 (세션 A)
@@ -159,6 +194,40 @@ cd docs && python build_academic_pdf.py academic_paper_full.md
 - `/explain-research` — 비전공자용 연구 설명 (세션 D)
 - `/update-paper` — JSON 최신 수치 → 논문 표 자동 반영 (세션 D)
 - `/research-next` — 선행연구 + 다음 방향 제안 (세션 A/D)
+
+## 다음 우선 작업 (2026-04-13 기준)
+
+### 높은 우선순위 (연구 결과에 직접 영향)
+
+| # | 세션 | 작업 | 의존성 | 비고 |
+|---|------|------|--------|------|
+| 1 | **A** | `ow=0.3 + α=0.0 + 감쇄lag` 통합 조합 실험 (N=20) | 없음 | 3개 독립 개선이 시너지 내는지 검증 — 현재 최고 우선 |
+| 2 | **A** | Per-cycle τ_c N=20 재검증 | 없음 | 현재 N=5 greedy, +48.6%를 통계적으로 확인 |
+| 3 | **A** | Soft activation → Transformer/LSTM 확장 | 없음 | FC에서 +64.3% 확인, 다른 아키텍처에서도? |
+| 4 | **D** | 피드백(1) 반영: §1~§4 수식 크기, 정의 보완, Tonnetz 범위 한정 | B-①②③ | 사실관계 확인 완료 후 수정 |
+| 5 | **D** | 피드백(2) 반영: §7 전체 지적사항 18건 | B-①②③ | §7.1 목적 정정, §7.3 정의 추가 등 |
+
+### 중간 우선순위 (결과 보강)
+
+| # | 세션 | 작업 | 의존성 | 비고 |
+|---|------|------|--------|------|
+| 6 | **D** | §2.9 감쇄 lag 가중치 수식·결과 반영 | 없음 | memory에 기록만 됨, 논문 미반영 |
+| 7 | **D** | §7.2 일반화 테이블 확장 (Bach/Ravel 추가) | 없음 | JSON 있음 |
+| 8 | **D** | §7.7/§7.8 실험 결과 논문 반영 | 없음 | JSON 있음, per-cycle τ/soft/온도/α |
+| 9 | **D** | §7.1.9 Barcode Wasserstein 주의사항 4개 | 없음 | memory에 기록 완료 |
+| 10 | **B** | density 수치 통일 (0.1684/0.160/0.201 혼용) | 없음 | 코드 확인 → 정확한 값 확정 |
+| 11 | **B** | §2.11 N! vs Hungarian 근사 — 논문 주석 추가 필요 여부 | 없음 | hibari는 항상 근사 경로 |
+| 12 | **B** | P3 수식 구현 확인 (v3 미구현 가능성) | 없음 | step71_improvements.json에 P3 없음 |
+
+### 낮은 우선순위 (향후 과제)
+
+| # | 세션 | 작업 | 비고 |
+|---|------|------|------|
+| 13 | **C** | 방향 A vwide WAV 청각 평가 | 아직 미실시 |
+| 14 | **C** | 최적 설정(ow=0.3, α=0.0) WAV 생성 + 감상 | A-① 이후 |
+| 15 | **A** | 나머지 곡 실험 (`run_any_track.py --all`) | 파라미터 확정 이후 |
+| 16 | **B** | Wasserstein 제약 재설계 (topk 이전 적용) | 현재 구현 효과 없음 |
+| 17 | **D** | LaTeX 원고 최종 업데이트 | 모든 반영 완료 후 |
 
 ## 기술 환경
 
