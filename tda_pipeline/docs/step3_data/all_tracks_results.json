@@ -1,33 +1,188 @@
 {
-  "merry-christmas-mr-lawrence": {
+  "a flower is not a flower": {
+    "T": 441,
+    "N": 48,
+    "num_chords": 133,
+    "inst1_n": 250,
+    "inst2_n": 219,
+    "frequency": {
+      "n_cycles": 69,
+      "ph_time_s": 14.6,
+      "js_mean": 0.0987,
+      "js_std": 0.0035,
+      "js_min": 0.0911
+    },
+    "tonnetz": {
+      "n_cycles": 70,
+      "ph_time_s": 30.0,
+      "js_mean": 0.1022,
+      "js_std": 0.0029,
+      "js_min": 0.0958
+    },
+    "voice_leading": {
+      "n_cycles": 40,
+      "ph_time_s": 41.9,
+      "js_mean": 0.1313,
+      "js_std": 0.0031,
+      "js_min": 0.126
+    },
+    "best_metric": "frequency",
+    "best_js": 0.0987,
+    "tonnetz_improvement": -3.5
+  },
+  "bibo no aozora": {
+    "T": 768,
+    "N": 60,
+    "num_chords": 194,
+    "inst1_n": 440,
+    "inst2_n": 682,
+    "frequency": {
+      "n_cycles": 246,
+      "ph_time_s": 38.8,
+      "js_mean": 0.055,
+      "js_std": 0.0017,
+      "js_min": 0.052
+    },
+    "tonnetz": {
+      "n_cycles": 139,
+      "ph_time_s": 62.9,
+      "js_mean": 0.0605,
+      "js_std": 0.0026,
+      "js_min": 0.0559
+    },
+    "voice_leading": {
+      "n_cycles": 77,
+      "ph_time_s": 77.5,
+      "js_mean": 0.0937,
+      "js_std": 0.0024,
+      "js_min": 0.0906
+    },
+    "best_metric": "frequency",
+    "best_js": 0.055,
+    "tonnetz_improvement": -10.0
+  },
+  "energy flow": {
+    "T": 751,
+    "N": 55,
+    "num_chords": 161,
+    "inst1_n": 647,
+    "inst2_n": 499,
+    "frequency": {
+      "n_cycles": 142,
+      "ph_time_s": 28.0,
+      "js_mean": 0.0704,
+      "js_std": 0.0028,
+      "js_min": 0.0656
+    },
+    "tonnetz": {
+      "n_cycles": 107,
+      "ph_time_s": 31.6,
+      "js_mean": 0.078,
+      "js_std": 0.0026,
+      "js_min": 0.0744
+    },
+    "voice_leading": {
+      "n_cycles": 39,
+      "ph_time_s": 50.5,
+      "js_mean": 0.1345,
+      "js_std": 0.0034,
+      "js_min": 0.1292
+    },
+    "best_metric": "frequency",
+    "best_js": 0.0704,
+    "tonnetz_improvement": -10.8
+  },
+  "merry christmas": {
     "T": 1062,
     "N": 48,
     "num_chords": 134,
     "inst1_n": 991,
     "inst2_n": 766,
     "frequency": {
-      "n_cycles": 28,
-      "ph_time_s": 12.6,
-      "js_mean": 0.1044,
-      "js_std": 0.003,
-      "js_min": 0.1007
+      "n_cycles": 116,
+      "ph_time_s": 12.2,
+      "js_mean": 0.0713,
+      "js_std": 0.0026,
+      "js_min": 0.0675
     },
     "tonnetz": {
-      "n_cycles": 75,
-      "ph_time_s": 25.7,
-      "js_mean": 0.1107,
-      "js_std": 0.0035,
-      "js_min": 0.1072
+      "n_cycles": 84,
+      "ph_time_s": 21.5,
+      "js_mean": 0.0921,
+      "js_std": 0.0032,
+      "js_min": 0.0879
     },
     "voice_leading": {
-      "n_cycles": 25,
-      "ph_time_s": 32.2,
-      "js_mean": 0.1727,
-      "js_std": 0.0038,
-      "js_min": 0.1666
+      "n_cycles": 23,
+      "ph_time_s": 39.6,
+      "js_mean": 0.1966,
+      "js_std": 0.0034,
+      "js_min": 0.1927
     },
     "best_metric": "frequency",
-    "best_js": 0.1044,
-    "tonnetz_improvement": -6.0
+    "best_js": 0.0713,
+    "tonnetz_improvement": -29.2
+  },
+  "the last emperor": {
+    "T": 802,
+    "N": 73,
+    "num_chords": 272,
+    "inst1_n": 849,
+    "inst2_n": 879,
+    "frequency": {
+      "n_cycles": 359,
+      "ph_time_s": 100.2,
+      "js_mean": 0.0292,
+      "js_std": 0.0017,
+      "js_min": 0.0263
+    },
+    "tonnetz": {
+      "n_cycles": 216,
+      "ph_time_s": 180.4,
+      "js_mean": 0.0311,
+      "js_std": 0.0021,
+      "js_min": 0.0275
+    },
+    "voice_leading": {
+      "n_cycles": 66,
+      "ph_time_s": 219.1,
+      "js_mean": 0.0458,
+      "js_std": 0.0029,
+      "js_min": 0.0409
+    },
+    "best_metric": "frequency",
+    "best_js": 0.0292,
+    "tonnetz_improvement": -6.5
+  },
+  "tong poo (solo)": {
+    "T": 1330,
+    "N": 63,
+    "num_chords": 238,
+    "inst1_n": 969,
+    "inst2_n": 971,
+    "frequency": {
+      "n_cycles": 296,
+      "ph_time_s": 75.7,
+      "js_mean": 0.0378,
+      "js_std": 0.0023,
+      "js_min": 0.0343
+    },
+    "tonnetz": {
+      "n_cycles": 168,
+      "ph_time_s": 72.8,
+      "js_mean": 0.0579,
+      "js_std": 0.0033,
+      "js_min": 0.0521
+    },
+    "voice_leading": {
+      "n_cycles": 38,
+      "ph_time_s": 83.5,
+      "js_mean": 0.1199,
+      "js_std": 0.0045,
+      "js_min": 0.1142
+    },
+    "best_metric": "frequency",
+    "best_js": 0.0378,
+    "tonnetz_improvement": -53.2
   }
 }

@@ -195,8 +195,11 @@ class TDAMusicPipeline:
                 musical_dist = 'hybrid'  # 마커 — loop 안에서 처리
             else:
                 # 단일 metric (tonnetz / voice_leading / dft)
+                kwargs = {}
+                if mcfg.metric == 'tonnetz':
+                    kwargs['octave_weight'] = mcfg.octave_weight
                 musical_dist = compute_note_distance_matrix(
-                    notes_label, metric=mcfg.metric
+                    notes_label, metric=mcfg.metric, **kwargs
                 )
 
         # _apply_metric을 search 함수에 전달
@@ -255,11 +258,18 @@ class TDAMusicPipeline:
     def _search_timeflow(self, adn_i, notes_dict, lag, dim, cfg, generateBarcode,
                          musical_dist=None):
         """Timeflow homology 탐색"""
+        from weights import compute_inter_weights_decayed
+
         w1 = compute_intra_weights(adn_i[1][0])
         w2 = compute_intra_weights(adn_i[2][0])
         intra = w1 + w2
 
-        inter = compute_inter_weights(adn_i[1][lag], adn_i[2][lag], lag=lag)
+        # lag 1~max_lag 감쇄 가중치 합산
+        max_lag = self.config.homology.max_lag
+        inter = compute_inter_weights_decayed(
+            adn_i, max_lag=max_lag,
+            num_chords=self.config.midi.num_chords
+        )
         oor = compute_out_of_reach(inter, power=cfg.power)
 
         step = 10 ** cfg.power
@@ -320,11 +330,16 @@ class TDAMusicPipeline:
     def _search_complex(self, adn_i, notes_dict, lag, dim, rate_t, rate_s, cfg, generateBarcode,
                          musical_dist=None):
         """Complex homology 탐색"""
+        from weights import compute_inter_weights_decayed
         # Timeflow 부분
         w1 = compute_intra_weights(adn_i[1][0])
         w2 = compute_intra_weights(adn_i[2][0])
         intra = w1 + w2
-        inter = compute_inter_weights(adn_i[1][lag], adn_i[2][lag], lag=lag)
+        max_lag = self.config.homology.max_lag
+        inter = compute_inter_weights_decayed(
+            adn_i, max_lag=max_lag,
+            num_chords=self.config.midi.num_chords
+        )
         
         timeflow_w = intra + rate_t * inter
         # Refine만 수행 (거리 변환은 complex에서)
@@ -370,21 +385,26 @@ class TDAMusicPipeline:
     # Stage 3: 중첩행렬 구축
     # ═══════════════════════════════════════════════════════════════════════
     
-    def run_overlap_construction(self, 
+    def run_overlap_construction(self,
                                  persistence_key: Optional[str] = None,
-                                 from_pickle: Optional[str] = None):
+                                 from_pickle: Optional[str] = None,
+                                 per_cycle_tau: Optional[List[float]] = None):
         """
         사이클 persistence 데이터로부터 중첩행렬을 구축합니다.
-        
+
         Args:
             persistence_key: 캐시 키 (예: 'h1_timeflow_lag1')
             from_pickle: pickle 파일에서 로드할 경우 파일명
+            per_cycle_tau: 길이 K의 리스트. None이면 config.overlap.threshold 단일값 사용.
+                           §7.7.1 per-cycle τ 최적화 결과를 직접 주입할 때 사용.
+                           예: [0.1, 0.2, 0.5, ...] (K개 cycle 각각의 임계값)
         """
         t0 = time.time()
         cfg = self.config.overlap
-        
-        print(f"[Stage 3] 중첩행렬 구축 (threshold={cfg.threshold})")
-        
+
+        print(f"[Stage 3] 중첩행렬 구축 "
+              f"({'per-cycle τ' if per_cycle_tau else f'threshold={cfg.threshold}'})")
+
         # Persistence 데이터 로드
         if from_pickle:
             filepath = os.path.join(self.config.pickle_dir, from_pickle)
@@ -393,11 +413,11 @@ class TDAMusicPipeline:
             persistence = self._cache[persistence_key]
         else:
             raise ValueError("persistence 데이터를 지정해주세요.")
-        
+
         # 사이클 레이블링
         cycle_labeled = label_cycles_from_persistence(persistence)
         self._cache['cycle_labeled'] = cycle_labeled
-        
+
         # 통계
         length_stats, vertex_stats, missing = get_cycle_stats(
             cycle_labeled, self._cache['notes_dict']
@@ -405,35 +425,54 @@ class TDAMusicPipeline:
         print(f"  - {len(cycle_labeled)}개 사이클")
         if missing:
             print(f"  - 사이클에 미포함 note: {missing}")
-        
+
         # Note-time 행렬 구축
         adn_i = self._cache['adn_i']
         notes_dict = self._cache['notes_dict']
-        
+
         chord_pairs = simul_chord_lists(adn_i[1][-1], adn_i[2][-1])
         note_sets = simul_union_by_dict(chord_pairs, notes_dict)
-        
+
         # DataFrame 구축
         nodes_list = list(range(1, self.config.midi.num_notes + 1))
         note_time_df = self._build_note_time_df(nodes_list, note_sets)
         self._cache['note_time_df'] = note_time_df
-        
-        # 활성화 행렬
-        activation = build_activation_matrix(note_time_df, cycle_labeled)
-        
-        # 중첩행렬
-        overlap = build_overlap_matrix(
-            activation, cycle_labeled,
-            threshold=cfg.threshold,
-            lower_bound=cfg.lower_bound,
-            total_length=cfg.total_length
-        )
+
+        if per_cycle_tau is not None:
+            # §7.7.1: per-cycle τ_c 적용 (continuous activation 필요)
+            from overlap import build_overlap_matrix_percycle
+            activation_cont = build_activation_matrix(
+                note_time_df, cycle_labeled, continuous=True
+            )
+            self._cache['activation_continuous'] = activation_cont
+            overlap = build_overlap_matrix_percycle(
+                activation_cont, cycle_labeled,
+                tau_list=per_cycle_tau,
+                total_length=cfg.total_length
+            )
+        else:
+            # 기존 방식: 단일 threshold
+            activation = build_activation_matrix(note_time_df, cycle_labeled)
+            overlap = build_overlap_matrix(
+                activation, cycle_labeled,
+                threshold=cfg.threshold,
+                lower_bound=cfg.lower_bound,
+                total_length=cfg.total_length
+            )
+
+        # continuous activation도 캐시 (Algo2 soft input용, §7.7.2)
+        if 'activation_continuous' not in self._cache:
+            activation_cont = build_activation_matrix(
+                note_time_df, cycle_labeled, continuous=True
+            )
+            self._cache['activation_continuous'] = activation_cont
+
         self._cache['overlap_matrix'] = overlap
-        
+
         dt = time.time() - t0
         on_ratio = overlap.values.sum() / overlap.size
         print(f"[Stage 3] 완료 ({dt:.2f}s) - ON ratio: {on_ratio:.4f}")
-        
+
         return self
     
     def _build_note_time_df(self, nodes_list, note_sets):
@@ -578,10 +617,11 @@ class TDAMusicPipeline:
                        4, 4, 4, 3, 4, 3, 4, 3, 4, 3, 4, 3, 3, 3, 3, 3]
             inst_chord_heights = modules * 33
         
-        # 노드 풀 생성
+        # 노드 풀 생성 (온도 스케일링 적용)
         pool = NodePool(
             notes_label, notes_counts,
-            num_modules=self.config.generation.num_modules
+            num_modules=self.config.generation.num_modules,
+            temperature=self.config.generation.temperature,
         )
         
         # 사이클 집합 매니저
@@ -629,18 +669,25 @@ class TDAMusicPipeline:
         t0 = time.time()
         cfg = self.config.generation
         print("[Stage 4-B] Algorithm 2 (신경망) 학습")
-        
-        overlap = self._cache['overlap_matrix']
+
+        # §7.7.2: use_continuous_overlap=True면 continuous activation을 X로 사용
+        if cfg.use_continuous_overlap and 'activation_continuous' in self._cache:
+            overlap_for_x = self._cache['activation_continuous']
+            print("  입력: continuous overlap (§7.7.2, +64.3% JS 개선)")
+        else:
+            overlap_for_x = self._cache['overlap_matrix']
+            print("  입력: binary overlap")
+
         notes_label = self._cache['notes_label']
         inst1_real = self._cache['inst1_real']
         inst2_real = self._cache['inst2_real']
-        
+
         n_notes = self.config.midi.num_notes
         seq_len = self.config.overlap.total_length
-        
+
         # 학습 데이터 준비
         X, y = prepare_training_data(
-            overlap.values,
+            overlap_for_x.values if hasattr(overlap_for_x, 'values') else overlap_for_x,
             [inst1_real, inst2_real],
             notes_label,
             seq_len,

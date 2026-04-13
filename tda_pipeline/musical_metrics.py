@@ -82,7 +82,7 @@ def tonnetz_distance(pc1: int, pc2: int) -> int:
 
 
 def tonnetz_note_distance(note1: Tuple[int, int], note2: Tuple[int, int],
-                          octave_weight: float = 0.5,
+                          octave_weight: float = 0.3,
                           duration_weight: float = 0.3) -> float:
     """
     두 note = (pitch, duration) 간의 Tonnetz 기반 거리.

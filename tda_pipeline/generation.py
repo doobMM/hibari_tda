@@ -44,22 +44,35 @@ class NodePool:
     """
     노드 풀 관리 클래스.
     기존 코드의 node_pool, node_freq, node_i를 캡슐화합니다.
+
+    temperature: §7.7.3 온도 스케일링. w(n) ∝ freq(n)^(1/T).
+      T=1.0: 원래 빈도 (기존 동작)
+      T=3.0: 균등화 방향 (N=10 최적, JS -6.7%)
+      T<1.0: 고빈도 집중
     """
-    
-    def __init__(self, notes_label: dict, notes_counts: Counter, num_modules: int = 65):
+
+    def __init__(self, notes_label: dict, notes_counts: Counter,
+                 num_modules: int = 65, temperature: float = 1.0):
         self.notes_label = notes_label
         self.label_to_note = {v: k for k, v in notes_label.items()}  # 역매핑
-        
+
         # 전체 곡에서의 빈도 계산
         whole_counts = {k: v * num_modules for k, v in notes_counts.items()}
-        
+
+        # 온도 스케일링: count → round(count^(1/T)), 최소 1
+        if abs(temperature - 1.0) > 1e-9:
+            whole_counts = {
+                k: max(1, round(v ** (1.0 / temperature)))
+                for k, v in whole_counts.items()
+            }
+
         # 빈도 기반 노드 풀 생성 (numpy 배열)
         pool_list = []
         for note, count in whole_counts.items():
             if note in notes_label:
                 label = notes_label[note]
                 pool_list.extend([label] * count)
-        
+
         # 셔플
         random.shuffle(pool_list)
         self.pool = np.array(pool_list, dtype=int)

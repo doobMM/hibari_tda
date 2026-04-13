@@ -44,7 +44,8 @@ class MetricConfig:
       예: [0.4, 0.3, 0.3] → 빈도 40%, tonnetz 30%, dft 30%
     """
     metric: str = 'frequency'
-    alpha: float = 0.5                  # hybrid에서 빈도 거리 비중
+    alpha: float = 0.0                  # hybrid에서 빈도 거리 비중 (α grid search N=20 결과: α=0.0 최적)
+    octave_weight: float = 0.3          # Tonnetz note 거리의 옥타브 항 가중치 (튜닝 N=10: 0.3 최적, 기존 0.5)
     hybrid_metrics: List[str] = field(default_factory=lambda: ['tonnetz'])
     hybrid_weights: Optional[List[float]] = None  # None이면 균등 배분
 
@@ -72,6 +73,7 @@ class GenerationConfig:
     """음악 생성(Algorithm 1 & 2) 설정"""
     num_modules: int = 65      # 반복 모듈 수
     tempo_bpm: int = 66
+    temperature: float = 3.0   # NodePool 샘플링 온도: w(n) ∝ freq(n)^(1/T). T>1=균등화, T<1=집중 (N=10 결과: T=3.0 최적)
     # Algorithm 2 (Neural Network)
     epochs: int = 100
     lr: float = 0.001
@@ -79,6 +81,7 @@ class GenerationConfig:
     test_size: float = 0.3
     random_state: int = 1
     max_resample_attempts: int = 50  # 재샘플링 최대 시도 횟수
+    use_continuous_overlap: bool = True  # Algo2 입력: True=continuous, False=binary (N=5: +64.3% JS 개선)
 
 
 @dataclass

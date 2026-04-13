@@ -1,0 +1,57 @@
+{
+  "n_repeats": 10,
+  "alpha": 0.5,
+  "experiments": {
+    "0.1": {
+      "octave_weight": 0.1,
+      "n_cycles": 50,
+      "ph_time_s": 10.4,
+      "js_mean": 0.0516,
+      "js_std": 0.0041,
+      "js_min": 0.0458,
+      "js_max": 0.0587
+    },
+    "0.3": {
+      "octave_weight": 0.3,
+      "n_cycles": 47,
+      "ph_time_s": 12.6,
+      "js_mean": 0.0479,
+      "js_std": 0.0021,
+      "js_min": 0.0428,
+      "js_max": 0.0502
+    },
+    "0.5": {
+      "octave_weight": 0.5,
+      "n_cycles": 42,
+      "ph_time_s": 12.2,
+      "js_mean": 0.059,
+      "js_std": 0.0031,
+      "js_min": 0.0538,
+      "js_max": 0.0629
+    },
+    "0.7": {
+      "octave_weight": 0.7,
+      "n_cycles": 38,
+      "ph_time_s": 8.8,
+      "js_mean": 0.072,
+      "js_std": 0.0047,
+      "js_min": 0.0658,
+      "js_max": 0.0815
+    },
+    "1.0": {
+      "octave_weight": 1.0,
+      "n_cycles": 35,
+      "ph_time_s": 10.8,
+      "js_mean": 0.0719,
+      "js_std": 0.0043,
+      "js_min": 0.0636,
+      "js_max": 0.0807
+    }
+  },
+  "baseline_ref": {
+    "octave_weight": 0.5,
+    "js_mean_from_paper": 0.0398,
+    "source": "§3.1 N=20 기준 (캐시, single-lag)"
+  },
+  "best_octave_weight": 0.3
+}

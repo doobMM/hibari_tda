@@ -239,6 +239,50 @@ def build_overlap_matrix(activation_df: pd.DataFrame,
     return pd.DataFrame(overlap, columns=columns)
 
 
+def build_overlap_matrix_percycle(activation_df: pd.DataFrame,
+                                  cycle_labeled: Union[dict, list],
+                                  tau_list: list,
+                                  total_length: int = 1088) -> pd.DataFrame:
+    """
+    Per-cycle 임계값 τ_c를 적용하여 중첩행렬을 구축합니다.
+    §7.7.1 실험 결과: 단일 τ=0.35 대비 +48.6% JS 개선 (N=5, K=42).
+
+    각 cycle c에 고유한 임계값 tau_list[c]를 적용:
+      overlap[t, c] = 1  if  activation[t, c] >= tau_list[c]
+                    = 0  otherwise
+
+    Args:
+        activation_df: build_activation_matrix(continuous=True)의 출력. (T, K) DataFrame.
+        cycle_labeled: cycle 레이블 딕셔너리 또는 리스트.
+        tau_list: 길이 K의 리스트. 각 cycle에 대응하는 임계값 (0~1).
+                  None이면 τ_c = 0.35 (기본값)로 일괄 적용.
+        total_length: 시간축 길이.
+
+    Returns:
+        (total_length, K) 이진 overlap DataFrame.
+    """
+    if isinstance(cycle_labeled, dict):
+        items = list(cycle_labeled.items())
+    else:
+        items = list(enumerate(cycle_labeled))
+
+    n_cycles = len(items)
+    if tau_list is None:
+        tau_list = [0.35] * n_cycles
+    assert len(tau_list) == n_cycles, \
+        f"tau_list 길이({len(tau_list)})가 cycle 수({n_cycles})와 불일치"
+
+    act = activation_df.values  # (T, K) — continuous activation
+    overlap = np.zeros((total_length, n_cycles), dtype=int)
+
+    for c_idx, tau in enumerate(tau_list):
+        col = act[:min(total_length, len(act)), c_idx]
+        overlap[:len(col), c_idx] = (col >= tau).astype(int)
+
+    columns = [item[0] for item in items]
+    return pd.DataFrame(overlap, columns=columns)
+
+
 # ─── rBD 그룹화 (최적화) ──────────────────────────────────────────────────
 
 def group_rBD_by_homology(homology_profile: list, dim: int = 1) -> dict:

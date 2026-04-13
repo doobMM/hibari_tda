@@ -7,7 +7,6 @@
     88
   ],
   "n_candidates": 1000,
-  "orig_mean_dissonance": 0.264,
   "orig_n_pitch_classes": 7,
   "experiments": {
     "baseline": {
@@ -17,7 +16,7 @@
       "consonance_score": 0.0,
       "interval_error": 0.0,
       "total_cost": 2.8471,
-      "elapsed_s": 5.9,
+      "elapsed_s": 12.6,
       "n_generated": 3706,
       "new_pitches": [
         41,
@@ -38,9 +37,6 @@
         86,
         88
       ],
-      "harmony_mean_dissonance": 0.4121031746031746,
-      "harmony_max_dissonance": 0.6333333333333333,
-      "harmony_min_dissonance": 0.15,
       "harmony_best_scale_match": 0.7,
       "harmony_best_scale_name": "C# major",
       "harmony_pitch_classes_used": [
@@ -64,7 +60,7 @@
       "consonance_score": 0.0,
       "interval_error": 0.0,
       "total_cost": 2.497,
-      "elapsed_s": 3.5,
+      "elapsed_s": 5.4,
       "n_generated": 3706,
       "new_pitches": [
         40,
@@ -85,9 +81,6 @@
         77,
         81
       ],
-      "harmony_mean_dissonance": 0.3614153439153439,
-      "harmony_max_dissonance": 0.5499999999999999,
-      "harmony_min_dissonance": 0.16666666666666666,
       "harmony_best_scale_match": 1.0,
       "harmony_best_scale_name": "C major",
       "harmony_pitch_classes_used": [
@@ -111,7 +104,7 @@
       "consonance_score": 0.0,
       "interval_error": 0.0,
       "total_cost": 2.6851,
-      "elapsed_s": 4.9,
+      "elapsed_s": 7.1,
       "n_generated": 3706,
       "new_pitches": [
         40,
@@ -132,9 +125,6 @@
         78,
         81
       ],
-      "harmony_mean_dissonance": 0.36334656084656086,
-      "harmony_max_dissonance": 0.6666666666666666,
-      "harmony_min_dissonance": 0.16666666666666666,
       "harmony_best_scale_match": 1.0,
       "harmony_best_scale_name": "E major",
       "harmony_pitch_classes_used": [
@@ -158,7 +148,7 @@
       "consonance_score": 0.0,
       "interval_error": 0.0,
       "total_cost": 2.9004,
-      "elapsed_s": 5.9,
+      "elapsed_s": 8.3,
       "n_generated": 3706,
       "new_pitches": [
         40,
@@ -179,9 +169,6 @@
         86,
         88
       ],
-      "harmony_mean_dissonance": 0.213478835978836,
-      "harmony_max_dissonance": 0.5333333333333333,
-      "harmony_min_dissonance": 0.03333333333333333,
       "harmony_best_scale_match": 1.0,
       "harmony_best_scale_name": "C major",
       "harmony_pitch_classes_used": [
@@ -203,7 +190,7 @@
       "consonance_score": 0.4121,
       "interval_error": 0.0,
       "total_cost": 2.9708,
-      "elapsed_s": 5.8,
+      "elapsed_s": 9.7,
       "n_generated": 3706,
       "new_pitches": [
         41,
@@ -224,9 +211,6 @@
         86,
         88
       ],
-      "harmony_mean_dissonance": 0.4121031746031746,
-      "harmony_max_dissonance": 0.6333333333333333,
-      "harmony_min_dissonance": 0.15,
       "harmony_best_scale_match": 0.7,
       "harmony_best_scale_name": "C# major",
       "harmony_pitch_classes_used": [
@@ -250,7 +234,7 @@
       "consonance_score": 0.0,
       "interval_error": 0.8582,
       "total_cost": 3.1058,
-      "elapsed_s": 8.7,
+      "elapsed_s": 9.1,
       "n_generated": 3706,
       "new_pitches": [
         42,
@@ -271,9 +255,6 @@
         83,
         87
       ],
-      "harmony_mean_dissonance": 0.43674603174603166,
-      "harmony_max_dissonance": 0.63,
-      "harmony_min_dissonance": 0.19999999999999998,
       "harmony_best_scale_match": 0.6363636363636364,
       "harmony_best_scale_name": "D major",
       "harmony_pitch_classes_used": [
@@ -298,7 +279,7 @@
       "consonance_score": 0.3614,
       "interval_error": 0.4669,
       "total_cost": 2.7455,
-      "elapsed_s": 5.4,
+      "elapsed_s": 9.7,
       "n_generated": 3706,
       "new_pitches": [
         40,
@@ -319,9 +300,6 @@
         77,
         81
       ],
-      "harmony_mean_dissonance": 0.3614153439153439,
-      "harmony_max_dissonance": 0.5499999999999999,
-      "harmony_min_dissonance": 0.16666666666666666,
       "harmony_best_scale_match": 1.0,
       "harmony_best_scale_name": "C major",
       "harmony_pitch_classes_used": [
@@ -345,7 +323,7 @@
       "consonance_score": 0.2135,
       "interval_error": 0.8235,
       "total_cost": 3.2115,
-      "elapsed_s": 6.2,
+      "elapsed_s": 10.7,
       "n_generated": 3706,
       "new_pitches": [
         40,
@@ -366,9 +344,6 @@
         86,
         88
       ],
-      "harmony_mean_dissonance": 0.213478835978836,
-      "harmony_max_dissonance": 0.5333333333333333,
-      "harmony_min_dissonance": 0.03333333333333333,
       "harmony_best_scale_match": 1.0,
       "harmony_best_scale_name": "C major",
       "harmony_pitch_classes_used": [

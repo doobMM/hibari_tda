@@ -1,0 +1,306 @@
+{
+  "sec77_1_percycle_tau": {
+    "baseline": {
+      "js_mean": 0.04639593170125232,
+      "js_std": 0.0028879184406424676,
+      "tau": 0.35
+    },
+    "per_cycle_tau": {
+      "best_taus": [
+        0.1,
+        0.2,
+        0.5,
+        0.7,
+        0.1,
+        0.7,
+        0.6,
+        0.1,
+        0.2,
+        0.5,
+        0.1,
+        0.2,
+        0.1,
+        0.7,
+        0.2,
+        0.1,
+        0.1,
+        0.3,
+        0.3,
+        0.1,
+        0.2,
+        0.2,
+        0.3,
+        0.4,
+        0.6,
+        0.6,
+        0.4,
+        0.5,
+        0.4,
+        0.4,
+        0.1,
+        0.1,
+        0.6,
+        0.5,
+        0.35,
+        0.7,
+        0.7,
+        0.7,
+        0.6,
+        0.2,
+        0.3,
+        0.35
+      ],
+      "js_mean": 0.0238,
+      "js_std": 0.0025,
+      "improvement_pct": 48.6
+    },
+    "per_cycle_search": {
+      "0": {
+        "best_tau": 0.1,
+        "best_js_vs_baseline": -0.0026
+      },
+      "1": {
+        "best_tau": 0.2,
+        "best_js_vs_baseline": -0.0029
+      },
+      "2": {
+        "best_tau": 0.5,
+        "best_js_vs_baseline": -0.0046
+      },
+      "3": {
+        "best_tau": 0.7,
+        "best_js_vs_baseline": -0.0047
+      },
+      "4": {
+        "best_tau": 0.1,
+        "best_js_vs_baseline": -0.0055
+      },
+      "5": {
+        "best_tau": 0.7,
+        "best_js_vs_baseline": -0.0057
+      },
+      "6": {
+        "best_tau": 0.6,
+        "best_js_vs_baseline": -0.0059
+      },
+      "7": {
+        "best_tau": 0.1,
+        "best_js_vs_baseline": -0.0059
+      },
+      "8": {
+        "best_tau": 0.2,
+        "best_js_vs_baseline": -0.008
+      },
+      "9": {
+        "best_tau": 0.5,
+        "best_js_vs_baseline": -0.0076
+      },
+      "10": {
+        "best_tau": 0.1,
+        "best_js_vs_baseline": -0.0105
+      },
+      "11": {
+        "best_tau": 0.2,
+        "best_js_vs_baseline": -0.0086
+      },
+      "12": {
+        "best_tau": 0.1,
+        "best_js_vs_baseline": -0.0089
+      },
+      "13": {
+        "best_tau": 0.7,
+        "best_js_vs_baseline": -0.0116
+      },
+      "14": {
+        "best_tau": 0.2,
+        "best_js_vs_baseline": -0.0128
+      },
+      "15": {
+        "best_tau": 0.1,
+        "best_js_vs_baseline": -0.0118
+      },
+      "16": {
+        "best_tau": 0.1,
+        "best_js_vs_baseline": -0.0107
+      },
+      "17": {
+        "best_tau": 0.3,
+        "best_js_vs_baseline": -0.0111
+      },
+      "18": {
+        "best_tau": 0.3,
+        "best_js_vs_baseline": -0.0121
+      },
+      "19": {
+        "best_tau": 0.1,
+        "best_js_vs_baseline": -0.0116
+      },
+      "20": {
+        "best_tau": 0.2,
+        "best_js_vs_baseline": -0.0139
+      },
+      "21": {
+        "best_tau": 0.2,
+        "best_js_vs_baseline": -0.0123
+      },
+      "22": {
+        "best_tau": 0.3,
+        "best_js_vs_baseline": -0.0108
+      },
+      "23": {
+        "best_tau": 0.4,
+        "best_js_vs_baseline": -0.0122
+      },
+      "24": {
+        "best_tau": 0.6,
+        "best_js_vs_baseline": -0.0129
+      },
+      "25": {
+        "best_tau": 0.6,
+        "best_js_vs_baseline": -0.0128
+      },
+      "26": {
+        "best_tau": 0.4,
+        "best_js_vs_baseline": -0.0142
+      },
+      "27": {
+        "best_tau": 0.5,
+        "best_js_vs_baseline": -0.016
+      },
+      "28": {
+        "best_tau": 0.4,
+        "best_js_vs_baseline": -0.0157
+      },
+      "29": {
+        "best_tau": 0.4,
+        "best_js_vs_baseline": -0.0164
+      },
+      "30": {
+        "best_tau": 0.1,
+        "best_js_vs_baseline": -0.019
+      },
+      "31": {
+        "best_tau": 0.1,
+        "best_js_vs_baseline": -0.0199
+      },
+      "32": {
+        "best_tau": 0.6,
+        "best_js_vs_baseline": -0.0213
+      },
+      "33": {
+        "best_tau": 0.5,
+        "best_js_vs_baseline": -0.0211
+      },
+      "34": {
+        "best_tau": 0.35,
+        "best_js_vs_baseline": -0.0248
+      },
+      "35": {
+        "best_tau": 0.7,
+        "best_js_vs_baseline": -0.0226
+      },
+      "36": {
+        "best_tau": 0.7,
+        "best_js_vs_baseline": -0.0238
+      },
+      "37": {
+        "best_tau": 0.7,
+        "best_js_vs_baseline": -0.023
+      },
+      "38": {
+        "best_tau": 0.6,
+        "best_js_vs_baseline": -0.0242
+      },
+      "39": {
+        "best_tau": 0.2,
+        "best_js_vs_baseline": -0.0239
+      },
+      "40": {
+        "best_tau": 0.3,
+        "best_js_vs_baseline": -0.0233
+      },
+      "41": {
+        "best_tau": 0.35,
+        "best_js_vs_baseline": -0.0245
+      }
+    },
+    "tau_distribution": {
+      "0.1": 10,
+      "0.2": 7,
+      "0.3": 4,
+      "0.35": 2,
+      "0.4": 4,
+      "0.5": 4,
+      "0.6": 5,
+      "0.7": 6
+    }
+  },
+  "sec77_2_soft_activation_algo2": {
+    "binary": {
+      "js_mean": 0.0028,
+      "js_std": 0.0,
+      "train_time_s": 16.4,
+      "final_val_loss": 0.3007,
+      "n_trials": 5
+    },
+    "continuous": {
+      "js_mean": 0.001,
+      "js_std": 0.0,
+      "train_time_s": 10.9,
+      "final_val_loss": 0.0251,
+      "n_trials": 5
+    },
+    "improvement_pct": 64.3
+  },
+  "sec77_3_learnable_weight": {
+    "baseline": {
+      "temperature": 1.0,
+      "js_mean": 0.0627,
+      "js_std": 0.0042
+    },
+    "temperature_grid": {
+      "0.3": {
+        "temperature": 0.3,
+        "js_mean": 0.0596,
+        "js_std": 0.0017,
+        "improvement_pct": 4.9
+      },
+      "0.5": {
+        "temperature": 0.5,
+        "js_mean": 0.0624,
+        "js_std": 0.0027,
+        "improvement_pct": 0.5
+      },
+      "1.0": {
+        "temperature": 1.0,
+        "js_mean": 0.0627,
+        "js_std": 0.0042,
+        "improvement_pct": 0.0
+      },
+      "2.0": {
+        "temperature": 2.0,
+        "js_mean": 0.0587,
+        "js_std": 0.0032,
+        "improvement_pct": 6.5
+      },
+      "3.0": {
+        "temperature": 3.0,
+        "js_mean": 0.0585,
+        "js_std": 0.0046,
+        "improvement_pct": 6.7
+      },
+      "5.0": {
+        "temperature": 5.0,
+        "js_mean": 0.0607,
+        "js_std": 0.0039,
+        "improvement_pct": 3.3
+      }
+    },
+    "best_temperature": 3.0,
+    "interpretation": {
+      "T<1": "고빈도 note 집중 (sharp sampling)",
+      "T=1": "원래 빈도 (current default)",
+      "T>1": "균등화 (uniform-like sampling)"
+    }
+  }
+}

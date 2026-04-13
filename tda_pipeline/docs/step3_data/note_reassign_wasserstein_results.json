@@ -1,0 +1,175 @@
+{
+  "track": "hibari",
+  "metric": "tonnetz",
+  "n_cycles": 18,
+  "N": 17,
+  "baseline": {
+    "pitch_js": 0.012133,
+    "transition_js": 0.238611,
+    "dtw": 2.2094,
+    "ncd": 0.998992
+  },
+  "experiments": {
+    "no_wasserstein": {
+      "note_dist_error": 4.3451,
+      "cycle_dist_error": 1.3491,
+      "wasserstein_dist": 0.0,
+      "total_cost": 2.8471,
+      "new_pitches": [
+        41,
+        44,
+        51,
+        52,
+        55,
+        58,
+        64,
+        66,
+        68,
+        70,
+        73,
+        75,
+        82,
+        84,
+        85,
+        86,
+        88
+      ],
+      "avg_metrics": {
+        "pitch_js": 0.607164,
+        "transition_js": 0.686809,
+        "dtw": 4.13,
+        "ncd": 1.044654
+      },
+      "elapsed_s": 9.0
+    },
+    "wasserstein_0.3": {
+      "note_dist_error": 4.4802,
+      "cycle_dist_error": 1.4161,
+      "wasserstein_dist": 1.7678,
+      "total_cost": 3.4785,
+      "new_pitches": [
+        40,
+        45,
+        46,
+        50,
+        53,
+        61,
+        62,
+        68,
+        69,
+        70,
+        71,
+        77,
+        80,
+        81,
+        83,
+        84,
+        88
+      ],
+      "avg_metrics": {
+        "pitch_js": 0.512626,
+        "transition_js": 0.679662,
+        "dtw": 4.0082,
+        "ncd": 1.037783
+      },
+      "elapsed_s": 8.4
+    },
+    "wasserstein_0.5": {
+      "note_dist_error": 4.4802,
+      "cycle_dist_error": 1.4161,
+      "wasserstein_dist": 1.7678,
+      "total_cost": 3.832,
+      "new_pitches": [
+        40,
+        45,
+        46,
+        50,
+        53,
+        61,
+        62,
+        68,
+        69,
+        70,
+        71,
+        77,
+        80,
+        81,
+        83,
+        84,
+        88
+      ],
+      "avg_metrics": {
+        "pitch_js": 0.512626,
+        "transition_js": 0.679662,
+        "dtw": 4.0082,
+        "ncd": 1.037783
+      },
+      "elapsed_s": 5.6
+    },
+    "wasserstein_1.0": {
+      "note_dist_error": 4.4802,
+      "cycle_dist_error": 1.4161,
+      "wasserstein_dist": 1.7678,
+      "total_cost": 4.7159,
+      "new_pitches": [
+        40,
+        45,
+        46,
+        50,
+        53,
+        61,
+        62,
+        68,
+        69,
+        70,
+        71,
+        77,
+        80,
+        81,
+        83,
+        84,
+        88
+      ],
+      "avg_metrics": {
+        "pitch_js": 0.512626,
+        "transition_js": 0.679662,
+        "dtw": 4.0082,
+        "ncd": 1.037783
+      },
+      "elapsed_s": 5.5
+    },
+    "scale_major_wass_0.5": {
+      "note_dist_error": 3.5169,
+      "cycle_dist_error": 1.4771,
+      "wasserstein_dist": 1.0607,
+      "total_cost": 3.0273,
+      "new_pitches": [
+        40,
+        41,
+        47,
+        52,
+        59,
+        60,
+        62,
+        64,
+        65,
+        67,
+        69,
+        71,
+        72,
+        74,
+        76,
+        77,
+        81
+      ],
+      "avg_metrics": {
+        "pitch_js": 0.114862,
+        "transition_js": 0.355154,
+        "dtw": 2.7829,
+        "ncd": 1.008997
+      },
+      "elapsed_s": 5.6,
+      "scale_root": "C"
+    }
+  }
+}

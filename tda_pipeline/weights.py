@@ -41,8 +41,10 @@ def compute_inter_weights(seq_a: list, seq_b: list,
     두 악기 간 시차(lag)를 둔 화음 전이 빈도를 계산합니다.
     """
     weights = np.zeros((num_chords, num_chords), dtype=int)
-    n = len(seq_a) - lag
-    
+    n = min(len(seq_a), len(seq_b)) - lag
+    if n <= 0:
+        return pd.DataFrame(weights)
+
     for i in range(n):
         a_i = seq_a[i]
         b_i_lag = seq_b[i + lag]
@@ -50,15 +52,51 @@ def compute_inter_weights(seq_a: list, seq_b: list,
         # a[i] → b[i+lag]
         if a_i is None or b_i_lag is None:
             continue
-        weights[a_i, b_i_lag] += 1
+        if a_i < num_chords and b_i_lag < num_chords:
+            weights[a_i, b_i_lag] += 1
 
         # b[i] → a[i+lag] (양방향)
         b_i = seq_b[i]
         a_i_lag = seq_a[i + lag]
         if b_i is not None and a_i_lag is not None:
-            weights[b_i, a_i_lag] += 1
-    
+            if b_i < num_chords and a_i_lag < num_chords:
+                weights[b_i, a_i_lag] += 1
+
     return pd.DataFrame(weights)
+
+
+def compute_inter_weights_decayed(adn_i: dict, max_lag: int = 4,
+                                   num_chords: int = 17) -> pd.DataFrame:
+    """
+    lag 1~max_lag를 감쇄 가중치로 합산한 inter weight.
+
+    가중치 (사용자 임의 설정):
+      lag 1: 0.60,  lag 2: 0.30,  lag 3: 0.08,  lag 4: 0.02  (합계 = 1.0)
+    가까운 시차에 집중적으로 가중하되, 먼 시차의 기여를 급격히 줄인다.
+    """
+    DECAY_WEIGHTS = [0.60, 0.30, 0.08, 0.02]
+
+    # 실제 사용 가능한 max_lag 결정 (adn_i[inst]는 list, index=lag)
+    actual_max = min(max_lag, len(adn_i[1]) - 1, len(adn_i[2]) - 1)
+    if actual_max < 1:
+        actual_max = 1
+
+    nc = num_chords
+    combined = np.zeros((nc, nc), dtype=float)
+
+    # 사용할 가중치 슬라이스 후 재정규화
+    ws = DECAY_WEIGHTS[:actual_max]
+    w_sum = sum(ws)
+
+    for lag in range(1, actual_max + 1):
+        w = ws[lag - 1] / w_sum
+        inter_lag = compute_inter_weights(
+            adn_i[1][lag], adn_i[2][lag],
+            num_chords=nc, lag=lag
+        )
+        combined += w * inter_lag.values
+
+    return pd.DataFrame(combined)
 
 
 # ─── 핵심 최적화: Refine Connectedness ─────────────────────────────────────

@@ -17,10 +17,106 @@ note_reassign.py — 방향 A: 거리 보존 note 재분배
   - 'scale': 후보 pitch를 특정 음계로 제한
   - 'consonance': cycle 내 불협화도 패널티 추가
   - 'interval': 원곡 cycle 내 interval structure 보존
+  - 'wasserstein': Persistence Diagram 간 Wasserstein distance 제약
 """
 import numpy as np
 from typing import Dict, Tuple, List, Optional
 from itertools import permutations
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 0. Wasserstein distance between persistence diagrams
+# ═══════════════════════════════════════════════════════════════════════════
+
+def _extract_h1_pairs(barcode: list) -> np.ndarray:
+    """barcode에서 H1 (birth, death) 쌍 추출. infinity는 제외."""
+    pairs = []
+    for entry in barcode:
+        if entry[0] == 1:  # dimension 1
+            bd = entry[1]
+            b = bd[0] if isinstance(bd, (list, tuple)) else bd
+            d = bd[1] if isinstance(bd, (list, tuple)) else None
+            if d is not None and d != 'infty' and d != float('inf'):
+                pairs.append([float(b), float(d)])
+    return np.array(pairs) if pairs else np.empty((0, 2))
+
+
+def wasserstein_distance_pd(dgm1: np.ndarray, dgm2: np.ndarray, p: int = 2) -> float:
+    """
+    두 persistence diagram 간 p-Wasserstein distance.
+
+    각 점을 상대 diagram의 점 또는 대각선(diagonal)에 매칭.
+    대각선 투영: (b,d) → ((b+d)/2, (b+d)/2), 비용 = (d-b)/2 * sqrt(2).
+
+    Args:
+        dgm1, dgm2: (n, 2) 형태의 (birth, death) 배열
+        p: Wasserstein 차수 (기본 2)
+    Returns:
+        Wasserstein distance (float)
+    """
+    from scipy.optimize import linear_sum_assignment
+
+    n1 = len(dgm1)
+    n2 = len(dgm2)
+
+    if n1 == 0 and n2 == 0:
+        return 0.0
+
+    # 비용 행렬: (n1 + n2) × (n1 + n2)
+    # 왼쪽 n1: dgm1 점, 오른쪽 n2: dgm2 점
+    # 상단 n1: dgm1을 dgm2 점 또는 대각선에 매칭
+    # 하단 n2: dgm2를 dgm1 점 또는 대각선에 매칭
+    N = n1 + n2
+    cost = np.zeros((N, N))
+
+    # dgm1[i] ↔ dgm2[j] 매칭 비용
+    for i in range(n1):
+        for j in range(n2):
+            diff = dgm1[i] - dgm2[j]
+            cost[i, j] = np.sum(np.abs(diff) ** p) ** (1.0 / p)
+
+    # dgm1[i] → 대각선 (자기 자신 삭제) 비용
+    for i in range(n1):
+        diag_cost = (dgm1[i, 1] - dgm1[i, 0]) / np.sqrt(2)
+        for j in range(n2, N):
+            cost[i, j] = abs(diag_cost)
+
+    # dgm2[j] → 대각선 (자기 자신 삭제) 비용
+    for j in range(n2):
+        diag_cost = (dgm2[j, 1] - dgm2[j, 0]) / np.sqrt(2)
+        for i in range(n1, N):
+            cost[i, j] = abs(diag_cost)
+
+    # 대각선 ↔ 대각선: 비용 0
+    # (이미 0으로 초기화됨)
+
+    row_ind, col_ind = linear_sum_assignment(cost)
+    return float(np.sum(cost[row_ind, col_ind]))
+
+
+def compute_ph_wasserstein(D_matrix: np.ndarray) -> Tuple[np.ndarray, float]:
+    """
+    거리행렬로부터 H1 persistence diagram을 계산하고
+    (birth-death pairs, total_persistence)를 반환.
+
+    topology.generate_barcode_numpy 대신 Ripser를 사용하여 빠르게 계산.
+    """
+    try:
+        from ripser import ripser
+        result = ripser(D_matrix, maxdim=1, distance_matrix=True)
+        dgm = result['dgms'][1]  # H1 diagram
+        # inf 제거
+        mask = np.isfinite(dgm[:, 1])
+        dgm = dgm[mask]
+        total_pers = float(np.sum(dgm[:, 1] - dgm[:, 0])) if len(dgm) > 0 else 0.0
+        return dgm, total_pers
+    except ImportError:
+        # Ripser 미설치 시 topology.py fallback
+        from topology import generate_barcode_numpy
+        barcode = generate_barcode_numpy(D_matrix, listOfDimension=[1])
+        dgm = _extract_h1_pairs(barcode)
+        total_pers = float(np.sum(dgm[:, 1] - dgm[:, 0])) if len(dgm) > 0 else 0.0
+        return dgm, total_pers
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -424,11 +520,15 @@ def find_new_notes(notes_label: dict,
                    scale_root: Optional[int] = None,
                    alpha_consonance: float = 0.0,
                    alpha_interval: float = 0.0,
+                   alpha_wasserstein: float = 0.0,
+                   n_wasserstein_topk: int = 20,
                    ) -> Dict:
     """
     원곡의 note-note / cycle-cycle 거리를 보존하는 새 note 집합을 찾는다.
 
-    전략: 랜덤 후보 생성 → 거리행렬 비교 → 최적 후보 선택
+    전략:
+      1단계: 랜덤 후보 생성 → 거리행렬 비교 → 상위 후보 수집
+      2단계 (alpha_wasserstein > 0): 상위 후보에 대해 PH → Wasserstein distance 계산
 
     Args:
         notes_label: 원곡의 {(pitch, dur): label}
@@ -527,6 +627,19 @@ def find_new_notes(notes_label: dict,
     if N > len(all_pitches):
         raise RuntimeError(f"pitch range too narrow: need {N} but only {len(all_pitches)} available")
 
+    use_wasserstein = alpha_wasserstein > 0
+
+    # Wasserstein: 원곡 PH를 미리 계산
+    dgm_orig = None
+    if use_wasserstein:
+        dgm_orig, _ = compute_ph_wasserstein(D_orig)
+        print(f"  원곡 PH: {len(dgm_orig)} H1 cycles")
+
+    # ── 1단계: note+cycle 기준 후보 수집 ──
+    import heapq
+    if use_wasserstein:
+        topk_heap = []  # min-heap of (-cost, idx, result)
+        topk_size = n_wasserstein_topk
     best_cost = float('inf')
     best_result = None
 
@@ -540,8 +653,11 @@ def find_new_notes(notes_label: dict,
         D_new_n = _normalize_matrix(D_new)
         note_error = float(np.sqrt(np.sum((D_orig_n - D_new_n) ** 2)))
 
-        # early rejection: note 오차만으로 이미 best 초과
-        if alpha_note * note_error >= best_cost:
+        # early rejection
+        cutoff = best_cost if not use_wasserstein else (
+            -topk_heap[0][0] if len(topk_heap) >= topk_size else float('inf')
+        )
+        if alpha_note * note_error >= cutoff:
             continue
 
         # 새 cycle 거리행렬
@@ -567,20 +683,46 @@ def find_new_notes(notes_label: dict,
             )
             total += alpha_interval * interval_error
 
-        if total < best_cost:
-            best_cost = total
-            new_notes = [(p, dur) for p in new_pitches]
-            best_result = {
-                'new_notes': new_notes,
-                'note_error': note_error,
-                'cycle_error': cycle_error,
-                'consonance_score': consonance_score,
-                'interval_error': interval_error,
-                'total_cost': total,
-                'cycle_perm': cycle_perm,
-                'D_new': D_new,
-                'C_new': C_new,
-            }
+        candidate = {
+            'new_notes': [(p, dur) for p in new_pitches],
+            'note_error': note_error,
+            'cycle_error': cycle_error,
+            'consonance_score': consonance_score,
+            'interval_error': interval_error,
+            'total_cost': total,
+            'cycle_perm': cycle_perm,
+            'D_new': D_new,
+            'C_new': C_new,
+        }
+
+        if use_wasserstein:
+            # top-k heap 유지 (max-heap via negation)
+            if len(topk_heap) < topk_size:
+                heapq.heappush(topk_heap, (-total, trial, candidate))
+            elif total < -topk_heap[0][0]:
+                heapq.heapreplace(topk_heap, (-total, trial, candidate))
+        else:
+            if total < best_cost:
+                best_cost = total
+                best_result = candidate
+
+    # ── 2단계: Wasserstein distance로 상위 후보 재평가 ──
+    if use_wasserstein:
+        print(f"  2단계: top-{len(topk_heap)} 후보에 Wasserstein distance 적용")
+        best_cost = float('inf')
+        best_result = None
+        for neg_cost, trial_idx, cand in topk_heap:
+            D_new = cand['D_new']
+            dgm_new, _ = compute_ph_wasserstein(D_new)
+            w_dist = wasserstein_distance_pd(dgm_orig, dgm_new)
+            total_with_w = cand['total_cost'] + alpha_wasserstein * w_dist
+            cand['wasserstein_dist'] = w_dist
+            cand['total_cost_with_wasserstein'] = total_with_w
+            if total_with_w < best_cost:
+                best_cost = total_with_w
+                best_result = cand
+                best_result['total_cost'] = total_with_w
+        print(f"  최종 선택: Wasserstein dist = {best_result.get('wasserstein_dist', 0):.4f}")
 
     if best_result is None:
         raise RuntimeError("No valid candidate found")
@@ -610,6 +752,7 @@ def find_new_notes(notes_label: dict,
         'harmony_mode': harmony_mode,
         'consonance_score': best_result['consonance_score'],
         'interval_error': best_result['interval_error'],
+        'wasserstein_dist': best_result.get('wasserstein_dist', 0.0),
     }
     if use_scale:
         result['scale_type'] = scale_type

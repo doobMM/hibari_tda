@@ -105,10 +105,12 @@ def compute_ph(data, metric):
     m_dist = (None if metric == 'frequency'
               else compute_note_distance_matrix(nl, metric=metric))
 
+    from weights import compute_inter_weights_decayed
+
+    inter = compute_inter_weights_decayed(adn_i, max_lag=4, num_chords=nc)
     w1 = compute_intra_weights(adn_i[1][0], num_chords=nc)
     w2 = compute_intra_weights(adn_i[2][0], num_chords=nc)
     intra = w1 + w2
-    inter = compute_inter_weights(adn_i[1][1], adn_i[2][1], num_chords=nc, lag=1)
     oor = compute_out_of_reach(inter, power=-2)
 
     profile = []; rate = 0.0; t0 = time.time()

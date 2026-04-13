@@ -1,0 +1,92 @@
+{
+  "tracks": {
+    "ravel_pavane": {
+      "T": 548,
+      "N": 49,
+      "num_chords": 230,
+      "inst1_n": 890,
+      "inst2_n": 552,
+      "frequency": {
+        "n_cycles": 83,
+        "ph_time_s": 44.5,
+        "js_mean": 0.0337,
+        "js_std": 0.0017,
+        "js_min": 0.0314
+      },
+      "tonnetz": {
+        "n_cycles": 80,
+        "ph_time_s": 44.1,
+        "js_mean": 0.0387,
+        "js_std": 0.002,
+        "js_min": 0.0351
+      },
+      "voice_leading": {
+        "n_cycles": 12,
+        "ph_time_s": 62.2,
+        "js_mean": 0.0798,
+        "js_std": 0.0038,
+        "js_min": 0.0755
+      },
+      "best_metric": "frequency",
+      "best_js": 0.0337,
+      "tonnetz_improvement": -14.8
+    },
+    "bach_fugue": {
+      "T": 870,
+      "N": 61,
+      "num_chords": 253,
+      "inst1_n": 933,
+      "inst2_n": 856,
+      "frequency": {
+        "n_cycles": 83,
+        "ph_time_s": 77.0,
+        "js_mean": 0.0902,
+        "js_std": 0.0027,
+        "js_min": 0.0864
+      },
+      "tonnetz": {
+        "n_cycles": 87,
+        "ph_time_s": 78.4,
+        "js_mean": 0.0408,
+        "js_std": 0.0015,
+        "js_min": 0.0385
+      },
+      "voice_leading": {
+        "n_cycles": 39,
+        "ph_time_s": 166.9,
+        "js_mean": 0.1242,
+        "js_std": 0.0037,
+        "js_min": 0.1176
+      },
+      "best_metric": "tonnetz",
+      "best_js": 0.0408,
+      "tonnetz_improvement": 54.8
+    }
+  },
+  "refs": {
+    "hibari": {
+      "frequency": 0.0753,
+      "tonnetz": 0.0398,
+      "voice_leading": null,
+      "best": "tonnetz",
+      "note": "diatonic, entropy 0.974"
+    },
+    "solari": {
+      "frequency": 0.0643,
+      "tonnetz": 0.0816,
+      "voice_leading": 0.0631,
+      "best": "voice_leading",
+      "note": "chromatic, strong melody"
+    },
+    "aqua": {
+      "frequency": 0.1249,
+      "tonnetz": 0.092,
+      "voice_leading": null,
+      "best": "tonnetz",
+      "note": "chromatic, Tonnetz 우위"
+    }
+  },
+  "interpretation": {
+    "hypothesis": "'전통적 선율 인과가 강한 곡'(Bach)에서는 voice_leading이 우위를 가지고, diatonic 화성이 명확한 곡(Ravel)에서는 tonnetz가 우위를 가질 것"
+  }
+}

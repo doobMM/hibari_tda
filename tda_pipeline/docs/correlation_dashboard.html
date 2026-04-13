@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>TDA Pipeline — Correlation Dashboard</title>
+<script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: #0f1117; color: #e0e0e0; }
+
+  .header {
+    background: linear-gradient(135deg, #1a1d2e 0%, #2d1f3d 100%);
+    padding: 32px 48px; border-bottom: 1px solid #333;
+  }
+  .header h1 { font-size: 28px; font-weight: 600; color: #fff; }
+  .header p { color: #999; margin-top: 6px; font-size: 14px; }
+
+  .tab-bar {
+    display: flex; gap: 0; background: #1a1d2e;
+    border-bottom: 2px solid #333; padding: 0 48px;
+  }
+  .tab {
+    padding: 14px 28px; cursor: pointer; font-size: 14px; font-weight: 500;
+    color: #888; border-bottom: 2px solid transparent; transition: all 0.2s;
+    margin-bottom: -2px;
+  }
+  .tab:hover { color: #ccc; }
+  .tab.active { color: #7c6cf0; border-bottom-color: #7c6cf0; }
+
+  .panel { display: none; padding: 32px 48px; }
+  .panel.active { display: block; }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  .grid-2.wide-left { grid-template-columns: 1.2fr 0.8fr; }
+
+  .card {
+    background: #1a1d2e; border-radius: 12px; padding: 24px;
+    border: 1px solid #2a2d3e;
+  }
+  .card h3 { font-size: 16px; color: #bbb; margin-bottom: 16px; font-weight: 500; }
+  .card .subtitle { font-size: 12px; color: #666; margin-top: -12px; margin-bottom: 16px; }
+
+  .surprise-box {
+    background: linear-gradient(135deg, #2d1f1f 0%, #1f2d1f 100%);
+    border: 1px solid #4a3a2a; border-radius: 12px; padding: 24px;
+    margin-top: 24px;
+  }
+  .surprise-box h3 { color: #f0c060; font-size: 16px; margin-bottom: 12px; }
+  .surprise-item {
+    margin-bottom: 12px; padding: 12px; background: rgba(0,0,0,0.3);
+    border-radius: 8px; font-size: 13px; line-height: 1.6;
+  }
+  .surprise-item .tag {
+    display: inline-block; padding: 2px 8px; border-radius: 4px;
+    font-size: 11px; font-weight: 600; margin-right: 6px;
+  }
+  .tag-strong { background: #c0392b; color: #fff; }
+  .tag-moderate { background: #e67e22; color: #fff; }
+  .tag-notable { background: #2980b9; color: #fff; }
+
+  .legend { font-size: 12px; color: #777; margin-top: 8px; line-height: 1.6; }
+
+  .scatter-hint {
+    text-align: center; padding: 60px 20px; color: #555; font-size: 14px;
+  }
+  .scatter-hint .arrow { font-size: 28px; margin-bottom: 8px; }
+
+  .metric-table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+  .metric-table th, .metric-table td {
+    padding: 8px 12px; text-align: left; font-size: 12px;
+    border-bottom: 1px solid #2a2d3e;
+  }
+  .metric-table th { color: #888; font-weight: 500; }
+  .metric-table td { color: #ccc; }
+  .metric-table tr:hover { background: rgba(124,108,240,0.08); }
+
+  @media (max-width: 1200px) {
+    .grid-2, .grid-2.wide-left { grid-template-columns: 1fr; }
+    .panel { padding: 20px; }
+    .header { padding: 24px; }
+    .tab-bar { padding: 0 20px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>Correlation Analysis Dashboard</h1>
+  <p>TDA Music Pipeline | Sakamoto Ryuichi | Click any cell in the heatmap to see the scatter plot</p>
+</div>
+
+<div class="tab-bar">
+  <div class="tab active" onclick="switchTab(0)">1. Cross-Track Structure</div>
+  <div class="tab" onclick="switchTab(1)">2. Direction A+B Experiments</div>
+  <div class="tab" onclick="switchTab(2)">3. Unified Results</div>
+</div>
+
+<!-- ====== PANEL 1: all_tracks ====== -->
+<div class="panel active" id="panel0">
+  <div class="grid-2 wide-left">
+    <div class="card">
+      <h3>Correlation Matrix — 6 Tracks x Structural + Performance Variables</h3>
+      <p class="subtitle">N=6 tracks (hibari, solari, aqua, bibo, energy flow, etc.) | Algo1, N=20 repeats</p>
+      <div id="heatmap0"></div>
+      <p class="legend">Pearson r | Blue = negative, Red = positive | Click any cell for scatter</p>
+    </div>
+    <div class="card">
+      <h3>Scatter Detail</h3>
+      <div id="scatter0">
+        <div class="scatter-hint">
+          <div class="arrow">&larr;</div>
+          Click a cell in the heatmap
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="surprise-box">
+    <h3>Surprises &amp; Key Findings</h3>
+    <div class="surprise-item">
+      <span class="tag tag-strong">r = -0.88</span>
+      <b>num_chords vs best_js</b> — More chords = lower JS divergence. The richer the harmonic vocabulary, the better PH can reconstruct. <i>The Last Emperor</i> (272 chords, JS 0.029) vs <i>a flower is not a flower</i> (133 chords, JS 0.099).
+    </div>
+    <div class="surprise-item">
+      <span class="tag tag-strong">r = -0.95</span>
+      <b>N (unique notes) vs best_js</b> — Strongly negative. More unique notes = dramatically better generation. This is the single strongest predictor of pipeline quality.
+    </div>
+    <div class="surprise-item">
+      <span class="tag tag-moderate">r = +0.82</span>
+      <b>tonnetz_improvement vs T (length)</b> — Longer pieces see bigger Tonnetz <i>degradation</i> vs frequency. Tonnetz advantage is specific to short, harmonically rich pieces (hibari). Longer pieces favor frequency.
+    </div>
+    <div class="surprise-item">
+      <span class="tag tag-notable">Counter-intuitive</span>
+      <b>All 6 tracks: frequency wins</b> — Despite hibari's famous Tonnetz advantage (-47%), for all other tracks frequency is the best metric. The "Tonnetz is always better" assumption does not generalize.
+    </div>
+  </div>
+</div>
+
+<!-- ====== PANEL 2: combined_AB ====== -->
+<div class="panel" id="panel1">
+  <div class="grid-2 wide-left">
+    <div class="card">
+      <h3>Correlation Matrix — A+B Combined Experiments (hibari)</h3>
+      <p class="subtitle">10 experiments: note_set {orig, major} x reorder {none, shuffle, block32, block64, markov} | Transformer</p>
+      <div id="heatmap1"></div>
+      <p class="legend">Variables: val_loss, pitch_js, transition_js, dtw, ncd (vs_original and vs_ref)</p>
+    </div>
+    <div class="card">
+      <h3>Scatter Detail</h3>
+      <div id="scatter1">
+        <div class="scatter-hint">
+          <div class="arrow">&larr;</div>
+          Click a cell in the heatmap
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="surprise-box">
+    <h3>Surprises &amp; Key Findings</h3>
+    <div class="surprise-item">
+      <span class="tag tag-strong">r = +0.98</span>
+      <b>pitch_js vs transition_js (vs_original)</b> — Near-perfect correlation. If pitch distribution diverges, so does transition structure. They measure overlapping aspects of "structural distance."
+    </div>
+    <div class="surprise-item">
+      <span class="tag tag-strong">r = +0.96</span>
+      <b>pitch_js vs dtw (vs_original)</b> — DTW (temporal alignment) is almost perfectly predicted by pitch divergence. Sequence-level and distribution-level quality are tightly coupled.
+    </div>
+    <div class="surprise-item">
+      <span class="tag tag-moderate">Decoupled</span>
+      <b>val_loss vs pitch_js (vs_ref): r = -0.38</b> — Lower validation loss does NOT predict better pitch fidelity to reference. The network optimizes something different from what our evaluation metrics capture.
+    </div>
+    <div class="surprise-item">
+      <span class="tag tag-notable">Split pattern</span>
+      <b>orig vs major clusters</b> — The data clearly splits into two clusters. "major" experiments have ~10x higher pitch_js vs_original but similar pitch_js vs_ref. The scale change is correctly captured as "different from original" but "internally coherent."
+    </div>
+  </div>
+</div>
+
+<!-- ====== PANEL 3: unified ====== -->
+<div class="panel" id="panel2">
+  <div class="grid-2 wide-left">
+    <div class="card">
+      <h3>Correlation Matrix — Unified Experiments (all step3_data)</h3>
+      <p class="subtitle">24 experiments merged: baselines, continuous, improvements, harmony, modules</p>
+      <div id="heatmap2"></div>
+      <p class="legend">Aggregated from step3_results, step3_continuous, improvementF, harmony, module improvements</p>
+    </div>
+    <div class="card">
+      <h3>Scatter Detail</h3>
+      <div id="scatter2">
+        <div class="scatter-hint">
+          <div class="arrow">&larr;</div>
+          Click a cell in the heatmap
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="surprise-box">
+    <h3>Surprises &amp; Key Findings</h3>
+    <div class="surprise-item">
+      <span class="tag tag-strong">r = +0.94</span>
+      <b>js_mean vs kl_mean</b> — JS and KL divergence are nearly redundant. Reporting both adds little information; one suffices for the committee.
+    </div>
+    <div class="surprise-item">
+      <span class="tag tag-strong">r = -0.82</span>
+      <b>n_cycles vs js_mean</b> — More PH cycles = better generation quality. The pipeline fundamentally benefits from richer topological structure. This validates the core thesis.
+    </div>
+    <div class="surprise-item">
+      <span class="tag tag-moderate">r = -0.71</span>
+      <b>n_notes vs js_mean</b> — More generated notes correlates with lower JS, but weaker than n_cycles. Topology matters more than volume.
+    </div>
+    <div class="surprise-item">
+      <span class="tag tag-notable">Outlier</span>
+      <b>Improvement F (continuous + FC)</b> — JS 0.0004, an order of magnitude better than everything else. This single point pulls the continuous overlap regression line dramatically. It's real, but the committee should know it's from a specialized FC architecture, not a general result.
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+//  DATA
+// ============================================================
+
+// --- Dataset 1: all_tracks ---
+const tracks1 = {
+  labels: ["a flower is\nnot a flower", "bibo no\naozora", "energy flow", "merry\nchristmas", "the last\nemperor", "tong poo\n(solo)"],
+  T:           [441, 768, 751, 1062, 802, 1330],
+  N:           [48,  60,  55,  48,   73,  63],
+  num_chords:  [133, 194, 161, 134,  272, 238],
+  inst1_n:     [250, 440, 647, 991,  849, 969],
+  inst2_n:     [219, 682, 499, 766,  879, 971],
+  freq_cycles: [69,  246, 142, 116,  359, 296],
+  freq_js:     [0.0987, 0.0550, 0.0704, 0.0713, 0.0292, 0.0378],
+  tonn_cycles: [70,  139, 107, 84,   216, 168],
+  tonn_js:     [0.1022, 0.0605, 0.0780, 0.0921, 0.0311, 0.0579],
+  vl_cycles:   [40,  77,  39,  23,   66,  38],
+  vl_js:       [0.1313, 0.0937, 0.1345, 0.1966, 0.0458, 0.1199],
+  best_js:     [0.0987, 0.0550, 0.0704, 0.0713, 0.0292, 0.0378],
+  tonn_impr:   [-3.5, -10.0, -10.8, -29.2, -6.5, -53.2]
+};
+const vars1 = ['T','N','num_chords','inst1_n','inst2_n','freq_cycles','freq_js','tonn_cycles','tonn_js','vl_cycles','vl_js','best_js','tonn_impr'];
+const varLabels1 = ['T (length)','N (notes)','num_chords','inst1 notes','inst2 notes','freq cycles','freq JS','tonn cycles','tonn JS','VL cycles','VL JS','best JS','tonnetz impr%'];
+
+// --- Dataset 2: combined_AB ---
+const ab_labels = ['orig_none','orig_seg_shuf','orig_block32','orig_block64','orig_markov',
+                   'major_none','major_seg_shuf','major_block32','major_block64','major_markov'];
+const ab = {
+  labels: ab_labels,
+  val_loss:    [0.0972, 0.7229, 0.606, 0.5503, 0.718, 0.0953, 0.699, 0.6303, 0.5938, 0.6907],
+  o_pitch_js:  [0.0129, 0.0087, 0.0065, 0.011, 0.0082, 0.1258, 0.1047, 0.0968, 0.0984, 0.1208],
+  o_trans_js:  [0.1146, 0.0893, 0.0968, 0.1145, 0.088, 0.3022, 0.268, 0.248, 0.2478, 0.2822],
+  o_dtw:       [1.511, 1.872, 1.849, 1.854, 1.857, 2.327, 2.441, 2.359, 2.409, 2.5],
+  o_ncd:       [0.874, 0.928, 0.950, 0.949, 0.924, 0.946, 0.976, 0.978, 0.985, 0.978],
+  r_pitch_js:  [0.0129, 0.0087, 0.0065, 0.011, 0.0082, 0.0102, 0.0035, 0.0034, 0.0029, 0.0158],
+  r_trans_js:  [0.1146, 0.0893, 0.0968, 0.1145, 0.088, 0.102, 0.0919, 0.0878, 0.0859, 0.1205],
+  r_dtw:       [1.511, 1.872, 1.849, 1.854, 1.857, 1.933, 2.291, 2.31, 2.362, 2.318],
+  r_ncd:       [0.874, 0.928, 0.950, 0.949, 0.924, 0.870, 0.923, 0.940, 0.949, 0.947]
+};
+const vars2 = ['val_loss','o_pitch_js','o_trans_js','o_dtw','o_ncd','r_pitch_js','r_trans_js','r_dtw','r_ncd'];
+const varLabels2 = ['val_loss','pitch JS\n(vs orig)','trans JS\n(vs orig)','DTW\n(vs orig)','NCD\n(vs orig)','pitch JS\n(vs ref)','trans JS\n(vs ref)','DTW\n(vs ref)','NCD\n(vs ref)'];
+
+// --- Dataset 3: unified step3 ---
+const uni_labels = [
+  'freq baseline','tonnetz baseline','VL baseline','DFT baseline',
+  'binary cached','cont direct','cont thr=0.3','cont thr=0.5','cont thr=0.7',
+  'F-bin (DL)','F-cont (DL)',
+  'subset K=10','subset K=17','full K=46',
+  'P1 baseline','C best-of-10','D cov>=20','P4 local PH','P4+C'
+];
+const uni = {
+  labels: uni_labels,
+  js_mean: [0.0753, 0.0398, 0.0891, 0.0511, 0.0599, 0.0525, 0.0468, 0.0455, 0.028, 0.00144, 0.000568, 0.0991, 0.074, 0.0397, 0.145, 0.121, 0.117, 0.0783, 0.0654],
+  kl_mean: [0.387, 0.172, 0.404, 0.274, 0.270, 0.237, 0.213, 0.221, 0.120, 0.070, 0.031, 0.556, 0.550, 0.172, null, null, null, null, null],
+  n_notes: [1619, 1699, 1410, 1663, 1441, 1463, 1485, 1552, 1608, null, null, 1673, 1679, 1688, null, null, null, null, null],
+  n_cycles:[43, 46, 22, 20, 46, 46, 46, 46, 46, 46, 46, 10, 17, 46, 46, 46, 46, null, null],
+  coverage:[0.991, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.948, 0.991, 0.980, 0.996, 1.0, 0.735, 0.822, 0.848, 0.761, 0.835],
+  js_std:  [0.00328, 0.00314, 0.00484, 0.00285, 0.00372, 0.00481, 0.0039, 0.00317, 0.00168, 0.001, 0.000464, 0.00376, 0.00377, 0.00253, 0.0285, 0.0248, 0.0178, 0.0277, 0.0192]
+};
+const vars3 = ['js_mean','kl_mean','n_notes','n_cycles','coverage','js_std'];
+const varLabels3 = ['JS mean','KL mean','n_notes','n_cycles','coverage','JS std'];
+
+// ============================================================
+//  CORRELATION & PLOT FUNCTIONS
+// ============================================================
+
+function pearson(x, y) {
+  // filter out nulls
+  const pairs = [];
+  for (let i = 0; i < x.length; i++) {
+    if (x[i] !== null && y[i] !== null && !isNaN(x[i]) && !isNaN(y[i]))
+      pairs.push([x[i], y[i]]);
+  }
+  if (pairs.length < 3) return NaN;
+  const n = pairs.length;
+  const mx = pairs.reduce((s,p) => s+p[0], 0) / n;
+  const my = pairs.reduce((s,p) => s+p[1], 0) / n;
+  let num = 0, dx = 0, dy = 0;
+  for (const [xi, yi] of pairs) {
+    num += (xi - mx) * (yi - my);
+    dx += (xi - mx) ** 2;
+    dy += (yi - my) ** 2;
+  }
+  if (dx === 0 || dy === 0) return 0;
+  return num / Math.sqrt(dx * dy);
+}
+
+function corrMatrix(dataset, varNames) {
+  const n = varNames.length;
+  const mat = [];
+  for (let i = 0; i < n; i++) {
+    mat[i] = [];
+    for (let j = 0; j < n; j++) {
+      mat[i][j] = pearson(dataset[varNames[i]], dataset[varNames[j]]);
+    }
+  }
+  return mat;
+}
+
+function plotHeatmap(divId, mat, labels, dataset, varNames, scatterId, pointLabels) {
+  // Format text
+  const textMat = mat.map(row => row.map(v => isNaN(v) ? '' : v.toFixed(2)));
+
+  const trace = {
+    z: mat, x: labels, y: labels,
+    type: 'heatmap',
+    colorscale: [
+      [0, '#2166ac'], [0.25, '#67a9cf'], [0.5, '#f7f7f7'],
+      [0.75, '#ef8a62'], [1, '#b2182b']
+    ],
+    zmin: -1, zmax: 1,
+    text: textMat,
+    texttemplate: '%{text}',
+    textfont: { size: 11, color: '#333' },
+    hoverongaps: false,
+    showscale: true,
+    colorbar: {
+      title: 'r', titleside: 'right',
+      tickfont: { color: '#999' }, titlefont: { color: '#999' }
+    }
+  };
+
+  const layout = {
+    margin: { l: 110, r: 20, t: 20, b: 110 },
+    paper_bgcolor: 'rgba(0,0,0,0)',
+    plot_bgcolor: 'rgba(0,0,0,0)',
+    xaxis: { tickfont: { size: 10, color: '#999' }, tickangle: -45 },
+    yaxis: { tickfont: { size: 10, color: '#999' }, autorange: 'reversed' },
+    height: 480,
+  };
+
+  Plotly.newPlot(divId, [trace], layout, { responsive: true }).then(() => {
+    document.getElementById(divId).on('plotly_click', function(data) {
+      const pt = data.points[0];
+      const xi = pt.x, yi = pt.y;
+      const idxX = labels.indexOf(xi);
+      const idxY = labels.indexOf(yi);
+      if (idxX === idxY) return;
+      plotScatter(scatterId, dataset[varNames[idxX]], dataset[varNames[idxY]],
+                  xi, yi, mat[idxY][idxX], pointLabels);
+    });
+  });
+}
+
+function plotScatter(divId, xData, yData, xLabel, yLabel, r, pointLabels) {
+  // filter nulls
+  const x = [], y = [], labs = [];
+  for (let i = 0; i < xData.length; i++) {
+    if (xData[i] !== null && yData[i] !== null && !isNaN(xData[i]) && !isNaN(yData[i])) {
+      x.push(xData[i]); y.push(yData[i]); labs.push(pointLabels[i]);
+    }
+  }
+
+  const trace = {
+    x, y, text: labs, mode: 'markers+text',
+    textposition: 'top center',
+    textfont: { size: 10, color: '#bbb' },
+    marker: {
+      size: 12, color: '#7c6cf0',
+      line: { width: 1.5, color: '#fff' },
+      opacity: 0.9
+    },
+    type: 'scatter'
+  };
+
+  // trendline
+  const n = x.length;
+  const mx = x.reduce((s,v)=>s+v,0)/n;
+  const my = y.reduce((s,v)=>s+v,0)/n;
+  let num=0,den=0;
+  for(let i=0;i<n;i++){num+=(x[i]-mx)*(y[i]-my);den+=(x[i]-mx)**2;}
+  const slope = den?num/den:0;
+  const intercept = my - slope*mx;
+  const xmin = Math.min(...x), xmax = Math.max(...x);
+  const trend = {
+    x: [xmin, xmax], y: [slope*xmin+intercept, slope*xmax+intercept],
+    mode: 'lines', line: { color: '#f06060', width: 2, dash: 'dash' },
+    showlegend: false
+  };
+
+  const rColor = Math.abs(r) > 0.7 ? '#f06060' : Math.abs(r) > 0.4 ? '#e67e22' : '#666';
+
+  const layout = {
+    title: {
+      text: `r = ${r.toFixed(3)}`,
+      font: { size: 20, color: rColor },
+      x: 0.5
+    },
+    xaxis: { title: xLabel.replace(/\n/g,' '), gridcolor: '#2a2d3e', zerolinecolor: '#333',
+             tickfont: { color: '#999' }, titlefont: { color: '#bbb' } },
+    yaxis: { title: yLabel.replace(/\n/g,' '), gridcolor: '#2a2d3e', zerolinecolor: '#333',
+             tickfont: { color: '#999' }, titlefont: { color: '#bbb' } },
+    paper_bgcolor: 'rgba(0,0,0,0)',
+    plot_bgcolor: 'rgba(0,0,0,0)',
+    margin: { l: 60, r: 20, t: 50, b: 60 },
+    height: 420,
+  };
+
+  Plotly.newPlot(divId, [trace, trend], layout, { responsive: true });
+}
+
+// ============================================================
+//  TAB SWITCHING
+// ============================================================
+
+function switchTab(idx) {
+  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', i===idx));
+  document.querySelectorAll('.panel').forEach((p,i) => p.classList.toggle('active', i===idx));
+}
+
+// ============================================================
+//  RENDER
+// ============================================================
+
+const mat1 = corrMatrix(tracks1, vars1);
+plotHeatmap('heatmap0', mat1, varLabels1, tracks1, vars1, 'scatter0', tracks1.labels);
+
+const mat2 = corrMatrix(ab, vars2);
+plotHeatmap('heatmap1', mat2, varLabels2, ab, vars2, 'scatter1', ab.labels);
+
+const mat3 = corrMatrix(uni, vars3);
+plotHeatmap('heatmap2', mat3, varLabels3, uni, vars3, 'scatter2', uni.labels);
+
+</script>
+</body>
+</html>

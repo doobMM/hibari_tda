@@ -72,6 +72,11 @@ def pitch_distribution_similarity(generated: List[Tuple[int, int, int]],
     orig_total = sum(orig_pitches.values())
     gen_total = sum(gen_pitches.values())
 
+    # 생성 결과가 비어있으면 최악값(1.0) 반환
+    if gen_total == 0:
+        return {'kl_divergence': float('inf'), 'js_divergence': 1.0,
+                'common_pitches': 0, 'gen_unique_pitches': 0}
+
     eps = 1e-10  # smoothing
     p = np.array([orig_pitches.get(k, 0) / orig_total + eps for k in sorted(all_pitches)])
     q = np.array([gen_pitches.get(k, 0) / gen_total + eps for k in sorted(all_pitches)])
@@ -156,6 +161,8 @@ def transition_matrix_similarity(generated: List[Tuple[int, int, int]],
 
     orig_total = sum(t_orig.values())
     gen_total = sum(t_gen.values())
+    if gen_total == 0:
+        return {'transition_js': 1.0, 'common_transitions': 0}
     eps = 1e-10
 
     p = np.array([t_orig.get(k, 0) / orig_total + eps for k in sorted(all_trans)])

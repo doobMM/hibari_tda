@@ -139,6 +139,27 @@ python run_test.py
 cd docs && python build_academic_pdf.py academic_paper_full.md
 ```
 
+## 세션 운용 가이드
+
+토큰 절약을 위해 세션을 역할별로 분리. 세션 시작 시 "X 세션이야"라고 선언.
+
+| 세션 | 역할 | 읽는 것 | 안 읽는 것 |
+|------|------|---------|-----------|
+| **A. 실험** | run_*.py 실행, 결과 해석 | config, pipeline, 실험 스크립트 | docs/, LaTeX |
+| **B. 디버그** | 코드 수정, diagnose.py | 소스코드 전체 | docs/, 결과 해석 |
+| **C. 감상** | WAV 청취 평가, 방향 논의 | output/, 생성 결과 요약 | 소스코드 내부 |
+| **D. 보고서** | md/LaTeX, 도표, 수치 | docs/, step3_data/ | 소스코드 내부 |
+
+**세션 간 인터페이스 = 파일**: A→json→D, A→wav→C, B→코드수정→A, C→방향→memory→A/B
+
+### Skills (자동 로드)
+- `/run-experiment` — MIDI 파이프라인 실행 (세션 A)
+- `/compare` — 실험 결과 JSON 2개 비교 + t-test 유의성 (세션 A)
+- `/piano-wav` — MusicXML/MIDI → Piano WAV 변환 (세션 C)
+- `/explain-research` — 비전공자용 연구 설명 (세션 D)
+- `/update-paper` — JSON 최신 수치 → 논문 표 자동 반영 (세션 D)
+- `/research-next` — 선행연구 + 다음 방향 제안 (세션 A/D)
+
 ## 기술 환경
 
 - Windows, Python 3.10, VS Code

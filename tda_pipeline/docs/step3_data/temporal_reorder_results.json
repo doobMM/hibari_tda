@@ -1,67 +1,67 @@
 {
   "track": "hibari",
   "metric": "tonnetz",
-  "n_cycles": 16,
+  "n_cycles": 18,
   "n_trials": 5,
   "baseline": {
     "avg": {
-      "pitch_js": 0.015595,
-      "transition_js": 0.236228,
-      "dtw": 2.2148,
-      "ncd": 0.997856
+      "pitch_js": 0.012133,
+      "transition_js": 0.238611,
+      "dtw": 2.2094,
+      "ncd": 0.998992
     },
     "std": {
-      "pitch_js": 0.000848,
-      "transition_js": 0.003238,
-      "dtw": 0.020946,
-      "ncd": 0.002265
+      "pitch_js": 0.000707,
+      "transition_js": 0.002336,
+      "dtw": 0.020082,
+      "ncd": 0.00147
     }
   },
   "strategies": {
     "segment_shuffle": {
       "avg": {
-        "pitch_js": 0.015911,
-        "transition_js": 0.242003,
-        "dtw": 2.22765,
-        "ncd": 0.99959
+        "pitch_js": 0.0123,
+        "transition_js": 0.23852,
+        "dtw": 2.20555,
+        "ncd": 0.998594
       },
       "std": {
-        "pitch_js": 0.001702,
-        "transition_js": 0.0035,
-        "dtw": 0.008042,
-        "ncd": 0.00076
+        "pitch_js": 0.001158,
+        "transition_js": 0.004921,
+        "dtw": 0.033875,
+        "ncd": 0.000549
       },
       "delta_pct": {
-        "pitch_js": 2.0,
-        "transition_js": 2.4,
-        "dtw": 0.6,
-        "ncd": 0.2
+        "pitch_js": 1.4,
+        "transition_js": -0.0,
+        "dtw": -0.2,
+        "ncd": -0.0
       },
       "verdict": "△ 보통",
       "reorder_info": {
         "strategy": "segment_shuffle",
-        "n_segments": 685,
-        "avg_segment_len": 1.5883211678832116
+        "n_segments": 743,
+        "avg_segment_len": 1.4643337819650066
       }
     },
     "block_permute_block_size32": {
       "avg": {
-        "pitch_js": 0.015963,
-        "transition_js": 0.238932,
-        "dtw": 2.21265,
-        "ncd": 0.998259
+        "pitch_js": 0.011966,
+        "transition_js": 0.23717,
+        "dtw": 2.2246,
+        "ncd": 1.000101
       },
       "std": {
-        "pitch_js": 0.000922,
-        "transition_js": 0.006757,
-        "dtw": 0.033095,
-        "ncd": 0.002628
+        "pitch_js": 0.000385,
+        "transition_js": 0.003545,
+        "dtw": 0.01869,
+        "ncd": 0.001208
       },
       "delta_pct": {
-        "pitch_js": 2.4,
-        "transition_js": 1.1,
-        "dtw": -0.1,
-        "ncd": 0.0
+        "pitch_js": -1.4,
+        "transition_js": -0.6,
+        "dtw": 0.7,
+        "ncd": 0.1
       },
       "verdict": "△ 보통",
       "reorder_info": {
@@ -73,22 +73,22 @@
     },
     "block_permute_block_size64": {
       "avg": {
-        "pitch_js": 0.016617,
-        "transition_js": 0.241038,
-        "dtw": 2.24295,
-        "ncd": 0.997855
+        "pitch_js": 0.012486,
+        "transition_js": 0.237897,
+        "dtw": 2.2272,
+        "ncd": 0.999497
       },
       "std": {
-        "pitch_js": 0.000882,
-        "transition_js": 0.005021,
-        "dtw": 0.020067,
-        "ncd": 0.000759
+        "pitch_js": 0.000829,
+        "transition_js": 0.004118,
+        "dtw": 0.011196,
+        "ncd": 0.001473
       },
       "delta_pct": {
-        "pitch_js": 6.6,
-        "transition_js": 2.0,
-        "dtw": 1.3,
-        "ncd": -0.0
+        "pitch_js": 2.9,
+        "transition_js": -0.3,
+        "dtw": 0.8,
+        "ncd": 0.1
       },
       "verdict": "△ 보통",
       "reorder_info": {
@@ -100,56 +100,56 @@
     },
     "markov_resample_temperature1.0": {
       "avg": {
-        "pitch_js": 0.016896,
-        "transition_js": 0.242579,
-        "dtw": 2.24055,
-        "ncd": 0.998153
+        "pitch_js": 0.015567,
+        "transition_js": 0.238394,
+        "dtw": 2.23515,
+        "ncd": 0.999085
       },
       "std": {
-        "pitch_js": 0.002472,
-        "transition_js": 0.004369,
-        "dtw": 0.00983,
-        "ncd": 0.001802
+        "pitch_js": 0.002209,
+        "transition_js": 0.003538,
+        "dtw": 0.026262,
+        "ncd": 0.002915
       },
       "delta_pct": {
-        "pitch_js": 8.3,
-        "transition_js": 2.7,
+        "pitch_js": 28.3,
+        "transition_js": -0.1,
         "dtw": 1.2,
         "ncd": 0.0
       },
-      "verdict": "△ 보통",
+      "verdict": "✗ 분포 붕괴",
       "reorder_info": {
         "strategy": "markov_resample",
-        "n_unique_patterns": 299,
+        "n_unique_patterns": 337,
         "temperature": 1.0
       }
     },
     "markov_resample_temperature1.5": {
       "avg": {
-        "pitch_js": 0.016665,
-        "transition_js": 0.240006,
-        "dtw": 2.22725,
-        "ncd": 0.99886
+        "pitch_js": 0.014412,
+        "transition_js": 0.241996,
+        "dtw": 2.2268,
+        "ncd": 0.99837
       },
       "std": {
-        "pitch_js": 0.002046,
-        "transition_js": 0.003631,
-        "dtw": 0.014635,
-        "ncd": 0.002816
+        "pitch_js": 0.002283,
+        "transition_js": 0.003704,
+        "dtw": 0.020727,
+        "ncd": 0.000976
       },
       "delta_pct": {
-        "pitch_js": 6.9,
-        "transition_js": 1.6,
-        "dtw": 0.6,
-        "ncd": 0.1
+        "pitch_js": 18.8,
+        "transition_js": 1.4,
+        "dtw": 0.8,
+        "ncd": -0.1
       },
       "verdict": "△ 보통",
       "reorder_info": {
         "strategy": "markov_resample",
-        "n_unique_patterns": 299,
+        "n_unique_patterns": 337,
         "temperature": 1.5
       }
     }
   },
-  "elapsed_s": 139.8
+  "elapsed_s": 230.7
 }
