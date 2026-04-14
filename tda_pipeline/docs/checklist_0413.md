@@ -8,27 +8,40 @@
 ## A 세션 (실험)
 
 ### A-1. 통합 조합 실험 ★★★ 최고 우선
-- [ ] `ow=0.3 + α=0.0 + 감쇄lag(1~4)` 통합 설정으로 N=20 Algo1 실행
-- [ ] 기존 개별 결과(ow=0.3 단독, α=0.0 단독, 감쇄lag 단독)와 비교하여 시너지 확인
-- [ ] 결과 JSON → `step3_data/combined_optimal_results.json`
-- [ ] 캐시 재계산 필요 여부 확인 (ow/α 변경 시 distance matrix 변경 → pkl 무효)
+- [x] `ow=0.3 + α=0.0 + 감쇄lag(1~4)` 통합 설정으로 N=20 Algo1 실행
+- [x] 기존 개별 결과(ow=0.3 단독, α=0.0 단독, 감쇄lag 단독)와 비교하여 시너지 확인
+- [x] 결과 JSON → `step3_data/combined_optimal_results.json`
+- [x] 캐시 재계산 필요 여부 확인 (ow/α 변경 시 distance matrix 변경 → pkl 무효)
+  - **결과**: K=14 (α=0.0 적용 시 cycle 수 42→14로 감소), JS=0.0569
+  - **핵심 발견**: α=0.0이 cycle 수를 크게 줄여 시너지 없음. 개별 최적보다 오히려 악화.
+  - **스크립트**: `run_combined_optimal.py` (generate_barcode_numpy 사용, 기존 실험들과 일관성)
 
 ### A-2. Per-cycle τ_c 재검증
-- [ ] N=20으로 per-cycle τ_c 실험 재실행 (현재 N=5 greedy)
-- [ ] baseline(전체 τ=0.35) 대비 개선율 통계 확인 (p-value)
-- [ ] 결과 JSON → `step3_data/percycle_tau_n20_results.json`
+- [x] N=20으로 per-cycle τ_c 실험 재실행 (현재 N=5 greedy)
+- [x] baseline(전체 τ=0.35) 대비 개선율 통계 확인 (p-value)
+- [x] 결과 JSON → `step3_data/percycle_tau_n20_results.json`
+  - **결과**: baseline JS=0.0460, per-cycle τ_c JS=0.0241, 개선 +47.5%, p<0.001 ★
+  - **과적합 없음**: N=5(0.0238) vs N=20(0.0241) 거의 동일 → 통계적으로 확정
+  - **스크립트**: `run_percycle_tau_n20.py`
 
 ### A-3. Soft activation 아키텍처 확장
-- [ ] continuous overlap → Transformer 학습 (binary 대비 JS/val_loss 비교)
-- [ ] continuous overlap → LSTM 학습 (binary 대비 JS/val_loss 비교)
-- [ ] FC 결과(+64.3%)와 비교 표 작성
-- [ ] 결과 JSON → `step3_data/soft_activation_all_models.json`
+- [x] continuous overlap → Transformer 학습 (binary 대비 JS/val_loss 비교)
+- [x] continuous overlap → LSTM 학습 (binary 대비 JS/val_loss 비교)
+- [x] FC 결과(+64.3%)와 비교 표 작성
+- [x] 결과 JSON → `step3_data/soft_activation_all_models.json`
+  - **결과**: FC +88.6%(0.0035→0.0004★), Transformer +79.4%(0.0034→0.0007), LSTM -3.5%(부적합)
+  - **최적**: FC continuous가 최고 (JS=0.0004, 현재 최고 기록 유지)
+  - **스크립트**: `run_soft_activation_all_models.py`
 
 ### A-4. 최종 최적 설정 확정 실험
-- [ ] A-1 + A-2 + A-3 결과를 종합한 "최종 최적 설정" 결정
-- [ ] 최종 설정으로 Algo1 + Algo2(FC) N=20 실행
-- [ ] 기존 최고 기록(JS 0.0004, 개선 F) 대비 개선 여부 확인
-- [ ] 결과 JSON → `step3_data/final_optimal_results.json`
+- [x] A-1 + A-2 + A-3 결과를 종합한 "최종 최적 설정" 결정
+- [x] 최종 설정으로 Algo1 + Algo2(FC) N=20 실행
+- [x] 기존 최고 기록(JS 0.0004, 개선 F) 대비 개선 여부 확인
+- [x] 결과 JSON → `step3_data/final_optimal_results.json`
+  - **최종 설정**: Overlap=per-cycle τ_c(K=42, α=0.5 캐시), Algo2=FC+continuous
+  - **Algo1 최적**: JS=0.0240±0.0028 (per-cycle τ_c, +48.0%, p<0.001)
+  - **Algo2 최적**: JS=0.0004±0.0000 (FC continuous, N=20, 현재 최고 기록 재확인)
+  - **스크립트**: `run_final_optimal.py`
 
 ---
 
@@ -208,4 +221,4 @@ B세션 P3 구현 확인 → D-F2-16 (P3 수식)
 
 ---
 
-*마지막 업데이트: 2026-04-13 by Control Tower*
+*마지막 업데이트: 2026-04-14 by A 세션*
