@@ -116,6 +116,82 @@ def tonnetz_note_distance(note1: Tuple[int, int], note2: Tuple[int, int],
 
 
 # ═══════════════════════════════════════════════════════════════════════════
+# 1b. Triad Sharing Distance
+# ═══════════════════════════════════════════════════════════════════════════
+#
+# 두 pitch class가 함께 속하는 Major/Minor triad 개수를 기반으로 거리를 계산.
+# BFS Tonnetz 거리가 "격자 칸 수(이산)"를 측정하는 반면,
+# 이 거리는 "공유 화음 수"를 직접 측정 — 더 soft한 화성 근접도.
+#
+# 24개 triad:
+#   major triad r: {r, r+4, r+7} mod 12,  for r in range(12)
+#   minor triad r: {r, r+3, r+7} mod 12,  for r in range(12)
+#
+# shared_count(pc1, pc2) = 두 pc가 함께 속하는 triad 수  (범위: 0~6)
+# distance = 1 / (shared_count + 1e-6)
+#   → 많이 공유할수록 가까움, 전혀 공유 안 하면 ≈ 1e6
+
+_TRIAD_SHARING_DIST = None
+
+
+def _build_triad_sharing_table() -> np.ndarray:
+    """
+    12×12 Triad Sharing 거리 테이블을 구축합니다.
+
+    각 pitch class 쌍에 대해 함께 속하는 Major/Minor triad 수를 세고,
+    그 역수를 거리로 사용합니다. 대각선(자기 자신)은 0으로 설정합니다.
+
+    수학적 성질:
+      - 자음 음정(단3도·장3도·4도/5도·단6도·장6도) 쌍 → 공유 2 → 거리 ≈ 0.5
+      - 불협음 음정(단2도·장2도·증4도) 쌍 → 공유 0 → 거리 ≈ 1e6
+      - 같은 음 → 공유 6 → 대각선이므로 0으로 재설정
+    """
+    triads = []
+    for r in range(12):
+        triads.append(frozenset({r % 12, (r + 4) % 12, (r + 7) % 12}))  # major
+        triads.append(frozenset({r % 12, (r + 3) % 12, (r + 7) % 12}))  # minor
+
+    shared = np.zeros((12, 12), dtype=float)
+    for pc1 in range(12):
+        for pc2 in range(12):
+            shared[pc1, pc2] = sum(1 for t in triads if pc1 in t and pc2 in t)
+
+    dist = 1.0 / (shared + 1e-6)
+    np.fill_diagonal(dist, 0.0)
+    return dist
+
+
+def triad_sharing_distance(pc1: int, pc2: int) -> float:
+    """두 pitch class (0~11) 간의 Triad Sharing 거리."""
+    global _TRIAD_SHARING_DIST
+    if _TRIAD_SHARING_DIST is None:
+        _TRIAD_SHARING_DIST = _build_triad_sharing_table()
+    return float(_TRIAD_SHARING_DIST[pc1 % 12, pc2 % 12])
+
+
+def triad_sharing_note_distance(note1: Tuple[int, int], note2: Tuple[int, int],
+                                octave_weight: float = 0.3,
+                                duration_weight: float = 0.3) -> float:
+    """
+    두 note = (pitch, duration) 간의 Triad Sharing 기반 거리.
+    tonnetz_note_distance와 동일한 구조, pc 거리 함수만 교체.
+
+    d(n1, n2) = triad_sharing(pc1, pc2)
+              + octave_weight * |octave1 - octave2|
+              + duration_weight * |dur1 - dur2| / max_dur
+    """
+    p1, d1 = note1
+    p2, d2 = note2
+
+    ts_dist = triad_sharing_distance(p1 % 12, p2 % 12)
+    oct_diff = abs(p1 // 12 - p2 // 12)
+    max_dur = max(d1, d2, 1)
+    dur_diff = abs(d1 - d2) / max_dur
+
+    return ts_dist + octave_weight * oct_diff + duration_weight * dur_diff
+
+
+# ═══════════════════════════════════════════════════════════════════════════
 # 2. Voice-leading 거리
 # ═══════════════════════════════════════════════════════════════════════════
 
@@ -205,6 +281,7 @@ def dft_note_distance(note1: Tuple[int, int], note2: Tuple[int, int],
 
 METRICS = {
     'tonnetz': tonnetz_note_distance,
+    'triad_sharing': triad_sharing_note_distance,
     'voice_leading': voice_leading_note_distance,
     'dft': dft_note_distance,
 }
