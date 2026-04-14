@@ -29,6 +29,14 @@
   // Normalised strength max values per cycle name
   var maxStrength = { A: 1, B: 1, C: 1, D: 1 };
 
+  // ── Overlap-driven playback state ─────────────────────────────────
+  // colToCycle[c] = 'A'/'B'/'C'/'D'/null — overlap matrix column → ABCD 매핑
+  var colToCycle = [];
+  // 현재 overlap row에서 각 사이클이 active한가 (lerp'd 0..1)
+  var overlapSmooth = { A: 1, B: 1, C: 1, D: 1 };
+  var OVERLAP_DIM    = 0.12;   // inactive 시 최소 opacity
+  var OVERLAP_SMOOTH = 0.30;   // lerp factor (100ms tick 기준)
+
   // ── Colours matching tonnetz.js H1_CYCLES ──────────────────────────
   var CYCLE_META = [
     { name: 'A', label: 'E–G–B',   pcs: [4,7,11],     fill: 'rgba(100,220,100,', stroke: '#64dc64' },
@@ -59,6 +67,59 @@
         if (v > maxStrength[k]) maxStrength[k] = v;
       });
     });
+  }
+
+  // overlap matrix column → A/B/C/D 사이클 매핑 (init 시 1회 계산)
+  function buildColToCycle () {
+    if (!overlapData) return;
+    var ids = overlapData.cycle_ids || [];
+    var pcs = overlapData.cycle_pcs || {};
+    colToCycle = ids.map(function (cid) {
+      var pcList = pcs[String(cid)] || [];
+      var pcSet  = {};
+      pcList.forEach(function (p) { pcSet[p] = 1; });
+      var best = null, bestN = 0;
+      CYCLE_META.forEach(function (cm) {
+        var n = cm.pcs.filter(function (p) { return pcSet[p]; }).length;
+        if (n >= 2 && n > bestN) { bestN = n; best = cm.name; }
+      });
+      return best;  // 'A'/'B'/'C'/'D' or null
+    });
+  }
+
+  // rate 강도 × overlap 활성화 상태를 합산하여 tonnetz에 push
+  // playing=true  → overlapSmooth 반영 (재생 중 cycle 점멸)
+  // playing=false → overlapSmooth 무시 (rate slider만)
+  function pushCombinedMults () {
+    var rd = getRateEntry(currentRate);
+    if (!rd) return;
+
+    var playing = (typeof Tone !== 'undefined' &&
+                   window._midiDuration > 0 &&
+                   Tone.Transport && Tone.Transport.state === 'started');
+
+    var result = {};
+    CYCLE_META.forEach(function (cm) {
+      var rMult = maxStrength[cm.name] > 0
+                  ? (rd.cycle_strengths[cm.name] || 0) / maxStrength[cm.name]
+                  : 0;
+      result[cm.name] = playing ? rMult * overlapSmooth[cm.name] : rMult;
+    });
+
+    if (window.tonnetz && window.tonnetz.setRateMultipliers) {
+      window.tonnetz.setRateMultipliers(result.A, result.B, result.C, result.D);
+    }
+
+    // strength label 업데이트 (재생 중 active cycle에 ● 표시)
+    var labelEl = document.getElementById('rateStrengthLabels');
+    if (labelEl) {
+      labelEl.innerHTML = CYCLE_META.map(function (cm) {
+        var pct = Math.round((result[cm.name] || 0) * 100);
+        var dot = playing && overlapSmooth[cm.name] > 0.5 ? ' ●' : '';
+        return '<span style="color:' + cm.stroke + '">' +
+               cm.name + ':' + pct + '%' + dot + '</span>';
+      }).join(' ');
+    }
   }
 
   function getRateEntry (rate) {
@@ -270,47 +331,42 @@
   // ── Rate application ──────────────────────────────────────────────
   function applyRate (rate) {
     currentRate = rate;
-    var rd = getRateEntry(rate);
-    if (!rd) return;
-
-    // Normalised strengths (0..1)
-    var mults = {};
-    ['A','B','C','D'].forEach(function (k) {
-      mults[k] = maxStrength[k] > 0 ? (rd.cycle_strengths[k] || 0) / maxStrength[k] : 0;
-    });
-
-    // Push to tonnetz
-    if (window.tonnetz && window.tonnetz.setRateMultipliers) {
-      window.tonnetz.setRateMultipliers(mults.A, mults.B, mults.C, mults.D);
-    }
-
-    // Redraw barcode chart
-    renderBarcodeChart(rd);
-
-    // Update strength bar labels on the HTML slider panel
-    var labelEl = document.getElementById('rateStrengthLabels');
-    if (labelEl) {
-      labelEl.innerHTML = CYCLE_META.map(function (cm) {
-        var pct = Math.round((mults[cm.name] || 0) * 100);
-        return '<span style="color:' + cm.stroke + '">' + cm.name + ':' + pct + '%</span>';
-      }).join(' ');
-    }
+    // rate 전용 barcode 차트 갱신
+    renderBarcodeChart(getRateEntry(rate));
+    // 재생 중이 아닐 때는 rate 강도만 반영; 재생 중이면 overlap도 포함
+    pushCombinedMults();
   }
 
   // ── Playback cursor update ────────────────────────────────────────
   function updatePlaybackCursor (frac) {
     overlapCursorFrac = Math.max(0, Math.min(1, frac));
+
+    // overlap matrix 현재 row에서 A/B/C/D 활성화 여부 계산
+    if (overlapData && colToCycle.length > 0) {
+      var mat = overlapData.matrix;
+      var T   = mat.length;
+      var t   = Math.round(overlapCursorFrac * (T - 1));
+      var row = (t >= 0 && t < T) ? mat[t] : [];
+
+      // 각 사이클이 active(1)인지 집계
+      var active = { A: false, B: false, C: false, D: false };
+      for (var c = 0; c < row.length; c++) {
+        if (row[c] && colToCycle[c]) active[colToCycle[c]] = true;
+      }
+
+      // 부드러운 전환 (lerp): 켜짐 → 1.0, 꺼짐 → OVERLAP_DIM
+      ['A','B','C','D'].forEach(function (k) {
+        var target = active[k] ? 1.0 : OVERLAP_DIM;
+        overlapSmooth[k] += OVERLAP_SMOOTH * (target - overlapSmooth[k]);
+      });
+
+      // Tonnetz cycle polygon 즉시 업데이트
+      pushCombinedMults();
+    }
+
+    // overlap heatmap 커서 갱신
     overlapCanvas = overlapCanvas || document.getElementById('overlapCanvas');
-    if (!overlapCanvas || !overlapData) return;
-
-    var W = overlapCanvas.width;
-    var H = overlapCanvas.height;
-    var T = overlapData.matrix.length;
-    var rowH = Math.max(1, Math.floor(H / T));
-    var ctx = overlapCanvas.getContext('2d');
-
-    // Only redraw the cursor region (full redraw once per frame is fine since it's fast)
-    renderOverlapHeatmap();
+    if (overlapCanvas && overlapData) renderOverlapHeatmap();
   }
 
   // ── Init ──────────────────────────────────────────────────────────
@@ -326,6 +382,11 @@
     }
 
     normalize();
+    buildColToCycle();   // overlap column → ABCD 매핑 사전 계산
+
+    // 콘솔 확인용: 매핑 결과 출력
+    console.log('colToCycle:', colToCycle,
+                '(ids:', (overlapData.cycle_ids || []).join(','), ')');
 
     // Defer first render so the DOM layout is fully stable
     setTimeout(function () {
