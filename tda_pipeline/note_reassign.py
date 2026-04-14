@@ -449,6 +449,40 @@ def _precompute_tonnetz_table() -> np.ndarray:
     return _build_tonnetz_distance_table()
 
 
+def _tonnetz_nearest_matching(orig_pitches: List[int],
+                               new_pool: List[int],
+                               tonnetz_table: np.ndarray) -> List[int]:
+    """
+    원곡 pitch에 대해 새 pool에서 Tonnetz 공간상 가장 가까운 pitch를
+    Hungarian 매칭으로 배정한다.
+
+    Args:
+        orig_pitches: 원곡의 pitch 리스트 (길이 N)
+        new_pool: 새로 선택된 pitch 리스트 (길이 N, 순서 무관)
+        tonnetz_table: 12×12 pitch-class 거리 테이블
+
+    Returns:
+        new_pool의 재배치 결과 (orig_pitches와 같은 위치에 매칭된 pitch).
+        반환 길이는 N이며, i번째 원소는 orig_pitches[i]에 배정된 pitch.
+    """
+    from scipy.optimize import linear_sum_assignment
+    N = len(orig_pitches)
+    if len(new_pool) != N:
+        raise ValueError(f"orig ({N}) and new_pool ({len(new_pool)}) length mismatch")
+
+    cost = np.zeros((N, N))
+    for i in range(N):
+        for j in range(N):
+            pc_d = int(tonnetz_table[orig_pitches[i] % 12, new_pool[j] % 12])
+            oct_d = abs(orig_pitches[i] // 12 - new_pool[j] // 12) * 0.5
+            cost[i, j] = pc_d + oct_d
+
+    row_ind, col_ind = linear_sum_assignment(cost)
+    # row_ind는 0..N-1 정렬됨
+    result = [int(new_pool[col_ind[i]]) for i in range(N)]
+    return result
+
+
 def _fast_note_distance_matrix(pitches: List[int], metric: str,
                                 tonnetz_table: Optional[np.ndarray] = None) -> np.ndarray:
     """note 리스트의 거리행렬을 빠르게 계산 (duration=1 가정)."""
@@ -522,6 +556,7 @@ def find_new_notes(notes_label: dict,
                    alpha_interval: float = 0.0,
                    alpha_wasserstein: float = 0.0,
                    n_wasserstein_topk: int = 20,
+                   matching_mode: str = 'ascending',
                    ) -> Dict:
     """
     원곡의 note-note / cycle-cycle 거리를 보존하는 새 note 집합을 찾는다.
@@ -643,10 +678,23 @@ def find_new_notes(notes_label: dict,
     best_cost = float('inf')
     best_result = None
 
+    # matching_mode 검증: tonnetz_nearest는 tonnetz_table 필요
+    if matching_mode == 'tonnetz_nearest' and tonnetz_table is None:
+        # note_metric이 tonnetz가 아니어도 매칭에는 Tonnetz 테이블 필요
+        tonnetz_table = _precompute_tonnetz_table()
+    elif matching_mode not in ('ascending', 'tonnetz_nearest'):
+        raise ValueError(f"Unknown matching_mode: {matching_mode}")
+
     for trial in range(n_candidates):
         chosen = rng.choice(all_pitches, size=N, replace=False)
-        chosen.sort()
-        new_pitches = [int(p) for p in chosen]
+        if matching_mode == 'ascending':
+            chosen.sort()
+            new_pitches = [int(p) for p in chosen]
+        else:  # tonnetz_nearest
+            new_pool = [int(p) for p in chosen]
+            new_pitches = _tonnetz_nearest_matching(
+                orig_pitches, new_pool, tonnetz_table
+            )
 
         # 새 note-note 거리행렬
         D_new = _fast_note_distance_matrix(new_pitches, note_metric, tonnetz_table)
@@ -753,6 +801,9 @@ def find_new_notes(notes_label: dict,
         'consonance_score': best_result['consonance_score'],
         'interval_error': best_result['interval_error'],
         'wasserstein_dist': best_result.get('wasserstein_dist', 0.0),
+        'matching_mode': matching_mode,
+        'alpha_note': alpha_note,
+        'alpha_cycle': alpha_cycle,
     }
     if use_scale:
         result['scale_type'] = scale_type
