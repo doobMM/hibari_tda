@@ -39,7 +39,7 @@ MIDI_FILE = "Ryuichi_Sakamoto_-_hibari.mid"
 TRACK_NAME = "hibari"
 METRIC = "tonnetz"
 SEED_BASE = 42
-PITCH_RANGE = (48, 84)   # wide (기존 최적 설정)
+PITCH_RANGE = (48, 84)   # wide
 N_CANDIDATES = 1000
 
 
@@ -73,28 +73,26 @@ def avg_metrics(results):
 
 
 def run_condition(data, cl, ov, original_notes, *,
-                  matching_mode, alpha_cycle, n_trials, seed_base=SEED_BASE):
+                  matching_mode, n_trials, seed_base=SEED_BASE):
     """
-    한 조건(matching_mode, alpha_cycle)에서 note 재분배 → Algorithm 1 × n_trials → 평균.
+    한 조건(matching_mode)에서 note 재분배 → Algorithm 1 × n_trials → 평균.
+    cycle_error는 제거됨. note_error만으로 최적 후보 선택.
     """
-    print(f"\n  --- condition: matching={matching_mode}, alpha_cycle={alpha_cycle}")
+    print(f"\n  --- condition: matching={matching_mode}")
 
     t0 = time.time()
     reassign = find_new_notes(
         data['notes_label'], cl,
         note_metric='tonnetz',
-        cycle_metric='tonnetz',
         pitch_range=PITCH_RANGE,
         n_candidates=N_CANDIDATES,
         alpha_note=0.5,
-        alpha_cycle=alpha_cycle,
         matching_mode=matching_mode,
         seed=seed_base,
     )
     find_elapsed = time.time() - t0
     print(f"    find_new_notes: {find_elapsed:.1f}s  "
-          f"note_err={reassign['note_dist_error']:.4f}  "
-          f"cycle_err={reassign['cycle_dist_error']:.4f}")
+          f"note_err={reassign['note_dist_error']:.4f}")
 
     trial_results = []
     for i in range(n_trials):
@@ -106,9 +104,7 @@ def run_condition(data, cl, ov, original_notes, *,
     avg = avg_metrics(trial_results)
     return {
         'matching_mode': matching_mode,
-        'alpha_cycle': alpha_cycle,
         'note_dist_error': round(reassign['note_dist_error'], 4),
-        'cycle_dist_error': round(reassign['cycle_dist_error'], 4),
         'find_elapsed_s': round(find_elapsed, 1),
         'n_trials_completed': len(trial_results),
         'avg_metrics': {k: round(v, 6) for k, v in avg.items()} if avg else None,
@@ -160,18 +156,16 @@ def main():
         'ablation_2x2': {},
     }
 
-    # 2×2 factorial
+    # matching_mode ablation (cycle_error 제거 후 단일 축)
     conditions = [
-        ('ascending_with_cycle',      'ascending',       0.5),
-        ('ascending_no_cycle',        'ascending',       0.0),
-        ('tonnetz_nearest_with_cycle','tonnetz_nearest', 0.5),
-        ('tonnetz_nearest_no_cycle',  'tonnetz_nearest', 0.0),
+        ('ascending',       'ascending'),
+        ('tonnetz_nearest', 'tonnetz_nearest'),
     ]
 
-    for label, mm, ac in conditions:
+    for label, mm in conditions:
         all_results['ablation_2x2'][label] = run_condition(
             data, cl, ov, original_notes,
-            matching_mode=mm, alpha_cycle=ac, n_trials=args.n_trials,
+            matching_mode=mm, n_trials=args.n_trials,
         )
 
     # DL stub
@@ -202,7 +196,7 @@ def main():
             m = r['avg_metrics']
             print(f"  {label:<30} pitch_js={m['pitch_js']:.4f}  "
                   f"dtw={m['dtw']:.4f}  "
-                  f"cycle_err={r['cycle_dist_error']:.4f}")
+                  f"note_err={r['note_dist_error']:.4f}")
 
 
 if __name__ == '__main__':

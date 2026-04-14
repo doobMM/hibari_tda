@@ -1,0 +1,53 @@
+{
+  "FC": {
+    "binary": {
+      "js_mean": 0.0035,
+      "js_std": 0.0,
+      "val_loss": 0.3072,
+      "train_time_s": 9.4,
+      "n_trials": 5
+    },
+    "continuous": {
+      "js_mean": 0.0004,
+      "js_std": 0.0,
+      "val_loss": 0.0255,
+      "train_time_s": 5.8,
+      "n_trials": 5
+    },
+    "improvement_pct": 88.6
+  },
+  "LSTM": {
+    "binary": {
+      "js_mean": 0.2799,
+      "js_std": 0.0,
+      "val_loss": 0.4108,
+      "train_time_s": 4.4,
+      "n_trials": 5
+    },
+    "continuous": {
+      "js_mean": 0.2897,
+      "js_std": 0.0,
+      "val_loss": 0.4109,
+      "train_time_s": 4.5,
+      "n_trials": 5
+    },
+    "improvement_pct": -3.5
+  },
+  "Transformer": {
+    "binary": {
+      "js_mean": 0.0034,
+      "js_std": 0.0,
+      "val_loss": 0.4646,
+      "train_time_s": 23.8,
+      "n_trials": 5
+    },
+    "continuous": {
+      "js_mean": 0.0007,
+      "js_std": 0.0,
+      "val_loss": 0.1205,
+      "train_time_s": 27.9,
+      "n_trials": 5
+    },
+    "improvement_pct": 79.4
+  }
+}

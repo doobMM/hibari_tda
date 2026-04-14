@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>TonnetzViz — hibari demo</title>
+
+    <meta name="description" content="TDA music analysis demo: hibari by Ryuichi Sakamoto visualized on the Tonnetz with H1 cycle overlays.">
+
+    <!-- Bootstrap & Font Awesome via CDN -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link href="css/style.css" rel="stylesheet">
+  </head>
+  <body>
+    <div class="container-fullwidth">
+      <nav class="navbar navbar-inverse navbar-static-top" id="navbar">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar-collapse" aria-expanded="false">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="#">TonnetzViz — hibari</a>
+        </div>
+        <div class="collapse navbar-collapse" id="navbar-collapse">
+          <ul class="nav navbar-nav" role="tablist">
+            <li>
+              <a href="#playback" data-toggle="tab" role="tab" aria-controls="playback">
+                <i class="fa fa-fw fa-music" aria-hidden="true"></i>
+                Playback<span class="caret"></span>
+              </a>
+            </li>
+            <li>
+              <a href="#controls" data-toggle="tab" role="tab" aria-controls="controls">
+                <i class="fa fa-fw fa-gamepad" aria-hidden="true"></i>
+                Controls<span class="caret"></span>
+              </a>
+            </li>
+            <li>
+              <a href="#appearance" data-toggle="tab" role="tab" aria-controls="appearance">
+                <i class="fa fa-fw fa-eye" aria-hidden="true"></i>
+                Appearance<span class="caret"></span>
+              </a>
+            </li>
+            <li>
+              <a href="#sound" data-toggle="tab" role="tab" aria-controls="sound">
+                <i class="fa fa-fw fa-volume-off" aria-hidden="true"></i>
+                Sound<span class="caret"></span>
+              </a>
+            </li>
+            <li>
+              <a href="#tda" data-toggle="tab" role="tab" aria-controls="tda">
+                <i class="fa fa-fw fa-bar-chart" aria-hidden="true"></i>
+                TDA<span class="caret"></span>
+              </a>
+            </li>
+            <li>
+              <a href="#about" data-toggle="tab" role="tab" aria-controls="about">
+                <i class="fa fa-fw fa-question-circle" aria-hidden="true"></i>
+                Help<span class="caret"></span>
+              </a>
+            </li>
+            <li class="hidden">
+              <a href="#" data-toggle="tab" role="tab" id="dummy-tab"></a>
+            </li>
+          </ul>
+        </div><!-- /.navbar-collapse -->
+      </nav>
+
+      <div class="tab-content collapse col-xs-12 col-sm-10 col-sm-offset-1 col-md-8 col-md-offset-2" id="tabs">
+
+        <!-- ── Playback panel (new) ─────────────────────────────────── -->
+        <div role="tabpanel" class="tab-pane" id="playback">
+          <div class="panel panel-default">
+            <div class="panel-heading"><strong>hibari</strong> MIDI Playback</div>
+            <div class="panel-body">
+              <p class="help-block">Load <code>hibari.mid</code> (or any MIDI file), then press Play.
+              Notes will light up on the Tonnetz in real time.</p>
+              <div class="form-group">
+                <label for="midiFileInput">MIDI file</label>
+                <input type="file" id="midiFileInput" accept=".mid,.midi" class="form-control">
+              </div>
+              <div class="btn-group" style="margin-top:6px">
+                <button id="playBtn" class="btn btn-success">
+                  <i class="fa fa-play"></i> Play
+                </button>
+                <button id="pauseBtn" class="btn btn-warning">
+                  <i class="fa fa-pause"></i> Pause
+                </button>
+                <button id="stopBtn" class="btn btn-danger">
+                  <i class="fa fa-stop"></i> Stop
+                </button>
+                <button id="recordBtn" class="btn btn-default">
+                  <i class="fa fa-circle" style="color:#c00"></i> REC
+                </button>
+              </div>
+              <div style="margin-top:10px">
+                <span id="playStatus" class="label label-default">Stopped</span>
+                &nbsp;
+                <span id="playTime" style="font-family:monospace">0:00 / 0:00</span>
+                &nbsp;
+                <span id="recStatus" class="label label-default" style="display:none">
+                  <i class="fa fa-circle" style="color:#c00"></i> REC
+                </span>
+              </div>
+              <p class="help-block" style="margin-top:8px;font-size:11px">
+                <i class="fa fa-info-circle"></i>
+                REC 버튼을 누르고 Play → 다시 REC로 중지하면 <code>.webm</code> 파일로 저장됩니다.
+                YouTube 업로드 시 <strong>Handbrake</strong>로 mp4 변환을 권장합니다.
+              </p>
+            </div>
+          </div>
+
+          <!-- H1 cycle legend -->
+          <div class="panel panel-default">
+            <div class="panel-heading">H₁ Cycle Overlays (hibari)</div>
+            <div class="panel-body">
+              <p class="help-block">Persistent H₁ cycles detected by TDA are always shown as
+              semi-transparent polygons on the Tonnetz.</p>
+              <table class="table table-condensed">
+                <thead><tr><th>Cycle</th><th>Notes</th><th>Interpretation</th><th>Color</th></tr></thead>
+                <tbody>
+                  <tr>
+                    <td>A</td><td>E – G – B</td><td>E minor triad</td>
+                    <td><span style="display:inline-block;width:20px;height:14px;background:rgba(100,220,100,0.7);border-radius:3px"></span></td>
+                  </tr>
+                  <tr>
+                    <td>B</td><td>C – E – G</td><td>C major triad</td>
+                    <td><span style="display:inline-block;width:20px;height:14px;background:rgba(100,150,255,0.7);border-radius:3px"></span></td>
+                  </tr>
+                  <tr>
+                    <td>C</td><td>D – F – A</td><td>D minor triad</td>
+                    <td><span style="display:inline-block;width:20px;height:14px;background:rgba(255,165,80,0.7);border-radius:3px"></span></td>
+                  </tr>
+                  <tr>
+                    <td>D</td><td>F – A – C – E</td><td>Fmaj7 / Am7 shell</td>
+                    <td><span style="display:inline-block;width:20px;height:14px;background:rgba(200,100,255,0.7);border-radius:3px"></span></td>
+                  </tr>
+                </tbody>
+              </table>
+              <div class="checkbox">
+                <label>
+                  <input type="checkbox" id="showCycles" checked> Show H₁ cycle overlays
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- ── end Playback panel ─────────────────────────────────── -->
+
+        <div role="tabpanel" class="tab-pane" id="controls">
+          <div class="panel panel-default">
+            <div class="panel-heading">MIDI</div>
+            <div class="panel-body">
+              <div class="form-group">
+                <div class="row">
+                  <div class="col-xs-6 col-sm-5 col-md-6 col-sm-offset-1">
+                    <label for="midi-port" class="control-label">MIDI port</label>
+                    <select class="form-control" name="midi-port" id="midi-port"></select>
+                  </div>
+
+                  <div class="col-xs-6 col-sm-5 col-md-4">
+                    <label for="midi-channel" class="control-label">MIDI channel</label>
+                    <select class="form-control" name="midi-channel" id="midi-channel">
+                      <option value="-1">All</option>
+                      <option value="-10">All except drums (10)</option>
+                      <option value="0">1</option>
+                      <option value="1">2</option>
+                      <option value="2">3</option>
+                      <option value="3">4</option>
+                      <option value="4">5</option>
+                      <option value="5">6</option>
+                      <option value="6">7</option>
+                      <option value="7">8</option>
+                      <option value="8">9</option>
+                      <option value="9">10</option>
+                      <option value="10">11</option>
+                      <option value="11">12</option>
+                      <option value="12">13</option>
+                      <option value="13">14</option>
+                      <option value="14">15</option>
+                      <option value="15">16</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+              <div class="form-group">
+                <div class="row">
+                  <div class="col-xs-12 col-sm-10 col-sm-offset-1">
+                    <div class="checkbox">
+                      <label><input name="enable-sustain" id="enable-sustain" type="checkbox" checked> Enable sustain pedal</label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="panel panel-default">
+            <div class="panel-heading">Computer keyboard</div>
+            <div class="panel-body">
+              <div class="form-group">
+                <div class="row">
+                  <div class="col-xs-12 col-sm-10 col-sm-offset-1">
+                    <div class="radio">
+                      <label><input type="radio" name="kbd-layout" value="piano" checked>Piano</label>
+                    </div>
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="col-xs-10 col-xs-offset-1 col-sm-8 col-sm-offset-2 col-md-6 col-md-offset-3">
+                    <div class="keyboard">
+                      <span class="white key"><span>A</span></span>
+                      <span class="black key"><span>W</span></span>
+                      <span class="white key"><span>S</span></span>
+                      <span class="black key"><span>E</span></span>
+                      <span class="white key"><span>D</span></span>
+                      <span class="white key"><span>F</span></span>
+                      <span class="black key"><span>T</span></span>
+                      <span class="white key"><span>G</span></span>
+                      <span class="black key"><span><sup>Y</sup>/<sub>Z</sub></span></span>
+                      <span class="white key"><span>H</span></span>
+                      <span class="black key"><span>U</span></span>
+                      <span class="white key"><span>J</span></span>
+                      <span class="white key"><span>K</span></span>
+                      <span class="black key"><span>O</span></span>
+                      <span class="white key"><span>L</span></span>
+                    </div>
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="col-xs-12 col-sm-10 col-sm-offset-1">
+                    <div class="radio">
+                      <label><input type="radio" name="kbd-layout" value="riemann">Tonnetz-like</label>
+                    </div>
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="col-xs-10 col-xs-offset-1 col-sm-8 col-sm-offset-2 col-md-8 col-md-offset-2">
+                    <img src="images/keyboard-layout.svg" width="100%">
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-xs-12 col-sm-6 col-md-4 col-sm-offset-3 col-md-offset-4">
+              <button type="button" id="panic" class="btn btn-danger btn-block" data-toggle="tooltip" title="All notes off">
+              <i class="fa fa-fw fa-lg fa-exclamation-circle" aria-hidden="true"></i>
+              Panic</button>
+            </div>
+          </div>
+        </div>
+
+        <div role="tabpanel" class="tab-pane" id="appearance">
+          <div class="panel panel-default">
+            <div class="panel-heading">Appearance</div>
+            <div class="panel-body">
+              <div class="form-horizontal">
+                <div class="form-group">
+                  <label for="color-scheme" class="control-label col-xs-5 col-sm-4 col-md-3">Colour scheme</label>
+                  <div class="col-xs-6 col-sm-4">
+                    <select class="form-control" name="color-scheme" id="color-scheme">
+                    </select>
+                    <div class="help-block">
+                        <div>
+                          <i class="fa fa-fw fa-pencil" aria-hidden="true"></i>
+                          <a href="#" id="clone-scheme">Clone<span> and edit</span></a><span>,
+                            <a href="#" id="edit-scheme">edit</a> or <a href="#" id="delete-scheme">delete</a></span> this scheme
+                        </div>
+                        <div>
+                          <i class="fa fa-fw fa-code-fork" aria-hidden="true"></i>
+                          <a href="#" id="scheme-github">Add</a> this scheme on GitHub
+                        </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label for="layout" class="control-label col-xs-5 col-sm-4 col-md-3">Layout</label>
+                  <div class="col-xs-6 col-sm-7 col-md-8">
+                    <label class="radio-inline"><input type="radio" name="layout" value="riemann" checked>Riemannian</label>
+                    <label class="radio-inline"><input type="radio" name="layout" value="sonome">Sonome</label>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="control-label col-xs-5 col-sm-4 col-md-3">Show/hide</label>
+                  <div class="col-xs-6 col-sm-7 col-md-8">
+                    <div class="checkbox">
+                      <label><input name="show-note-names" id="show-note-names" type="checkbox" checked> Tone names</label>
+                    </div>
+                    <div class="checkbox">
+                      <label><input name="show-triad-names" id="show-triad-names" type="checkbox"> Triad names</label>
+                    </div>
+                    <div class="checkbox">
+                      <label><input name="show-unit-cell" id="show-unit-cell" type="checkbox"> Unit cell</label>
+                    </div>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label for="ghost-duration" class="control-label col-xs-5 col-sm-4 col-md-3">'Ghost' tone duration</label>
+                  <div class="col-xs-6 col-sm-4 col-md-3">
+                    <div class="input-group">
+                      <input type="number" class="form-control" id="ghost-duration" min="0" step="50" value="500">
+                      <div class="input-group-addon">ms</div>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </div>
+          <div class="alert alert-info" role="alert"><strong>Tip:</strong> Use your mouse wheel to zoom in or out.</div>
+        </div>
+
+        <div role="tabpanel" class="tab-pane" id="sound">
+          <div class="panel panel-default">
+            <div class="panel-heading">Sound</div>
+            <div class="panel-body">
+              <div class="form-horizontal">
+                <div class="form-group">
+                  <label class="control-label col-xs-5 col-sm-4 col-md-3">Enable sound</label>
+                  <div class="col-xs-6 col-sm-7 col-md-8">
+                    <div class="checkbox">
+                      <label><input name="sound-on" id="sound-on" type="checkbox"> <i class="fa fa-lg fa-fw fa-volume-off"  style="text-align: left"></i></label>
+                    </div>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label for="gain" class="control-label col-xs-5 col-sm-4 col-md-3">Gain</label>
+                  <div class="col-xs-6 col-sm-4 col-md-3">
+                    <input type="number" class="form-control" id="gain" min="0" max="1" step="0.1" value="0.3">
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label for="synth-type" class="control-label col-xs-5 col-sm-4 col-md-3">Synth type</label>
+                  <div class="col-xs-6 col-sm-4 col-md-3">
+                    <select class="form-control" name="synth-type" id="synth-type">
+                      <option value="sine">Sine</option>
+                      <option value="square">Square</option>
+                      <option value="sawtooth">Sawtooth</option>
+                      <option value="triangle">Triangle</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label for="tuning" class="control-label col-xs-5 col-sm-4 col-md-3">Tuning</label>
+                  <div class="col-xs-6 col-sm-4 col-md-3">
+                    <select class="form-control" name="tuning" id="tuning">
+                      <option value="et">Equal Temperament</option>
+                      <option value="pyth">Pythagorean tuning</option>
+                      <option value="js">Just Intonation</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label for="base_tuning" class="control-label col-xs-5 col-sm-4 col-md-3">Base note of the tuning</label>
+                  <div class="col-xs-6 col-sm-4 col-md-3">
+                    <select class="form-control" name="base_tuning" id="base_tuning">
+                      <option value=36>C</option>
+                      <option value=37>C#</option>
+                      <option value=38>D</option>
+                      <option value=39>D#</option>
+                      <option value=40>E</option>
+                      <option value=41>F</option>
+                      <option value=42>F#</option>
+                      <option value=43>G</option>
+                      <option value=44>G#</option>
+                      <option value=45>A</option>
+                      <option value=46>A#</option>
+                      <option value=47>B</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── TDA Analysis panel ─────────────────────────────────── -->
+        <div role="tabpanel" class="tab-pane" id="tda">
+
+          <!-- Rate slider + barcode -->
+          <div class="panel panel-default">
+            <div class="panel-heading">
+              <strong>Rate Parameter</strong> — Vietoris–Rips filtration
+            </div>
+            <div class="panel-body">
+              <p class="help-block" style="margin-bottom:8px">
+                <code>timeflow = intra + rate × inter</code>. As <em>rate</em> increases,
+                inter-chord connections strengthen and H₁ cycles appear / vanish.
+                The Tonnetz overlays scale in opacity to reflect each cycle's total persistence.
+              </p>
+              <p class="help-block" style="margin-bottom:6px;font-size:11px;color:#888">
+                <strong>% 계산:</strong>
+                현재 rate에서 해당 사이클과 겹치는 H₁ 구간들의
+                <code>Σ(death − birth)</code>를 rate 0–1.5 전체 최댓값으로 나눈 비율.
+                값이 클수록 그 화음 구조가 이 rate에서 위상적으로 더 뚜렷하게 존재함.
+              </p>
+              <div class="form-group" style="margin-bottom:6px">
+                <label for="rateSlider" style="min-width:54px;display:inline-block">
+                  rate = <span id="rateValue">0.5</span>
+                </label>
+                <input type="range" id="rateSlider"
+                       min="0" max="1.5" step="0.1" value="0.5"
+                       style="width:60%;vertical-align:middle">
+              </div>
+              <div id="rateStrengthLabels"
+                   style="font-family:monospace;font-size:11px;margin-bottom:8px;letter-spacing:1px">
+              </div>
+              <!-- Barcode chart canvas -->
+              <canvas id="barcodeCanvas"
+                      style="width:100%;height:200px;background:#111;border-radius:4px;display:block">
+              </canvas>
+              <p class="help-block" style="margin-top:6px;font-size:10px">
+                Each bar = one H₁ cycle's [birth, death] interval in the Vietoris–Rips filtration.
+                Longer bars = more persistent topological features.
+                Colors match the four overlay cycles (A–D).
+              </p>
+            </div>
+          </div>
+
+          <!-- Overlap matrix heatmap -->
+          <div class="panel panel-default">
+            <div class="panel-heading">
+              <strong>Overlap Matrix</strong> — cycle activity over time
+            </div>
+            <div class="panel-body">
+              <p class="help-block" style="margin-bottom:4px">
+                Each column = one persistent H₁ cycle (top 10 by density).
+                Each row = one 8th-note time step. White line = current playback position.
+              </p>
+              <p class="help-block" style="margin-bottom:8px;font-size:11px">
+                <span class="label label-warning" style="font-weight:normal">hibari 전곡 고정 데이터</span>
+                &nbsp;재생 중인 MIDI 파일과 무관하게, hibari를 TDA 분석한 결과를 항상 표시합니다.
+                열 색깔은 상단 A/B/C/D 사이클 색과 동일한 기준 (pitch class 교집합 최대)으로 배정됩니다.
+              </p>
+              <div style="display:flex;gap:8px;align-items:flex-start">
+                <canvas id="overlapCanvas"
+                        style="width:240px;height:380px;background:#111;border-radius:4px;flex-shrink:0">
+                </canvas>
+                <div style="font-size:10px;color:#999;line-height:1.6">
+                  <p>Columns (left→right):<br>top 10 cycles ordered by activity density.</p>
+                  <p>Colors:<br>
+                    <span style="color:#64dc64">■</span> 1st &nbsp;
+                    <span style="color:#6496ff">■</span> 2nd<br>
+                    <span style="color:#ffa550">■</span> 3rd &nbsp;
+                    <span style="color:#c864ff">■</span> 4th<br>
+                    <span style="color:#50dcdc">■</span> 5th &nbsp;
+                    <span style="color:#ff5050">■</span> 6th
+                  </p>
+                  <p>Rows: 1088 time steps<br>(4× downsampled → 272 rows)</p>
+                  <p>White cursor = MIDI playback position.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- ── end TDA Analysis panel ─────────────────────────────── -->
+
+        <div role="tabpanel" class="tab-pane" id="about">
+          <div class="panel panel-default">
+            <div class="panel-heading">What is this demo?</div>
+            <div class="panel-body">
+              <p>This demo visualizes <em>hibari</em> by Ryuichi Sakamoto on the Tonnetz,
+              a diagram representing tonal space used in music theory and TDA research.</p>
+              <p>The semi-transparent polygons are <strong>H₁ cycles</strong> (1-dimensional
+              topological features) detected by Persistent Homology applied to the note
+              co-occurrence structure of hibari. They represent groups of notes that form
+              persistent loops in the Vietoris–Rips complex.</p>
+              <p>Based on <a href="https://github.com/cifkao/tonnetz-viz" target="_blank">cifkao/tonnetz-viz</a>
+              by Ondřej Cífka.</p>
+            </div>
+          </div>
+          <div class="panel panel-default">
+            <div class="panel-heading">How to use</div>
+            <div class="panel-body">
+              <ul>
+                <li>Open the <strong>Playback</strong> tab, select <code>hibari.mid</code>, and press Play.</li>
+                <li>Notes light up on the Tonnetz as the piece plays.</li>
+                <li>H₁ cycle polygons are always visible as colored overlays.</li>
+                <li>You can also use a hardware MIDI device (Controls tab) or your computer keyboard.</li>
+                <li>Scroll to zoom; drag to pan.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div><!-- /.container-fullwidth -->
+
+    <div class="container" id="messages-container">
+      <div class="row">
+        <div class="col-sm-10 col-sm-offset-1 col-md-8 col-md-offset-2" id="messages">
+        </div>
+      </div>
+    </div>
+
+    <div class="modal fade" id="scheme-editor" tabindex="-1" role="dialog" aria-labelledby="scheme-editor-label"
+      data-backdrop="static" data-keyboard="false">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title" id="scheme-editor-label">Edit colour scheme</h4>
+          </div>
+          <div class="modal-body">
+            <div id="scheme-editor-holder">
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+            <button type="button" class="btn btn-primary" id="save-scheme">Save</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="tonnetz">
+      <div id="note-labels" class="labels"></div>
+      <div id="triad-labels" class="labels"></div>
+      <canvas id="canvas"></canvas>
+    </div>
+
+    <!-- jQuery & Bootstrap via CDN -->
+    <script src="https://code.jquery.com/jquery-1.12.4.min.js"></script>
+    <script src="js/jquery.mousewheel.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+    <script src="js/jsoneditor.min.js"></script>
+
+    <!-- Tone.js & @tonejs/midi for MIDI file playback -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tonejs/midi@2.0.28/build/Midi.js"></script>
+
+    <!-- TonnetzViz modules -->
+    <script src="js/storage.js"></script>
+    <script src="js/audio.js"></script>
+    <script src="js/tonnetz.js"></script>
+    <script src="js/midi.js"></script>
+    <script src="js/keyboard.js"></script>
+
+    <script src="js/colorscheme.js"></script>
+    <script src="color-schemes/default.js"></script>
+    <script src="color-schemes/greenonblack.js"></script>
+    <script src="color-schemes/apollo.js"></script>
+
+    <script src="js/main.js"></script>
+    <script src="js/midifile.js"></script>
+    <!-- Inline TDA data (works with both http:// and file://) -->
+    <script src="js/hibari_barcode_data.js"></script>
+    <script src="js/hibari_overlap_data.js"></script>
+    <script src="js/hibaridata.js"></script>
+  </body>
+</html>

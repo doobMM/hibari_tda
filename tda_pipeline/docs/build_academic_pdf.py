@@ -22,13 +22,17 @@ from reportlab.lib.colors import HexColor, white
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 
-# 폰트 — 나눔고딕 사용
+# 폰트 — NanumSquare_ac (Regular+Bold 쌍이 시스템에 존재)
 from reportlab.pdfbase.pdfmetrics import registerFontFamily
 
-NANUM_REGULAR = 'C:/Users/82104/AppData/Local/Microsoft/Windows/Fonts/NanumGothic.ttf'
-# Bold는 docs/ 폴더에 다운로드된 Google Fonts 버전 사용
-_BOLD_LOCAL = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'NanumGothic-Bold.ttf')
-NANUM_BOLD = _BOLD_LOCAL if os.path.exists(_BOLD_LOCAL) else NANUM_REGULAR
+_FONTS_DIR = 'C:/Users/82104/AppData/Local/Microsoft/Windows/Fonts'
+NANUM_REGULAR = f'{_FONTS_DIR}/NanumSquare_acR.ttf'   # NanumSquare_ac Regular
+NANUM_BOLD    = f'{_FONTS_DIR}/NanumSquare.ttf'        # NanumSquare_ac Bold
+# 파일이 없으면 GothicRegular로 fallback (볼드 불가지만 크래시 방지)
+if not os.path.exists(NANUM_REGULAR):
+    NANUM_REGULAR = f'{_FONTS_DIR}/NanumGothic.ttf'
+if not os.path.exists(NANUM_BOLD):
+    NANUM_BOLD = NANUM_REGULAR
 
 pdfmetrics.registerFont(TTFont('Nanum', NANUM_REGULAR))
 pdfmetrics.registerFont(TTFont('NanumBd', NANUM_BOLD))
@@ -119,6 +123,8 @@ def clean_latex_for_mathtext(s):
     )
 
     replacements = [
+        # \displaystyle — mathtext 미지원, 블록수식은 이미 display 크기로 렌더링
+        (r'\\displaystyle', ''),
         # \text → \mathrm
         (r'\\text\{([^}]*)\}', r'\\mathrm{\1}'),
         # 부등호: mathtext가 \le, \ge 미지원 → unicode
@@ -426,24 +432,38 @@ def md_to_pdf(md_path, pdf_path):
                     i = j
                     continue
 
-        # 마크다운 이미지 ![alt](path)
-        img_match = re.match(r'!\[([^\]]*)\]\(([^)]+)\)', line.strip())
+        # 마크다운 이미지 ![alt](path) 또는 ![alt](path){width=N%}
+        img_match = re.match(r'!\[([^\]]*)\]\(([^)]+)\)(?:\{width=(\d+)%\})?', line.strip())
         if img_match:
             alt = img_match.group(1)
             img_path = img_match.group(2)
+            width_pct = int(img_match.group(3)) / 100.0 if img_match.group(3) else None
             # 상대 경로면 md 파일과 같은 폴더 기준
             if not os.path.isabs(img_path):
                 img_path = os.path.join(os.path.dirname(md_path), img_path)
             if os.path.exists(img_path):
                 from PIL import Image as PILImage
+                import tempfile
                 pil = PILImage.open(img_path)
+                # webp는 ReportLab이 직접 임베드 불가 → PNG로 변환
+                if img_path.lower().endswith('.webp'):
+                    tmp = tempfile.NamedTemporaryFile(suffix='.png', delete=False)
+                    tmp.close()
+                    pil.convert('RGBA').save(tmp.name, 'PNG')
+                    embed_path = tmp.name
+                else:
+                    embed_path = img_path
                 w_px, h_px = pil.size
-                # 페이지 폭의 80%를 최대로
-                max_w_pt = doc.width * 0.85
                 aspect = h_px / w_px
-                w_pt = min(max_w_pt, w_px * 72 / 200)
+                if width_pct is not None:
+                    # 명시적 비율 지정
+                    w_pt = doc.width * width_pct
+                else:
+                    # 기본: 픽셀 크기 기반, 최대 85%
+                    max_w_pt = doc.width * 0.85
+                    w_pt = min(max_w_pt, w_px * 72 / 200)
                 h_pt = w_pt * aspect
-                img_obj = Image(img_path, width=w_pt, height=h_pt)
+                img_obj = Image(embed_path, width=w_pt, height=h_pt)
                 img_obj.hAlign = 'CENTER'
                 story.append(Spacer(1, 3*mm))
                 story.append(img_obj)

@@ -72,18 +72,18 @@
       "note": "diatonic, entropy 0.974"
     },
     "solari": {
-      "frequency": 0.0643,
-      "tonnetz": 0.0816,
-      "voice_leading": 0.0631,
-      "best": "voice_leading",
-      "note": "chromatic, strong melody"
+      "frequency": 0.0634,
+      "tonnetz": 0.0632,
+      "voice_leading": 0.0775,
+      "best": "tonnetz",
+      "note": "chromatic, freq/tonnetz tied (from solari_results.json)"
     },
     "aqua": {
-      "frequency": 0.1249,
-      "tonnetz": 0.092,
+      "frequency": 0.1681,
+      "tonnetz": 0.1008,
       "voice_leading": null,
       "best": "tonnetz",
-      "note": "chromatic, Tonnetz 우위"
+      "note": "chromatic, Tonnetz 우위 (from aqua_results.json)"
     }
   },
   "interpretation": {

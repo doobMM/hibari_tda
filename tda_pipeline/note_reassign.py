@@ -435,12 +435,12 @@ def _matrix_distance_up_to_perm(A: np.ndarray, B: np.ndarray,
                 cost[i, j] = np.sum((A_profiles[i] - B_profiles[j]) ** 2)
         row_ind, col_ind = linear_sum_assignment(cost)
 
-        # 매칭된 프로파일 간 오차
-        total_err = sum(cost[r, c] for r, c in zip(row_ind, col_ind))
-        perm = [0] * N
-        for r, c in zip(row_ind, col_ind):
-            perm[c] = r
-        return float(np.sqrt(total_err)), perm
+        # perm[r] = col_ind[r]: A의 위치 r에 B의 col_ind[r]번 행/열을 대응
+        perm = list(col_ind)
+        # 실제 Frobenius 계산 (프로파일 기반 근사값 대신)
+        B_perm = B_n[np.ix_(perm, perm)]
+        actual_frob = float(np.sqrt(np.sum((A_n - B_perm) ** 2)))
+        return actual_frob, perm
 
 
 def _precompute_tonnetz_table() -> np.ndarray:
@@ -543,11 +543,9 @@ def _fast_cycle_distance_matrix(cycle_pitches: List[List[int]], metric: str,
 def find_new_notes(notes_label: dict,
                    cycle_labeled: dict,
                    note_metric: str = 'voice_leading',
-                   cycle_metric: str = 'voice_leading',
                    pitch_range: Tuple[int, int] = (48, 84),
                    n_candidates: int = 500,
                    alpha_note: float = 0.5,
-                   alpha_cycle: float = 0.5,
                    seed: int = 42,
                    harmony_mode: Optional[str] = None,
                    scale_type: str = 'major',
@@ -559,21 +557,25 @@ def find_new_notes(notes_label: dict,
                    matching_mode: str = 'ascending',
                    ) -> Dict:
     """
-    원곡의 note-note / cycle-cycle 거리를 보존하는 새 note 집합을 찾는다.
+    원곡의 note-note 거리 구조를 보존하는 새 note 집합을 찾는다.
 
     전략:
-      1단계: 랜덤 후보 생성 → 거리행렬 비교 → 상위 후보 수집
+      1단계: 랜덤 후보 생성 → D_orig와의 Frobenius 거리 최소화 (up to permutation)
       2단계 (alpha_wasserstein > 0): 상위 후보에 대해 PH → Wasserstein distance 계산
+
+    note permutation 탐색:
+      각 후보 note 집합에 대해 D_new의 행/열 순서를 재배치하여
+      ||D_new_perm - D_orig||_F 를 최소화하는 permutation을 찾고,
+      그 순서로 new_pitches를 재정렬한다.
+      N ≤ 8이면 전수 탐색, N > 8이면 Hungarian 근사 (정렬 프로파일 기반).
 
     Args:
         notes_label: 원곡의 {(pitch, dur): label}
-        cycle_labeled: 원곡의 {label: (note_indices...)}
+        cycle_labeled: 원곡의 {label: (note_indices...)} — harmony_mode 시 사용
         note_metric: note-note 거리 메트릭
-        cycle_metric: cycle-cycle 거리 메트릭
         pitch_range: 후보 pitch 범위 (MIDI number)
         n_candidates: 탐색할 랜덤 후보 수
         alpha_note: note 거리 보존 가중치
-        alpha_cycle: cycle 거리 보존 가중치
         seed: 랜덤 시드
         harmony_mode: 화성 제약 모드
             None      — 기존 방식 (chromatic)
@@ -603,7 +605,7 @@ def find_new_notes(notes_label: dict,
         alpha_interval = 0.3
 
     # Tonnetz 테이블 미리 구축
-    tonnetz_table = _precompute_tonnetz_table() if note_metric == 'tonnetz' or cycle_metric == 'tonnetz' else None
+    tonnetz_table = _precompute_tonnetz_table() if (note_metric == 'tonnetz' or matching_mode == 'tonnetz_nearest') else None
 
     # 원곡 정보 추출
     sorted_items = sorted(notes_label.items(), key=lambda x: x[1])
@@ -612,26 +614,19 @@ def find_new_notes(notes_label: dict,
     N = len(orig_notes)
     dur = orig_notes[0][1]
 
-    # 원곡 거리행렬 (빠른 버전)
+    # 원곡 note-note 거리행렬
     D_orig = _fast_note_distance_matrix(orig_pitches, note_metric, tonnetz_table)
-    D_orig_n = _normalize_matrix(D_orig)
 
-    # cycle별 note 구성
+    # harmony_mode 사용 시에만 cycle 구성 필요
     label_to_idx = {item[1]: i for i, item in enumerate(sorted_items)}
-    cycle_compositions = []
-    for cycle_notes in cycle_labeled.values():
-        idxs = [label_to_idx[n] for n in cycle_notes if n in label_to_idx]
-        cycle_compositions.append(idxs)
-    K = len(cycle_compositions)
-
-    # 원곡 cycle pitches → cycle 거리행렬
-    orig_cycle_pitches = [[orig_pitches[i] for i in idxs] for idxs in cycle_compositions]
-    C_orig = _fast_cycle_distance_matrix(orig_cycle_pitches, cycle_metric, tonnetz_table)
-
-    # interval structure 보존용: 원곡 cycle interval vector
-    orig_interval_vecs = None
-    if use_interval:
-        orig_interval_vecs = orig_cycle_pitches  # 비교용으로 보존
+    cycle_compositions = None
+    orig_cycle_pitches = None
+    if use_consonance or use_interval:
+        cycle_compositions = []
+        for cycle_notes in cycle_labeled.values():
+            idxs = [label_to_idx[n] for n in cycle_notes if n in label_to_idx]
+            cycle_compositions.append(idxs)
+        orig_cycle_pitches = [[orig_pitches[i] for i in idxs] for idxs in cycle_compositions]
 
     # ── 후보 pitch pool 구성 ──
     if use_scale:
@@ -696,10 +691,23 @@ def find_new_notes(notes_label: dict,
                 orig_pitches, new_pool, tonnetz_table
             )
 
-        # 새 note-note 거리행렬
+        # 새 note-note 거리행렬 + permutation 탐색
         D_new = _fast_note_distance_matrix(new_pitches, note_metric, tonnetz_table)
-        D_new_n = _normalize_matrix(D_new)
-        note_error = float(np.sqrt(np.sum((D_orig_n - D_new_n) ** 2)))
+        if matching_mode == 'ascending':
+            # ascending: 사전 매칭 없으므로 Frobenius 최소화 permutation 탐색
+            # _matrix_distance_up_to_perm이 D_orig와 Frobenius 거리를 최소화하는
+            # D_new의 행/열 순서를 찾아 perm을 반환한다.
+            note_error, note_perm = _matrix_distance_up_to_perm(D_orig, D_new)
+            if note_perm is not None:
+                new_pitches = [new_pitches[note_perm[i]] for i in range(N)]
+                D_new = D_new[np.ix_(note_perm, note_perm)]
+        else:
+            # tonnetz_nearest: _tonnetz_nearest_matching이 이미 1:1 최적 매칭 완료.
+            # 추가 permutation 탐색은 해당 매칭을 파괴하므로 skip.
+            # note_error만 identity 기준으로 계산.
+            note_error = float(np.sqrt(np.sum(
+                (_normalize_matrix(D_orig) - _normalize_matrix(D_new)) ** 2
+            )))
 
         # early rejection
         cutoff = best_cost if not use_wasserstein else (
@@ -708,18 +716,14 @@ def find_new_notes(notes_label: dict,
         if alpha_note * note_error >= cutoff:
             continue
 
-        # 새 cycle 거리행렬
-        new_cycle_pitches = [[new_pitches[i] for i in idxs] for idxs in cycle_compositions]
-        C_new = _fast_cycle_distance_matrix(new_cycle_pitches, cycle_metric, tonnetz_table)
-
-        # cycle 거리 보존 (up to permutation)
-        cycle_error, cycle_perm = _matrix_distance_up_to_perm(C_orig, C_new)
-
-        total = alpha_note * note_error + alpha_cycle * cycle_error
+        total = alpha_note * note_error
 
         # ── 화성 제약 추가 비용 ──
         consonance_score = 0.0
         interval_error = 0.0
+
+        if use_consonance or use_interval:
+            new_cycle_pitches = [[new_pitches[i] for i in idxs] for idxs in cycle_compositions]
 
         if use_consonance:
             consonance_score = _total_dissonance(new_pitches, cycle_compositions)
@@ -734,13 +738,10 @@ def find_new_notes(notes_label: dict,
         candidate = {
             'new_notes': [(p, dur) for p in new_pitches],
             'note_error': note_error,
-            'cycle_error': cycle_error,
             'consonance_score': consonance_score,
             'interval_error': interval_error,
             'total_cost': total,
-            'cycle_perm': cycle_perm,
             'D_new': D_new,
-            'C_new': C_new,
         }
 
         if use_wasserstein:
@@ -790,20 +791,15 @@ def find_new_notes(notes_label: dict,
         'orig_notes': orig_notes,
         'new_notes': new_notes,
         'note_dist_error': best_result['note_error'],
-        'cycle_dist_error': best_result['cycle_error'],
         'total_cost': best_result['total_cost'],
-        'cycle_permutation': best_result['cycle_perm'],
         'D_orig': D_orig,
         'D_new': best_result['D_new'],
-        'C_orig': C_orig,
-        'C_new': best_result['C_new'],
         'harmony_mode': harmony_mode,
         'consonance_score': best_result['consonance_score'],
         'interval_error': best_result['interval_error'],
         'wasserstein_dist': best_result.get('wasserstein_dist', 0.0),
         'matching_mode': matching_mode,
         'alpha_note': alpha_note,
-        'alpha_cycle': alpha_cycle,
     }
     if use_scale:
         result['scale_type'] = scale_type
