@@ -110,6 +110,25 @@
       window.tonnetz.setRateMultipliers(result.A, result.B, result.C, result.D);
     }
 
+    // ── TDA 탭 Live Topology State 블록 업데이트 ──────────────────
+    CYCLE_META.forEach(function (cm) {
+      var v       = result[cm.name] || 0;
+      var glowEl  = document.getElementById('cycleGlow_' + cm.name);
+      var pctEl   = document.getElementById('cyclePct_'  + cm.name);
+      if (glowEl) glowEl.style.background = cm.fill + (0.06 + v * 0.84) + ')';
+      if (pctEl)  pctEl.textContent = Math.round(v * 100) + '%';
+    });
+    var statusEl = document.getElementById('liveTopoStatus');
+    if (statusEl) {
+      if (playing) {
+        statusEl.textContent = '● 재생 중';
+        statusEl.style.color = '#6f6';
+      } else {
+        statusEl.textContent = '(MIDI 재생 시 업데이트)';
+        statusEl.style.color = '#888';
+      }
+    }
+
     // strength label 업데이트 (재생 중 active cycle에 ● 표시)
     var labelEl = document.getElementById('rateStrengthLabels');
     if (labelEl) {
