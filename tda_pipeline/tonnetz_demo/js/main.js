@@ -186,6 +186,22 @@ $(function(){
     themeManager.applyCanvas(localStorage.getItem('tz-theme') || 'default');
   }
 
+  // ── Mobile: auto-collapse both overlays so the canvas is unobstructed ──
+  if (window.innerWidth < 600) {
+    var txOv  = document.getElementById('transform-overlay');
+    var intOv = document.getElementById('interval-overlay');
+    var txColBtn  = document.getElementById('txCollapseBtn');
+    var intColBtn = document.getElementById('intCollapseBtn');
+    if (txOv  && !txOv.classList.contains('tz-collapsed'))  {
+      txOv.classList.add('tz-collapsed');
+      if (txColBtn)  txColBtn.textContent  = '+';
+    }
+    if (intOv && !intOv.classList.contains('tz-collapsed')) {
+      intOv.classList.add('tz-collapsed');
+      if (intColBtn) intColBtn.textContent = '+';
+    }
+  }
+
   $('[data-toggle="tooltip"]').tooltip();
 
   // Open links with data-popup="true" in a new window.

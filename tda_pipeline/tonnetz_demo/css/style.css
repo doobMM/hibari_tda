@@ -646,3 +646,81 @@ body.lang-ko .lang-tab[data-lang="ko"] {
   box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.30);
   transform: scale(1.15);
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   Mobile overlay layout  (≤ 599 px)
+   Both overlays start collapsed on mobile (set via JS in main.js).
+   When expanded they take the full screen width as a sheet.
+   ═══════════════════════════════════════════════════════════════ */
+@media (max-width: 599px) {
+
+  /* ── Transform overlay: bottom sheet when expanded ── */
+  #transform-overlay:not(.tz-collapsed) {
+    left: 0;
+    right: 0;
+    bottom: 0;
+    min-width: 0;
+    border-radius: 14px 14px 0 0;
+    border-left: none;
+    border-right: none;
+    border-bottom: none;
+    padding: 4px 16px calc(16px + env(safe-area-inset-bottom, 0px));
+  }
+
+  /* Drag-handle hint on the expanded sheet */
+  #transform-overlay:not(.tz-collapsed)::before {
+    content: '';
+    display: block;
+    width: 36px;
+    height: 4px;
+    border-radius: 2px;
+    background: rgba(255, 255, 255, 0.16);
+    margin: 6px auto 8px;
+  }
+
+  /* ── Transform overlay: float pill when collapsed ── */
+  #transform-overlay.tz-collapsed {
+    bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+    /* left: 14px inherited from base */
+    min-width: 0;
+  }
+
+  /* ── Interval overlay: full-width drop-down when expanded ── */
+  #interval-overlay:not(.tz-collapsed) {
+    left: 0;
+    right: 0;
+    width: 100%;
+    border-radius: 0 0 10px 10px;
+    border-left: none;
+    border-right: none;
+    max-height: 42vh;
+  }
+
+  /* ── Interval overlay: compact tab when collapsed ── */
+  #interval-overlay.tz-collapsed {
+    width: 110px;
+  }
+
+  /* Larger touch targets for all overlay buttons */
+  .tx-btn {
+    min-height: 36px;
+    min-width: 34px;
+    padding: 6px 9px;
+    font-size: 12px;
+  }
+
+  .tx-axis {
+    min-width: 26px;
+    padding: 6px 5px;
+    font-size: 10px;
+  }
+
+  #interval-overlay .int-btn {
+    padding: 10px 14px 9px;
+  }
+
+  /* Wrap axis buttons in 2 rows comfortably */
+  #txAxisRow {
+    gap: 4px;
+  }
+}
