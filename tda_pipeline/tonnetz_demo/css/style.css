@@ -36,44 +36,58 @@ a:link.external:after {
 
 /* ── Design tokens (Music Streaming palette — UI Pro Max) ───────── */
 :root {
-  --tz-bg-deep:         #0F0F23;
-  --tz-bg-panel:        rgba(15, 15, 40, 0.93);
-  --tz-bg-heading:      rgba(30, 27, 75, 0.96);
-  --tz-border:          rgba(67, 56, 202, 0.28);
-  --tz-accent:          #4338CA;
-  --tz-cta:             #22C55E;
-  --tz-text:            #d8d8ee;
-  --tz-text-muted:      #7878aa;
-  --tz-progress-start:  #4338CA;
-  --tz-progress-end:    #22C55E;
+  --tz-bg-deep:           #0F0F23;
+  --tz-bg-panel:          rgba(15, 15, 40, 0.93);
+  --tz-bg-heading:        rgba(30, 27, 75, 0.96);
+  --tz-border:            rgba(67, 56, 202, 0.28);
+  --tz-accent:            #4338CA;
+  --tz-cta:               #22C55E;
+  --tz-text:              #d8d8ee;
+  --tz-text-muted:        #7878aa;
+  --tz-progress-start:    #4338CA;
+  --tz-progress-end:      #22C55E;
+  /* overlay surfaces (always-visible panels) */
+  --tz-overlay-bg:        rgba(8, 8, 20, 0.82);
+  --tz-overlay-border:    rgba(67, 56, 202, 0.22);
+  /* button active/selected state */
+  --tz-btn-active-bg:     rgba(67, 56, 202, 0.38);
+  --tz-btn-active-border: rgba(67, 56, 202, 0.70);
 }
 
 /* ── Theme: Zinc / Pink ─────────────────────────────────────────── */
 body.theme-zinc {
-  --tz-bg-deep:         #18181B;
-  --tz-bg-panel:        rgba(24, 24, 27, 0.93);
-  --tz-bg-heading:      rgba(39, 39, 42, 0.98);
-  --tz-border:          rgba(236, 72, 153, 0.22);
-  --tz-accent:          #EC4899;
-  --tz-cta:             #EC4899;
-  --tz-text:            #d4d4d8;
-  --tz-text-muted:      #71717a;
-  --tz-progress-start:  #7C3AED;
-  --tz-progress-end:    #EC4899;
+  --tz-bg-deep:           #18181B;
+  --tz-bg-panel:          rgba(24, 24, 27, 0.93);
+  --tz-bg-heading:        rgba(39, 39, 42, 0.98);
+  --tz-border:            rgba(236, 72, 153, 0.22);
+  --tz-accent:            #EC4899;
+  --tz-cta:               #EC4899;
+  --tz-text:              #d4d4d8;
+  --tz-text-muted:        #71717a;
+  --tz-progress-start:    #7C3AED;
+  --tz-progress-end:      #EC4899;
+  --tz-overlay-bg:        rgba(12, 10, 12, 0.85);
+  --tz-overlay-border:    rgba(236, 72, 153, 0.18);
+  --tz-btn-active-bg:     rgba(236, 72, 153, 0.35);
+  --tz-btn-active-border: rgba(236, 72, 153, 0.70);
 }
 
 /* ── Theme: Carbon / Gold ───────────────────────────────────────── */
 body.theme-carbon {
-  --tz-bg-deep:         #171717;
-  --tz-bg-panel:        rgba(23, 23, 23, 0.93);
-  --tz-bg-heading:      rgba(30, 30, 30, 0.99);
-  --tz-border:          rgba(212, 175, 55, 0.20);
-  --tz-accent:          #D4AF37;
-  --tz-cta:             #D4AF37;
-  --tz-text:            #d4d4d4;
-  --tz-text-muted:      #737373;
-  --tz-progress-start:  #92400E;
-  --tz-progress-end:    #D4AF37;
+  --tz-bg-deep:           #171717;
+  --tz-bg-panel:          rgba(23, 23, 23, 0.93);
+  --tz-bg-heading:        rgba(30, 30, 30, 0.99);
+  --tz-border:            rgba(212, 175, 55, 0.20);
+  --tz-accent:            #D4AF37;
+  --tz-cta:               #D4AF37;
+  --tz-text:              #d4d4d4;
+  --tz-text-muted:        #737373;
+  --tz-progress-start:    #92400E;
+  --tz-progress-end:      #D4AF37;
+  --tz-overlay-bg:        rgba(5, 5, 5, 0.87);
+  --tz-overlay-border:    rgba(212, 175, 55, 0.16);
+  --tz-btn-active-bg:     rgba(212, 175, 55, 0.28);
+  --tz-btn-active-border: rgba(212, 175, 55, 0.70);
 }
 
 /* ── Dark glassmorphism tab container ───────────────────────────── */
@@ -279,13 +293,14 @@ body.theme-carbon {
   bottom: 20px;
   left: 14px;
   z-index: 500;
-  background: rgba(0, 0, 0, 0.68);
-  border: 1px solid rgba(255, 255, 255, 0.11);
+  background: var(--tz-overlay-bg);
+  border: 1px solid var(--tz-overlay-border);
   border-radius: 8px;
   padding: 8px 11px 10px;
   user-select: none;
   -webkit-user-select: none;
   min-width: 250px;
+  transition: background 0.25s, border-color 0.25s;
 }
 
 .tx-group {
@@ -351,9 +366,9 @@ body.theme-carbon {
   color: #fff;
 }
 .tx-btn.active, .tx-btn.btn-primary {
-  background: rgba(90, 150, 255, 0.40);
+  background: var(--tz-btn-active-bg);
   color: #fff;
-  border-color: rgba(90, 150, 255, 0.65);
+  border-color: var(--tz-btn-active-border);
 }
 .tx-btn.btn-info {
   background: rgba(60, 180, 200, 0.35);
@@ -403,12 +418,13 @@ body.theme-carbon {
   width: 228px;
   max-height: calc(100vh - 50px);
   overflow-y: auto;
-  background: rgba(0, 0, 0, 0.72);
-  border: 1px solid rgba(255, 255, 255, 0.11);
+  background: var(--tz-overlay-bg);
+  border: 1px solid var(--tz-overlay-border);
   border-right: none;
   border-radius: 8px 0 0 8px;
   user-select: none;
   -webkit-user-select: none;
+  transition: background 0.25s, border-color 0.25s;
 }
 
 #interval-overlay .int-title {
@@ -447,9 +463,9 @@ body.theme-carbon {
 }
 
 #interval-overlay .int-btn.active {
-  background: rgba(80, 140, 255, 0.22);
+  background: var(--tz-btn-active-bg);
   color: #fff;
-  border-left: 3px solid rgba(90, 150, 255, 0.80);
+  border-left: 3px solid var(--tz-btn-active-border);
   padding-left: 7px;
 }
 
@@ -497,12 +513,19 @@ body.theme-carbon {
 body.lang-ko .ko { display: revert; }
 body.lang-ko .en { display: none; }
 
-/* Two-tab segmented language switcher */
-#langTabs {
+/* ── Top-right controls container (theme picker + lang tabs) ─────── */
+#top-right-controls {
   position: fixed;
   top: 7px;
   right: 12px;
-  z-index: 1010;        /* above navbar (1000), below modals */
+  z-index: 1010;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Two-tab segmented language switcher */
+#langTabs {
   display: flex;
   border: 1px solid rgba(255, 255, 255, 0.28);
   border-radius: 4px;
@@ -530,7 +553,7 @@ body.lang-ko .en { display: none; }
 }
 /* Active state: driven by body.lang-ko */
 .lang-tab[data-lang="en"] {
-  background: rgba(90, 150, 255, 0.38);
+  background: var(--tz-btn-active-bg);
   color: #fff;
 }
 body.lang-ko .lang-tab[data-lang="en"] {
@@ -538,7 +561,7 @@ body.lang-ko .lang-tab[data-lang="en"] {
   color: #999;
 }
 body.lang-ko .lang-tab[data-lang="ko"] {
-  background: rgba(90, 150, 255, 0.38);
+  background: var(--tz-btn-active-bg);
   color: #fff;
 }
 
@@ -597,12 +620,8 @@ body.lang-ko .lang-tab[data-lang="ko"] {
 #interval-overlay.tz-collapsed .int-btn { display: none; }
 #interval-overlay.tz-collapsed .int-title { border-bottom: none; }
 
-/* ── Theme swatch picker (fixed, beside lang tabs) ──────────────── */
+/* ── Theme swatch picker (inside #top-right-controls) ───────────── */
 #themePicker {
-  position: fixed;
-  top: 7px;
-  right: 82px;           /* sit left of #langTabs (~70px wide) */
-  z-index: 1010;
   display: flex;
   align-items: center;
   gap: 5px;
