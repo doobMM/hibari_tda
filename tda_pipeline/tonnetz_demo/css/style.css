@@ -163,53 +163,96 @@ a:link.external:after {
 /* ── Interval preset overlay (always visible on Tonnetz canvas) ── */
 #interval-overlay {
   position: fixed;
-  bottom: 20px;
-  right: 16px;
+  top: 42px;          /* sit just below the navbar */
+  right: 0;
   z-index: 500;
-  background: rgba(0, 0, 0, 0.60);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 8px;
-  padding: 7px 9px 8px;
+  width: 228px;
+  max-height: calc(100vh - 50px);
+  overflow-y: auto;
+  background: rgba(0, 0, 0, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  border-right: none;
+  border-radius: 8px 0 0 8px;
   user-select: none;
   -webkit-user-select: none;
 }
 
 #interval-overlay .int-title {
-  color: #999;
+  color: #777;
   font-size: 9px;
   text-align: center;
-  letter-spacing: 0.6px;
+  letter-spacing: 0.7px;
   text-transform: uppercase;
-  margin-bottom: 5px;
-}
-
-#interval-overlay .int-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 3px;
+  padding: 6px 10px 5px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
 }
 
 #interval-overlay .int-btn {
-  background: rgba(255, 255, 255, 0.08);
-  color: #bbb;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  border-radius: 4px;
-  font-size: 10px;
-  padding: 3px 5px;
+  display: flex;
+  align-items: baseline;
+  gap: 0;
+  width: 100%;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  padding: 5px 10px 4px;
   cursor: pointer;
-  white-space: nowrap;
-  transition: background 0.12s, color 0.12s;
-  font-family: monospace;
-  line-height: 1.4;
+  text-align: left;
+  transition: background 0.12s;
+  color: #bbb;
+  line-height: 1.35;
+}
+
+#interval-overlay .int-btn:last-child {
+  border-bottom: none;
 }
 
 #interval-overlay .int-btn:hover {
-  background: rgba(255, 255, 255, 0.20);
+  background: rgba(255, 255, 255, 0.09);
   color: #fff;
 }
 
 #interval-overlay .int-btn.active {
-  background: rgba(90, 150, 255, 0.38);
+  background: rgba(80, 140, 255, 0.22);
   color: #fff;
-  border-color: rgba(90, 150, 255, 0.65);
+  border-left: 3px solid rgba(90, 150, 255, 0.80);
+  padding-left: 7px;
+}
+
+#interval-overlay .int-nums {
+  font-family: monospace;
+  font-size: 10px;
+  color: #888;
+  min-width: 56px;
+  flex-shrink: 0;
+  margin-right: 5px;
+}
+
+#interval-overlay .int-btn.active .int-nums {
+  color: #99beff;
+}
+
+#interval-overlay .int-name {
+  font-size: 10px;
+  font-weight: 600;
+  min-width: 82px;
+  flex-shrink: 0;
+  margin-right: 4px;
+}
+
+#interval-overlay .int-default {
+  font-weight: normal;
+  font-size: 9px;
+  color: #f0c040;
+  margin-left: 2px;
+}
+
+#interval-overlay .int-ivals {
+  font-size: 9px;
+  color: #666;
+  white-space: nowrap;
+}
+
+#interval-overlay .int-btn.active .int-ivals {
+  color: #99a;
 }

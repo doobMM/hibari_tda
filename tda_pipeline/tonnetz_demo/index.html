@@ -526,21 +526,67 @@
 
     <!-- ── Interval overlay (always visible on canvas) ───────────── -->
     <div id="interval-overlay">
-      <div class="int-title">Interval (a · b · c)</div>
-      <div class="int-grid">
-        <button class="int-btn active" data-ab="3,4" title="Standard — m3 / M3 / P5">3·4·7</button>
-        <button class="int-btn" data-ab="4,3" title="Inverted — M3 / m3 / P5">4·3·7</button>
-        <button class="int-btn" data-ab="2,5" title="Diatonic — M2 / P4 / P5">2·5·7</button>
-        <button class="int-btn" data-ab="5,2" title="Diatonic II — P4 / M2 / P5">5·2·7</button>
-        <button class="int-btn" data-ab="2,3" title="Pentatonic — M2 / m3 / P4">2·3·5</button>
-        <button class="int-btn" data-ab="3,2" title="Pentatonic II — m3 / M2 / P4">3·2·5</button>
-        <button class="int-btn" data-ab="1,2" title="Chromatic — m2 / M2 / m3">1·2·3</button>
-        <button class="int-btn" data-ab="2,2" title="Whole Tone — M2 / M2 / M3">2·2·4</button>
-        <button class="int-btn" data-ab="3,3" title="Diminished — m3 / m3 / TT">3·3·6</button>
-        <button class="int-btn" data-ab="4,4" title="Augmented — M3 / M3 / m6">4·4·8</button>
-        <button class="int-btn" data-ab="1,6" title="Tritone — m2 / TT / P5">1·6·7</button>
-        <button class="int-btn" data-ab="4,6" title="Jazz — M3 / TT / m7">4·6·10</button>
-      </div>
+      <div class="int-title">Interval &nbsp;(a + b + c = 12)</div>
+      <button class="int-btn active" data-ab="3,4">
+        <span class="int-nums">(3, 4, 5)</span>
+        <span class="int-name">Standard <span class="int-default">★</span></span>
+        <span class="int-ivals">m3 / M3 / P4</span>
+      </button>
+      <button class="int-btn" data-ab="4,3">
+        <span class="int-nums">(4, 3, 5)</span>
+        <span class="int-name">Inverted</span>
+        <span class="int-ivals">M3 / m3 / P4</span>
+      </button>
+      <button class="int-btn" data-ab="2,5">
+        <span class="int-nums">(2, 5, 5)</span>
+        <span class="int-name">Diatonic</span>
+        <span class="int-ivals">M2 / P4 / P4</span>
+      </button>
+      <button class="int-btn" data-ab="5,2">
+        <span class="int-nums">(5, 2, 5)</span>
+        <span class="int-name">Diatonic II</span>
+        <span class="int-ivals">P4 / M2 / P4</span>
+      </button>
+      <button class="int-btn" data-ab="2,3">
+        <span class="int-nums">(2, 3, 7)</span>
+        <span class="int-name">Pentatonic</span>
+        <span class="int-ivals">M2 / m3 / P5</span>
+      </button>
+      <button class="int-btn" data-ab="3,2">
+        <span class="int-nums">(3, 2, 7)</span>
+        <span class="int-name">Pentatonic II</span>
+        <span class="int-ivals">m3 / M2 / P5</span>
+      </button>
+      <button class="int-btn" data-ab="1,2">
+        <span class="int-nums">(1, 2, 9)</span>
+        <span class="int-name">Chromatic</span>
+        <span class="int-ivals">m2 / M2 / M6</span>
+      </button>
+      <button class="int-btn" data-ab="2,2">
+        <span class="int-nums">(2, 2, 8)</span>
+        <span class="int-name">Whole Tone</span>
+        <span class="int-ivals">M2 / M2 / m6</span>
+      </button>
+      <button class="int-btn" data-ab="3,3">
+        <span class="int-nums">(3, 3, 6)</span>
+        <span class="int-name">Diminished</span>
+        <span class="int-ivals">m3 / m3 / TT</span>
+      </button>
+      <button class="int-btn" data-ab="4,4">
+        <span class="int-nums">(4, 4, 4)</span>
+        <span class="int-name">Augmented</span>
+        <span class="int-ivals">M3 / M3 / M3</span>
+      </button>
+      <button class="int-btn" data-ab="1,6">
+        <span class="int-nums">(1, 6, 5)</span>
+        <span class="int-name">Tritone</span>
+        <span class="int-ivals">m2 / TT / P4</span>
+      </button>
+      <button class="int-btn" data-ab="4,6">
+        <span class="int-nums">(4, 6, 2)</span>
+        <span class="int-name">Jazz</span>
+        <span class="int-ivals">M3 / TT / M2</span>
+      </button>
     </div>
 
     <!-- jQuery & Bootstrap via CDN -->
