@@ -47,12 +47,18 @@
     return m + ':' + (s < 10 ? '0' : '') + s;
   }
 
+  function setProgress(frac) {
+    var fill = ui('midiProgressFill');
+    if (fill) fill.style.width = Math.min(1, Math.max(0, frac)) * 100 + '%';
+  }
+
   function startTimer() {
     stopTimer();
     timerID = setInterval(function () {
       if (Tone.Transport.state === 'started') {
         var pos = Tone.Transport.seconds;
         ui('playTime').textContent = formatTime(pos) + ' / ' + formatTime(midiDuration);
+        if (midiDuration > 0) setProgress(pos / midiDuration);
       }
     }, 250);
   }
@@ -144,6 +150,7 @@
     noteMap = {};
     if (window.tonnetz) window.tonnetz.allNotesOff(MIDI_CHANNEL);
     stopTimer();
+    setProgress(0);
     setStatus('Stopped', 'default');
   }
 
@@ -271,6 +278,19 @@
     ui('pauseBtn').addEventListener('click', pauseMidi);
     ui('stopBtn').addEventListener('click', stopMidi);
     ui('recordBtn').addEventListener('click', toggleRecording);
+
+    // Progress bar — click to seek
+    var progressBar = ui('midiProgress');
+    if (progressBar) {
+      progressBar.addEventListener('click', function (e) {
+        if (!midiDuration || Tone.Transport.state === 'stopped') return;
+        var rect = progressBar.getBoundingClientRect();
+        var frac = (e.clientX - rect.left) / rect.width;
+        var seekTime = Math.max(0, Math.min(midiDuration, frac * midiDuration));
+        Tone.Transport.seconds = seekTime;
+        setProgress(frac);
+      });
+    }
 
     ui('midiFileInput').addEventListener('change', function () {
       stopMidi();

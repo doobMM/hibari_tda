@@ -12,6 +12,8 @@
     <!-- Bootstrap & Font Awesome via CDN -->
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <!-- Fira Code + Fira Sans (UI Pro Max: Dashboard Data pairing) -->
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&family=Fira+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link href="css/style.css" rel="stylesheet">
   </head>
   <body>
@@ -120,11 +122,15 @@
               <div style="margin-top:10px">
                 <span id="playStatus" class="label label-default">Stopped</span>
                 &nbsp;
-                <span id="playTime" style="font-family:monospace;font-size:12px">0:00 / 0:00</span>
+                <span id="playTime" style="font-family:'Fira Code',monospace;font-size:12px">0:00 / 0:00</span>
                 &nbsp;
                 <span id="recStatus" class="label label-default" style="display:none">
                   <i class="fa fa-circle" style="color:#c00"></i> REC
                 </span>
+              </div>
+              <!-- ── Progress bar ──────────────────────────────────── -->
+              <div id="midiProgress" title="Click to seek">
+                <div id="midiProgressFill"></div>
               </div>
               <p class="help-block" style="margin-top:8px;font-size:11px">
                 <span class="en">Press REC → Play → REC again to save a <code>.webm</code> recording.</span>
@@ -726,6 +732,10 @@
 
     <!-- ── Transform overlay (always visible on canvas) ────────────── -->
     <div id="transform-overlay">
+      <div class="overlay-header">
+        <span class="overlay-title-text"><span class="en">Transforms</span><span class="ko">변환</span></span>
+        <button class="overlay-collapse-btn" id="txCollapseBtn" title="Collapse">−</button>
+      </div>
 
       <!-- Group 1: Neo-Riemannian P/L/R -->
       <div class="tx-group">
@@ -771,7 +781,10 @@
 
     <!-- ── Interval overlay (always visible on canvas) ───────────── -->
     <div id="interval-overlay">
-      <div class="int-title"><span class="en">Interval</span><span class="ko">인터벌</span> &nbsp;(a + b + c = 12)</div>
+      <div class="int-title" style="display:flex;justify-content:space-between;align-items:center">
+        <span><span class="en">Interval</span><span class="ko">인터벌</span> &nbsp;(a + b + c = 12)</span>
+        <button class="overlay-collapse-btn" id="intCollapseBtn" title="Collapse" style="margin-left:6px">−</button>
+      </div>
       <button class="int-btn active" data-ab="3,4">
         <span class="int-nums">(3, 4, 5)</span>
         <span class="int-name">Standard <span class="int-default">★</span></span>

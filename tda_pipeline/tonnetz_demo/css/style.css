@@ -34,10 +34,27 @@ a:link.external:after {
   margin-left: 10px;
 }
 
+/* ── Design tokens (Music Streaming palette — UI Pro Max) ───────── */
+:root {
+  --tz-bg-deep:    #0F0F23;
+  --tz-bg-panel:   rgba(15, 15, 40, 0.93);
+  --tz-bg-heading: rgba(30, 27, 75, 0.96);
+  --tz-border:     rgba(67, 56, 202, 0.28);
+  --tz-accent:     #4338CA;
+  --tz-cta:        #22C55E;
+  --tz-text:       #d8d8ee;
+  --tz-text-muted: #7878aa;
+}
+
+/* ── Dark glassmorphism tab container ───────────────────────────── */
 #tabs {
-  background: #fafafa;
-  border: 1px solid #b3b3b3;
+  background: var(--tz-bg-panel);
+  border: 1px solid var(--tz-border);
   border-top: none;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  color: var(--tz-text);
+  font-family: 'Fira Sans', system-ui, sans-serif;
 }
 
 #tabs .tab-pane {
@@ -45,9 +62,63 @@ a:link.external:after {
   padding-top: 20px;
 }
 
-#tabs .tab-pane .panel-default>.panel-heading {
-  background: #eaeaea;
+/* ── Dark panels ────────────────────────────────────────────────── */
+#tabs .panel-default {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--tz-border);
+  box-shadow: none;
 }
+
+#tabs .panel-default > .panel-heading {
+  background: var(--tz-bg-heading);
+  border-bottom: 1px solid var(--tz-border);
+  color: #b8b8d8;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  font-family: 'Fira Sans', sans-serif;
+  padding: 7px 12px;
+}
+
+#tabs .panel-body {
+  color: var(--tz-text);
+}
+
+/* Override Bootstrap text colours inside dark panels */
+#tabs label,
+#tabs .help-block,
+#tabs .checkbox label {
+  color: var(--tz-text-muted);
+}
+#tabs .form-control {
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid var(--tz-border);
+  color: var(--tz-text);
+}
+#tabs .form-control:focus {
+  border-color: var(--tz-accent);
+  box-shadow: 0 0 0 2px rgba(67, 56, 202, 0.25);
+}
+#tabs .table {
+  color: var(--tz-text);
+}
+#tabs .table > thead > tr > th {
+  border-bottom-color: var(--tz-border);
+  color: var(--tz-text-muted);
+}
+#tabs .table > tbody > tr > td {
+  border-top-color: rgba(255,255,255,0.07);
+}
+#tabs h3, #tabs h4 {
+  color: #c8c8ee;
+}
+#tabs code {
+  background: rgba(67, 56, 202, 0.2);
+  color: #a8b8ff;
+  border: none;
+}
+#tabs a { color: #818cf8; }
+#tabs a:hover { color: #a5b4fc; }
 
 
 .keyboard .key {
@@ -438,3 +509,58 @@ body.lang-ko .lang-tab[data-lang="ko"] {
   background: rgba(90, 150, 255, 0.38);
   color: #fff;
 }
+
+/* ── MIDI progress bar ──────────────────────────────────────────── */
+#midiProgress {
+  height: 4px;
+  background: rgba(255, 255, 255, 0.10);
+  border-radius: 2px;
+  margin: 10px 0 6px;
+  cursor: pointer;
+  position: relative;
+}
+#midiProgress:hover { background: rgba(255, 255, 255, 0.18); }
+#midiProgressFill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #4338CA, #22C55E);
+  border-radius: 2px;
+  transition: width 0.22s linear;
+  pointer-events: none;
+}
+
+/* ── Overlay header + collapse button ───────────────────────────── */
+.overlay-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 7px;
+}
+.overlay-header .overlay-title-text {
+  color: #777;
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  font-family: 'Fira Sans', monospace;
+}
+.overlay-collapse-btn {
+  background: none;
+  border: none;
+  color: #555;
+  font-size: 13px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 2px;
+  transition: color 0.15s;
+  font-family: monospace;
+}
+.overlay-collapse-btn:hover { color: #aaa; }
+
+/* Collapsed state */
+#transform-overlay.tz-collapsed .tx-group { display: none; }
+#transform-overlay.tz-collapsed { padding-bottom: 6px; }
+#transform-overlay .overlay-header { margin-bottom: 0; }
+#transform-overlay:not(.tz-collapsed) .overlay-header { margin-bottom: 7px; }
+
+#interval-overlay.tz-collapsed .int-btn { display: none; }
+#interval-overlay.tz-collapsed .int-title { border-bottom: none; }

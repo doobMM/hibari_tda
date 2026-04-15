@@ -163,6 +163,18 @@ $(function(){
     if (window.i18n) window.i18n.setLang($(this).data('lang'));
   });
 
+  // Overlay collapse buttons
+  $('#txCollapseBtn').click(function() {
+    var overlay = document.getElementById('transform-overlay');
+    var collapsed = overlay.classList.toggle('tz-collapsed');
+    this.textContent = collapsed ? '+' : '−';
+  });
+  $('#intCollapseBtn').click(function() {
+    var overlay = document.getElementById('interval-overlay');
+    var collapsed = overlay.classList.toggle('tz-collapsed');
+    this.textContent = collapsed ? '+' : '−';
+  });
+
   $('[data-toggle="tooltip"]').tooltip();
 
   // Open links with data-popup="true" in a new window.
