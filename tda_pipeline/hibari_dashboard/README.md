@@ -33,11 +33,17 @@ python hibari_dashboard/scripts/export_hibari_data.py
 
 ## 로컬 실행
 
+데이터(`data/`)가 `public/`과 같은 레벨에 있으므로 서버는
+`hibari_dashboard/` 에서 띄운다:
+
 ```bash
-cd C:/WK14/tda_pipeline/hibari_dashboard/public
+cd C:/WK14/tda_pipeline/hibari_dashboard
 python -m http.server 8000
-# 브라우저에서 http://localhost:8000
+# 브라우저: http://localhost:8000/public/index.html
 ```
+
+배포 시 `public/` 만 올려야 한다면 `public/` 안에 `data/` 를 복사하고
+`index.html` 에 `?data=data` 쿼리를 붙여 접근.
 
 ## Phase 진행 상태
 
