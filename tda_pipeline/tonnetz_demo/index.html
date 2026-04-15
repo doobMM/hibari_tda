@@ -382,70 +382,30 @@
         <!-- ── TDA Analysis panel ─────────────────────────────────── -->
         <div role="tabpanel" class="tab-pane" id="tda">
 
-          <!-- Live Topology State ───────────────────────────────── -->
+          <!-- Generated Music Comparison ──────────────────────────── -->
           <div class="panel panel-default">
-            <div class="panel-heading">
-              <strong>Live Topology State</strong>
-              <span id="liveTopoStatus"
-                    style="font-size:10px;color:#888;font-weight:normal;margin-left:8px">
-                (MIDI 재생 시 업데이트)
+            <div class="panel-heading" style="display:flex;align-items:baseline;gap:8px">
+              <strong>Generated Music Comparison</strong>
+              <span style="font-size:10px;font-weight:normal;color:#888">
+                FC + continuous activation &nbsp;·&nbsp;
+                <span style="color:#7f7;font-weight:bold">JS = 0.0004 ★</span>
+                &nbsp;본 연구 최저
               </span>
             </div>
-            <div class="panel-body" style="padding:12px 16px">
-              <div style="display:flex;gap:14px;justify-content:center;flex-wrap:wrap">
-
-                <div style="text-align:center;min-width:62px">
-                  <div id="cycleGlow_A"
-                       style="width:62px;height:62px;border-radius:10px;margin:0 auto 4px;
-                              border:2px solid #64dc64;background:rgba(100,220,100,0.08);
-                              transition:background 0.15s ease"></div>
-                  <div style="color:#64dc64;font-size:13px;font-weight:bold">A</div>
-                  <div style="color:#888;font-size:9px">E–G–B</div>
-                  <div id="cyclePct_A"
-                       style="color:#aaa;font-size:9px;font-family:monospace;margin-top:1px">—</div>
-                </div>
-
-                <div style="text-align:center;min-width:62px">
-                  <div id="cycleGlow_B"
-                       style="width:62px;height:62px;border-radius:10px;margin:0 auto 4px;
-                              border:2px solid #6496ff;background:rgba(100,150,255,0.08);
-                              transition:background 0.15s ease"></div>
-                  <div style="color:#6496ff;font-size:13px;font-weight:bold">B</div>
-                  <div style="color:#888;font-size:9px">C–E–G</div>
-                  <div id="cyclePct_B"
-                       style="color:#aaa;font-size:9px;font-family:monospace;margin-top:1px">—</div>
-                </div>
-
-                <div style="text-align:center;min-width:62px">
-                  <div id="cycleGlow_C"
-                       style="width:62px;height:62px;border-radius:10px;margin:0 auto 4px;
-                              border:2px solid #ffa550;background:rgba(255,165,80,0.08);
-                              transition:background 0.15s ease"></div>
-                  <div style="color:#ffa550;font-size:13px;font-weight:bold">C</div>
-                  <div style="color:#888;font-size:9px">D–F–A</div>
-                  <div id="cyclePct_C"
-                       style="color:#aaa;font-size:9px;font-family:monospace;margin-top:1px">—</div>
-                </div>
-
-                <div style="text-align:center;min-width:62px">
-                  <div id="cycleGlow_D"
-                       style="width:62px;height:62px;border-radius:10px;margin:0 auto 4px;
-                              border:2px solid #c864ff;background:rgba(200,100,255,0.08);
-                              transition:background 0.15s ease"></div>
-                  <div style="color:#c864ff;font-size:13px;font-weight:bold">D</div>
-                  <div style="color:#888;font-size:9px">F–A–C–E</div>
-                  <div id="cyclePct_D"
-                       style="color:#aaa;font-size:9px;font-family:monospace;margin-top:1px">—</div>
-                </div>
-
+            <div class="panel-body" style="padding:10px 14px">
+              <canvas id="comparisonCanvas"
+                      style="width:100%;height:180px;background:#111;border-radius:4px;display:block">
+              </canvas>
+              <div style="margin-top:5px;font-size:10px;color:#777;line-height:1.8">
+                <span style="color:#6496ff">■</span> Original hibari (3,953 notes)
+                &nbsp;&nbsp;
+                <span style="color:#ffa550">■</span> Generated (1,309 notes)
+                &nbsp;&nbsp;<span style="color:#444">|</span>&nbsp;&nbsp;
+                Tonnetz α=0.0 · ow=0.3 · per-cycle τ<sub>c</sub> · T=3.0
               </div>
-              <p style="text-align:center;font-size:10px;color:#666;margin:10px 0 0">
-                블록이 밝아지면 해당 화음 구조가 이 시점에 위상적으로 active.
-                Tonnetz 배경의 삼각형 오버레이와 동기화됩니다.
-              </p>
             </div>
           </div>
-          <!-- ── end Live Topology State ─────────────────────────── -->
+          <!-- ── end Generated Music Comparison ──────────────────── -->
 
           <!-- Rate slider + barcode -->
           <div class="panel panel-default">
@@ -616,6 +576,7 @@
     <!-- Inline TDA data (works with both http:// and file://) -->
     <script src="js/hibari_barcode_data.js"></script>
     <script src="js/hibari_overlap_data.js"></script>
+    <script src="js/hibari_comparison_data.js"></script>
     <script src="js/hibaridata.js"></script>
   </body>
 </html>

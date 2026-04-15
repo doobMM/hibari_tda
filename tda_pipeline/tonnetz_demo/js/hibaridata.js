@@ -110,25 +110,6 @@
       window.tonnetz.setRateMultipliers(result.A, result.B, result.C, result.D);
     }
 
-    // ── TDA 탭 Live Topology State 블록 업데이트 ──────────────────
-    CYCLE_META.forEach(function (cm) {
-      var v       = result[cm.name] || 0;
-      var glowEl  = document.getElementById('cycleGlow_' + cm.name);
-      var pctEl   = document.getElementById('cyclePct_'  + cm.name);
-      if (glowEl) glowEl.style.background = cm.fill + (0.06 + v * 0.84) + ')';
-      if (pctEl)  pctEl.textContent = Math.round(v * 100) + '%';
-    });
-    var statusEl = document.getElementById('liveTopoStatus');
-    if (statusEl) {
-      if (playing) {
-        statusEl.textContent = '● 재생 중';
-        statusEl.style.color = '#6f6';
-      } else {
-        statusEl.textContent = '(MIDI 재생 시 업데이트)';
-        statusEl.style.color = '#888';
-      }
-    }
-
     // strength label 업데이트 (재생 중 active cycle에 ● 표시)
     var labelEl = document.getElementById('rateStrengthLabels');
     if (labelEl) {
@@ -347,6 +328,92 @@
     ctx.restore();
   }
 
+  // ── Generated Music Comparison chart ────────────────────────────
+  function renderComparisonChart () {
+    var canvas = document.getElementById('comparisonCanvas');
+    if (!canvas) return;
+    var cd = window.HIBARI_COMPARISON_DATA;
+    if (!cd) {
+      var ctx2 = canvas.getContext('2d');
+      ctx2.fillStyle = '#333';
+      ctx2.font = '12px monospace';
+      ctx2.fillText('comparison data not loaded', 16, canvas.height / 2);
+      return;
+    }
+
+    var W = canvas.width  = canvas.offsetWidth  || 420;
+    var H = canvas.height = canvas.offsetHeight || 180;
+    var ctx = canvas.getContext('2d');
+
+    ctx.fillStyle = '#111';
+    ctx.fillRect(0, 0, W, H);
+
+    var PAD_L = 38, PAD_R = 10, PAD_T = 32, PAD_B = 26;
+    var chartW = W - PAD_L - PAD_R;
+    var chartH = H - PAD_T - PAD_B;
+
+    var orig   = cd.original.dist;
+    var gen    = cd.generated.dist;
+    var maxV   = Math.max.apply(null, orig.concat(gen)) * 1.15 || 0.25;
+    var nPc    = cd.pc_names.length;   // 12
+    var gW     = chartW / nPc;
+    var barW   = gW * 0.36;
+    var gap    = gW * 0.05;
+
+    function yOf(v) { return PAD_T + chartH * (1 - v / maxV); }
+
+    // Gridlines + Y labels
+    ctx.font = '9px monospace';
+    ctx.textAlign = 'right';
+    for (var t = 0; t <= 4; t++) {
+      var yv = maxV * t / 4;
+      var yy = yOf(yv);
+      ctx.strokeStyle = (t === 0) ? '#444' : '#222';
+      ctx.lineWidth = (t === 0) ? 1 : 0.5;
+      ctx.beginPath();
+      ctx.moveTo(PAD_L, yy);
+      ctx.lineTo(W - PAD_R, yy);
+      ctx.stroke();
+      ctx.fillStyle = '#555';
+      ctx.fillText(Math.round(yv * 100) + '%', PAD_L - 3, yy + 3);
+    }
+
+    // Bars + X labels
+    ctx.textAlign = 'center';
+    for (var i = 0; i < nPc; i++) {
+      var xC = PAD_L + (i + 0.5) * gW;
+
+      // original (blue)
+      var hO = chartH * (orig[i] / maxV);
+      ctx.fillStyle = 'rgba(100,150,255,0.88)';
+      ctx.fillRect(xC - gap / 2 - barW, yOf(orig[i]), barW, hO);
+
+      // generated (orange)
+      var hG = chartH * (gen[i] / maxV);
+      ctx.fillStyle = 'rgba(255,165,80,0.88)';
+      ctx.fillRect(xC + gap / 2, yOf(gen[i]), barW, hG);
+
+      // X label — only for non-zero pitch classes
+      if (orig[i] > 0 || gen[i] > 0) {
+        ctx.fillStyle = '#888';
+        ctx.font = '9px monospace';
+        ctx.fillText(cd.pc_names[i], xC, H - PAD_B + 12);
+      }
+    }
+
+    // Chart title (left)
+    ctx.fillStyle = '#aaa';
+    ctx.font = 'bold 10px monospace';
+    ctx.textAlign = 'left';
+    ctx.fillText('Pitch Class Distribution', PAD_L + 2, PAD_T - 18);
+
+    // JS value (right) — prominent
+    ctx.fillStyle = '#6f6';
+    ctx.font = 'bold 13px monospace';
+    ctx.textAlign = 'right';
+    ctx.fillText('JS = ' + cd.js_note.toFixed(4) + ' \u2605', W - PAD_R, PAD_T - 18);
+  }
+
   // ── Rate application ──────────────────────────────────────────────
   function applyRate (rate) {
     currentRate = rate;
@@ -411,6 +478,7 @@
     setTimeout(function () {
       applyRate(currentRate);
       renderOverlapHeatmap();
+      renderComparisonChart();
     }, 0);
   }
 
@@ -419,6 +487,7 @@
     applyRate: applyRate,
     updatePlaybackCursor: updatePlaybackCursor,
     renderOverlapHeatmap: renderOverlapHeatmap,
+    renderComparisonChart: renderComparisonChart,
     renderBarcodeChart: function () {
       renderBarcodeChart(getRateEntry(currentRate));
     }
