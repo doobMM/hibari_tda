@@ -158,6 +158,14 @@ $(function(){
     tonnetz.panic();
   });
 
+  // Language toggle
+  $('#langToggle').click(function() {
+    if (window.i18n) window.i18n.toggle();
+    // Update button label
+    var isKo = document.body.classList.contains('lang-ko');
+    $(this).text(isKo ? 'English' : '한국어');
+  });
+
   $('[data-toggle="tooltip"]').tooltip();
 
   // Open links with data-popup="true" in a new window.

@@ -31,43 +31,46 @@
             <li>
               <a href="#playback" data-toggle="tab" role="tab" aria-controls="playback">
                 <i class="fa fa-fw fa-music" aria-hidden="true"></i>
-                Playback<span class="caret"></span>
+                <span class="en">Playback</span><span class="ko">재생</span><span class="caret"></span>
               </a>
             </li>
             <li>
               <a href="#controls" data-toggle="tab" role="tab" aria-controls="controls">
                 <i class="fa fa-fw fa-gamepad" aria-hidden="true"></i>
-                Controls<span class="caret"></span>
+                <span class="en">Controls</span><span class="ko">연주</span><span class="caret"></span>
               </a>
             </li>
             <li>
               <a href="#appearance" data-toggle="tab" role="tab" aria-controls="appearance">
                 <i class="fa fa-fw fa-eye" aria-hidden="true"></i>
-                Appearance<span class="caret"></span>
+                <span class="en">Appearance</span><span class="ko">화면</span><span class="caret"></span>
               </a>
             </li>
             <li>
               <a href="#sound" data-toggle="tab" role="tab" aria-controls="sound">
                 <i class="fa fa-fw fa-volume-off" aria-hidden="true"></i>
-                Sound<span class="caret"></span>
+                <span class="en">Sound</span><span class="ko">음향</span><span class="caret"></span>
               </a>
             </li>
             <li>
               <a href="#tda" data-toggle="tab" role="tab" aria-controls="tda">
                 <i class="fa fa-fw fa-bar-chart" aria-hidden="true"></i>
-                TDA<span class="caret"></span>
+                <span class="en">TDA</span><span class="ko">TDA</span><span class="caret"></span>
               </a>
             </li>
             <li>
               <a href="#about" data-toggle="tab" role="tab" aria-controls="about">
                 <i class="fa fa-fw fa-question-circle" aria-hidden="true"></i>
-                Help<span class="caret"></span>
+                <span class="en">Help</span><span class="ko">도움말</span><span class="caret"></span>
               </a>
             </li>
             <li class="hidden">
               <a href="#" data-toggle="tab" role="tab" id="dummy-tab"></a>
             </li>
           </ul>
+          <div class="navbar-right">
+            <button id="langToggle" class="btn btn-xs btn-default navbar-btn">한국어</button>
+          </div>
         </div><!-- /.navbar-collapse -->
       </nav>
 
@@ -76,7 +79,7 @@
         <!-- ── Playback panel (new) ─────────────────────────────────── -->
         <div role="tabpanel" class="tab-pane" id="playback">
           <div class="panel panel-default">
-            <div class="panel-heading"><strong>hibari</strong> MIDI Playback</div>
+            <div class="panel-heading"><strong>hibari</strong> <span class="en">MIDI Playback</span><span class="ko">재생</span></div>
             <div class="panel-body">
               <!-- ── Preloaded: hibari ─────────────────────────────── -->
               <div style="margin-bottom:12px">
@@ -88,7 +91,7 @@
               <hr style="margin:10px 0;border-color:rgba(0,0,0,0.1)">
               <!-- ── Custom MIDI file ──────────────────────────────── -->
               <div class="form-group" style="margin-bottom:6px">
-                <label for="midiFileInput" style="font-size:11px;color:#888">Custom MIDI file</label>
+                <label for="midiFileInput" style="font-size:11px;color:#888"><span class="en">Custom MIDI file</span><span class="ko">커스텀 MIDI 파일</span></label>
                 <input type="file" id="midiFileInput" accept=".mid,.midi" class="form-control input-sm">
               </div>
               <div class="btn-group">
@@ -115,17 +118,20 @@
                 </span>
               </div>
               <p class="help-block" style="margin-top:8px;font-size:11px">
-                REC → Play → REC로 중지하면 <code>.webm</code>으로 저장됩니다.
+                <span class="en">Press REC → Play → REC again to save a <code>.webm</code> recording.</span>
+                <span class="ko">REC → Play → REC로 중지하면 <code>.webm</code>으로 저장됩니다.</span>
               </p>
             </div>
           </div>
 
           <!-- H1 cycle legend -->
           <div class="panel panel-default">
-            <div class="panel-heading">H₁ Cycle Overlays (hibari)</div>
+            <div class="panel-heading">H₁ <span class="en">Cycle Overlays (hibari)</span><span class="ko">사이클 오버레이 (hibari)</span></div>
             <div class="panel-body">
-              <p class="help-block">Persistent H₁ cycles detected by TDA are always shown as
-              semi-transparent polygons on the Tonnetz.</p>
+              <p class="help-block">
+                <span class="en">Persistent H₁ cycles detected by TDA are always shown as semi-transparent polygons on the Tonnetz.</span>
+                <span class="ko">TDA로 검출된 지속적 H₁ 사이클들이 Tonnetz 위에 반투명 다각형으로 항상 표시됩니다.</span>
+              </p>
               <table class="table table-condensed">
                 <thead><tr><th>Cycle</th><th>Notes</th><th>Interpretation</th><th>Color</th></tr></thead>
                 <tbody>
@@ -262,7 +268,7 @@
 
         <div role="tabpanel" class="tab-pane" id="appearance">
           <div class="panel panel-default">
-            <div class="panel-heading">Appearance</div>
+            <div class="panel-heading"><span class="en">Appearance</span><span class="ko">화면 설정</span></div>
             <div class="panel-body">
               <div class="form-horizontal">
                 <div class="form-group">
@@ -284,28 +290,28 @@
                   </div>
                 </div>
                 <div class="form-group">
-                  <label for="layout" class="control-label col-xs-5 col-sm-4 col-md-3">Layout</label>
+                  <label for="layout" class="control-label col-xs-5 col-sm-4 col-md-3"><span class="en">Layout</span><span class="ko">레이아웃</span></label>
                   <div class="col-xs-6 col-sm-7 col-md-8">
                     <label class="radio-inline"><input type="radio" name="layout" value="riemann" checked>Riemannian</label>
                     <label class="radio-inline"><input type="radio" name="layout" value="sonome">Sonome</label>
                   </div>
                 </div>
                 <div class="form-group">
-                  <label class="control-label col-xs-5 col-sm-4 col-md-3">Show/hide</label>
+                  <label class="control-label col-xs-5 col-sm-4 col-md-3"><span class="en">Show/hide</span><span class="ko">표시/숨기기</span></label>
                   <div class="col-xs-6 col-sm-7 col-md-8">
                     <div class="checkbox">
-                      <label><input name="show-note-names" id="show-note-names" type="checkbox" checked> Tone names</label>
+                      <label><input name="show-note-names" id="show-note-names" type="checkbox" checked> <span class="en">Tone names</span><span class="ko">음 이름</span></label>
                     </div>
                     <div class="checkbox">
-                      <label><input name="show-triad-names" id="show-triad-names" type="checkbox"> Triad names</label>
+                      <label><input name="show-triad-names" id="show-triad-names" type="checkbox"> <span class="en">Triad names</span><span class="ko">화음 이름</span></label>
                     </div>
                     <div class="checkbox">
-                      <label><input name="show-unit-cell" id="show-unit-cell" type="checkbox"> Unit cell</label>
+                      <label><input name="show-unit-cell" id="show-unit-cell" type="checkbox"> <span class="en">Unit cell</span><span class="ko">단위 셀</span></label>
                     </div>
                   </div>
                 </div>
                 <div class="form-group">
-                  <label for="ghost-duration" class="control-label col-xs-5 col-sm-4 col-md-3">'Ghost' tone duration</label>
+                  <label for="ghost-duration" class="control-label col-xs-5 col-sm-4 col-md-3"><span class="en">'Ghost' tone duration</span><span class="ko">잔향 지속 시간</span></label>
                   <div class="col-xs-6 col-sm-4 col-md-3">
                     <div class="input-group">
                       <input type="number" class="form-control" id="ghost-duration" min="0" step="50" value="500">
@@ -466,207 +472,208 @@
         <!-- ── end TDA Analysis panel ─────────────────────────────── -->
 
         <div role="tabpanel" class="tab-pane" id="about">
+
+          <!-- What is this demo -->
           <div class="panel panel-default">
-            <div class="panel-heading">What is this demo?</div>
+            <div class="panel-heading">
+              <span class="en">What is this demo?</span>
+              <span class="ko">이 데모는?</span>
+            </div>
             <div class="panel-body">
-              <p>This demo visualizes <em>hibari</em> by Ryuichi Sakamoto on the Tonnetz,
+              <p class="en">This demo visualizes <em>hibari</em> by Ryuichi Sakamoto on the Tonnetz,
               a diagram representing tonal space used in music theory and TDA research.</p>
-              <p>The semi-transparent polygons are <strong>H₁ cycles</strong> (1-dimensional
+              <p class="en">The semi-transparent polygons are <strong>H₁ cycles</strong> (1-dimensional
               topological features) detected by Persistent Homology applied to the note
               co-occurrence structure of hibari. They represent groups of notes that form
               persistent loops in the Vietoris–Rips complex.</p>
-              <p>Based on <a href="https://github.com/cifkao/tonnetz-viz" target="_blank">cifkao/tonnetz-viz</a>
+              <p class="en">Based on <a href="https://github.com/cifkao/tonnetz-viz" target="_blank">cifkao/tonnetz-viz</a>
               by Ondřej Cífka.</p>
+              <p class="ko">이 데모는 류이치 사카모토의 <em>hibari</em>를 Tonnetz 위에 시각화합니다.
+              Tonnetz는 음악 이론과 TDA 연구에서 사용하는 음 공간 다이어그램입니다.</p>
+              <p class="ko">반투명 다각형들은 <strong>H₁ 사이클</strong>입니다 — hibari 음표의
+              공기화(co-occurrence) 구조에 지속적 호몰로지(Persistent Homology)를 적용해 검출한
+              1차원 위상수학적 특징으로, Vietoris–Rips 복합체에서 지속되는 루프를 나타냅니다.</p>
+              <p class="ko"><a href="https://github.com/cifkao/tonnetz-viz" target="_blank">cifkao/tonnetz-viz</a>
+              (Ondřej Cífka) 기반.</p>
             </div>
           </div>
+
+          <!-- How to use -->
           <div class="panel panel-default">
-            <div class="panel-heading">How to use</div>
+            <div class="panel-heading">
+              <span class="en">How to use</span>
+              <span class="ko">사용법</span>
+            </div>
             <div class="panel-body">
-              <ul>
+              <ul class="en">
                 <li>Open the <strong>Playback</strong> tab and press <strong>Play hibari</strong> — no file needed.</li>
                 <li>Notes light up on the Tonnetz as the piece plays.</li>
                 <li>H₁ cycle polygons are always visible as colored overlays.</li>
                 <li>Use a hardware MIDI device (Controls tab) or computer keyboard for live input.</li>
                 <li>Scroll to zoom; <strong>Transform overlay</strong> (bottom-left) and <strong>Interval overlay</strong> (right) are always visible.</li>
               </ul>
+              <ul class="ko">
+                <li><strong>재생</strong> 탭을 열고 <strong>Play hibari</strong>를 클릭하세요 — 파일 선택 불필요.</li>
+                <li>곡이 재생되면 연주된 음이 Tonnetz 위에 점등됩니다.</li>
+                <li>H₁ 사이클 다각형은 항상 색깔 오버레이로 표시됩니다.</li>
+                <li>하드웨어 MIDI 장치(연주 탭) 또는 컴퓨터 키보드로도 연주할 수 있습니다.</li>
+                <li>스크롤로 줌; <strong>변환 오버레이</strong>(좌하단)와 <strong>인터벌 오버레이</strong>(우측)는 항상 표시됩니다.</li>
+              </ul>
             </div>
           </div>
 
-          <!-- ── Neo-Riemannian ──────────────────────────────────────── -->
+          <!-- Neo-Riemannian -->
           <div class="panel panel-default">
             <div class="panel-heading">
-              <strong>Neo-Riemannian Transforms</strong>
-              <span class="text-muted" style="font-size:12px;margin-left:8px">P · L · R · N · S · H</span>
+              <span class="en"><strong>Neo-Riemannian Transforms</strong> <span class="text-muted" style="font-size:12px">P · L · R · N · S · H</span></span>
+              <span class="ko"><strong>신리만 변환</strong> <span class="text-muted" style="font-size:12px">P · L · R · N · S · H</span></span>
             </div>
             <div class="panel-body" style="font-size:13px">
-              <p>
-                Neo-Riemannian theory describes <em>parsimonious</em> voice-leading between triads —
+              <!-- English -->
+              <div class="en">
+                <p>Neo-Riemannian theory describes <em>parsimonious</em> voice-leading between triads —
                 each operation moves exactly <strong>one</strong> note by one or two semitones while
                 keeping the other two fixed. On the Tonnetz, each operation corresponds to a
-                <strong>reflection</strong> of the current triangle across one of its edges.
-              </p>
-
-              <table class="table table-condensed table-bordered" style="font-size:12px">
-                <thead>
-                  <tr>
-                    <th style="width:36px">Op</th>
-                    <th>What moves</th>
-                    <th>Formula</th>
-                    <th>Example (C major → ?)</th>
-                    <th>Tonnetz</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td><strong>P</strong></td>
-                    <td>The third (±1 semitone)</td>
-                    <td><code>{r,r+4,r+7} ↔ {r,r+3,r+7}</code></td>
-                    <td>C maj {C,E,G} → C min {C,E♭,G}</td>
-                    <td>Flip across the top edge</td>
-                  </tr>
-                  <tr>
-                    <td><strong>L</strong></td>
-                    <td>The root (−1 semitone)</td>
-                    <td><code>{r,r+4,r+7} → {r+4,r+7,r+11}</code></td>
-                    <td>C maj {C,E,G} → E min {E,G,B}</td>
-                    <td>Flip across the right edge</td>
-                  </tr>
-                  <tr>
-                    <td><strong>R</strong></td>
-                    <td>The fifth (+2 semitones)</td>
-                    <td><code>{r,r+4,r+7} → {r,r+4,r+9}</code></td>
-                    <td>C maj {C,E,G} → A min {A,C,E}</td>
-                    <td>Flip across the left edge</td>
-                  </tr>
-                </tbody>
-              </table>
-
-              <p>
-                Each operation is its own inverse: P(P(x)) = x, L(L(x)) = x, R(R(x)) = x.
-                Crucially, <strong>P preserves root class</strong>,
-                <strong>L preserves the minor third</strong>, and
-                <strong>R preserves the major third</strong>.
-              </p>
-
-              <h5 style="margin-top:14px">Composite operations (N, S, H)</h5>
-              <p>Three common combinations extend the group:</p>
-
-              <table class="table table-condensed table-bordered" style="font-size:12px">
-                <thead>
-                  <tr><th style="width:36px">Op</th><th>Composition</th><th>Example (C major → ?)</th><th>Character</th></tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td><strong>N</strong></td>
-                    <td>R → L → P</td>
-                    <td>C maj → F min</td>
-                    <td>Nebenverwandt — "neighboring" triad a P4 below</td>
-                  </tr>
-                  <tr>
-                    <td><strong>S</strong></td>
-                    <td>L → P → R</td>
-                    <td>C maj → D♭ maj</td>
-                    <td>Slide — root moves by one semitone, quality unchanged</td>
-                  </tr>
-                  <tr>
-                    <td><strong>H</strong></td>
-                    <td>L → P → L</td>
-                    <td>C maj → A♭ maj</td>
-                    <td>Hexatonic pole — tritone-related triad, same quality</td>
-                  </tr>
-                </tbody>
-              </table>
-
-              <p style="font-size:11px;color:#888;margin-top:6px">
-                <strong>In the demo:</strong> Press any button while notes are lit (or during playback).
-                The current chord is identified as the best-matching major/minor triad, the
-                operation is applied, and the result flashes for 2.5 s on a separate channel.
-                The result label (e.g. <em>L → E min</em>) fades in the overlay.
-              </p>
+                <strong>reflection</strong> of the current triangle across one of its edges.</p>
+                <table class="table table-condensed table-bordered" style="font-size:12px">
+                  <thead><tr><th style="width:36px">Op</th><th>What moves</th><th>Formula</th><th>Example (C major → ?)</th><th>Tonnetz</th></tr></thead>
+                  <tbody>
+                    <tr><td><strong>P</strong></td><td>The third (±1 semitone)</td><td><code>{r,r+4,r+7} ↔ {r,r+3,r+7}</code></td><td>C maj {C,E,G} → C min {C,E♭,G}</td><td>Flip across top edge</td></tr>
+                    <tr><td><strong>L</strong></td><td>The root (−1 semitone)</td><td><code>{r,r+4,r+7} → {r+4,r+7,r+11}</code></td><td>C maj {C,E,G} → E min {E,G,B}</td><td>Flip across right edge</td></tr>
+                    <tr><td><strong>R</strong></td><td>The fifth (+2 semitones)</td><td><code>{r,r+4,r+7} → {r,r+4,r+9}</code></td><td>C maj {C,E,G} → A min {A,C,E}</td><td>Flip across left edge</td></tr>
+                  </tbody>
+                </table>
+                <p>Each operation is its own inverse: P(P(x))=x, L(L(x))=x, R(R(x))=x. <strong>P</strong> preserves root, <strong>L</strong> preserves the minor third, <strong>R</strong> preserves the major third.</p>
+                <h5 style="margin-top:14px">Composite operations (N, S, H)</h5>
+                <table class="table table-condensed table-bordered" style="font-size:12px">
+                  <thead><tr><th style="width:36px">Op</th><th>Composition</th><th>Example (C major → ?)</th><th>Character</th></tr></thead>
+                  <tbody>
+                    <tr><td><strong>N</strong></td><td>R → L → P</td><td>C maj → F min</td><td>Nebenverwandt — neighboring triad a P4 below</td></tr>
+                    <tr><td><strong>S</strong></td><td>L → P → R</td><td>C maj → D♭ maj</td><td>Slide — root moves by one semitone, quality unchanged</td></tr>
+                    <tr><td><strong>H</strong></td><td>L → P → L</td><td>C maj → A♭ maj</td><td>Hexatonic pole — tritone-related triad, same quality</td></tr>
+                  </tbody>
+                </table>
+                <p style="font-size:11px;color:#888">
+                  <strong>In the demo:</strong> press any button while notes are lit (or during playback).
+                  The current chord is identified as the best-matching major/minor triad, the
+                  operation is applied, and the result flashes for 2.5 s. The label (e.g. <em>L → E min</em>) fades in the overlay.
+                </p>
+              </div>
+              <!-- Korean -->
+              <div class="ko">
+                <p>신리만 이론은 삼화음 사이의 <em>절약적</em> 성부진행을 기술합니다 —
+                각 연산은 정확히 <strong>한 음</strong>을 1~2 반음 이동하고 나머지 두 음은 고정합니다.
+                Tonnetz 위에서 각 연산은 현재 삼각형을 한 변(edge)을 기준으로
+                <strong>반사(reflection)</strong>시키는 것에 해당합니다.</p>
+                <table class="table table-condensed table-bordered" style="font-size:12px">
+                  <thead><tr><th style="width:36px">연산</th><th>움직이는 음</th><th>수식</th><th>예시 (C장조 → ?)</th><th>Tonnetz</th></tr></thead>
+                  <tbody>
+                    <tr><td><strong>P</strong></td><td>3도음 (±1 반음)</td><td><code>{r,r+4,r+7} ↔ {r,r+3,r+7}</code></td><td>C장조 {C,E,G} → C단조 {C,E♭,G}</td><td>위쪽 변으로 뒤집기</td></tr>
+                    <tr><td><strong>L</strong></td><td>근음 (−1 반음)</td><td><code>{r,r+4,r+7} → {r+4,r+7,r+11}</code></td><td>C장조 {C,E,G} → E단조 {E,G,B}</td><td>오른쪽 변으로 뒤집기</td></tr>
+                    <tr><td><strong>R</strong></td><td>5도음 (+2 반음)</td><td><code>{r,r+4,r+7} → {r,r+4,r+9}</code></td><td>C장조 {C,E,G} → A단조 {A,C,E}</td><td>왼쪽 변으로 뒤집기</td></tr>
+                  </tbody>
+                </table>
+                <p>각 연산은 자기 역원입니다: P(P(x))=x, L(L(x))=x, R(R(x))=x.
+                <strong>P</strong>는 근음을, <strong>L</strong>은 단3도를, <strong>R</strong>은 장3도를 보존합니다.</p>
+                <h5 style="margin-top:14px">합성 연산 (N, S, H)</h5>
+                <table class="table table-condensed table-bordered" style="font-size:12px">
+                  <thead><tr><th style="width:36px">연산</th><th>합성</th><th>예시 (C장조 → ?)</th><th>성격</th></tr></thead>
+                  <tbody>
+                    <tr><td><strong>N</strong></td><td>R → L → P</td><td>C장조 → F단조</td><td>Nebenverwandt — 완전4도 아래 인접 화음</td></tr>
+                    <tr><td><strong>S</strong></td><td>L → P → R</td><td>C장조 → D♭장조</td><td>Slide — 근음이 반음 이동, 장단 유지</td></tr>
+                    <tr><td><strong>H</strong></td><td>L → P → L</td><td>C장조 → A♭장조</td><td>헥사토닉 극점 — 3온음 위치 화음, 장단 동일</td></tr>
+                  </tbody>
+                </table>
+                <p style="font-size:11px;color:#888">
+                  <strong>데모에서:</strong> 음이 켜진 상태(재생 중 포함)에서 버튼을 누릅니다.
+                  현재 화음을 장/단 삼화음으로 인식한 후 연산을 적용하며, 결과가 2.5초 flash됩니다.
+                  오버레이에 결과 이름(예: <em>L → E단조</em>)이 잠시 표시됩니다.
+                </p>
+              </div>
             </div>
           </div>
 
-          <!-- ── Transpositions ─────────────────────────────────────── -->
+          <!-- Transpositions -->
           <div class="panel panel-default">
             <div class="panel-heading">
-              <strong>Transpositions</strong>
-              <span class="text-muted" style="font-size:12px;margin-left:8px">T<sub>n</sub></span>
+              <span class="en"><strong>Transpositions</strong> <span class="text-muted" style="font-size:12px">T<sub>n</sub></span></span>
+              <span class="ko"><strong>이조 (Transposition)</strong> <span class="text-muted" style="font-size:12px">T<sub>n</sub></span></span>
             </div>
             <div class="panel-body" style="font-size:13px">
-              <p>
-                A transposition T<sub>n</sub> shifts every pitch class by <em>n</em> semitones
-                modulo 12 — the simplest and most familiar musical transformation.
-              </p>
-              <p style="background:#f8f8f8;padding:8px 12px;border-left:3px solid #ccc;font-family:monospace;font-size:12px">
-                T<sub>n</sub>(p) = (p + n) mod 12
-              </p>
-              <p>
-                On the Tonnetz, T<sub>n</sub> slides the entire highlighted region
-                along one of the grid's axes:
-              </p>
-              <ul style="font-size:12px">
-                <li><strong>±1</strong> — chromatic semitone (m2); diagonal move</li>
-                <li><strong>±7</strong> — perfect fifth (P5); horizontal move in Riemannian layout</li>
-                <li><strong>±12</strong> — octave; all pitch classes unchanged visually (audio shifts one octave)</li>
-              </ul>
-              <p>
-                <strong>Continuous effect:</strong> unlike the one-shot PLR operations, the
-                transposition offset persists and is applied to every subsequent MIDI note.
-                Use the <strong>0</strong> (reset) button to return to the original key.
-              </p>
-              <p style="font-size:11px;color:#888">
-                <em>Example:</em> hibari is in G major. T<sub>+5</sub> (= T<sub>−7</sub>) transposes it to C major.
-                On the Tonnetz the whole lit pattern shifts five steps to the left.
-              </p>
+              <div class="en">
+                <p>A transposition T<sub>n</sub> shifts every pitch class by <em>n</em> semitones modulo 12 — the simplest and most familiar musical transformation.</p>
+                <p style="background:#f8f8f8;padding:8px 12px;border-left:3px solid #ccc;font-family:monospace;font-size:12px">T<sub>n</sub>(p) = (p + n) mod 12</p>
+                <p>On the Tonnetz, T<sub>n</sub> slides the entire highlighted region along one of the grid's axes:</p>
+                <ul style="font-size:12px">
+                  <li><strong>±1</strong> — chromatic semitone (m2); diagonal move</li>
+                  <li><strong>±7</strong> — perfect fifth (P5); horizontal move in Riemannian layout</li>
+                  <li><strong>±12</strong> — octave; pitch classes unchanged visually (audio shifts one octave)</li>
+                </ul>
+                <p><strong>Continuous effect:</strong> unlike the one-shot PLR operations, the transposition offset persists. Use the <strong>0</strong> (reset) button to return to the original key.</p>
+                <p style="font-size:11px;color:#888"><em>Example:</em> hibari is in G major. T<sub>+5</sub> transposes it to C major. The lit pattern shifts five steps left on the Tonnetz.</p>
+              </div>
+              <div class="ko">
+                <p>이조 T<sub>n</sub>은 모든 음높이 클래스를 <em>n</em> 반음만큼 이동시킵니다 (mod 12) — 가장 기본적이고 친숙한 음악적 변환입니다.</p>
+                <p style="background:#f8f8f8;padding:8px 12px;border-left:3px solid #ccc;font-family:monospace;font-size:12px">T<sub>n</sub>(p) = (p + n) mod 12</p>
+                <p>Tonnetz 위에서 T<sub>n</sub>은 점등된 전체 영역을 격자의 한 축 방향으로 이동시킵니다:</p>
+                <ul style="font-size:12px">
+                  <li><strong>±1</strong> — 반음 (m2); 대각선 방향 이동</li>
+                  <li><strong>±7</strong> — 완전5도 (P5); 리만 레이아웃에서 수평 이동</li>
+                  <li><strong>±12</strong> — 옥타브; 음높이 클래스 시각적으로 동일 (오디오만 한 옥타브 이동)</li>
+                </ul>
+                <p><strong>연속 효과:</strong> PLR의 일회성 연산과 달리, 이조 오프셋은 지속됩니다. <strong>0</strong> (초기화) 버튼으로 원래 조성으로 돌아옵니다.</p>
+                <p style="font-size:11px;color:#888"><em>예시:</em> hibari는 G장조입니다. T<sub>+5</sub>를 적용하면 C장조로 이조됩니다. Tonnetz 위 점등 패턴이 왼쪽으로 다섯 칸 이동합니다.</p>
+              </div>
             </div>
           </div>
 
-          <!-- ── Inversions ─────────────────────────────────────────── -->
+          <!-- Inversions -->
           <div class="panel panel-default">
             <div class="panel-heading">
-              <strong>Inversions</strong>
-              <span class="text-muted" style="font-size:12px;margin-left:8px">I<sub>n</sub></span>
+              <span class="en"><strong>Inversions</strong> <span class="text-muted" style="font-size:12px">I<sub>n</sub></span></span>
+              <span class="ko"><strong>반전 (Inversion)</strong> <span class="text-muted" style="font-size:12px">I<sub>n</sub></span></span>
             </div>
             <div class="panel-body" style="font-size:13px">
-              <p>
-                An inversion I<sub>n</sub> reflects all pitch classes around an <em>axis</em> n.
-                It is the combination of a transposition and a "mirror flip" of the pitch-class circle.
-              </p>
-              <p style="background:#f8f8f8;padding:8px 12px;border-left:3px solid #ccc;font-family:monospace;font-size:12px">
-                I<sub>n</sub>(p) = (n − p) mod 12 &nbsp;&nbsp; [equivalently: (2n − p) mod 12]
-              </p>
-
-              <p>Key properties:</p>
-              <ul style="font-size:12px">
-                <li>I<sub>n</sub> is its own inverse: applying it twice returns to the original.</li>
-                <li>It maps a <strong>major triad to a minor triad</strong> of the same quality class —
-                    the harmonic "shape" is preserved but mirrored.</li>
-                <li>The axis n acts as a "fixed point" of the reflection on the pitch-class circle:
-                    if p = n then I<sub>n</sub>(p) = p.</li>
-              </ul>
-
-              <table class="table table-condensed table-bordered" style="font-size:12px;margin-top:10px">
-                <thead><tr><th>Axis</th><th>Maps C major {C,E,G} to…</th><th>Musical interpretation</th></tr></thead>
-                <tbody>
-                  <tr><td>I<sub>0</sub> (C)</td><td>{C, A♭, F} = F min</td><td>Invert around C</td></tr>
-                  <tr><td>I<sub>4</sub> (E)</td><td>{E, C, A} = A min</td><td>Invert around E (= Relative minor)</td></tr>
-                  <tr><td>I<sub>7</sub> (G)</td><td>{G, E♭, C} = C min</td><td>Invert around G (= Parallel)</td></tr>
-                  <tr><td>I<sub>11</sub> (B)</td><td>{B, G, E} = E min</td><td>Invert around B (= Leading-tone)</td></tr>
-                </tbody>
-              </table>
-
-              <p style="font-size:11px;color:#888">
-                Notice: I<sub>4</sub> = R, I<sub>7</sub> = P, I<sub>11</sub> = L when applied to major triads.
-                The Neo-Riemannian operations P, L, R are in fact <em>special cases</em> of pitch-class inversion.
-                On the Tonnetz, inversion corresponds to a <strong>global reflection</strong> of the grid
-                rather than a local edge-flip.
-              </p>
-
-              <p style="font-size:11px;color:#888">
-                <strong>In the demo:</strong> toggle ON and click an axis note name.
-                All subsequent MIDI events are remapped by I<sub>n</sub>.
-                Combine with a transposition offset to reach any inversion in the standard TI-group.
-              </p>
+              <div class="en">
+                <p>An inversion I<sub>n</sub> reflects all pitch classes around an <em>axis</em> n — the combination of transposition and a mirror flip of the pitch-class circle.</p>
+                <p style="background:#f8f8f8;padding:8px 12px;border-left:3px solid #ccc;font-family:monospace;font-size:12px">I<sub>n</sub>(p) = (2n − p) mod 12</p>
+                <ul style="font-size:12px">
+                  <li>I<sub>n</sub> is its own inverse: applying it twice returns to the original.</li>
+                  <li>It maps a <strong>major triad to a minor triad</strong> — the harmonic shape is preserved but mirrored.</li>
+                  <li>The axis n acts as a fixed point: if p = n then I<sub>n</sub>(p) = p.</li>
+                </ul>
+                <table class="table table-condensed table-bordered" style="font-size:12px;margin-top:10px">
+                  <thead><tr><th>Axis</th><th>Maps C major {C,E,G} to…</th><th>Musical interpretation</th></tr></thead>
+                  <tbody>
+                    <tr><td>I<sub>0</sub> (C)</td><td>{C, A♭, F} = F min</td><td>Invert around C</td></tr>
+                    <tr><td>I<sub>4</sub> (E)</td><td>{E, C, A} = A min</td><td>= R (Relative)</td></tr>
+                    <tr><td>I<sub>7</sub> (G)</td><td>{G, E♭, C} = C min</td><td>= P (Parallel)</td></tr>
+                    <tr><td>I<sub>11</sub> (B)</td><td>{B, G, E} = E min</td><td>= L (Leading-tone)</td></tr>
+                  </tbody>
+                </table>
+                <p style="font-size:11px;color:#888">Notice: I<sub>4</sub> = R, I<sub>7</sub> = P, I<sub>11</sub> = L when applied to major triads. The Neo-Riemannian operations are <em>special cases</em> of pitch-class inversion. On the Tonnetz, inversion corresponds to a <strong>global reflection</strong> of the grid rather than a local edge-flip.</p>
+                <p style="font-size:11px;color:#888"><strong>In the demo:</strong> toggle ON and click an axis note. All subsequent MIDI events are remapped by I<sub>n</sub>. Combine with transpose to reach any inversion in the standard TI-group.</p>
+              </div>
+              <div class="ko">
+                <p>반전 I<sub>n</sub>은 모든 음높이 클래스를 축 n을 중심으로 반사시킵니다 — 이조와 음높이 클래스 원의 거울 뒤집기를 결합한 변환입니다.</p>
+                <p style="background:#f8f8f8;padding:8px 12px;border-left:3px solid #ccc;font-family:monospace;font-size:12px">I<sub>n</sub>(p) = (2n − p) mod 12</p>
+                <ul style="font-size:12px">
+                  <li>I<sub>n</sub>은 자기 역원입니다: 두 번 적용하면 원래로 돌아옵니다.</li>
+                  <li><strong>장화음을 단화음으로</strong> 대응시킵니다 — 화성적 형태는 보존되지만 거울처럼 뒤집힙니다.</li>
+                  <li>축 n은 고정점 역할을 합니다: p = n이면 I<sub>n</sub>(p) = p.</li>
+                </ul>
+                <table class="table table-condensed table-bordered" style="font-size:12px;margin-top:10px">
+                  <thead><tr><th>축</th><th>C장조 {C,E,G}의 대응</th><th>음악적 해석</th></tr></thead>
+                  <tbody>
+                    <tr><td>I<sub>0</sub> (C)</td><td>{C, A♭, F} = F단조</td><td>C 축 반전</td></tr>
+                    <tr><td>I<sub>4</sub> (E)</td><td>{E, C, A} = A단조</td><td>= R (관계조 전환)</td></tr>
+                    <tr><td>I<sub>7</sub> (G)</td><td>{G, E♭, C} = C단조</td><td>= P (동명조 전환)</td></tr>
+                    <tr><td>I<sub>11</sub> (B)</td><td>{B, G, E} = E단조</td><td>= L (이끔음 교환)</td></tr>
+                  </tbody>
+                </table>
+                <p style="font-size:11px;color:#888">핵심: I<sub>4</sub> = R, I<sub>7</sub> = P, I<sub>11</sub> = L (장화음에 적용 시). 신리만 연산 P/L/R은 사실 음높이 클래스 반전의 <em>특수한 경우</em>입니다. Tonnetz 위에서 반전은 국소적 변 뒤집기가 아닌 <strong>격자 전체의 반사</strong>에 해당합니다.</p>
+                <p style="font-size:11px;color:#888"><strong>데모에서:</strong> ON 토글 후 축 음이름을 클릭합니다. 이후 모든 MIDI 이벤트에 I<sub>n</sub>이 적용됩니다. 이조 오프셋과 조합하면 표준 TI-군의 모든 반전에 도달할 수 있습니다.</p>
+              </div>
             </div>
           </div>
 
@@ -713,7 +720,7 @@
 
       <!-- Group 1: Neo-Riemannian P/L/R -->
       <div class="tx-group">
-        <div class="tx-label">Neo-Riemannian
+        <div class="tx-label"><span class="en">Neo-Riemannian</span><span class="ko">신리만 변환</span>
           <span id="plrResult" class="tx-result"></span>
         </div>
         <div class="tx-row">
@@ -728,7 +735,7 @@
 
       <!-- Group 2: Transpositions -->
       <div class="tx-group">
-        <div class="tx-label">Transpose &nbsp;<span id="txOffset" class="tx-value">+0</span></div>
+        <div class="tx-label"><span class="en">Transpose</span><span class="ko">이조</span> &nbsp;<span id="txOffset" class="tx-value">+0</span></div>
         <div class="tx-row">
           <button class="tx-btn" id="txM12">−12</button>
           <button class="tx-btn" id="txM7">−7</button>
@@ -743,8 +750,8 @@
       <!-- Group 3: Inversions -->
       <div class="tx-group">
         <div class="tx-label">
-          Invert &nbsp;<button id="txInvToggle" class="tx-toggle btn-default">OFF</button>
-          &nbsp;<span class="tx-sublabel">axis:</span>
+          <span class="en">Invert</span><span class="ko">반전</span> &nbsp;<button id="txInvToggle" class="tx-toggle btn-default">OFF</button>
+          &nbsp;<span class="tx-sublabel"><span class="en">axis:</span><span class="ko">축:</span></span>
         </div>
         <div class="tx-row" id="txAxisRow">
           <!-- 12 axis buttons generated by main.js -->
@@ -755,7 +762,7 @@
 
     <!-- ── Interval overlay (always visible on canvas) ───────────── -->
     <div id="interval-overlay">
-      <div class="int-title">Interval &nbsp;(a + b + c = 12)</div>
+      <div class="int-title"><span class="en">Interval</span><span class="ko">인터벌</span> &nbsp;(a + b + c = 12)</div>
       <button class="int-btn active" data-ab="3,4">
         <span class="int-nums">(3, 4, 5)</span>
         <span class="int-name">Standard <span class="int-default">★</span></span>
@@ -840,9 +847,10 @@
     <script src="color-schemes/greenonblack.js"></script>
     <script src="color-schemes/apollo.js"></script>
 
-    <!-- Embedded MIDI + transform engine (load before main.js) -->
+    <!-- Embedded MIDI + transform engine + i18n (load before main.js) -->
     <script src="js/hibari_midi.js"></script>
     <script src="js/transforms.js"></script>
+    <script src="js/i18n.js"></script>
 
     <script src="js/main.js"></script>
     <script src="js/midifile.js"></script>

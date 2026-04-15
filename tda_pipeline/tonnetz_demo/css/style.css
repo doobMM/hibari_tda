@@ -377,3 +377,15 @@ a:link.external:after {
 #interval-overlay .int-btn.active .int-ivals {
   color: #99a;
 }
+
+/* ── Language toggle ────────────────────────────────────────────── */
+.ko { display: none; }
+
+body.lang-ko .ko { display: revert; }
+body.lang-ko .en { display: none; }
+
+#langToggle {
+  margin-top: 8px;
+  font-size: 11px;
+  padding: 2px 8px;
+}
