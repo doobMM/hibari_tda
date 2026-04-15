@@ -1,3 +1,13 @@
+/* ── Preloaded song buttons ─────────────────────────────────────── */
+#preloadedSongs .preload-btn {
+  font-size: 11px;
+  padding: 2px 8px;
+  line-height: 1.5;
+}
+#preloadedSongs .preload-btn.btn-success {
+  font-weight: 600;
+}
+
 a:link.external:after {
   font-family: 'FontAwesome';
   font-style: normal;
@@ -384,22 +394,47 @@ a:link.external:after {
 body.lang-ko .ko { display: revert; }
 body.lang-ko .en { display: none; }
 
-#langToggle {
+/* Two-tab segmented language switcher */
+#langTabs {
   position: fixed;
   top: 7px;
   right: 12px;
   z-index: 1010;        /* above navbar (1000), below modals */
-  background: rgba(255, 255, 255, 0.13);
-  color: #ddd;
+  display: flex;
   border: 1px solid rgba(255, 255, 255, 0.28);
   border-radius: 4px;
+  overflow: hidden;
+}
+
+.lang-tab {
+  background: rgba(255, 255, 255, 0.08);
+  color: #999;
+  border: none;
   font-size: 11px;
-  padding: 3px 10px;
+  padding: 3px 9px;
   cursor: pointer;
   transition: background 0.15s, color 0.15s;
   white-space: nowrap;
+  font-family: inherit;
+  line-height: 1.4;
 }
-#langToggle:hover {
-  background: rgba(255, 255, 255, 0.28);
+.lang-tab:first-child {
+  border-right: 1px solid rgba(255, 255, 255, 0.18);
+}
+.lang-tab:hover {
+  background: rgba(255, 255, 255, 0.22);
+  color: #fff;
+}
+/* Active state: driven by body.lang-ko */
+.lang-tab[data-lang="en"] {
+  background: rgba(90, 150, 255, 0.38);
+  color: #fff;
+}
+body.lang-ko .lang-tab[data-lang="en"] {
+  background: rgba(255, 255, 255, 0.08);
+  color: #999;
+}
+body.lang-ko .lang-tab[data-lang="ko"] {
+  background: rgba(90, 150, 255, 0.38);
   color: #fff;
 }

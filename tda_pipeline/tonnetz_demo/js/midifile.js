@@ -6,7 +6,7 @@
  *   - @tonejs/midi     (global: Midi)
  *   - window.tonnetz   (set in main.js)
  *   - window.transforms (from transforms.js — optional, graceful fallback)
- *   - window.HIBARI_MIDI_B64 (from hibari_midi.js — optional auto-load)
+ *   - window.PRELOADED_MIDI  (from preloaded_midi.js — optional auto-load)
  *
  * Public API:
  *   loadAndPlayMidi(arrayBuffer | File)
@@ -147,18 +147,22 @@
     setStatus('Stopped', 'default');
   }
 
-  // ── HIBARI auto-load from embedded base64 ─────────────────────────
-  function loadHibariPreload() {
-    if (typeof HIBARI_MIDI_B64 === 'undefined') return;
-    try {
-      var raw    = atob(HIBARI_MIDI_B64);
-      var bytes  = new Uint8Array(raw.length);
-      for (var i = 0; i < raw.length; i++) bytes[i] = raw.charCodeAt(i);
-      window._hibariBuffer = bytes.buffer;
-      setStatus('hibari ready ▶', 'info');
-    } catch (e) {
-      console.warn('hibari preload failed:', e);
-    }
+  // ── Preloaded songs — decode all PRELOADED_MIDI entries ───────────
+  function loadAllPreloaded() {
+    if (typeof PRELOADED_MIDI === 'undefined') return;
+    window._preloadedBuffers = {};
+    Object.keys(PRELOADED_MIDI).forEach(function (key) {
+      try {
+        var raw   = atob(PRELOADED_MIDI[key].b64);
+        var bytes = new Uint8Array(raw.length);
+        for (var i = 0; i < raw.length; i++) bytes[i] = raw.charCodeAt(i);
+        window._preloadedBuffers[key] = bytes.buffer;
+        if (key === 'hibari') window._hibariBuffer = bytes.buffer; // backward compat
+      } catch (e) {
+        console.warn('preload failed:', key, e);
+      }
+    });
+    setStatus('songs ready ▶', 'info');
   }
 
   // ── Recording ─────────────────────────────────────────────────────
@@ -221,18 +225,28 @@
   // ── Wire up after DOM ready ───────────────────────────────────────
   document.addEventListener('DOMContentLoaded', function () {
 
-    // Preload embedded hibari
-    loadHibariPreload();
+    // Decode all preloaded songs
+    loadAllPreloaded();
 
-    // Play hibari (preloaded) button
-    var hibariBtn = ui('playHibariBtn');
-    if (hibariBtn) {
-      hibariBtn.addEventListener('click', function () {
-        if (window._hibariBuffer) {
-          loadAndPlayMidi(window._hibariBuffer.slice(0)); // slice = fresh copy
-        } else {
-          setStatus('hibari not preloaded', 'danger');
+    // Preloaded song buttons (event delegation on #preloadedSongs)
+    var songsContainer = ui('preloadedSongs');
+    if (songsContainer) {
+      songsContainer.addEventListener('click', function (e) {
+        var btn = e.target.closest ? e.target.closest('.preload-btn') : null;
+        if (!btn) return;
+        var key = btn.getAttribute('data-key');
+        if (!window._preloadedBuffers || !window._preloadedBuffers[key]) {
+          setStatus(key + ' not loaded', 'danger');
+          return;
         }
+        // Highlight active button
+        songsContainer.querySelectorAll('.preload-btn').forEach(function (b) {
+          b.classList.remove('btn-success');
+          b.classList.add('btn-default');
+        });
+        btn.classList.remove('btn-default');
+        btn.classList.add('btn-success');
+        loadAndPlayMidi(window._preloadedBuffers[key].slice(0));
       });
     }
 
@@ -240,9 +254,12 @@
     ui('playBtn').addEventListener('click', function () {
       var file = ui('midiFileInput').files[0];
       if (!file) {
-        // Fall back to preloaded hibari if no file chosen
-        if (window._hibariBuffer) {
-          loadAndPlayMidi(window._hibariBuffer.slice(0));
+        // Fall back to first available preloaded song
+        var buf = window._preloadedBuffers;
+        var fallbackKey = buf && (buf['bach'] || buf['ravel'] || buf['clair']);
+        if (fallbackKey) {
+          var key = buf['bach'] ? 'bach' : (buf['ravel'] ? 'ravel' : 'clair');
+          loadAndPlayMidi(buf[key].slice(0));
         } else {
           setStatus('No file selected', 'danger');
         }

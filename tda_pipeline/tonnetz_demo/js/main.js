@@ -158,9 +158,9 @@ $(function(){
     tonnetz.panic();
   });
 
-  // Language toggle — button text is handled by .en/.ko CSS, no JS needed
-  $('#langToggle').click(function() {
-    if (window.i18n) window.i18n.toggle();
+  // Language tabs — two always-visible buttons (ENG / KOR)
+  $('#langTabs').on('click', '.lang-tab', function() {
+    if (window.i18n) window.i18n.setLang($(this).data('lang'));
   });
 
   $('[data-toggle="tooltip"]').tooltip();
