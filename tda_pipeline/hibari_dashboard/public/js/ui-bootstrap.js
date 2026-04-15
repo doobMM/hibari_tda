@@ -23,6 +23,7 @@
     refEditor: null,
     editEditor: null,
     data: null,
+    ood: null,        // OODDetector 인스턴스
   };
 
   // ── 로그/상태 유틸 ──────────────────────────────────────────────────
@@ -94,6 +95,39 @@
 
   function updateRefMeta(editor) {
     $('refMeta').textContent = `T=${editor.T} × K=${editor.K}`;
+  }
+
+  // ── OOD 배너 갱신 ───────────────────────────────────────────────────
+  const LEVEL_LABEL = {
+    stable: '안정',
+    normal: '정상',
+    warn: '주의',
+    danger: '경고',
+  };
+
+  function updateOODBanner(editor) {
+    if (!UI.ood) return;
+    const banner = $('oodBanner');
+    const scoreEl = $('oodScore');
+    const levelEl = $('oodLevel');
+    const detailEl = $('oodDetail');
+    if (!banner || !scoreEl || !levelEl || !detailEl) return;
+
+    const s = UI.ood.score(editor.getMatrix());
+
+    banner.classList.remove('ood-hidden', 'level-warn', 'level-danger');
+    // 편집이 전혀 없으면 배너 숨김 (stable + diff=0)
+    if (s.diffCount === 0) {
+      banner.classList.add('ood-hidden');
+      return;
+    }
+    if (s.level === 'warn') banner.classList.add('level-warn');
+    if (s.level === 'danger') banner.classList.add('level-danger');
+
+    // 숫자는 0~1 을 %로
+    scoreEl.textContent = (s.score * 100).toFixed(1) + '%';
+    levelEl.textContent = LEVEL_LABEL[s.level] || s.level;
+    detailEl.textContent = s.detail;
   }
 
   // ── Hover tooltip ───────────────────────────────────────────────────
@@ -454,6 +488,15 @@
       });
       updateRefMeta(UI.refEditor);
 
+      // OOD detector: 참조 + cycle persistence 로 초기화
+      if (window.OODDetector) {
+        UI.ood = new window.OODDetector({
+          reference: values,
+          T, K,
+          cycles: data.cyclesMeta.cycles,
+        });
+      }
+
       // 편집 editor: 상호작용
       const restored = loadEditState(T, K);
       const initVals = restored || values; // 복구 실패 시 참조 복사
@@ -464,10 +507,12 @@
         readonly: false,
         onChange: (ed) => {
           updateEditMeta(ed);
+          updateOODBanner(ed);
           saveEditState(ed);
         },
       });
       updateEditMeta(UI.editEditor);
+      updateOODBanner(UI.editEditor);
 
       // hover tooltip
       const tt = $('hoverTooltip');
