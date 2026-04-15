@@ -19,7 +19,7 @@ var audio = (function() {
   Note.prototype.start = function() {
     this.oscillator.start();
     this.gain.gain.setValueAtTime(0, this.ctx.currentTime);
-    this.gain.gain.linearRampToValueAtTime(1, this.ctx.currentTime + this.attack);
+    this.gain.gain.linearRampToValueAtTime(0.5, this.ctx.currentTime + this.attack);
   };
 
   Note.prototype.stop = function() {
