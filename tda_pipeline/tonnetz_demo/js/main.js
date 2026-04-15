@@ -106,6 +106,11 @@ $(function(){
   $('input[type=radio][name=layout]').change(function() {
     tonnetz.setLayout($(this).val());
   });
+
+  $('#intervalPreset').change(function() {
+    var parts = $(this).val().split(',');
+    tonnetz.setIntervals(parseInt(parts[0], 10), parseInt(parts[1], 10));
+  });
   $('input[type=radio][name=kbd-layout]').change(function() {
     keyboard.layout = $(this).val();
     tonnetz.panic();

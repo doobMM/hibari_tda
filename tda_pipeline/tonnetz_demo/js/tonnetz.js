@@ -21,6 +21,11 @@ var tonnetz = (function() {
   module.layout = LAYOUT_RIEMANN;
   module.unitCellVisible = false;
 
+  // ── (a, b, c) interval parameters ────────────────────────────────
+  // 6 directions of the hex grid: a, b, c=a+b and their complements.
+  // Default: (3, 4, 7) = minor third / major third / perfect fifth.
+  var iA = 3, iB = 4, iC = 7;
+
   var toneGrid = [];
   var tones;
   var channels;
@@ -187,6 +192,13 @@ var tonnetz = (function() {
     this.rebuild();
   };
 
+  module.setIntervals = function(a, b) {
+    iA = ((a % 12) + 12) % 12;
+    iB = ((b % 12) + 12) % 12;
+    iC = (iA + iB) % 12;
+    this.rebuild();
+  };
+
   module.toggleUnitCell = function() {
     this.unitCellVisible = !this.unitCellVisible;
     this.draw();
@@ -288,17 +300,18 @@ var tonnetz = (function() {
 
   // Compute the (dx, dy) offset for a single Tonnetz interval step,
   // respecting the current layout (Riemann vs Sonome).
+  // Maps a semitone interval to a hex-grid XY offset.
+  // The 6 directions correspond to (iA, iB, iC) and their complements.
   var cycleStepOffset = function(diff) {
     var r;
-    switch (diff) {
-      case 3: r = {x: -0.5*SQRT_3*u, y: -0.5*u}; break;
-      case 4: r = {x:  0.5*SQRT_3*u, y: -0.5*u}; break;
-      case 7: r = {x:  0,            y: -1.0*u}; break;
-      case 9: r = {x:  0.5*SQRT_3*u, y:  0.5*u}; break;
-      case 8: r = {x: -0.5*SQRT_3*u, y:  0.5*u}; break;
-      case 5: r = {x:  0,            y:  1.0*u}; break;
-      default: r = {x: 0, y: 0};
-    }
+    var d = ((diff % 12) + 12) % 12;
+    if      (d === iA)          r = {x: -0.5*SQRT_3*u, y: -0.5*u};
+    else if (d === iB)          r = {x:  0.5*SQRT_3*u, y: -0.5*u};
+    else if (d === iC)          r = {x:  0,            y: -1.0*u};
+    else if (d === (12-iA)%12)  r = {x:  0.5*SQRT_3*u, y:  0.5*u};
+    else if (d === (12-iB)%12)  r = {x: -0.5*SQRT_3*u, y:  0.5*u};
+    else if (d === (12-iC)%12)  r = {x:  0,            y:  1.0*u};
+    else                        r = {x: 0, y: 0};
     if (module.layout === LAYOUT_RIEMANN) {
       r = {x: -r.y, y: r.x};
     }
@@ -328,6 +341,8 @@ var tonnetz = (function() {
   // Alpha scales with activation: idle → dim, partial → medium, all-on → full glow.
   var drawCycleOverlays = function() {
     if (!module.cyclesVisible) return;
+    // H1 cycles are defined for standard (3,4,7) intervals only.
+    if (iA !== 3 || iB !== 4) return;
 
     ctx.save();
     ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -401,9 +416,9 @@ var tonnetz = (function() {
     for (var tone=0; tone<12; tone++) {
       var c = tones[tone].cache;
 
-      var leftNeighbor = (tone+3)%12;
-      var rightNeighbor = (tone+4)%12;
-      var topNeighbor = (tone+7)%12;
+      var leftNeighbor = (tone+iA)%12;
+      var rightNeighbor = (tone+iB)%12;
+      var topNeighbor = (tone+iC)%12;
 
       c.leftPos = getNeighborXYDiff(tone, leftNeighbor);
       c.rightPos = getNeighborXYDiff(tone, rightNeighbor);
@@ -551,24 +566,9 @@ var tonnetz = (function() {
     ctx.stroke();
   };
 
-  var getNeighborXYDiff = function(t1, t2){
-    var diff = (t2-t1+12)%12;
-
-    var result;
-    switch (diff){
-      case 3: result = {x: -0.5*SQRT_3*u, y: -0.5*u}; break;
-      case 7: result = {x: 0, y: -1*u}; break;
-      case 4: result = {x: 0.5*SQRT_3*u, y: -0.5*u}; break;
-      case 9: result = {x: 0.5*SQRT_3*u, y: 0.5*u}; break;
-      case 5: result = {x: 0, y: 1*u}; break;
-      case 8: result = {x: -0.5*SQRT_3*u, y: 0.5*u}; break;
-    }
-
-    if (module.layout == LAYOUT_RIEMANN) {
-      result = {x: -result.y, y: result.x};
-    }
-
-    return result;
+  // Reuses cycleStepOffset — same logic, just computed from two pitch classes.
+  var getNeighborXYDiff = function(t1, t2) {
+    return cycleStepOffset((t2 - t1 + 12) % 12);
   };
 
   var createLabel = function(text, x, y) {
@@ -613,6 +613,8 @@ var tonnetz = (function() {
   };
 
   var drawUnitCell = function(ctx) {
+    // Unit cell geometry is only valid for standard (3,4,7) intervals.
+    if (iA !== 3 || iB !== 4) return;
     var closest = getNeighborXYDiff(0,3);
     setTranslate(ctx, W/2-closest.x, H/2-closest.y);
 
@@ -654,11 +656,11 @@ var tonnetz = (function() {
       var uH = Math.ceil(H/yUnit);
       for(var j=-Math.floor(uW/2+1); j<=Math.floor(uW/2+1); j++){
         for(var i=-Math.floor(uH/2+1); i<=Math.floor(uH/2+1); i++){
-          addNode(((i-7*j)%12 + 12)%12,
+          addNode(((i-iC*j)%12 + 12)%12,
                   W/2 - j*u,
                   H/2 + i*yUnit);
 
-          addNode(((i-7*j)%12 + 12 + 4)%12,
+          addNode(((i-iC*j)%12 + 12 + iB)%12,
                   W/2 - (j - 0.5)*u,
                   H/2 + (i + 0.5)*yUnit);
         }
@@ -670,11 +672,11 @@ var tonnetz = (function() {
 
       for (var j=-Math.floor(uH/2+1); j<=Math.floor(uH/2+1); j++) {
         for (var i=-Math.floor(uW/2+1); i<=Math.floor(uW/2+1); i++) {
-          addNode(((i-7*j)%12 + 12)%12,
+          addNode(((i-iC*j)%12 + 12)%12,
                   W/2 + i*xUnit,
                   H/2 + j*u);
 
-          addNode(((i-7*j)%12 + 12 + 4)%12,
+          addNode(((i-iC*j)%12 + 12 + iB)%12,
                   W/2 + (i + 0.5)*xUnit,
                   H/2 + (j - 0.5)*u);
         }
