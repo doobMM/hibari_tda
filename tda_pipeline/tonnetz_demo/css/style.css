@@ -210,6 +210,8 @@ a:link.external:after {
   margin: 0;
   padding: 0;
   overflow: hidden;
+  touch-action: none;   /* prevent scroll/zoom on canvas */
+  cursor: crosshair;    /* hint: canvas is interactive */
 }
 
 

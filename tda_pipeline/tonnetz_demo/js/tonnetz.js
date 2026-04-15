@@ -177,6 +177,21 @@ var tonnetz = (function() {
     return pcs;
   };
 
+  // Returns pitch class (0-11) of the Tonnetz node nearest to canvas coords (x, y).
+  // Used by touch.js for tap/click-to-play.
+  module.pitchFromXY = function(x, y) {
+    var best = -1, bestDist = Infinity;
+    for (var pc = 0; pc < 12; pc++) {
+      for (var i = 0; i < toneGrid[pc].length; i++) {
+        var node = toneGrid[pc][i];
+        var dx = node.x - x, dy = node.y - y;
+        var d2 = dx*dx + dy*dy;
+        if (d2 < bestDist) { bestDist = d2; best = pc; }
+      }
+    }
+    return best;
+  };
+
   module.setDensity = function(density) {
     if (isFinite(density) && density >= 5 && density <= 50) {
       this.density = density;
