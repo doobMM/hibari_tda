@@ -181,18 +181,189 @@
       });
     }
 
-    // Phase 4 대기 버튼들
-    $('btnGenerate').addEventListener('click', () => {
-      log('[Phase 4] 생성·재생 — 아직 미구현', 'WIP');
-    });
-    $('btnStop').addEventListener('click', () => log('정지 (대기 중)'));
-    $('btnDownloadMidi').addEventListener('click', () => {
-      log('[Phase 4] MIDI 저장 — 아직 미구현', 'WIP');
-    });
-    $('btnPlayOriginal').addEventListener('click', () => {
-      log('[Phase 4] 원곡 재생 — 아직 미구현', 'WIP');
-    });
-    $('btnStopOriginal').addEventListener('click', () => log('정지 (대기 중)'));
+    // Phase 4 생성·재생 버튼
+    $('btnGenerate').addEventListener('click', onClickGenerate);
+    $('btnStop').addEventListener('click', onClickStop);
+    $('btnDownloadMidi').addEventListener('click', onClickDownloadMidi);
+    $('btnPlayOriginal').addEventListener('click', onClickPlayOriginal);
+    $('btnStopOriginal').addEventListener('click', onClickStopOriginal);
+  }
+
+  // ── Phase 4: 생성·재생 로직 ─────────────────────────────────────────
+  const playState = {
+    lastGenerated: null,      // { notes: [[startEighth, pitch, endEighth]], meta: {...} }
+    lastOriginalNotes: null,  // [[startSec, pitch, endSec, vel], ...]
+    genPlayer: null,
+    origPlayer: null,
+    bpm: 60,                  // 생성 MIDI 기본 tempo
+  };
+
+  function ensurePlayer(kind) {
+    const k = kind === 'orig' ? 'origPlayer' : 'genPlayer';
+    if (!playState[k]) playState[k] = new window.PianoPlayer();
+    return playState[k];
+  }
+
+  function setProgress(frac, meta) {
+    const bar = $('progressFill');
+    if (!bar) return;
+    const p = Math.max(0, Math.min(1, frac));
+    bar.style.width = (p * 100).toFixed(2) + '%';
+    if (meta != null) $('playbackMeta').textContent = meta;
+  }
+
+  // 8분음표 → seconds 변환 (bpm: quarter = 60/bpm, 8th = 30/bpm)
+  function eighthsToSec(eighths, bpm) {
+    return eighths * (30 / bpm);
+  }
+
+  // 생성 버튼
+  function onClickGenerate() {
+    if (!UI.editEditor || !UI.data) { log('데이터 미로드', 'ERR'); return; }
+    if (!window.GenerationAlgo1) { log('GenerationAlgo1 모듈 미로드', 'ERR'); return; }
+
+    const algo = document.querySelector('input[name="algo"]:checked')?.value || 'algo1';
+    const temperature = parseFloat($('sliderTemp').value) || 3.0;
+    const seed = parseInt($('sliderSeed').value, 10) || 0;
+
+    if (algo === 'algo2') {
+      log('[Phase 5] Algorithm 2 (FC) — ONNX 모델 미탑재 (Phase 5 대기)', 'WIP');
+      return;
+    }
+
+    const t0 = performance.now();
+    log(`Algorithm 1 생성 시작 (T=${UI.editEditor.T}, temp=${temperature.toFixed(1)}, seed=${seed})`);
+
+    try {
+      const { NodePool, CycleSetManager, algorithm1, makeRng, buildHibariInstLen } =
+        window.GenerationAlgo1;
+
+      const rng = makeRng(seed);
+      const pool = new NodePool({
+        labels: UI.data.notesMeta.labels,
+        numModules: UI.data.notesMeta.num_modules_reference,
+        temperature,
+        rng,
+      });
+      const cycleMgr = new CycleSetManager({
+        cycles: UI.data.cyclesMeta.cycles,
+        K: UI.editEditor.K,
+      });
+      const instLen = buildHibariInstLen(UI.editEditor.T);
+      const overlap = {
+        T: UI.editEditor.T,
+        K: UI.editEditor.K,
+        values: UI.editEditor.getMatrix(),
+      };
+
+      const res = algorithm1({
+        nodePool: pool,
+        cycleManager: cycleMgr,
+        instLen,
+        overlap,
+        maxResample: 50,
+        rng,
+      });
+
+      const dt = performance.now() - t0;
+      log(`생성 완료: ${res.notes.length} notes, resample fail=${res.resampleFails}, ${dt.toFixed(0)}ms`, 'OK');
+
+      playState.lastGenerated = res;
+      $('btnStop').disabled = false;
+      $('btnDownloadMidi').disabled = false;
+
+      // 재생용 초 단위 note 리스트로 변환
+      const bpm = playState.bpm;
+      const sec = res.notes.map(([s, p, e]) => [
+        eighthsToSec(s, bpm),
+        p,
+        eighthsToSec(e, bpm),
+        70,
+      ]);
+
+      const player = ensurePlayer('gen');
+      player.play(sec, {
+        onProgress: (t, total) => setProgress(total > 0 ? t / total : 0,
+          `재생중 · ${t.toFixed(1)}s / ${total.toFixed(1)}s · ${res.notes.length} notes`),
+        onEnd: () => {
+          setProgress(1, `완료 · ${res.notes.length} notes`);
+          $('btnStop').disabled = true;
+          log('재생 종료');
+        },
+      });
+    } catch (e) {
+      log(`생성 실패: ${e.message}`, 'ERR');
+      console.error(e);
+    }
+  }
+
+  function onClickStop() {
+    if (playState.genPlayer) playState.genPlayer.stop();
+    setProgress(0, '중지');
+    $('btnStop').disabled = true;
+  }
+
+  function onClickDownloadMidi() {
+    if (!playState.lastGenerated) {
+      log('다운로드할 생성 결과가 없습니다 (먼저 Generate)', 'ERR');
+      return;
+    }
+    try {
+      const { notes } = playState.lastGenerated;
+      const bytes = window.MidiIO.notesToMidiBytes(notes, {
+        bpm: playState.bpm,
+        ticksPerEighth: 240,
+        velocity: 80,
+      });
+      const seed = parseInt($('sliderSeed').value, 10) || 0;
+      const fname = `hibari_dash_seed${seed}.mid`;
+      window.MidiIO.downloadBytes(bytes, fname);
+      log(`MIDI 다운로드: ${fname} (${(bytes.length / 1024).toFixed(1)} KB)`, 'OK');
+    } catch (e) {
+      log(`MIDI 저장 실패: ${e.message}`, 'ERR');
+    }
+  }
+
+  // 원곡 재생
+  async function onClickPlayOriginal() {
+    if (!window.MidiIO || !window.PianoPlayer) {
+      log('MIDI/오디오 모듈 미로드', 'ERR'); return;
+    }
+    try {
+      if (!playState.lastOriginalNotes) {
+        const base = (new URLSearchParams(window.location.search).get('data') || '../data') + '/';
+        const url = base + 'original_hibari.mid';
+        log(`원곡 MIDI 로드 중: ${url}`);
+        const res = await fetch(url, { cache: 'no-cache' });
+        if (!res.ok) throw new Error(`원곡 MIDI 로드 실패: ${res.status}`);
+        const buf = await res.arrayBuffer();
+        const parsed = window.MidiIO.readMidiNotes(new Uint8Array(buf));
+        playState.lastOriginalNotes = parsed.notes;
+        log(`원곡 파싱 완료: ${parsed.notes.length} notes, ${parsed.bpm.toFixed(1)} BPM`, 'OK');
+      }
+      const player = ensurePlayer('orig');
+      $('btnStopOriginal').disabled = false;
+      player.play(playState.lastOriginalNotes, {
+        gain: 0.6,
+        velocityScale: 0.14,
+        onProgress: (t, total) => setProgress(total > 0 ? t / total : 0,
+          `원곡 재생중 · ${t.toFixed(1)}s / ${total.toFixed(1)}s`),
+        onEnd: () => {
+          setProgress(1, '원곡 재생 완료');
+          $('btnStopOriginal').disabled = true;
+          log('원곡 재생 종료');
+        },
+      });
+    } catch (e) {
+      log(`원곡 재생 실패: ${e.message}`, 'ERR');
+      console.error(e);
+    }
+  }
+
+  function onClickStopOriginal() {
+    if (playState.origPlayer) playState.origPlayer.stop();
+    $('btnStopOriginal').disabled = true;
+    setProgress(0, '원곡 정지');
   }
 
   // ── 부트스트랩 본체 ─────────────────────────────────────────────────
