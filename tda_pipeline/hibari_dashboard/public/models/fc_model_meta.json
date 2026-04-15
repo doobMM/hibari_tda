@@ -1,0 +1,176 @@
+{
+  "version": "1.0",
+  "architecture": "MusicGeneratorFC (40 → 128 → 256 → 23)",
+  "num_cycles": 40,
+  "num_notes": 23,
+  "input": {
+    "shape": [
+      null,
+      40
+    ],
+    "dtype": "float32",
+    "description": "Binary overlap row [0/1]. (T, C) 배치도 가능 (C=num_cycles)."
+  },
+  "output": {
+    "shape": [
+      null,
+      23
+    ],
+    "dtype": "float32",
+    "description": "Raw logits. sigmoid(logits) → multi-label 확률."
+  },
+  "label_to_note": [
+    {
+      "label_idx": 0,
+      "label": 1,
+      "pitch": 52,
+      "dur": 2
+    },
+    {
+      "label_idx": 1,
+      "label": 2,
+      "pitch": 53,
+      "dur": 2
+    },
+    {
+      "label_idx": 2,
+      "label": 3,
+      "pitch": 55,
+      "dur": 2
+    },
+    {
+      "label_idx": 3,
+      "label": 4,
+      "pitch": 57,
+      "dur": 2
+    },
+    {
+      "label_idx": 4,
+      "label": 5,
+      "pitch": 57,
+      "dur": 6
+    },
+    {
+      "label_idx": 5,
+      "label": 6,
+      "pitch": 59,
+      "dur": 2
+    },
+    {
+      "label_idx": 6,
+      "label": 7,
+      "pitch": 60,
+      "dur": 2
+    },
+    {
+      "label_idx": 7,
+      "label": 8,
+      "pitch": 60,
+      "dur": 6
+    },
+    {
+      "label_idx": 8,
+      "label": 9,
+      "pitch": 62,
+      "dur": 2
+    },
+    {
+      "label_idx": 9,
+      "label": 10,
+      "pitch": 64,
+      "dur": 2
+    },
+    {
+      "label_idx": 10,
+      "label": 11,
+      "pitch": 64,
+      "dur": 6
+    },
+    {
+      "label_idx": 11,
+      "label": 12,
+      "pitch": 65,
+      "dur": 2
+    },
+    {
+      "label_idx": 12,
+      "label": 13,
+      "pitch": 65,
+      "dur": 5
+    },
+    {
+      "label_idx": 13,
+      "label": 14,
+      "pitch": 65,
+      "dur": 6
+    },
+    {
+      "label_idx": 14,
+      "label": 15,
+      "pitch": 67,
+      "dur": 1
+    },
+    {
+      "label_idx": 15,
+      "label": 16,
+      "pitch": 69,
+      "dur": 1
+    },
+    {
+      "label_idx": 16,
+      "label": 17,
+      "pitch": 69,
+      "dur": 5
+    },
+    {
+      "label_idx": 17,
+      "label": 18,
+      "pitch": 71,
+      "dur": 1
+    },
+    {
+      "label_idx": 18,
+      "label": 19,
+      "pitch": 72,
+      "dur": 1
+    },
+    {
+      "label_idx": 19,
+      "label": 20,
+      "pitch": 74,
+      "dur": 1
+    },
+    {
+      "label_idx": 20,
+      "label": 21,
+      "pitch": 76,
+      "dur": 1
+    },
+    {
+      "label_idx": 21,
+      "label": 22,
+      "pitch": 79,
+      "dur": 1
+    },
+    {
+      "label_idx": 22,
+      "label": 23,
+      "pitch": 81,
+      "dur": 1
+    }
+  ],
+  "threshold": {
+    "default": 0.5,
+    "adaptive_target_on_ratio": 0.15,
+    "min_threshold": 0.1,
+    "description": "adaptive=true 시 전체 확률의 top 15% 를 임계값으로."
+  },
+  "training": {
+    "epochs": 300,
+    "final_train_loss": 0.0227,
+    "final_val_loss": 0.03836,
+    "augmentation": "circular shift × 4 + noise(p=0.03) × 3",
+    "loss": "BCEWithLogitsLoss",
+    "optimizer": "Adam (lr=1e-3)"
+  }
+}

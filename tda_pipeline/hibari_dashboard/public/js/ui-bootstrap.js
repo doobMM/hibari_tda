@@ -227,7 +227,7 @@
     const seed = parseInt($('sliderSeed').value, 10) || 0;
 
     if (algo === 'algo2') {
-      log('[Phase 5] Algorithm 2 (FC) — ONNX 모델 미탑재 (Phase 5 대기)', 'WIP');
+      runAlgo2(temperature, seed);
       return;
     }
 
@@ -293,6 +293,66 @@
       });
     } catch (e) {
       log(`생성 실패: ${e.message}`, 'ERR');
+      console.error(e);
+    }
+  }
+
+  // Algorithm 2 (FC model) 실행
+  async function runAlgo2(temperature, seed) {
+    if (!window.FCGenerator) {
+      log('FCGenerator 모듈 미로드', 'ERR');
+      return;
+    }
+    if (!playState.fcGen) playState.fcGen = new window.FCGenerator();
+    try {
+      if (!playState.fcGen.session) {
+        log('FC 모델 로드 중… (ONNX runtime + 모델 다운로드)');
+      }
+      await playState.fcGen.load();
+      if (playState.fcLoaded !== true) {
+        const m = playState.fcGen.meta;
+        log(`FC 모델 로드 완료 (${m.architecture})`, 'OK');
+        playState.fcLoaded = true;
+      }
+
+      const overlap = {
+        T: UI.editEditor.T,
+        K: UI.editEditor.K,
+        values: UI.editEditor.getMatrix(),
+      };
+      // temperature 는 FC 에서는 threshold 조절용으로 사용:
+      //   higher temp → lower threshold → 더 많은 activation
+      const targetOnRatio = Math.max(0.05, Math.min(0.35, 0.05 * temperature));
+      log(`Algorithm 2 (FC) 추론 시작 (targetOnRatio=${targetOnRatio.toFixed(2)}, seed=${seed})`);
+
+      const res = await playState.fcGen.generate({
+        overlap, adaptive: true, targetOnRatio, minOnsetGap: 0,
+      });
+
+      log(`추론 완료: ${res.notes.length} notes, threshold=${res.threshold.toFixed(4)}, ${res.inferenceMs.toFixed(0)}ms`, 'OK');
+
+      playState.lastGenerated = res;
+      $('btnStop').disabled = false;
+      $('btnDownloadMidi').disabled = false;
+
+      // 8 분음표 → 초 변환 후 재생
+      const bpm = playState.bpm;
+      const sec = res.notes.map(([s, p, e]) => [
+        eighthsToSec(s, bpm), p, eighthsToSec(e, bpm), 70,
+      ]);
+
+      const player = ensurePlayer('gen');
+      player.play(sec, {
+        onProgress: (t, total) => setProgress(total > 0 ? t / total : 0,
+          `FC 재생중 · ${t.toFixed(1)}s / ${total.toFixed(1)}s · ${res.notes.length} notes`),
+        onEnd: () => {
+          setProgress(1, `완료 · ${res.notes.length} notes`);
+          $('btnStop').disabled = true;
+          log('FC 재생 종료');
+        },
+      });
+    } catch (e) {
+      log(`FC 생성 실패: ${e.message}`, 'ERR');
       console.error(e);
     }
   }
