@@ -385,7 +385,21 @@ body.lang-ko .ko { display: revert; }
 body.lang-ko .en { display: none; }
 
 #langToggle {
-  margin-top: 8px;
+  position: fixed;
+  top: 7px;
+  right: 12px;
+  z-index: 1010;        /* above navbar (1000), below modals */
+  background: rgba(255, 255, 255, 0.13);
+  color: #ddd;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 4px;
   font-size: 11px;
-  padding: 2px 8px;
+  padding: 3px 10px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  white-space: nowrap;
+}
+#langToggle:hover {
+  background: rgba(255, 255, 255, 0.28);
+  color: #fff;
 }

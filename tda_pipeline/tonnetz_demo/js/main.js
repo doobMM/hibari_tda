@@ -158,12 +158,9 @@ $(function(){
     tonnetz.panic();
   });
 
-  // Language toggle
+  // Language toggle — button text is handled by .en/.ko CSS, no JS needed
   $('#langToggle').click(function() {
     if (window.i18n) window.i18n.toggle();
-    // Update button label
-    var isKo = document.body.classList.contains('lang-ko');
-    $(this).text(isKo ? 'English' : '한국어');
   });
 
   $('[data-toggle="tooltip"]').tooltip();
