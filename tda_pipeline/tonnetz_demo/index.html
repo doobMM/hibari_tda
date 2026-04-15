@@ -382,31 +382,6 @@
         <!-- ── TDA Analysis panel ─────────────────────────────────── -->
         <div role="tabpanel" class="tab-pane" id="tda">
 
-          <!-- Generated Music Comparison ──────────────────────────── -->
-          <div class="panel panel-default">
-            <div class="panel-heading" style="display:flex;align-items:baseline;gap:8px">
-              <strong>Generated Music Comparison</strong>
-              <span style="font-size:10px;font-weight:normal;color:#888">
-                FC + continuous activation &nbsp;·&nbsp;
-                <span style="color:#7f7;font-weight:bold">JS = 0.0004 ★</span>
-                &nbsp;본 연구 최저
-              </span>
-            </div>
-            <div class="panel-body" style="padding:10px 14px">
-              <canvas id="comparisonCanvas"
-                      style="width:100%;height:180px;background:#111;border-radius:4px;display:block">
-              </canvas>
-              <div style="margin-top:5px;font-size:10px;color:#777;line-height:1.8">
-                <span style="color:#6496ff">■</span> Original hibari (3,953 notes)
-                &nbsp;&nbsp;
-                <span style="color:#ffa550">■</span> Generated (1,309 notes)
-                &nbsp;&nbsp;<span style="color:#444">|</span>&nbsp;&nbsp;
-                Tonnetz α=0.0 · ow=0.3 · per-cycle τ<sub>c</sub> · T=3.0
-              </div>
-            </div>
-          </div>
-          <!-- ── end Generated Music Comparison ──────────────────── -->
-
           <!-- Rate slider + barcode -->
           <div class="panel panel-default">
             <div class="panel-heading">
@@ -576,7 +551,6 @@
     <!-- Inline TDA data (works with both http:// and file://) -->
     <script src="js/hibari_barcode_data.js"></script>
     <script src="js/hibari_overlap_data.js"></script>
-    <script src="js/hibari_comparison_data.js"></script>
-    <script src="js/hibaridata.js"></script>
+<script src="js/hibaridata.js"></script>
   </body>
 </html>

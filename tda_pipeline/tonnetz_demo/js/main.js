@@ -46,7 +46,6 @@ $(function(){
   $('#navbar a[data-toggle="tab"]').on('shown.bs.tab', function() {
     if ($(this).attr('href') === '#tda' && window.hibariData) {
       setTimeout(function() {
-        hibariData.renderComparisonChart();
         hibariData.renderBarcodeChart();
         hibariData.renderOverlapHeatmap();
       }, 50);
