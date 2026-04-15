@@ -226,7 +226,7 @@ A~D 세션의 상위 조율자. 어떤 세션에도 속하지 않으며, 세션 
 | 12 | **B+D** | §7.3 ascending Hungarian 근사 경로 주석 ✓ | 완료 | §2.11과 무관, §7.3 line 1221에 N=17 / N!=3.56×10¹⁴ 1문장 삽입 (2026-04-15) |
 | 13 | **B+D** | P3 수식 구현 확인 + 파일명 수정 ✓ | 완료 | P3는 unified.py에 구현·결과 기재 정상. run_module_generation_v2/v3 언급 4곳 → unified로 교체 (2026-04-15) |
 | 14 | **D** | §7.3 두 전략 비교 서술로 재구성 ✓ | 완료 | 2×2 → 1×2 교체. 전략 A(tonnetz_nearest)/B(ascending) 수식 추가. 피드백 #16 박스 재작성. 잔류 참조 스캔 clean. (2026-04-15) |
-| 20 | **B→D** | line 1787 `run_module_generation_v4.py` 참조 확인 | 없음 | v4 파일 non-existent. unified 교체 타당성 B 확인 후 D 반영 (2026-04-15 신규 발견) |
+| 20 | **B+D** | line 1787 `run_module_generation_v4.py` 참조 교체 ✓ | 완료 | v4 기능은 unified.py `--mode startmodule_study`로 완전 통합됨 확인 후 교체 (2026-04-15) |
 
 ### 낮은 우선순위 (향후 과제)
 
