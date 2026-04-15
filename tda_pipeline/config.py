@@ -46,6 +46,7 @@ class MetricConfig:
     metric: str = 'frequency'
     alpha: float = 0.0                  # hybrid에서 빈도 거리 비중 (α grid search N=20 결과: α=0.0 최적)
     octave_weight: float = 0.3          # Tonnetz note 거리의 옥타브 항 가중치 (튜닝 N=10: 0.3 최적, 기존 0.5)
+    duration_weight: float = 0.3        # Tonnetz/DFT/VL note 거리의 duration 항 가중치 (기본값 0.3)
     hybrid_metrics: List[str] = field(default_factory=lambda: ['tonnetz'])
     hybrid_weights: Optional[List[float]] = None  # None이면 균등 배분
 

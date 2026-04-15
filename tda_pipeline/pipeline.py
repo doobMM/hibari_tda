@@ -196,8 +196,11 @@ class TDAMusicPipeline:
             else:
                 # 단일 metric (tonnetz / voice_leading / dft)
                 kwargs = {}
-                if mcfg.metric == 'tonnetz':
+                if mcfg.metric in ('tonnetz', 'dft'):
                     kwargs['octave_weight'] = mcfg.octave_weight
+                    kwargs['duration_weight'] = mcfg.duration_weight
+                elif mcfg.metric == 'voice_leading':
+                    kwargs['duration_weight'] = mcfg.duration_weight
                 musical_dist = compute_note_distance_matrix(
                     notes_label, metric=mcfg.metric, **kwargs
                 )
@@ -252,7 +255,13 @@ class TDAMusicPipeline:
                 weights=mcfg.hybrid_weights
             )
         else:
-            m_dist = compute_note_distance_matrix(notes_label, metric=mcfg.metric)
+            kwargs = {}
+            if mcfg.metric in ('tonnetz', 'dft'):
+                kwargs['octave_weight'] = mcfg.octave_weight
+                kwargs['duration_weight'] = mcfg.duration_weight
+            elif mcfg.metric == 'voice_leading':
+                kwargs['duration_weight'] = mcfg.duration_weight
+            m_dist = compute_note_distance_matrix(notes_label, metric=mcfg.metric, **kwargs)
             return compute_hybrid_distance(freq_dist_values, m_dist, alpha=mcfg.alpha)
 
     def _search_timeflow(self, adn_i, notes_dict, lag, dim, cfg, generateBarcode,
