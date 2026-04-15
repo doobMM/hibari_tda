@@ -24,7 +24,7 @@
     "ascending": {
       "matching_mode": "ascending",
       "note_dist_error": 4.6819,
-      "find_elapsed_s": 7.7,
+      "find_elapsed_s": 3.3,
       "n_trials_completed": 20,
       "avg_metrics": {
         "pitch_js": 0.381501,
@@ -35,16 +35,16 @@
     },
     "tonnetz_nearest": {
       "matching_mode": "tonnetz_nearest",
-      "note_dist_error": 3.2132,
-      "find_elapsed_s": 0.4,
+      "note_dist_error": 4.4721,
+      "find_elapsed_s": 2.5,
       "n_trials_completed": 20,
       "avg_metrics": {
-        "pitch_js": 0.292959,
-        "transition_js": 0.5488,
-        "dtw": 2.6442,
-        "ncd": 1.020493
+        "pitch_js": 0.384269,
+        "transition_js": 0.614235,
+        "dtw": 2.823488,
+        "ncd": 1.02435
       }
     }
   },
-  "elapsed_s": 355.4
+  "elapsed_s": 328.0
 }

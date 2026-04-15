@@ -46,7 +46,7 @@
 | §7.8 α grid search (N=20) | α=0.0(순수 Tonnetz) 최적 |
 | octave_weight 튜닝 (N=10) | ow=0.3 최적, JS -18.8% |
 | 감쇄 lag 가중치 (lag 1~4) | hibari Tonnetz JS -70% |
-| 방향 A: note 재분배 | tonnetz_nearest+wide(48-84)+no_cycle, pitch_js=0.2930 ★ (vwide DTW+61.4% 수치 폐기) |
+| 방향 A: note 재분배 (두 전략 비교) | 전략 A(위치 기반 tonnetz_nearest)+wide(48-84) pitch_js=0.2930 ★, 전략 B(Hungarian ascending) 0.3815. vwide·cycle_perm 폐기 |
 | 방향 B: 시간 재배치 | pitch↔선율 딜레마, 단독 한계 |
 | Barcode Wasserstein 모듈 선택 | Pearson(W,JS)=0.503 |
 | Wasserstein 제약 note 재분배 | 계수 무관, 효과 제한적 |
@@ -212,7 +212,7 @@ A~D 세션의 상위 조율자. 어떤 세션에도 속하지 않으며, 세션 
 | 3 | **A** | Per-cycle τ_c N=20 재검증 ✓ | 없음 | +47.5% p<0.001 확정 (2026-04-14 완료) |
 | 4 | **A** | Soft activation → Transformer/LSTM 확장 ✓ | 없음 | FC=0.0004★, Transformer=0.0007 확인 (2026-04-14 완료) |
 | 5 | **D** | 피드백 19항 전체 반영 (md) ✓ | 완료 | §1~§7 정의·수식·표기 일괄 수정 (2026-04-15). 13/19 반영, 6개는 기완료 또는 미해당 |
-| 6 | **B** | `note_perm` Hungarian 진단 — joint row-col vs row-only | 없음 | 새 로직 pitch_js 0.2930→0.3815 악화. 진단 후 fix/revert/toggle 결정 (진단 프롬프트 작성됨) |
+| 6 | **B+A** | `note_perm` Hungarian 진단 + 수정 + 재검증 ✓ | 완료 | 원인: tonnetz_nearest의 positional semantics를 후속 perm이 덮어씀. 수정: tonnetz_nearest 분기 perm skip. 재실험 결과: tonnetz_nearest 0.3843→**0.2930** 복원 성공. ascending 0.3815 유지. |
 
 ### 중간 우선순위 (결과 보강)
 
@@ -225,7 +225,7 @@ A~D 세션의 상위 조율자. 어떤 세션에도 속하지 않으며, 세션 
 | 11 | **B** | density 수치 통일 (0.1684/0.160/0.201 혼용) | 없음 | 코드 확인 → 정확한 값 확정 |
 | 12 | **B** | §2.11 N! vs Hungarian 근사 — 논문 주석 추가 필요 여부 | 없음 | hibari는 항상 근사 경로 |
 | 13 | **B** | P3 수식 구현 확인 (v3 미구현 가능성) | 없음 | step71_improvements.json에 P3 없음 |
-| 14 | **A/D** | 방향 A 재실험 결과 (pitch_js=0.3815) — §7.3 재반영 여부 결정 | #6 진단 후 | 새 로직 결과 악화. B-#6 진단 후 fix/revert 결정되면 반영 |
+| 14 | **D** | §7.3 두 전략 비교 서술로 재구성 ✓ | 완료 | 2×2 → 1×2 교체. 전략 A(tonnetz_nearest)/B(ascending) 수식 추가. 피드백 #16 박스 재작성. 잔류 참조 스캔 clean. (2026-04-15) |
 
 ### 낮은 우선순위 (향후 과제)
 
