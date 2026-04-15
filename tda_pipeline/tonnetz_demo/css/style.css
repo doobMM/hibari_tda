@@ -160,6 +160,127 @@ a:link.external:after {
 }
 
 
+/* ── Transform overlay (bottom-left, always visible) ────────────── */
+#transform-overlay {
+  position: fixed;
+  bottom: 20px;
+  left: 14px;
+  z-index: 500;
+  background: rgba(0, 0, 0, 0.68);
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  border-radius: 8px;
+  padding: 8px 11px 10px;
+  user-select: none;
+  -webkit-user-select: none;
+  min-width: 250px;
+}
+
+.tx-group {
+  margin-bottom: 9px;
+}
+.tx-group:last-child { margin-bottom: 0; }
+
+.tx-label {
+  color: #888;
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.7px;
+  margin-bottom: 4px;
+}
+
+.tx-sublabel {
+  color: #666;
+  font-size: 9px;
+}
+
+.tx-value {
+  font-family: monospace;
+  color: #aaa;
+  font-size: 10px;
+  font-style: normal;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.tx-result {
+  font-family: monospace;
+  color: #8cf;
+  font-size: 10px;
+  text-transform: none;
+  letter-spacing: 0;
+  margin-left: 6px;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.tx-row {
+  display: flex;
+  gap: 3px;
+  flex-wrap: wrap;
+}
+
+.tx-btn {
+  background: rgba(255, 255, 255, 0.08);
+  color: #bbb;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 4px;
+  font-size: 10px;
+  padding: 3px 7px;
+  cursor: pointer;
+  font-family: monospace;
+  transition: background 0.10s, color 0.10s;
+  min-width: 26px;
+  text-align: center;
+  line-height: 1.4;
+}
+.tx-btn:hover {
+  background: rgba(255, 255, 255, 0.20);
+  color: #fff;
+}
+.tx-btn.active, .tx-btn.btn-primary {
+  background: rgba(90, 150, 255, 0.40);
+  color: #fff;
+  border-color: rgba(90, 150, 255, 0.65);
+}
+.tx-btn.btn-info {
+  background: rgba(60, 180, 200, 0.35);
+  color: #fff;
+  border-color: rgba(60, 180, 200, 0.6);
+}
+
+/* Composite ops (N/S/H) slightly dimmer to distinguish from primary P/L/R */
+.tx-composite {
+  opacity: 0.7;
+}
+.tx-composite:hover { opacity: 1; }
+
+.tx-reset {
+  color: #f99;
+  border-color: rgba(255, 120, 120, 0.35);
+}
+.tx-reset:hover {
+  background: rgba(255, 80, 80, 0.22);
+  color: #fcc;
+}
+
+/* Invert toggle — shares tx-btn base */
+#txInvToggle {
+  font-size: 9px;
+  padding: 1px 6px;
+  border-radius: 3px;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.08);
+  color: #bbb;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  transition: background 0.10s;
+  font-family: monospace;
+}
+#txInvToggle.btn-info {
+  background: rgba(60, 180, 200, 0.35);
+  color: #fff;
+  border-color: rgba(60, 180, 200, 0.6);
+}
+
 /* ── Interval preset overlay (always visible on Tonnetz canvas) ── */
 #interval-overlay {
   position: fixed;

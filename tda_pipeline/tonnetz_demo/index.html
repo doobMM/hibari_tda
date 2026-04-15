@@ -78,39 +78,44 @@
           <div class="panel panel-default">
             <div class="panel-heading"><strong>hibari</strong> MIDI Playback</div>
             <div class="panel-body">
-              <p class="help-block">Load <code>hibari.mid</code> (or any MIDI file), then press Play.
-              Notes will light up on the Tonnetz in real time.</p>
-              <div class="form-group">
-                <label for="midiFileInput">MIDI file</label>
-                <input type="file" id="midiFileInput" accept=".mid,.midi" class="form-control">
+              <!-- ── Preloaded: hibari ─────────────────────────────── -->
+              <div style="margin-bottom:12px">
+                <button id="playHibariBtn" class="btn btn-success btn-block">
+                  <i class="fa fa-play"></i>&nbsp; Play <strong>hibari</strong>
+                  <small style="opacity:0.75;font-weight:normal">&nbsp;(Ryuichi Sakamoto, 2009)</small>
+                </button>
               </div>
-              <div class="btn-group" style="margin-top:6px">
-                <button id="playBtn" class="btn btn-success">
+              <hr style="margin:10px 0;border-color:rgba(0,0,0,0.1)">
+              <!-- ── Custom MIDI file ──────────────────────────────── -->
+              <div class="form-group" style="margin-bottom:6px">
+                <label for="midiFileInput" style="font-size:11px;color:#888">Custom MIDI file</label>
+                <input type="file" id="midiFileInput" accept=".mid,.midi" class="form-control input-sm">
+              </div>
+              <div class="btn-group">
+                <button id="playBtn" class="btn btn-default btn-sm">
                   <i class="fa fa-play"></i> Play
                 </button>
-                <button id="pauseBtn" class="btn btn-warning">
+                <button id="pauseBtn" class="btn btn-warning btn-sm">
                   <i class="fa fa-pause"></i> Pause
                 </button>
-                <button id="stopBtn" class="btn btn-danger">
+                <button id="stopBtn" class="btn btn-danger btn-sm">
                   <i class="fa fa-stop"></i> Stop
                 </button>
-                <button id="recordBtn" class="btn btn-default">
+                <button id="recordBtn" class="btn btn-default btn-sm">
                   <i class="fa fa-circle" style="color:#c00"></i> REC
                 </button>
               </div>
               <div style="margin-top:10px">
                 <span id="playStatus" class="label label-default">Stopped</span>
                 &nbsp;
-                <span id="playTime" style="font-family:monospace">0:00 / 0:00</span>
+                <span id="playTime" style="font-family:monospace;font-size:12px">0:00 / 0:00</span>
                 &nbsp;
                 <span id="recStatus" class="label label-default" style="display:none">
                   <i class="fa fa-circle" style="color:#c00"></i> REC
                 </span>
               </div>
               <p class="help-block" style="margin-top:8px;font-size:11px">
-                <i class="fa fa-info-circle"></i>
-                REC 버튼을 누르고 Play → 다시 REC로 중지하면 <code>.webm</code> 파일로 저장됩니다.
-                YouTube 업로드 시 <strong>Handbrake</strong>로 mp4 변환을 권장합니다.
+                REC → Play → REC로 중지하면 <code>.webm</code>으로 저장됩니다.
               </p>
             </div>
           </div>
@@ -524,6 +529,51 @@
       <canvas id="canvas"></canvas>
     </div>
 
+    <!-- ── Transform overlay (always visible on canvas) ────────────── -->
+    <div id="transform-overlay">
+
+      <!-- Group 1: Neo-Riemannian P/L/R -->
+      <div class="tx-group">
+        <div class="tx-label">Neo-Riemannian
+          <span id="plrResult" class="tx-result"></span>
+        </div>
+        <div class="tx-row">
+          <button class="tx-btn plr-btn" data-op="P" title="Parallel: toggles major↔minor, keeps root &amp; fifth">P</button>
+          <button class="tx-btn plr-btn" data-op="L" title="Leading-tone exchange: moves one voice by semitone">L</button>
+          <button class="tx-btn plr-btn" data-op="R" title="Relative: major↔relative minor">R</button>
+          <button class="tx-btn plr-btn tx-composite" data-op="N" title="Nebenverwandt = R→L→P">N</button>
+          <button class="tx-btn plr-btn tx-composite" data-op="S" title="Slide = L→P→R">S</button>
+          <button class="tx-btn plr-btn tx-composite" data-op="H" title="Hexatonic pole = L→P→L">H</button>
+        </div>
+      </div>
+
+      <!-- Group 2: Transpositions -->
+      <div class="tx-group">
+        <div class="tx-label">Transpose &nbsp;<span id="txOffset" class="tx-value">+0</span></div>
+        <div class="tx-row">
+          <button class="tx-btn" id="txM12">−12</button>
+          <button class="tx-btn" id="txM7">−7</button>
+          <button class="tx-btn" id="txM1">−1</button>
+          <button class="tx-btn tx-reset" id="txReset">0</button>
+          <button class="tx-btn" id="txP1">+1</button>
+          <button class="tx-btn" id="txP7">+7</button>
+          <button class="tx-btn" id="txP12">+12</button>
+        </div>
+      </div>
+
+      <!-- Group 3: Inversions -->
+      <div class="tx-group">
+        <div class="tx-label">
+          Invert &nbsp;<button id="txInvToggle" class="tx-toggle btn-default">OFF</button>
+          &nbsp;<span class="tx-sublabel">axis:</span>
+        </div>
+        <div class="tx-row" id="txAxisRow">
+          <!-- 12 axis buttons generated by main.js -->
+        </div>
+      </div>
+
+    </div>
+
     <!-- ── Interval overlay (always visible on canvas) ───────────── -->
     <div id="interval-overlay">
       <div class="int-title">Interval &nbsp;(a + b + c = 12)</div>
@@ -611,11 +661,15 @@
     <script src="color-schemes/greenonblack.js"></script>
     <script src="color-schemes/apollo.js"></script>
 
+    <!-- Embedded MIDI + transform engine (load before main.js) -->
+    <script src="js/hibari_midi.js"></script>
+    <script src="js/transforms.js"></script>
+
     <script src="js/main.js"></script>
     <script src="js/midifile.js"></script>
     <!-- Inline TDA data (works with both http:// and file://) -->
     <script src="js/hibari_barcode_data.js"></script>
     <script src="js/hibari_overlap_data.js"></script>
-<script src="js/hibaridata.js"></script>
+    <script src="js/hibaridata.js"></script>
   </body>
 </html>

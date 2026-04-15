@@ -165,6 +165,18 @@ var tonnetz = (function() {
     sustainEnabled = !sustainEnabled;
   };
 
+  // Returns array of pitch classes (0-11) currently ON or SUSTAINED.
+  // Used by transforms.js for Neo-Riemannian operations.
+  module.getActivePC = function() {
+    var pcs = [];
+    for (var i = 0; i < 12; i++) {
+      if (tones[i].state === STATE_ON || tones[i].state === STATE_SUST) {
+        pcs.push(i);
+      }
+    }
+    return pcs;
+  };
+
   module.setDensity = function(density) {
     if (isFinite(density) && density >= 5 && density <= 50) {
       this.density = density;

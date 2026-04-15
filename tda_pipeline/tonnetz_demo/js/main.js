@@ -113,6 +113,46 @@ $(function(){
     var parts = $(this).data('ab').split(',');
     tonnetz.setIntervals(parseInt(parts[0], 10), parseInt(parts[1], 10));
   });
+
+  // ── Transform overlay ────────────────────────────────────────────
+  // Group 1: Neo-Riemannian P/L/R/N/S/H
+  $('#transform-overlay').on('click', '.plr-btn', function() {
+    if (window.transforms) window.transforms.applyPLR($(this).data('op'));
+  });
+
+  // Group 2: Transpositions
+  $('#txM12').click(function() { if (window.transforms) window.transforms.setTranspose(window.transforms.offset - 12); });
+  $('#txM7').click(function()  { if (window.transforms) window.transforms.setTranspose(window.transforms.offset - 7);  });
+  $('#txM1').click(function()  { if (window.transforms) window.transforms.setTranspose(window.transforms.offset - 1);  });
+  $('#txReset').click(function(){ if (window.transforms) window.transforms.reset(); });
+  $('#txP1').click(function()  { if (window.transforms) window.transforms.setTranspose(window.transforms.offset + 1);  });
+  $('#txP7').click(function()  { if (window.transforms) window.transforms.setTranspose(window.transforms.offset + 7);  });
+  $('#txP12').click(function() { if (window.transforms) window.transforms.setTranspose(window.transforms.offset + 12); });
+
+  // Group 3: Inversions — generate 12 axis buttons dynamically
+  (function() {
+    var axisRow = document.getElementById('txAxisRow');
+    if (!axisRow) return;
+    var NOTE_NAMES = ['C','C♯','D','D♯','E','F','F♯','G','G♯','A','A♯','B'];
+    for (var i = 0; i < 12; i++) {
+      (function(axis) {
+        var btn = document.createElement('button');
+        btn.id = 'txAxis' + axis;
+        btn.className = 'tx-btn tx-axis';
+        btn.textContent = NOTE_NAMES[axis];
+        btn.title = 'Invert around ' + NOTE_NAMES[axis] + ' axis (I_' + axis + ')';
+        btn.addEventListener('click', function() {
+          if (window.transforms) window.transforms.setInvert(true, axis);
+        });
+        axisRow.appendChild(btn);
+      })(i);
+    }
+  })();
+
+  $('#txInvToggle').click(function() {
+    if (window.transforms) window.transforms.setInvert(!window.transforms.invEnabled);
+  });
+
   $('input[type=radio][name=kbd-layout]').change(function() {
     keyboard.layout = $(this).val();
     tonnetz.panic();

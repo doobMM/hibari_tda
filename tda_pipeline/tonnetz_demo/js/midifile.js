@@ -2,36 +2,43 @@
  * midifile.js — MIDI file playback for TonnetzViz
  *
  * Depends on:
- *   - Tone.js  (global: Tone)
- *   - @tonejs/midi  (global: Midi)
- *   - window.tonnetz  (set in main.js)
+ *   - Tone.js          (global: Tone)
+ *   - @tonejs/midi     (global: Midi)
+ *   - window.tonnetz   (set in main.js)
+ *   - window.transforms (from transforms.js — optional, graceful fallback)
+ *   - window.HIBARI_MIDI_B64 (from hibari_midi.js — optional auto-load)
  *
  * Public API:
- *   loadAndPlayMidi(file)  — load a File object and start playback
- *   pauseMidi()            — toggle pause/resume
- *   stopMidi()             — stop and reset
+ *   loadAndPlayMidi(arrayBuffer | File)
+ *   pauseMidi()
+ *   stopMidi()
  */
 
 (function () {
   "use strict";
 
-  // ── State ──────────────────────────────────────────────────────────
-  var midiDuration = 0;   // total duration in seconds
-  var timerID      = null;
-  var MIDI_CHANNEL = 0;   // channel index passed to tonnetz.noteOn/Off
+  var MIDI_CHANNEL = 0;
 
-  // ── Recording state ─────────────────────────────────────────────
+  // noteMap: tracks originalPitch+startTime → transformedPitch
+  // so noteOff always matches the transformed pitch used at noteOn time.
+  var noteMap = {};
+
+  var midiDuration = 0;
+  var timerID      = null;
+
+  // ── Recording state ──────────────────────────────────────────────
   var recorder       = null;
   var recordedChunks = [];
   var isRecording    = false;
 
-  // ── UI element references (available after DOMContentLoaded) ───────
+  // ── UI helpers ────────────────────────────────────────────────────
   function ui(id) { return document.getElementById(id); }
 
   function setStatus(text, cls) {
     var el = ui('playStatus');
+    if (!el) return;
     el.textContent = text;
-    el.className = 'label label-' + (cls || 'default');
+    el.className   = 'label label-' + (cls || 'default');
   }
 
   function formatTime(sec) {
@@ -51,53 +58,63 @@
   }
 
   function stopTimer() {
-    if (timerID !== null) {
-      clearInterval(timerID);
-      timerID = null;
-    }
-    ui('playTime').textContent = '0:00 / ' + formatTime(midiDuration);
+    if (timerID !== null) { clearInterval(timerID); timerID = null; }
+    var el = ui('playTime');
+    if (el) el.textContent = '0:00 / ' + formatTime(midiDuration);
   }
 
-  // ── Core: load + schedule ──────────────────────────────────────────
-  async function loadAndPlayMidi(file) {
-    if (!file) return;
+  // ── Core schedule ─────────────────────────────────────────────────
+  function scheduleBuffer(buffer) {
+    var midi = new Midi(buffer);
+    midiDuration = midi.duration;
+    noteMap = {};
+
+    midi.tracks.forEach(function (track) {
+      track.notes.forEach(function (note) {
+        var origPitch  = note.midi;
+        var startTime  = note.time;
+        var mapKey     = origPitch + ':' + startTime.toFixed(4);
+
+        Tone.Transport.schedule(function () {
+          var tp = window.transforms ? window.transforms.apply(origPitch) : origPitch;
+          noteMap[mapKey] = tp;
+          if (window.tonnetz) window.tonnetz.noteOn(MIDI_CHANNEL, tp);
+        }, startTime);
+
+        Tone.Transport.schedule(function () {
+          var tp = (noteMap[mapKey] !== undefined)
+                    ? noteMap[mapKey]
+                    : (window.transforms ? window.transforms.apply(origPitch) : origPitch);
+          delete noteMap[mapKey];
+          if (window.tonnetz) window.tonnetz.noteOff(MIDI_CHANNEL, tp);
+        }, startTime + note.duration);
+      });
+    });
+
+    // Auto-stop sentinel
+    Tone.Transport.schedule(function () {
+      stopMidi();
+      setStatus('Finished', 'success');
+      var el = ui('playTime');
+      if (el) el.textContent = formatTime(midiDuration) + ' / ' + formatTime(midiDuration);
+    }, midiDuration + 0.1);
+
+    window._midiDuration = midiDuration;
+  }
+
+  // ── loadAndPlayMidi: accepts ArrayBuffer or File ──────────────────
+  async function loadAndPlayMidi(source) {
+    if (!source) return;
 
     try {
       setStatus('Loading…', 'info');
 
-      var buffer = await file.arrayBuffer();
-      var midi   = new Midi(buffer);
+      var buffer = (source instanceof ArrayBuffer) ? source : await source.arrayBuffer();
 
-      // Compute total duration
-      midiDuration = midi.duration;
-
-      // Resume AudioContext (required after user gesture)
       await Tone.start();
-
-      // Cancel previous playback completely
       stopMidi();
+      scheduleBuffer(buffer);
 
-      // Schedule all note on/off events
-      midi.tracks.forEach(function (track) {
-        track.notes.forEach(function (note) {
-          Tone.Transport.schedule(function () {
-            if (window.tonnetz) window.tonnetz.noteOn(MIDI_CHANNEL, note.midi);
-          }, note.time);
-
-          Tone.Transport.schedule(function () {
-            if (window.tonnetz) window.tonnetz.noteOff(MIDI_CHANNEL, note.midi);
-          }, note.time + note.duration);
-        });
-      });
-
-      // Auto-stop at end of file
-      Tone.Transport.schedule(function () {
-        stopMidi();
-        setStatus('Finished', 'success');
-        ui('playTime').textContent = formatTime(midiDuration) + ' / ' + formatTime(midiDuration);
-      }, midiDuration + 0.1);
-
-      window._midiDuration = midiDuration;  // expose for cursor update
       Tone.Transport.start();
       setStatus('Playing', 'success');
       startTimer();
@@ -111,7 +128,6 @@
   function pauseMidi() {
     if (Tone.Transport.state === 'started') {
       Tone.Transport.pause();
-      // Silence any held notes on the tonnetz
       if (window.tonnetz) window.tonnetz.allNotesOff(MIDI_CHANNEL);
       setStatus('Paused', 'warning');
       stopTimer();
@@ -125,49 +141,29 @@
   function stopMidi() {
     Tone.Transport.stop();
     Tone.Transport.cancel();
+    noteMap = {};
     if (window.tonnetz) window.tonnetz.allNotesOff(MIDI_CHANNEL);
     stopTimer();
     setStatus('Stopped', 'default');
   }
 
-  // ── Wire up buttons after DOM is ready ────────────────────────────
-  document.addEventListener('DOMContentLoaded', function () {
-    ui('playBtn').addEventListener('click', function () {
-      var file = ui('midiFileInput').files[0];
-      if (!file) {
-        setStatus('No file selected', 'danger');
-        return;
-      }
-      loadAndPlayMidi(file);
-    });
-
-    ui('pauseBtn').addEventListener('click', function () {
-      pauseMidi();
-    });
-
-    ui('stopBtn').addEventListener('click', function () {
-      stopMidi();
-    });
-
-    ui('recordBtn').addEventListener('click', function () {
-      toggleRecording();
-    });
-
-    // Allow re-selecting a file while paused/playing
-    ui('midiFileInput').addEventListener('change', function () {
-      stopMidi();
-      midiDuration = 0;
-      ui('playTime').textContent = '0:00 / 0:00';
-    });
-  });
-
-  // ── Recording ────────────────────────────────────────────────────
-  function toggleRecording() {
-    if (!isRecording) {
-      startRecording();
-    } else {
-      stopRecording();
+  // ── HIBARI auto-load from embedded base64 ─────────────────────────
+  function loadHibariPreload() {
+    if (typeof HIBARI_MIDI_B64 === 'undefined') return;
+    try {
+      var raw    = atob(HIBARI_MIDI_B64);
+      var bytes  = new Uint8Array(raw.length);
+      for (var i = 0; i < raw.length; i++) bytes[i] = raw.charCodeAt(i);
+      window._hibariBuffer = bytes.buffer;
+      setStatus('hibari ready ▶', 'info');
+    } catch (e) {
+      console.warn('hibari preload failed:', e);
     }
+  }
+
+  // ── Recording ─────────────────────────────────────────────────────
+  function toggleRecording() {
+    if (!isRecording) startRecording(); else stopRecording();
   }
 
   function startRecording() {
@@ -177,72 +173,94 @@
     recordedChunks = [];
     var tracks = [];
 
-    // 1) 캔버스 비디오 스트림 (30 fps)
     var videoStream = canvas.captureStream(30);
-    videoStream.getTracks().forEach(function(t) { tracks.push(t); });
+    videoStream.getTracks().forEach(function (t) { tracks.push(t); });
 
-    // 2) Tone.js 오디오 스트림 (Web Audio → MediaStream)
     try {
-      var rawCtx = Tone.getContext().rawContext;
+      var rawCtx    = Tone.getContext().rawContext;
       var audioDest = rawCtx.createMediaStreamDestination();
-      // Tone.js master output → audioDest
       Tone.getDestination().connect(audioDest);
-      audioDest.stream.getTracks().forEach(function(t) { tracks.push(t); });
-    } catch(e) {
-      console.warn('Audio capture unavailable:', e);
-    }
+      audioDest.stream.getTracks().forEach(function (t) { tracks.push(t); });
+    } catch (e) { console.warn('Audio capture unavailable:', e); }
 
     var combined = new MediaStream(tracks);
-
-    // 지원 코덱 선택 (webm/vp9 우선, 없으면 기본)
     var mimeType = '';
-    ['video/webm;codecs=vp9,opus',
-     'video/webm;codecs=vp8,opus',
-     'video/webm'].forEach(function(m) {
-      if (!mimeType && MediaRecorder.isTypeSupported(m)) mimeType = m;
-    });
+    ['video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm']
+      .forEach(function (m) { if (!mimeType && MediaRecorder.isTypeSupported(m)) mimeType = m; });
 
     recorder = new MediaRecorder(combined, mimeType ? { mimeType: mimeType } : {});
-    recorder.ondataavailable = function(e) {
-      if (e.data && e.data.size > 0) recordedChunks.push(e.data);
-    };
-    recorder.onstop = function() {
+    recorder.ondataavailable = function (e) { if (e.data && e.data.size > 0) recordedChunks.push(e.data); };
+    recorder.onstop = function () {
       var blob = new Blob(recordedChunks, { type: 'video/webm' });
       var url  = URL.createObjectURL(blob);
       var a    = document.createElement('a');
-      a.href     = url;
-      a.download = 'tonnetz_hibari_' + new Date().toISOString().slice(0,19).replace(/:/g,'-') + '.webm';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      setTimeout(function() { URL.revokeObjectURL(url); }, 5000);
+      a.href = url; a.download = 'tonnetz_' + new Date().toISOString().slice(0, 19).replace(/:/g, '-') + '.webm';
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      setTimeout(function () { URL.revokeObjectURL(url); }, 5000);
     };
 
-    recorder.start(200);  // 200ms 단위로 chunk
+    recorder.start(200);
     isRecording = true;
 
     var btn = ui('recordBtn');
-    btn.classList.add('btn-danger');
-    btn.classList.remove('btn-default');
+    btn.classList.add('btn-danger'); btn.classList.remove('btn-default');
     btn.innerHTML = '<i class="fa fa-stop-circle"></i> STOP REC';
-    ui('recStatus').style.display = 'inline';
+    var rs = ui('recStatus'); if (rs) rs.style.display = 'inline';
   }
 
   function stopRecording() {
-    if (recorder && recorder.state !== 'inactive') {
-      recorder.stop();
-    }
+    if (recorder && recorder.state !== 'inactive') recorder.stop();
     isRecording = false;
 
     var btn = ui('recordBtn');
-    btn.classList.remove('btn-danger');
-    btn.classList.add('btn-default');
+    btn.classList.remove('btn-danger'); btn.classList.add('btn-default');
     btn.innerHTML = '<i class="fa fa-circle" style="color:#c00"></i> REC';
-    ui('recStatus').style.display = 'none';
+    var rs = ui('recStatus'); if (rs) rs.style.display = 'none';
   }
 
-  // ── Expose for console debugging ──────────────────────────────────
-  window.midiPlayer = { load: loadAndPlayMidi, pause: pauseMidi, stop: stopMidi,
-                        startRec: startRecording, stopRec: stopRecording };
+  // ── Wire up after DOM ready ───────────────────────────────────────
+  document.addEventListener('DOMContentLoaded', function () {
 
+    // Preload embedded hibari
+    loadHibariPreload();
+
+    // Play hibari (preloaded) button
+    var hibariBtn = ui('playHibariBtn');
+    if (hibariBtn) {
+      hibariBtn.addEventListener('click', function () {
+        if (window._hibariBuffer) {
+          loadAndPlayMidi(window._hibariBuffer.slice(0)); // slice = fresh copy
+        } else {
+          setStatus('hibari not preloaded', 'danger');
+        }
+      });
+    }
+
+    // Play custom file button
+    ui('playBtn').addEventListener('click', function () {
+      var file = ui('midiFileInput').files[0];
+      if (!file) {
+        // Fall back to preloaded hibari if no file chosen
+        if (window._hibariBuffer) {
+          loadAndPlayMidi(window._hibariBuffer.slice(0));
+        } else {
+          setStatus('No file selected', 'danger');
+        }
+        return;
+      }
+      loadAndPlayMidi(file);
+    });
+
+    ui('pauseBtn').addEventListener('click', pauseMidi);
+    ui('stopBtn').addEventListener('click', stopMidi);
+    ui('recordBtn').addEventListener('click', toggleRecording);
+
+    ui('midiFileInput').addEventListener('change', function () {
+      stopMidi();
+      midiDuration = 0;
+      var el = ui('playTime'); if (el) el.textContent = '0:00 / 0:00';
+    });
+  });
+
+  window.midiPlayer = { load: loadAndPlayMidi, pause: pauseMidi, stop: stopMidi };
 })();
