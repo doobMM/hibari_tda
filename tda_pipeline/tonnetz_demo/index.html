@@ -286,25 +286,6 @@
                   </div>
                 </div>
                 <div class="form-group">
-                  <label for="intervalPreset" class="control-label col-xs-5 col-sm-4 col-md-3">Interval (a, b, c)</label>
-                  <div class="col-xs-7 col-sm-8 col-md-9">
-                    <select class="form-control" id="intervalPreset">
-                      <option value="3,4" selected>(3, 4, 7) — Standard  m3 / M3 / P5</option>
-                      <option value="4,3">(4, 3, 7) — Inverted  M3 / m3 / P5</option>
-                      <option value="2,5">(2, 5, 7) — Diatonic  M2 / P4 / P5</option>
-                      <option value="5,2">(5, 2, 7) — Diatonic II  P4 / M2 / P5</option>
-                      <option value="2,3">(2, 3, 5) — Pentatonic  M2 / m3 / P4</option>
-                      <option value="3,2">(3, 2, 5) — Pentatonic II  m3 / M2 / P4</option>
-                      <option value="1,2">(1, 2, 3) — Chromatic  m2 / M2 / m3</option>
-                      <option value="2,2">(2, 2, 4) — Whole Tone  M2 / M2 / M3</option>
-                      <option value="3,3">(3, 3, 6) — Diminished  m3 / m3 / TT</option>
-                      <option value="4,4">(4, 4, 8) — Augmented  M3 / M3 / m6</option>
-                      <option value="1,6">(1, 6, 7) — Tritone  m2 / TT / P5</option>
-                      <option value="4,6">(4, 6, 10) — Jazz  M3 / TT / m7</option>
-                    </select>
-                  </div>
-                </div>
-                <div class="form-group">
                   <label class="control-label col-xs-5 col-sm-4 col-md-3">Show/hide</label>
                   <div class="col-xs-6 col-sm-7 col-md-8">
                     <div class="checkbox">
@@ -541,6 +522,25 @@
       <div id="note-labels" class="labels"></div>
       <div id="triad-labels" class="labels"></div>
       <canvas id="canvas"></canvas>
+    </div>
+
+    <!-- ── Interval overlay (always visible on canvas) ───────────── -->
+    <div id="interval-overlay">
+      <div class="int-title">Interval (a · b · c)</div>
+      <div class="int-grid">
+        <button class="int-btn active" data-ab="3,4" title="Standard — m3 / M3 / P5">3·4·7</button>
+        <button class="int-btn" data-ab="4,3" title="Inverted — M3 / m3 / P5">4·3·7</button>
+        <button class="int-btn" data-ab="2,5" title="Diatonic — M2 / P4 / P5">2·5·7</button>
+        <button class="int-btn" data-ab="5,2" title="Diatonic II — P4 / M2 / P5">5·2·7</button>
+        <button class="int-btn" data-ab="2,3" title="Pentatonic — M2 / m3 / P4">2·3·5</button>
+        <button class="int-btn" data-ab="3,2" title="Pentatonic II — m3 / M2 / P4">3·2·5</button>
+        <button class="int-btn" data-ab="1,2" title="Chromatic — m2 / M2 / m3">1·2·3</button>
+        <button class="int-btn" data-ab="2,2" title="Whole Tone — M2 / M2 / M3">2·2·4</button>
+        <button class="int-btn" data-ab="3,3" title="Diminished — m3 / m3 / TT">3·3·6</button>
+        <button class="int-btn" data-ab="4,4" title="Augmented — M3 / M3 / m6">4·4·8</button>
+        <button class="int-btn" data-ab="1,6" title="Tritone — m2 / TT / P5">1·6·7</button>
+        <button class="int-btn" data-ab="4,6" title="Jazz — M3 / TT / m7">4·6·10</button>
+      </div>
     </div>
 
     <!-- jQuery & Bootstrap via CDN -->

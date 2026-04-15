@@ -107,8 +107,10 @@ $(function(){
     tonnetz.setLayout($(this).val());
   });
 
-  $('#intervalPreset').change(function() {
-    var parts = $(this).val().split(',');
+  $('#interval-overlay').on('click', '.int-btn', function() {
+    $('#interval-overlay .int-btn').removeClass('active');
+    $(this).addClass('active');
+    var parts = $(this).data('ab').split(',');
     tonnetz.setIntervals(parseInt(parts[0], 10), parseInt(parts[1], 10));
   });
   $('input[type=radio][name=kbd-layout]').change(function() {

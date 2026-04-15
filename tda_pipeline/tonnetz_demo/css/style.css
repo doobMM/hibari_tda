@@ -158,3 +158,58 @@ a:link.external:after {
 .fa-ul li {
   margin-bottom: 0.25em;
 }
+
+
+/* ── Interval preset overlay (always visible on Tonnetz canvas) ── */
+#interval-overlay {
+  position: fixed;
+  bottom: 20px;
+  right: 16px;
+  z-index: 500;
+  background: rgba(0, 0, 0, 0.60);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  padding: 7px 9px 8px;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+#interval-overlay .int-title {
+  color: #999;
+  font-size: 9px;
+  text-align: center;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  margin-bottom: 5px;
+}
+
+#interval-overlay .int-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 3px;
+}
+
+#interval-overlay .int-btn {
+  background: rgba(255, 255, 255, 0.08);
+  color: #bbb;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 4px;
+  font-size: 10px;
+  padding: 3px 5px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.12s, color 0.12s;
+  font-family: monospace;
+  line-height: 1.4;
+}
+
+#interval-overlay .int-btn:hover {
+  background: rgba(255, 255, 255, 0.20);
+  color: #fff;
+}
+
+#interval-overlay .int-btn.active {
+  background: rgba(90, 150, 255, 0.38);
+  color: #fff;
+  border-color: rgba(90, 150, 255, 0.65);
+}
