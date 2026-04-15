@@ -8,7 +8,7 @@ $(function(){
   $(triadLabels).hide();
 
   storage.init();
-  colorscheme.init('default');
+  colorscheme.init('tonnetz-dark');   /* dark canvas as default */
   audio.init();
   tonnetz.init();
   midi.init();
@@ -179,6 +179,12 @@ $(function(){
     var collapsed = overlay.classList.toggle('tz-collapsed');
     this.textContent = collapsed ? '+' : '−';
   });
+
+  /* Sync Tonnetz canvas colorscheme with persisted theme (theme.js runs
+     before colorscheme/tonnetz are initialized, so we apply canvas here) */
+  if (window.themeManager) {
+    themeManager.applyCanvas(localStorage.getItem('tz-theme') || 'default');
+  }
 
   $('[data-toggle="tooltip"]').tooltip();
 
