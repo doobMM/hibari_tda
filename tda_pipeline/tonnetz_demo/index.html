@@ -73,6 +73,16 @@
         </div><!-- /.navbar-collapse -->
       </nav>
 
+      <!-- ── Theme swatch picker (fixed, always visible) ─────────── -->
+      <div id="themePicker">
+        <button class="theme-swatch active" data-theme="default"
+                title="Default — Indigo/Green" style="background:#4338CA"></button>
+        <button class="theme-swatch" data-theme="zinc"
+                title="Zinc / Pink" style="background:#EC4899"></button>
+        <button class="theme-swatch" data-theme="carbon"
+                title="Carbon / Gold" style="background:#D4AF37"></button>
+      </div>
+
       <!-- ── Language tabs (fixed, always visible) ────────────────── -->
       <div id="langTabs">
         <button class="lang-tab" data-lang="en">ENG</button><button class="lang-tab" data-lang="ko">KOR</button>
@@ -873,6 +883,7 @@
     <script src="js/preloaded_midi.js"></script>
     <script src="js/transforms.js"></script>
     <script src="js/i18n.js"></script>
+    <script src="js/theme.js"></script>   <!-- theme switcher — runs immediately -->
 
     <script src="js/main.js"></script>
     <script src="js/midifile.js"></script>

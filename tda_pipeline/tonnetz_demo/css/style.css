@@ -36,14 +36,44 @@ a:link.external:after {
 
 /* ── Design tokens (Music Streaming palette — UI Pro Max) ───────── */
 :root {
-  --tz-bg-deep:    #0F0F23;
-  --tz-bg-panel:   rgba(15, 15, 40, 0.93);
-  --tz-bg-heading: rgba(30, 27, 75, 0.96);
-  --tz-border:     rgba(67, 56, 202, 0.28);
-  --tz-accent:     #4338CA;
-  --tz-cta:        #22C55E;
-  --tz-text:       #d8d8ee;
-  --tz-text-muted: #7878aa;
+  --tz-bg-deep:         #0F0F23;
+  --tz-bg-panel:        rgba(15, 15, 40, 0.93);
+  --tz-bg-heading:      rgba(30, 27, 75, 0.96);
+  --tz-border:          rgba(67, 56, 202, 0.28);
+  --tz-accent:          #4338CA;
+  --tz-cta:             #22C55E;
+  --tz-text:            #d8d8ee;
+  --tz-text-muted:      #7878aa;
+  --tz-progress-start:  #4338CA;
+  --tz-progress-end:    #22C55E;
+}
+
+/* ── Theme: Zinc / Pink ─────────────────────────────────────────── */
+body.theme-zinc {
+  --tz-bg-deep:         #18181B;
+  --tz-bg-panel:        rgba(24, 24, 27, 0.93);
+  --tz-bg-heading:      rgba(39, 39, 42, 0.98);
+  --tz-border:          rgba(236, 72, 153, 0.22);
+  --tz-accent:          #EC4899;
+  --tz-cta:             #EC4899;
+  --tz-text:            #d4d4d8;
+  --tz-text-muted:      #71717a;
+  --tz-progress-start:  #7C3AED;
+  --tz-progress-end:    #EC4899;
+}
+
+/* ── Theme: Carbon / Gold ───────────────────────────────────────── */
+body.theme-carbon {
+  --tz-bg-deep:         #171717;
+  --tz-bg-panel:        rgba(23, 23, 23, 0.93);
+  --tz-bg-heading:      rgba(30, 30, 30, 0.99);
+  --tz-border:          rgba(212, 175, 55, 0.20);
+  --tz-accent:          #D4AF37;
+  --tz-cta:             #D4AF37;
+  --tz-text:            #d4d4d4;
+  --tz-text-muted:      #737373;
+  --tz-progress-start:  #92400E;
+  --tz-progress-end:    #D4AF37;
 }
 
 /* ── Dark glassmorphism tab container ───────────────────────────── */
@@ -525,7 +555,7 @@ body.lang-ko .lang-tab[data-lang="ko"] {
 #midiProgressFill {
   height: 100%;
   width: 0%;
-  background: linear-gradient(90deg, #4338CA, #22C55E);
+  background: linear-gradient(90deg, var(--tz-progress-start), var(--tz-progress-end));
   border-radius: 2px;
   transition: width 0.22s linear;
   pointer-events: none;
@@ -566,3 +596,34 @@ body.lang-ko .lang-tab[data-lang="ko"] {
 
 #interval-overlay.tz-collapsed .int-btn { display: none; }
 #interval-overlay.tz-collapsed .int-title { border-bottom: none; }
+
+/* ── Theme swatch picker (fixed, beside lang tabs) ──────────────── */
+#themePicker {
+  position: fixed;
+  top: 7px;
+  right: 82px;           /* sit left of #langTabs (~70px wide) */
+  z-index: 1010;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.theme-swatch {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.20);
+  cursor: pointer;
+  padding: 0;
+  transition: border-color 0.15s, transform 0.15s;
+  flex-shrink: 0;
+}
+.theme-swatch:hover {
+  border-color: rgba(255, 255, 255, 0.65);
+  transform: scale(1.18);
+}
+.theme-swatch.active {
+  border-color: #fff;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.30);
+  transform: scale(1.15);
+}

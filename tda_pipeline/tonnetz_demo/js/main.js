@@ -163,6 +163,11 @@ $(function(){
     if (window.i18n) window.i18n.setLang($(this).data('lang'));
   });
 
+  // Theme swatch picker — Default / Zinc-Pink / Carbon-Gold
+  $('#themePicker').on('click', '.theme-swatch', function() {
+    if (window.themeManager) window.themeManager.apply($(this).data('theme'));
+  });
+
   // Overlay collapse buttons
   $('#txCollapseBtn').click(function() {
     var overlay = document.getElementById('transform-overlay');
