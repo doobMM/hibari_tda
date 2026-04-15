@@ -483,14 +483,193 @@
             <div class="panel-heading">How to use</div>
             <div class="panel-body">
               <ul>
-                <li>Open the <strong>Playback</strong> tab, select <code>hibari.mid</code>, and press Play.</li>
+                <li>Open the <strong>Playback</strong> tab and press <strong>Play hibari</strong> — no file needed.</li>
                 <li>Notes light up on the Tonnetz as the piece plays.</li>
                 <li>H₁ cycle polygons are always visible as colored overlays.</li>
-                <li>You can also use a hardware MIDI device (Controls tab) or your computer keyboard.</li>
-                <li>Scroll to zoom; drag to pan.</li>
+                <li>Use a hardware MIDI device (Controls tab) or computer keyboard for live input.</li>
+                <li>Scroll to zoom; <strong>Transform overlay</strong> (bottom-left) and <strong>Interval overlay</strong> (right) are always visible.</li>
               </ul>
             </div>
           </div>
+
+          <!-- ── Neo-Riemannian ──────────────────────────────────────── -->
+          <div class="panel panel-default">
+            <div class="panel-heading">
+              <strong>Neo-Riemannian Transforms</strong>
+              <span class="text-muted" style="font-size:12px;margin-left:8px">P · L · R · N · S · H</span>
+            </div>
+            <div class="panel-body" style="font-size:13px">
+              <p>
+                Neo-Riemannian theory describes <em>parsimonious</em> voice-leading between triads —
+                each operation moves exactly <strong>one</strong> note by one or two semitones while
+                keeping the other two fixed. On the Tonnetz, each operation corresponds to a
+                <strong>reflection</strong> of the current triangle across one of its edges.
+              </p>
+
+              <table class="table table-condensed table-bordered" style="font-size:12px">
+                <thead>
+                  <tr>
+                    <th style="width:36px">Op</th>
+                    <th>What moves</th>
+                    <th>Formula</th>
+                    <th>Example (C major → ?)</th>
+                    <th>Tonnetz</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><strong>P</strong></td>
+                    <td>The third (±1 semitone)</td>
+                    <td><code>{r,r+4,r+7} ↔ {r,r+3,r+7}</code></td>
+                    <td>C maj {C,E,G} → C min {C,E♭,G}</td>
+                    <td>Flip across the top edge</td>
+                  </tr>
+                  <tr>
+                    <td><strong>L</strong></td>
+                    <td>The root (−1 semitone)</td>
+                    <td><code>{r,r+4,r+7} → {r+4,r+7,r+11}</code></td>
+                    <td>C maj {C,E,G} → E min {E,G,B}</td>
+                    <td>Flip across the right edge</td>
+                  </tr>
+                  <tr>
+                    <td><strong>R</strong></td>
+                    <td>The fifth (+2 semitones)</td>
+                    <td><code>{r,r+4,r+7} → {r,r+4,r+9}</code></td>
+                    <td>C maj {C,E,G} → A min {A,C,E}</td>
+                    <td>Flip across the left edge</td>
+                  </tr>
+                </tbody>
+              </table>
+
+              <p>
+                Each operation is its own inverse: P(P(x)) = x, L(L(x)) = x, R(R(x)) = x.
+                Crucially, <strong>P preserves root class</strong>,
+                <strong>L preserves the minor third</strong>, and
+                <strong>R preserves the major third</strong>.
+              </p>
+
+              <h5 style="margin-top:14px">Composite operations (N, S, H)</h5>
+              <p>Three common combinations extend the group:</p>
+
+              <table class="table table-condensed table-bordered" style="font-size:12px">
+                <thead>
+                  <tr><th style="width:36px">Op</th><th>Composition</th><th>Example (C major → ?)</th><th>Character</th></tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><strong>N</strong></td>
+                    <td>R → L → P</td>
+                    <td>C maj → F min</td>
+                    <td>Nebenverwandt — "neighboring" triad a P4 below</td>
+                  </tr>
+                  <tr>
+                    <td><strong>S</strong></td>
+                    <td>L → P → R</td>
+                    <td>C maj → D♭ maj</td>
+                    <td>Slide — root moves by one semitone, quality unchanged</td>
+                  </tr>
+                  <tr>
+                    <td><strong>H</strong></td>
+                    <td>L → P → L</td>
+                    <td>C maj → A♭ maj</td>
+                    <td>Hexatonic pole — tritone-related triad, same quality</td>
+                  </tr>
+                </tbody>
+              </table>
+
+              <p style="font-size:11px;color:#888;margin-top:6px">
+                <strong>In the demo:</strong> Press any button while notes are lit (or during playback).
+                The current chord is identified as the best-matching major/minor triad, the
+                operation is applied, and the result flashes for 2.5 s on a separate channel.
+                The result label (e.g. <em>L → E min</em>) fades in the overlay.
+              </p>
+            </div>
+          </div>
+
+          <!-- ── Transpositions ─────────────────────────────────────── -->
+          <div class="panel panel-default">
+            <div class="panel-heading">
+              <strong>Transpositions</strong>
+              <span class="text-muted" style="font-size:12px;margin-left:8px">T<sub>n</sub></span>
+            </div>
+            <div class="panel-body" style="font-size:13px">
+              <p>
+                A transposition T<sub>n</sub> shifts every pitch class by <em>n</em> semitones
+                modulo 12 — the simplest and most familiar musical transformation.
+              </p>
+              <p style="background:#f8f8f8;padding:8px 12px;border-left:3px solid #ccc;font-family:monospace;font-size:12px">
+                T<sub>n</sub>(p) = (p + n) mod 12
+              </p>
+              <p>
+                On the Tonnetz, T<sub>n</sub> slides the entire highlighted region
+                along one of the grid's axes:
+              </p>
+              <ul style="font-size:12px">
+                <li><strong>±1</strong> — chromatic semitone (m2); diagonal move</li>
+                <li><strong>±7</strong> — perfect fifth (P5); horizontal move in Riemannian layout</li>
+                <li><strong>±12</strong> — octave; all pitch classes unchanged visually (audio shifts one octave)</li>
+              </ul>
+              <p>
+                <strong>Continuous effect:</strong> unlike the one-shot PLR operations, the
+                transposition offset persists and is applied to every subsequent MIDI note.
+                Use the <strong>0</strong> (reset) button to return to the original key.
+              </p>
+              <p style="font-size:11px;color:#888">
+                <em>Example:</em> hibari is in G major. T<sub>+5</sub> (= T<sub>−7</sub>) transposes it to C major.
+                On the Tonnetz the whole lit pattern shifts five steps to the left.
+              </p>
+            </div>
+          </div>
+
+          <!-- ── Inversions ─────────────────────────────────────────── -->
+          <div class="panel panel-default">
+            <div class="panel-heading">
+              <strong>Inversions</strong>
+              <span class="text-muted" style="font-size:12px;margin-left:8px">I<sub>n</sub></span>
+            </div>
+            <div class="panel-body" style="font-size:13px">
+              <p>
+                An inversion I<sub>n</sub> reflects all pitch classes around an <em>axis</em> n.
+                It is the combination of a transposition and a "mirror flip" of the pitch-class circle.
+              </p>
+              <p style="background:#f8f8f8;padding:8px 12px;border-left:3px solid #ccc;font-family:monospace;font-size:12px">
+                I<sub>n</sub>(p) = (n − p) mod 12 &nbsp;&nbsp; [equivalently: (2n − p) mod 12]
+              </p>
+
+              <p>Key properties:</p>
+              <ul style="font-size:12px">
+                <li>I<sub>n</sub> is its own inverse: applying it twice returns to the original.</li>
+                <li>It maps a <strong>major triad to a minor triad</strong> of the same quality class —
+                    the harmonic "shape" is preserved but mirrored.</li>
+                <li>The axis n acts as a "fixed point" of the reflection on the pitch-class circle:
+                    if p = n then I<sub>n</sub>(p) = p.</li>
+              </ul>
+
+              <table class="table table-condensed table-bordered" style="font-size:12px;margin-top:10px">
+                <thead><tr><th>Axis</th><th>Maps C major {C,E,G} to…</th><th>Musical interpretation</th></tr></thead>
+                <tbody>
+                  <tr><td>I<sub>0</sub> (C)</td><td>{C, A♭, F} = F min</td><td>Invert around C</td></tr>
+                  <tr><td>I<sub>4</sub> (E)</td><td>{E, C, A} = A min</td><td>Invert around E (= Relative minor)</td></tr>
+                  <tr><td>I<sub>7</sub> (G)</td><td>{G, E♭, C} = C min</td><td>Invert around G (= Parallel)</td></tr>
+                  <tr><td>I<sub>11</sub> (B)</td><td>{B, G, E} = E min</td><td>Invert around B (= Leading-tone)</td></tr>
+                </tbody>
+              </table>
+
+              <p style="font-size:11px;color:#888">
+                Notice: I<sub>4</sub> = R, I<sub>7</sub> = P, I<sub>11</sub> = L when applied to major triads.
+                The Neo-Riemannian operations P, L, R are in fact <em>special cases</em> of pitch-class inversion.
+                On the Tonnetz, inversion corresponds to a <strong>global reflection</strong> of the grid
+                rather than a local edge-flip.
+              </p>
+
+              <p style="font-size:11px;color:#888">
+                <strong>In the demo:</strong> toggle ON and click an axis note name.
+                All subsequent MIDI events are remapped by I<sub>n</sub>.
+                Combine with a transposition offset to reach any inversion in the standard TI-group.
+              </p>
+            </div>
+          </div>
+
         </div>
 
       </div>
