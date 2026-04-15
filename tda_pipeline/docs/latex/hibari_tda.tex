@@ -688,36 +688,76 @@ $-54.8\%$, the largest improvement observed.  On Ravel Pavane ($N{=}49$
 notes), frequency is optimal, suggesting that rich note diversity favors
 frequency-based separation.
 
-\subsection{Direction A: Topology-Preserving Note Redistribution}
+\subsection{Direction A: Two-Strategy Note Redistribution}
 \label{subsec:dirA}
 
-Cycle vertex sets are replaced with new notes selected to minimize
-the total pairwise distance.  For each cycle, we construct a
-Tonnetz (or voice-leading) distance matrix between original and
-candidate notes, then solve the optimal assignment via the
-Hungarian algorithm (\texttt{scipy.optimize.linear\_sum\_assignment}).
-The overlap matrix is preserved intact; only the note identities change.
+The overlap matrix is preserved intact; only note identities change.
+We compare two exclusive matching strategies over $n_{\mathrm{cand}}=1000$
+candidate pitch sets ($N=20$ trials, \emph{hibari}, Tonnetz, MIDI~48--84).
+
+\textbf{Strategy A --- Positional Tonnetz nearest-neighbour
+(\texttt{tonnetz\_nearest}):}
+\begin{equation}
+\mathrm{new\_pitches}[i]
+  = \arg\min_{p\,\in\,\mathrm{pool}}\,d_{\mathrm{Tonnetz}}
+    \!\bigl(\mathrm{orig\_pitches}[i],\,p\bigr).
+\end{equation}
+Each original note is replaced by its closest pool element in Tonnetz
+space; the index~$i$ encodes a 1:1 positional correspondence that
+preserves local harmonic relations.
+
+\textbf{Strategy B --- Matrix-structure Hungarian matching
+(\texttt{ascending}):}
+\begin{equation}
+\pi^{*} = \arg\min_{\pi}\,
+  \bigl\|P_{\pi}\,\hat{D}_{\mathrm{new}}\,P_{\pi}^{\top}
+         - \hat{D}_{\mathrm{orig}}\bigr\|_{F},
+\end{equation}
+where $\hat{D}$ is the off-diagonal min-max normalised distance matrix:
+\begin{equation}
+\hat{D}_{ij}
+  = \frac{D_{ij}-\min_{k\neq l}D_{kl}}
+         {\max D - \min_{k\neq l}D_{kl}},
+\quad \hat{D}_{ii}=0.
+\end{equation}
+Solving the joint row-column permutation exactly is NP-hard; with
+$N=17$ notes, $N!\!=3.56\times10^{14}$ exhaustive evaluations are
+infeasible, so all experiments use the Hungarian approximation
+(\texttt{scipy.optimize.linear\_sum\_assignment}).
+
+Both strategies report \textbf{note\_dist\_error}
+$=\|\hat{D}_{\mathrm{orig}}-\hat{D}_{\mathrm{new}}\|_F$,
+which is on the same $\hat{D}$ scale and directly comparable across rows.
+Applying both strategies simultaneously degrades performance (Strategy~A's
+positional semantics are overwritten by Strategy~B's permutation), so the
+two are applied exclusively via \texttt{matching\_mode}.
 
 \begin{table}[t]
 \centering
-\caption{Note redistribution (Algorithm~1, Tonnetz).}
+\caption{Two-strategy comparison (Algorithm~1, Tonnetz, MIDI~48--84,
+         $N=20$, $n_{\mathrm{cand}}=1000$).}
 \label{tab:redistrib}
 \begin{tabular}{lcccc}
 \toprule
-Setting & Note err & Cycle err & DTW & $\Delta$DTW \\
+Strategy & pitch JS & trans.\ JS & DTW & note err \\
 \midrule
-baseline  & --- & --- & $2.21$ & --- \\
-narrow    & $4.00$ & $1.17$ & $2.09$ & $-5.8\%$ \\
-wide      & $4.46$ & $1.18$ & $2.89$ & $+30.3\%$ \\
-\textbf{vwide} & $4.48$ & $1.06$ & $\mathbf{3.57}$ & $\mathbf{+61.4\%}$ \\
+baseline (original)
+  & $0.0212$ & $0.2470$ & $2.2186$ & --- \\
+B: ascending (Hungarian)
+  & $0.3815$ & $0.6121$ & $2.7918$ & $4.6819$ \\
+\textbf{A: \texttt{tonnetz\_nearest}}
+  & $\mathbf{0.2930}$ & $\mathbf{0.5488}$ & $2.6442$ & $\mathbf{3.2132}$ \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-With the widest pitch range (MIDI 40--88), DTW increases by $61.4\%$
-while cycle distance error remains stable at $\sim 1.1$
-(Table~\ref{tab:redistrib})---topological structure is preserved while
-melody is genuinely different.
+Strategy~A achieves pitch~JS $0.2930$ vs.\ $0.3815$ for Strategy~B
+($-23.2\%$, Table~\ref{tab:redistrib}).  Local pairwise harmonic
+preservation~(A) outperforms global distance-matrix alignment~(B),
+consistent with \emph{hibari}'s small note vocabulary ($N=17$) in which
+adjacent Tonnetz relations directly govern harmonic character
+(\S\ref{subsec:structure}).  The wider pitch range vwide (MIDI~40--88)
+was inferior to wide (48--84) in all conditions; wide is adopted.
 
 \subsection{Direction B: Temporal Reordering}
 \label{subsec:dirB}

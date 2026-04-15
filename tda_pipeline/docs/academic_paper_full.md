@@ -1217,7 +1217,7 @@ $$\hat{D}_{ij} = \frac{D_{ij} - \min_{k \neq l} D_{kl}}{\max D - \min_{k \neq l}
 (비영값이 모두 동일한 상수이면 $\hat{D}_{ij} = 0.5$로 고정, 행렬 전체가 $0$이면 원본 반환.)
 
 **전략 B — 행렬 구조 기반 Hungarian 매칭 (`ascending`):**
-$$\pi^* = \arg\min_{\pi} \| P_\pi \hat{D}_{\text{new}} P_\pi^T - \hat{D}_{\text{orig}} \|_F \quad \text{(Hungarian으로 근사)}$$
+$$\pi^* = \arg\min_{\pi} \| P_\pi \hat{D}_{\text{new}} P_\pi^T - \hat{D}_{\text{orig}} \|_F$$
 pool을 임의 순서로 배치한 뒤, 원곡의 note 거리행렬 $\hat{D}_{\text{orig}}$와 Frobenius 거리를 최소화하는 행 순열 $\pi^*$를 탐색한다 (내부적으로 동일한 $\hat{D}$ 정규화 적용). joint row-column permutation은 NP-hard이므로 Hungarian algorithm으로 근사한다. hibari의 note 수 $N = 17$은 exhaustive joint row-column permutation ($N! = 3.56 \times 10^{14}$)이 불가능하므로, 본 연구의 모든 실험에서 ascending 분기는 항상 이 Hungarian 근사 경로를 거친다.
 
 두 전략을 동시에 적용하면 A의 위치 대응이 B에 의해 재배치되어 성능이 저하된다. 따라서 `matching_mode`에 따라 배타 선택한다.
