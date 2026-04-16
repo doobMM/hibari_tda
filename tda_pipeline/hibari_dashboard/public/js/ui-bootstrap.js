@@ -177,20 +177,23 @@
       log('편집을 참조로 초기화했습니다.');
     });
 
-    $('btnRandom').addEventListener('click', () => {
-      if (!UI.editEditor) return;
-      const seed = parseInt($('sliderSeed').value, 10) || 0;
-      // 현재 참조 density 와 같은 수준으로
-      const d = UI.data?.overlapRef?.density ?? 0.3;
-      UI.editEditor.randomFill(d, seed);
-      log(`랜덤 채움: density≈${(d*100).toFixed(1)}%, seed=${seed}`);
-    });
-
     $('btnClear').addEventListener('click', () => {
       if (!UI.editEditor) return;
       UI.editEditor.clearAll();
       log('편집 matrix 를 모두 0 으로 비웠습니다.');
     });
+
+    // ── 변형 컨트롤 배선 ─────────────────────────────────────────────
+    const sV = $('sliderVariant');
+    const sVVal = $('sliderVariantVal');
+    if (sV && sVVal) {
+      sV.addEventListener('input', () => {
+        sVVal.textContent = parseFloat(sV.value).toFixed(2);
+      });
+    }
+    $('variantMode').addEventListener('change', updateVariantHint);
+    $('btnVariant').addEventListener('click', applyVariant);
+    updateVariantHint();
 
     const diffToggle = $('toggleDiff');
     diffToggle.addEventListener('change', () => {
@@ -221,6 +224,89 @@
     $('btnDownloadMidi').addEventListener('click', onClickDownloadMidi);
     $('btnPlayOriginal').addEventListener('click', onClickPlayOriginal);
     $('btnStopOriginal').addEventListener('click', onClickStopOriginal);
+  }
+
+  // ── 변형 컨트롤 힌트/적용 로직 ───────────────────────────────────────
+  const VARIANT_HINTS = {
+    block:       '강도 t 를 올릴수록 블록 크기 증가 (bs = round(8·(1+3t))). 작을수록 국소 섞임, 클수록 구간 이동.',
+    jitter:      '참조 각 ON 셀을 시간 축 ±round(24t), cycle 축 ±round(4t) 이내로 흔들기. 가까운 셀끼리 겹치면 병합되어 density 가 5~15% 감소할 수 있음.',
+    shift:       '시간 축으로 round(T·t) 스텝만큼 원형 이동. density/분포 완전 동일, 시작점만 이동.',
+    permuteTime: '시점(row) 순서를 완전 랜덤 permutation. cycle 별 column 분포는 완전 유지.',
+    permuteCycle:'cycle(K) 번호를 permutation. 각 시점의 활성 cycle 개수는 완전 유지.',
+    shuffle:     'ON 셀 개수(N_on)를 유지하면서 위치를 완전 랜덤 재배치. 공간 구조 완전 파괴, density 만 유지.',
+    flood:       '2~5 개 씨앗에서 시작해 4방향으로 번지는 물자국. 강도 = 번짐 확률 (0.3~0.9).',
+    bernoulli:   '각 셀을 참조 density 와 같은 확률로 독립 추출. 완전 노이즈 — 생성 음악도 거의 무작위.',
+  };
+  const VARIANT_LABEL = {
+    block: '블록 셔플', jitter: '참조 왜곡', shift: '원형 이동',
+    permuteTime: '시간축 셔플', permuteCycle: 'cycle 셔플',
+    shuffle: '무작위 재분배', flood: '흐름 무늬', bernoulli: '독립 Bernoulli',
+  };
+
+  function updateVariantHint() {
+    const mode = $('variantMode').value;
+    $('variantHint').textContent = VARIANT_HINTS[mode] || '';
+  }
+
+  function applyVariant() {
+    if (!UI.editEditor || !UI.data) { log('데이터 미로드', 'ERR'); return; }
+    const ed = UI.editEditor;
+    const mode = $('variantMode').value;
+    const seed = parseInt($('sliderSeed').value, 10) || 0;
+    const t = parseFloat($('sliderVariant').value);
+    const refDens = UI.data.overlapRef.density ?? 0.3;
+    const fromCurrent = $('toggleFromCurrent').checked;
+    const fromRef = !fromCurrent;
+    const T = ed.T;
+
+    switch (mode) {
+      case 'shuffle':
+        ed.shuffleDensity(seed, fromRef);
+        break;
+      case 'permuteTime':
+        ed.permuteTime(seed, fromRef);
+        break;
+      case 'permuteCycle':
+        ed.permuteCycles(seed, fromRef);
+        break;
+      case 'block': {
+        const bs = Math.max(2, Math.round(8 * (1 + t * 3)));
+        ed.blockShuffle(bs, seed, fromRef);
+        log(`${VARIANT_LABEL[mode]}: blockSize=${bs} (${fromRef ? '참조' : '편집본'} 기반, seed=${seed})`);
+        return;
+      }
+      case 'shift': {
+        const dt = Math.round(T * t);
+        ed.circularShift(dt, 0, fromRef);
+        log(`${VARIANT_LABEL[mode]}: Δt=${dt} (${fromRef ? '참조' : '편집본'} 기반, seed=${seed})`);
+        return;
+      }
+      case 'flood': {
+        const spread = 0.3 + 0.6 * t;
+        ed.floodPattern(seed, refDens, spread);
+        log(`${VARIANT_LABEL[mode]}: spread=${spread.toFixed(2)}, target density≈${(refDens*100).toFixed(1)}%, seed=${seed}`);
+        return;
+      }
+      case 'jitter': {
+        if (fromRef) {
+          ed.jitterFromReference(Math.max(0.02, t), seed);
+        } else {
+          // 편집본 기반 jitter: 현재 values 를 임시 reference 로 swap
+          const origRef = ed.reference;
+          ed.reference = ed.values;
+          ed.jitterFromReference(Math.max(0.02, t), seed);
+          ed.reference = origRef;
+        }
+        log(`${VARIANT_LABEL[mode]}: strength=${t.toFixed(2)} (${fromRef ? '참조' : '편집본'} 기반, seed=${seed})`);
+        return;
+      }
+      case 'bernoulli':
+        ed.randomFill(refDens, seed);
+        log(`${VARIANT_LABEL[mode]}: density≈${(refDens*100).toFixed(1)}%, seed=${seed}`);
+        return;
+    }
+    // 공통 로그 (shuffle/permuteTime/permuteCycle)
+    log(`${VARIANT_LABEL[mode]}: (${fromRef ? '참조' : '편집본'} 기반, seed=${seed})`);
   }
 
   // ── Phase 4: 생성·재생 로직 ─────────────────────────────────────────

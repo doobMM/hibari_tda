@@ -73,10 +73,33 @@
       <div class="control-group">
         <h3>편집</h3>
         <button class="btn" id="btnReset">초기화 (참조 복구)</button>
-        <button class="btn" id="btnRandom">랜덤 채움</button>
         <button class="btn" id="btnClear">모두 지우기</button>
         <label class="toggle">
           <input type="checkbox" id="toggleDiff"> <span>참조와 diff 하이라이트</span>
+        </label>
+      </div>
+
+      <div class="control-group">
+        <h3>변형 (density 유지)</h3>
+        <p class="hint" id="variantHint">참조 overlap 을 재배치해서 비슷한 분포의 다른 곡을 탐색합니다.</p>
+        <select class="select" id="variantMode">
+          <option value="block">블록 셔플 (국소 구조 유지)</option>
+          <option value="jitter">참조 왜곡 (local jitter)</option>
+          <option value="shift">원형 이동 (phase shift)</option>
+          <option value="permuteTime">시간축 셔플</option>
+          <option value="permuteCycle">cycle 축 셔플</option>
+          <option value="shuffle">무작위 재분배 (density 보존)</option>
+          <option value="flood">흐름 무늬 (물 번짐)</option>
+          <option value="bernoulli">독립 Bernoulli (공간 구조 無)</option>
+        </select>
+        <div class="slider-row">
+          <label for="sliderVariant">강도</label>
+          <input type="range" id="sliderVariant" min="0" max="1" step="0.05" value="0.3">
+          <span id="sliderVariantVal">0.30</span>
+        </div>
+        <button class="btn btn-primary" id="btnVariant">▷ 참조에 변형 적용</button>
+        <label class="toggle">
+          <input type="checkbox" id="toggleFromCurrent"> <span>참조 대신 현재 편집본에 적용</span>
         </label>
       </div>
 

@@ -8,10 +8,19 @@
  *   ed.setReference(Int8Array) — diff 비교용 참조. 같은 T×K 크기여야 함.
  *   ed.setDiffMode(bool)
  *   ed.resetToReference()      — 참조로 복구
- *   ed.randomFill(density)     — 전체를 density 확률로 채움
+ *   ed.randomFill(density)     — 각 셀 독립 Bernoulli (공간 구조 無)
  *   ed.clearAll()
  *   ed.density()               — 현재 ON 비율
  *   ed.diffCount()             — 참조와의 Hamming distance
+ *
+ *   ── density 보존 변형 (기본은 참조 기반) ──
+ *   ed.shuffleDensity(seed, fromRef)        — ON 셀 수 유지, 위치 완전 랜덤
+ *   ed.permuteTime(seed, fromRef)           — T 축 순서 permutation
+ *   ed.permuteCycles(seed, fromRef)         — K 축 순서 permutation
+ *   ed.blockShuffle(blockSize, seed, fromRef) — 시간 블록 단위 셔플
+ *   ed.circularShift(dt, dc, fromRef)       — 원형 이동
+ *   ed.floodPattern(seed, density, spread)  — 물 번짐 flood fill
+ *   ed.jitterFromReference(strength, seed)  — 참조 각 ON 셀을 local jitter
  *
  * Zoom/Pan:
  *   - 기본 fit-to-canvas
@@ -102,7 +111,7 @@
     }
 
     randomFill(density = 0.3, seed) {
-      const rng = seed != null ? mulberry32(seed) : Math.random;
+      const rng = this._rng(seed);
       for (let i = 0; i < this.values.length; i++) {
         this.values[i] = (rng() < density) ? 1 : 0;
       }
@@ -114,6 +123,232 @@
       this.values.fill(0);
       this.render();
       this._emitChange();
+    }
+
+    // ── density 보존 변형 ────────────────────────────────────────────
+    // source: fromRef=true 이면 this.reference 기반, false 이면 현재 편집본 기반.
+
+    /**
+     * density 유지 재분배 — ON 셀 개수(N_on)는 그대로, 위치만 완전 랜덤.
+     * 공간/시간 구조 완전 파괴, 통계(density)만 유지.
+     */
+    shuffleDensity(seed, fromRef = false) {
+      const rng = this._rng(seed);
+      const src = this._srcArray(fromRef);
+      const N = src.length;
+      let nOn = 0;
+      for (let i = 0; i < N; i++) if (src[i]) nOn++;
+      // 인덱스 배열을 shuffle 해서 앞 nOn 개만 ON 으로 선택
+      const idx = new Int32Array(N);
+      for (let i = 0; i < N; i++) idx[i] = i;
+      for (let i = 0; i < nOn; i++) {
+        const j = i + Math.floor(rng() * (N - i));
+        const tmp = idx[i]; idx[i] = idx[j]; idx[j] = tmp;
+      }
+      const out = new Int8Array(N);
+      for (let i = 0; i < nOn; i++) out[idx[i]] = 1;
+      this.values = out;
+      this.render();
+      this._emitChange();
+    }
+
+    /**
+     * T 축 permutation — 각 시점(row) 순서를 섞음.
+     * cycle별 column 분포 완전 유지, 시간 구조만 파괴.
+     */
+    permuteTime(seed, fromRef = false) {
+      const rng = this._rng(seed);
+      const src = this._srcArray(fromRef);
+      const T = this.T, K = this.K;
+      const perm = new Int32Array(T);
+      for (let t = 0; t < T; t++) perm[t] = t;
+      for (let i = T - 1; i > 0; i--) {
+        const j = Math.floor(rng() * (i + 1));
+        const tmp = perm[i]; perm[i] = perm[j]; perm[j] = tmp;
+      }
+      const out = new Int8Array(T * K);
+      for (let t = 0; t < T; t++) {
+        const s = perm[t];
+        for (let c = 0; c < K; c++) out[t * K + c] = src[s * K + c];
+      }
+      this.values = out;
+      this.render();
+      this._emitChange();
+    }
+
+    /**
+     * K 축 permutation — cycle 번호 순서를 섞음.
+     * 시점별 활성 cycle 개수 완전 유지, 어떤 cycle인지만 재배치.
+     */
+    permuteCycles(seed, fromRef = false) {
+      const rng = this._rng(seed);
+      const src = this._srcArray(fromRef);
+      const T = this.T, K = this.K;
+      const perm = new Int32Array(K);
+      for (let c = 0; c < K; c++) perm[c] = c;
+      for (let i = K - 1; i > 0; i--) {
+        const j = Math.floor(rng() * (i + 1));
+        const tmp = perm[i]; perm[i] = perm[j]; perm[j] = tmp;
+      }
+      const out = new Int8Array(T * K);
+      for (let t = 0; t < T; t++) {
+        for (let c = 0; c < K; c++) out[t * K + c] = src[t * K + perm[c]];
+      }
+      this.values = out;
+      this.render();
+      this._emitChange();
+    }
+
+    /**
+     * 시간 블록 단위 셔플 — blockSize 스텝을 하나의 블록으로 묶어 permutation.
+     * 블록 내부 구조는 보존, 블록 간 순서만 섞음.
+     */
+    blockShuffle(blockSize = 8, seed, fromRef = false) {
+      const rng = this._rng(seed);
+      const src = this._srcArray(fromRef);
+      const T = this.T, K = this.K;
+      const bs = Math.max(1, blockSize | 0);
+      const nb = Math.floor(T / bs);
+      const perm = new Int32Array(nb);
+      for (let b = 0; b < nb; b++) perm[b] = b;
+      for (let i = nb - 1; i > 0; i--) {
+        const j = Math.floor(rng() * (i + 1));
+        const tmp = perm[i]; perm[i] = perm[j]; perm[j] = tmp;
+      }
+      const out = new Int8Array(T * K);
+      for (let b = 0; b < nb; b++) {
+        const s = perm[b];
+        for (let dt = 0; dt < bs; dt++) {
+          for (let c = 0; c < K; c++) {
+            out[(b * bs + dt) * K + c] = src[(s * bs + dt) * K + c];
+          }
+        }
+      }
+      // 꼬리(T 가 bs 로 나누어 떨어지지 않을 때)는 그대로 복사
+      for (let t = nb * bs; t < T; t++) {
+        for (let c = 0; c < K; c++) out[t * K + c] = src[t * K + c];
+      }
+      this.values = out;
+      this.render();
+      this._emitChange();
+    }
+
+    /**
+     * 원형 이동 — 시간 축으로 dt, cycle 축으로 dc 만큼 circular shift.
+     * density/row/col 분포 완전 동일, 시작 위상만 다름.
+     */
+    circularShift(dt = 0, dc = 0, fromRef = false) {
+      const src = this._srcArray(fromRef);
+      const T = this.T, K = this.K;
+      dt = (((dt | 0) % T) + T) % T;
+      dc = (((dc | 0) % K) + K) % K;
+      const out = new Int8Array(T * K);
+      for (let t = 0; t < T; t++) {
+        const st = (t - dt + T) % T;
+        for (let c = 0; c < K; c++) {
+          const sc = (c - dc + K) % K;
+          out[t * K + c] = src[st * K + sc];
+        }
+      }
+      this.values = out;
+      this.render();
+      this._emitChange();
+    }
+
+    /**
+     * 물 번짐 flood fill — 2~5 개 씨앗에서 spread 확률로 4방향 전파.
+     * 참조와 무관한 공간 연속성 패턴. target density 근사.
+     */
+    floodPattern(seed, density = 0.3, spread = 0.6) {
+      const rng = this._rng(seed);
+      const T = this.T, K = this.K;
+      const N = T * K;
+      const target = Math.max(1, Math.round(N * density));
+      const out = new Int8Array(N);
+      const frontier = [];
+      const numSources = 2 + Math.floor(rng() * 4);  // 2..5
+      for (let s = 0; s < numSources; s++) {
+        const t = Math.floor(rng() * T);
+        const c = Math.floor(rng() * K);
+        const i = t * K + c;
+        if (!out[i]) { out[i] = 1; frontier.push(i); }
+      }
+      let count = frontier.length;
+      // 안전장치: 최악의 경우 무한루프 방지
+      let safety = N * 4;
+      while (count < target && frontier.length > 0 && safety-- > 0) {
+        const pickIdx = Math.floor(rng() * frontier.length);
+        const si = frontier[pickIdx];
+        const st = (si / K) | 0;
+        const sc = si - st * K;
+        const neigh = [
+          [st - 1, sc], [st + 1, sc],
+          [st, sc - 1], [st, sc + 1],
+        ];
+        let grew = false;
+        for (let n = 0; n < 4; n++) {
+          const nt = neigh[n][0], nc = neigh[n][1];
+          if (nt < 0 || nt >= T || nc < 0 || nc >= K) continue;
+          const ni = nt * K + nc;
+          if (out[ni]) continue;
+          if (rng() < spread) {
+            out[ni] = 1;
+            frontier.push(ni);
+            count++;
+            grew = true;
+            if (count >= target) break;
+          }
+        }
+        if (!grew) {
+          // 이 씨앗은 더 이상 확장 불가 — frontier 에서 제거 (O(1) swap-pop)
+          frontier[pickIdx] = frontier[frontier.length - 1];
+          frontier.pop();
+        }
+      }
+      this.values = out;
+      this.render();
+      this._emitChange();
+    }
+
+    /**
+     * 참조 왜곡 — 참조의 각 ON 셀을 local random offset 으로 이동.
+     * strength ∈ [0,1] → 시간축 최대 24 step, cycle 축 최대 4.
+     * 지각적으로 참조와 가장 비슷한 "흔들린 그림".
+     */
+    jitterFromReference(strength = 0.2, seed) {
+      if (!this.reference) return;
+      const rng = this._rng(seed);
+      const T = this.T, K = this.K;
+      const out = new Int8Array(T * K);
+      const maxT = Math.max(1, Math.round(strength * 24));
+      const maxC = Math.max(1, Math.round(strength * 4));
+      for (let t = 0; t < T; t++) {
+        for (let c = 0; c < K; c++) {
+          if (!this.reference[t * K + c]) continue;
+          const ot = Math.floor(rng() * (2 * maxT + 1)) - maxT;
+          const oc = Math.floor(rng() * (2 * maxC + 1)) - maxC;
+          let nt = t + ot, nc = c + oc;
+          // 시간은 clamp (wrap 하면 음악 끝과 처음이 섞여 부자연스러움)
+          if (nt < 0) nt = 0; else if (nt >= T) nt = T - 1;
+          if (nc < 0) nc = 0; else if (nc >= K) nc = K - 1;
+          out[nt * K + nc] = 1;  // 겹치면 자연스럽게 하나로 병합 → density 약간 감소
+        }
+      }
+      this.values = out;
+      this.render();
+      this._emitChange();
+    }
+
+    // ── 내부 helper ──────────────────────────────────────────────────
+    _rng(seed) {
+      return seed != null ? mulberry32(seed) : Math.random;
+    }
+    _srcArray(fromRef) {
+      if (fromRef) {
+        if (!this.reference) throw new Error('참조(reference) 가 설정되지 않음');
+        return this.reference;
+      }
+      return this.values;
     }
 
     density() {
@@ -144,30 +379,63 @@
       // 오른쪽 클릭 메뉴 억제
       c.addEventListener('contextmenu', (e) => e.preventDefault());
 
-      c.addEventListener('mousedown', (e) => this._onMouseDown(e));
-      c.addEventListener('mousemove', (e) => this._onMouseMove(e));
-      c.addEventListener('mouseleave', () => {
-        this._hover = null;
-        this.onHover(null);
-        this.render();
+      // Pointer 이벤트로 통일 (마우스/터치/펜 모두 처리). 모바일에서 단일 터치
+      // 드래그는 paint, 두 손가락은 pinch-zoom 으로 처리.
+      this._activePointers = new Map();   // pointerId → {x, y}
+      this._pinchStart = null;            // { dist, scale, cx, cy, offX, offY }
+
+      c.addEventListener('pointerdown', (e) => this._onPointerDown(e));
+      c.addEventListener('pointermove', (e) => this._onPointerMove(e));
+      c.addEventListener('pointerup', (e) => this._onPointerUp(e));
+      c.addEventListener('pointercancel', (e) => this._onPointerUp(e));
+      c.addEventListener('pointerleave', (e) => {
+        if (this._activePointers.size === 0) {
+          this._hover = null;
+          this.onHover(null);
+          this.render();
+        }
       });
-      c.addEventListener('mouseup', (e) => this._onMouseUp(e));
       c.addEventListener('wheel', (e) => this._onWheel(e), { passive: false });
       c.addEventListener('dblclick', () => this.resetView());
 
-      window.addEventListener('mouseup', () => { this._drag = null; });
+      window.addEventListener('pointerup', () => {
+        this._drag = null;
+        this._activePointers.clear();
+        this._pinchStart = null;
+      });
       window.addEventListener('resize', () => {
         this._resizeToContainer();
         this.render();
       });
     }
 
-    _onMouseDown(e) {
+    _onPointerDown(e) {
       if (this.readonly) return;
+      // 터치 캡처: pointermove 가 canvas 밖으로 나가도 추적되게
+      try { this.canvas.setPointerCapture(e.pointerId); } catch (_) {}
+      this._activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+      // 두 손가락 이상 → pinch/pan 모드로 전환, 이전 drag 취소
+      if (this._activePointers.size >= 2) {
+        const pts = Array.from(this._activePointers.values());
+        const dx = pts[1].x - pts[0].x;
+        const dy = pts[1].y - pts[0].y;
+        this._pinchStart = {
+          dist: Math.hypot(dx, dy) || 1,
+          scale: this.view.scale,
+          cx: (pts[0].x + pts[1].x) / 2,
+          cy: (pts[0].y + pts[1].y) / 2,
+          offX: this.view.offsetX,
+          offY: this.view.offsetY,
+        };
+        this._drag = { mode: 'multi' };
+        return;
+      }
+
       const pos = this._mouseToCell(e);
       if (!pos) return;
-      if (e.shiftKey || e.button === 1) {
-        // 팬 모드
+      if (e.shiftKey || e.button === 1 || e.pointerType === 'touch' && e.altKey) {
+        // Shift+드래그(데스크톱) 팬 모드
         this._drag = {
           mode: 'pan',
           startX: e.clientX,
@@ -176,11 +444,9 @@
           baseOffsetY: this.view.offsetY,
         };
       } else if (e.button === 2) {
-        // 우클릭: 강제 0
         this._paintCell(pos.t, pos.c, 0);
         this._drag = { mode: 'paint', paintValue: 0, lastCell: pos };
       } else {
-        // 좌클릭: 현재 값의 반대로 통일
         const cur = this.values[this.idx(pos.t, pos.c)];
         const newVal = cur ? 0 : 1;
         this._paintCell(pos.t, pos.c, newVal);
@@ -188,7 +454,38 @@
       }
     }
 
-    _onMouseMove(e) {
+    _onPointerMove(e) {
+      if (this._activePointers.has(e.pointerId)) {
+        this._activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      }
+
+      // 멀티터치 pinch-zoom + 2-finger pan
+      if (this._activePointers.size >= 2 && this._pinchStart) {
+        const pts = Array.from(this._activePointers.values());
+        const dx = pts[1].x - pts[0].x;
+        const dy = pts[1].y - pts[0].y;
+        const dist = Math.hypot(dx, dy) || 1;
+        const newCx = (pts[0].x + pts[1].x) / 2;
+        const newCy = (pts[0].y + pts[1].y) / 2;
+        const rect = this.canvas.getBoundingClientRect();
+        const pinch = this._pinchStart;
+        const zoomFactor = dist / pinch.dist;
+        const newScale = Math.max(0.3, Math.min(12, pinch.scale * zoomFactor));
+
+        // 시작 시점의 두 손가락 중점이 고정되게, 그리고 중점 평행이동을 pan 으로 반영
+        const mx = pinch.cx - rect.left;
+        const my = pinch.cy - rect.top;
+        const worldX = (mx - this.originX - pinch.offX) / pinch.scale;
+        const worldY = (my - this.originY - pinch.offY) / pinch.scale;
+        const panDx = newCx - pinch.cx;
+        const panDy = newCy - pinch.cy;
+        this.view.scale = newScale;
+        this.view.offsetX = mx - this.originX - worldX * newScale + panDx;
+        this.view.offsetY = my - this.originY - worldY * newScale + panDy;
+        this._scheduleRender();
+        return;
+      }
+
       const pos = this._mouseToCell(e);
       this._hover = pos;
       this.onHover(pos);
@@ -205,8 +502,17 @@
       this._scheduleRender();
     }
 
-    _onMouseUp() {
-      this._drag = null;
+    _onPointerUp(e) {
+      this._activePointers.delete(e.pointerId);
+      try { this.canvas.releasePointerCapture(e.pointerId); } catch (_) {}
+      // 손가락 1개 이하가 되면 pinch 종료
+      if (this._activePointers.size < 2) {
+        this._pinchStart = null;
+        if (this._drag && this._drag.mode === 'multi') this._drag = null;
+      }
+      if (this._activePointers.size === 0) {
+        this._drag = null;
+      }
     }
 
     _onWheel(e) {
