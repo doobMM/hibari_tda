@@ -12,7 +12,7 @@
 
 본 연구는 사카모토 류이치의 2009년 앨범 *out of noise* 수록곡 "hibari"를 대상으로, 음악의 구조를 **위상수학적으로 분석**하고 그 위상 구조를 **보존하면서 새로운 음악을 생성**하는 파이프라인을 제안한다. 전체 과정은 네 단계로 구성된다. (1) MIDI 전처리: 두 악기를 분리하고 8분음표 단위로 양자화. (2) Persistent Homology: 네 가지 거리 함수(frequency, Tonnetz, voice leading, DFT)로 note 간 거리 행렬을 구성한 뒤 $H_1$ cycle을 추출. (3) 중첩행렬 구축: cycle의 시간별 활성화를 이진 또는 연속값 행렬로 기록. (4) 음악 생성: 중첩행렬을 seed로 하여 확률적 샘플링 기반의 Algorithm 1과 FC / LSTM / Transformer 신경망 기반의 Algorithm 2 두 방식으로 음악 생성.
 
-$N = 20$회 통계적 반복을 통한 정량 검증에서, **Algorithm 1**(확률적 샘플링) 기반으로 Tonnetz 거리 함수가 frequency 거리 함수 대비 pitch Jensen-Shannon divergence를 $0.0753 \pm 0.0033$에서 $0.0398 \pm 0.0031$로 **약 $47\%$ 감소**시켰으며, 이는 Welch's $t = 35.1$, Cohen's $d = 11.1$, $p < 10^{-20}$로 극도로 유의한 개선이다. 동일 Algorithm 1 조건에서 연속값 중첩행렬을 임계값 $\tau = 0.5$로 이진화한 변형은 기존 이진 중첩행렬 대비 추가로 JS divergence를 $11.4\%$ 개선했으며 ($0.0387 \to 0.0343$, Welch $t = 5.16$), 이 역시 통계적으로 유의했다. **Algorithm 2**(DL 기반 생성)에서 가장 단순한 FC 신경망이 LSTM / Transformer보다 낮은 JS divergence($0.0015$)를 기록한 것은, hibari가 수록된 *out of noise* 앨범의 미학적 성격 — 전통적 선율 인과보다 음들의 공간적 배치에 의존 — 과 정확히 공명하는 관찰이다.
+$N = 20$회 통계적 반복을 통한 정량 검증에서, **Algorithm 1**(확률적 샘플링) 기반으로 DFT 거리 함수가 frequency 거리 함수 대비 pitch Jensen-Shannon divergence를 $0.0344 \pm 0.0023$에서 $0.0211 \pm 0.0021$로 **약 $38.7\%$ 감소**시켰으며, 이는 Welch's $t = 19.1$, Cohen's $d = 6.1$, $p < 10^{-20}$로 극도로 유의한 개선이다. 동일 Algorithm 1 조건에서 연속값 중첩행렬을 임계값 $\tau = 0.7$로 이진화한 변형은 기존 이진 중첩행렬 대비 추가로 JS divergence를 $39.1\%$ 개선했으며 ($0.0488 \to 0.0297$), 이 역시 통계적으로 유의했다. **Algorithm 2**(DL 기반 생성)에서 연속값 중첩행렬을 입력으로 하는 FC 신경망이 JS divergence $0.0004$를 달성한 것은, hibari가 수록된 *out of noise* 앨범의 미학적 성격 — 전통적 선율 인과보다 음들의 공간적 배치에 의존 — 과 정확히 공명하는 관찰이다.
 
 본 연구의 intra / inter / simul 세 갈래 가중치 분리 설계는 hibari의 두 악기 구조 — inst 1은 쉼 없이 연속 연주, inst 2는 모듈마다 규칙적 쉼을 두며 겹쳐 배치 — 를 수학적 구조에 반영한 것이며, 두 악기의 활성/쉼 패턴 관측 (inst 1 쉼 $0$개, inst 2 쉼 $64$개) 이 이 설계를 경험적으로 정당화한다. 본 논문은 수학적 정의부터 통계 실험, 시각자료, 향후 연구 방향까지를 하나의 일관된 흐름으로 정리한다.
 
@@ -557,19 +557,19 @@ $w_o$가 grid search로 최적화된 것과 동일한 방식으로, $w_d \in \{0
 
 ## 4.1c 감쇄 Lag 가중치 실험
 
-§2.9에서 도입한 감쇄 합산 inter weight의 실험적 근거를 제시한다. lag=1 단일 옵션과 lag 1~4 감쇄 합산 옵션 두 설정을 비교하되, 거리 함수는 frequency와 Tonnetz 두 가지를 대조하여 거리 함수의 특성에 따라 효과가 달라짐을 확인한다.
+§2.9에서 도입한 감쇄 합산 inter weight의 실험적 근거를 제시한다. lag=1 단일 옵션과 lag 1~4 감쇄 합산 옵션 두 설정을 비교하되, 거리 함수는 DFT와 Tonnetz 두 가지를 대조하여 거리 함수의 특성에 따라 효과가 달라짐을 확인한다.
 
 **실험 설정:**
 - lag=1 단일 : $W_{\text{inter}} = W_{\text{inter}}^{(1)}$
 - lag 1~4 감쇄 합산 : $\displaystyle W_{\text{inter}} = \sum_{\ell=1}^{4} \lambda_\ell \cdot W_{\text{inter}}^{(\ell)}$, $\quad (\lambda_1,\lambda_2,\lambda_3,\lambda_4) = (0.60,\ 0.30,\ 0.08,\ 0.02)$
 - 고정 조건: hibari, Algorithm 1, N=20
 
-| 곡 | 거리 함수 | lag=1 단일 | lag 1~4 감쇄 합산 | 변화 |
+| 곡 | 거리 함수 | lag=1 단일 (JS mean ± std) | lag 1~4 감쇄 합산 (JS mean ± std) | 변화 |
 |---|---|---|---|---|
-| hibari | frequency | $0.0753$ | $0.0787$ | $+4.5\%$ |
-| hibari | Tonnetz | $0.0398$ | $\mathbf{0.0121}$ | $\mathbf{-69.6\%}$ |
+| hibari | DFT | $0.0211 \pm 0.0021$ | $\mathbf{0.0196 \pm 0.0022}$ | $\mathbf{-7.1\%}$ ★ |
+| hibari | Tonnetz | $0.0488 \pm 0.0040$ | $0.0511 \pm 0.0039$ | $+4.8\%$ |
 
-__해석 4 — Tonnetz에서만 lag 감쇄가 유효.__ Tonnetz 거리는 화성적 관계를 반영하는 metric이다. hibari처럼 화성 구조가 명확한 곡에서는 악기 간 상호작용이 lag 2~4에서도 지속적으로 유의미하며, 감쇄 합산이 이를 포착하여 거리 행렬의 질을 크게 향상시킨다. 반면 frequency 거리는 lag를 확장할수록 음역대가 다른 화음들 사이의 우연한 동시 등장이 포함되어 노이즈가 증가하고, JS가 소폭 악화된다.
+__해석 4 — DFT에서 marginal 개선, Tonnetz에서는 악화.__ DFT 거리에서는 감쇄 lag가 JS를 7.1% 개선하는 소폭의 효과를 보인다 ($p \approx 0.034$). Tonnetz에서는 오히려 4.8% 악화한다. 이는 DFT가 스펙트럼 구조를 포착하는 metric으로, hibari의 좁은 화성 공간에서 lag 2~4의 추가 정보가 소량 유효하게 작용하는 반면, Tonnetz에서는 먼 lag의 우연한 동시 등장이 노이즈로 작용함을 시사한다.
 
 ---
 
