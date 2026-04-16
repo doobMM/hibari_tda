@@ -36,8 +36,8 @@
 
 | 실험 | 핵심 결과 |
 |---|---|
-| §3.1 거리 함수 비교 (N=20) | Tonnetz가 frequency 대비 JS -47% (hibari) |
-| §3.3a Continuous overlap (N=20) | τ=0.5 이진화가 추가 -11% |
+| §3.1 거리 함수 비교 (N=20) | DFT 0.0211★ (frequency -38.7%, Tonnetz -56.8%) |
+| §3.3a Continuous overlap (N=20) | τ=0.7 이진화가 추가 -39.1% (0.0488→0.0297) |
 | §3.4a 개선 F (N=5) | Continuous + FC → JS 0.0004 ★ 본 연구 최저 |
 | §3.6 곡 고유 구조 | deep scale, entropy 0.974, phase shifting |
 | §7.1 모듈 단위 생성 | P4+C best JS 0.0258, 첫 모듈 정당성 |
@@ -56,7 +56,7 @@
 
 | 곡 | PC 수 | 최적 거리 | 최적 모델 | 해석 |
 |---|---|---|---|---|
-| hibari | 7 (diatonic) | Tonnetz | FC | 공간적 배치, entropy 0.974 |
+| hibari | 7 (diatonic) | DFT | FC | 스펙트럼 구조 포착, entropy 0.974 |
 | solari | 12 (chromatic) | voice_leading | Transformer | 선율적 진행 |
 | aqua | 12 (chromatic) | Tonnetz | (미실행) | Tonnetz +26.3% |
 | Bach Fugue | 12 (chromatic) | Tonnetz | — | 대위법인데 Tonnetz 최적 (-54.8%) |
@@ -65,7 +65,7 @@
 ### hibari 현재 최적 설정
 
 ```
-거리 함수: Tonnetz (α=0.0, octave_weight=0.3)
+거리 함수: DFT
 Lag: 감쇄 가중 (lag 1~4, w=[0.4, 0.3, 0.2, 0.1])
 중첩행렬: continuous activation + per-cycle τ_c 이진화
 생성 모델: FC (soft activation 입력)
@@ -248,15 +248,15 @@ A~D 세션의 상위 조율자. 어떤 세션에도 속하지 않으며, 세션 
 | 21 | **A** | Complex PH + per-cycle τ + Algo2(FC) 통합 파이프라인 실험 ✓ | 완료 | **Algo1: 0.0182★ (−24.5%)**, **Algo2: 0.0003★ (−25.0%)** (complex α=0.25 ow=0.0 rc=0.1 + greedy τ). 실험C(α=0.5,ow=0.3) N=5: 0.0172 (추가 검증 필요). complex_percycle_results.json (2026-04-15) |
 | 22 | **D** | §7.8 α=0.0 표기 보완 | — | "α=0.0은 생성 단계에만 적용; PH 계산은 캐시(α=0.5) 사용" 명시. α=0.0+PH 시 K=3 붕괴 사실 각주 추가 |
 | 23 | **B** | pipeline.py ow/dw 버그 수정 커밋 | 완료(코드 수정됨) | config.py duration_weight 추가 + _apply_metric ow/dw 전달 수정 — 미커밋 상태 |
-| 24 | **A** | 실험 C (α=0.5 ow=0.3 rc=0.1) N=20 재검증 | 실험21 완료 | N=5 결과 JS=0.0172 (greedy τ=0.0183). N=20으로 통계 확보 필요. 실험B보다 우수할 가능성 있음 |
-| 25 | **D** | §7.9 신설 — complex+per-cycle τ 통합 실험 결과 논문 반영 | 실험21 완료 | Algo1: 0.0182 (−24.5%), Algo2: 0.0003 (−25.0%). complex_percycle_results.json 참조 |
+| 24 | **A** | 실험 C/D/E N=20 재검증 + 절대 최저 확정 ✓ | 완료 | **B(α=0.25,ow=0.0,rc=0.1) JS=0.0183±0.0009 N=20 ★확정**. D(α=0.5)=0.0218, E(rc=0.3)=0.0214. B vs D/E 모두 p<0.001 유의. Algo2 D=0.0005(B=0.0003 유지). complex_percycle_n20_results.json (2026-04-15) |
+| 25 | **D** | §7.9 신설 — complex+per-cycle τ 통합 실험 결과 논문 반영 | 실험24 완료 | Algo1: 0.0183±0.0009 N=20 (−24.1% vs timeflow). Algo2: 0.0003. B vs D p<0.001. complex_percycle_n20_results.json 참조 |
 
 ### 낮은 우선순위 (향후 과제)
 
 | # | 세션 | 작업 | 비고 |
 |---|------|------|------|
 | 15 | **C** | 방향 A wide(48-84) WAV 청각 평가 | vwide 폐기, wide 기준으로 재설정 |
-| 16 | **C** | 최적 설정 WAV 생성 + 감상 | complex+per-cycle τ 조합 확정 이후 |
+| 16 | **C** | 최적 설정 WAV 생성 + 감상 | complex(α=0.25,ow=0.0,rc=0.1)+per-cycle τ 확정됨 → 실행 가능 |
 | 17 | **A** | 나머지 곡 실험 (`run_any_track.py --all`) | 파라미터 확정 이후 |
 | 18 | **B** | Wasserstein 제약 재설계 (topk 이전 적용) | 현재 구현 효과 없음 |
 | 19 | **D** | LaTeX 원고 최종 업데이트 ✓ | 완료 | hibari_tda.tex(영문 IEEE) §7.3 1×2 표 + 전략 A/B 수식 + N!=3.56e14 주석 동기화. §4.1b/§7.2/§7.1.9는 이미 반영. 컴파일 성공, undefined ref 0. ko/report 버전은 제출 계획 따라 차후 (2026-04-15) |
