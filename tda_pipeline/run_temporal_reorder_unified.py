@@ -11,7 +11,7 @@ run_temporal_reorder_unified.py — 방향 B: 중첩행렬 시간 재배치 통�
   python run_temporal_reorder_unified.py --mode dl
   python run_temporal_reorder_unified.py --mode dl_v2
 """
-import os, sys, time, json, random, warnings, argparse
+import os, sys, time, json, random, warnings, argparse, pickle
 import numpy as np
 warnings.filterwarnings('ignore')
 
@@ -26,10 +26,25 @@ from sequence_metrics import evaluate_sequence_metrics
 # 공통 헬퍼
 # ═══════════════════════════════════════════════════════════════════════
 
-def setup_pipeline(midi_file, metric):
-    """전처리 + PH → 공통 데이터 반환."""
+def setup_pipeline(midi_file, metric, from_cache=False):
+    """전처리 + PH → 공통 데이터 반환.
+    from_cache=True 이면 cache/metric_{metric}.pkl 에서 overlap/cycle_labeled 로드.
+    """
     data = preprocess(midi_file)
     print(f"\n[전처리] T={data['T']}  N={data['N']}  C={data['num_chords']}")
+
+    if from_cache:
+        cache_path = os.path.join("cache", f"metric_{metric}.pkl")
+        t0 = time.time()
+        with open(cache_path, 'rb') as f:
+            cached = pickle.load(f)
+        cl = cached['cycle_labeled']
+        ov_df = cached['overlap']
+        ov = ov_df.values if hasattr(ov_df, 'values') else ov_df
+        ph_time = time.time() - t0
+        n_cyc = len(cl)
+        print(f"[캐시 로드] {metric}: {n_cyc} cycles  (alpha={cached.get('alpha','?')})")
+        return data, cl, ov, n_cyc, ph_time
 
     cl, ov, n_cyc, ph_time = compute_ph(data, metric)
     if cl is None:
@@ -92,7 +107,7 @@ def mode_algo1(args):
     print("=" * 64)
 
     t0 = time.time()
-    data, cl, ov, n_cyc, _ = setup_pipeline(args.midi, args.metric)
+    data, cl, ov, n_cyc, _ = setup_pipeline(args.midi, args.metric, args.from_cache)
     if data is None:
         return
 
@@ -233,7 +248,7 @@ def mode_dl(args):
     print("=" * 64)
 
     t0 = time.time()
-    data, cl, ov, n_cyc, _ = setup_pipeline(args.midi, args.metric)
+    data, cl, ov, n_cyc, _ = setup_pipeline(args.midi, args.metric, args.from_cache)
     if data is None:
         return
 
@@ -325,7 +340,7 @@ def mode_dl(args):
     elapsed = time.time() - t0
     all_results['elapsed_s'] = round(elapsed, 1)
 
-    out_path = os.path.join("docs", "step3_data", "temporal_reorder_dl_results.json")
+    out_path = args.out if args.out else os.path.join("docs", "step3_data", "temporal_reorder_dl_results.json")
     os.makedirs(os.path.dirname(out_path), exist_ok=True)
     with open(out_path, 'w', encoding='utf-8') as f:
         json.dump(all_results, f, indent=2, ensure_ascii=False)
@@ -402,7 +417,7 @@ def mode_dl_v2(args):
     print("=" * 64)
 
     t0 = time.time()
-    data, cl, ov, n_cyc, _ = setup_pipeline(args.midi, args.metric)
+    data, cl, ov, n_cyc, _ = setup_pipeline(args.midi, args.metric, args.from_cache)
     if data is None:
         return
 
@@ -540,7 +555,7 @@ def mode_dl_v2(args):
     elapsed = time.time() - t0
     all_results['elapsed_s'] = round(elapsed, 1)
 
-    out_path = os.path.join("docs", "step3_data", "temporal_reorder_dl_v2_results.json")
+    out_path = args.out if args.out else os.path.join("docs", "step3_data", "temporal_reorder_dl_v2_results.json")
     os.makedirs(os.path.dirname(out_path), exist_ok=True)
     with open(out_path, 'w', encoding='utf-8') as f:
         json.dump(all_results, f, indent=2, ensure_ascii=False)
@@ -559,7 +574,8 @@ def mode_dl_v2(args):
             print(f"  {name:<45} ERROR")
             continue
         dtw_delta = (100 * (r['dtw'] - bl_dtw) / bl_dtw) if bl_dtw > 0 else 0
-        print(f"  {name:<45} {r['val_loss']:>6.3f} {r['pitch_js']:>8.4f} {r['dtw']:>8.4f} "
+        vloss_str = f"{r['val_loss']:>6.3f}" if 'val_loss' in r else "     -"
+        print(f"  {name:<45} {vloss_str} {r['pitch_js']:>8.4f} {r['dtw']:>8.4f} "
               f"{r['transition_js']:>8.4f} {r['ncd']:>8.4f} {dtw_delta:>+7.1f}%")
     print(f"\n총 소요: {elapsed:.1f}s")
 
@@ -579,6 +595,10 @@ def main():
                         help="algo1 모드: 전략당 반복 횟수 (기본 5)")
     parser.add_argument('--epochs', type=int, default=50,
                         help="dl/dl_v2 모드: 학습 에포크 수 (기본 50)")
+    parser.add_argument('--out', default=None,
+                        help="결과 저장 경로 (기본값은 모드별 고정 경로)")
+    parser.add_argument('--from-cache', action='store_true', dest='from_cache',
+                        help="cache/metric_{metric}.pkl 에서 overlap/cycle_labeled 직접 로드")
 
     args = parser.parse_args()
 
