@@ -288,7 +288,7 @@ gap_min=3 청취 평가 폐기 결정에 따른 §4 gap=0 롤백 + bugfix 이후
 | # | 세션 | 작업 | 의존성 | 비고 |
 |---|------|------|--------|------|
 | 38a | **A** | §7 DFT α=0.25 전면 재수행 ✓ | 완료 | 커밋 dafdff3. **K=42→14**, P3 best 유지, P3+C best 0.0250. **§7.7 first-module 우위 미재현 (rank=5)**, **§7.8 Pearson 0.503→-0.054 — 반전**. best global JS=0.01479 (§6.7.1 0.01489와 동등 ★). `memory/project_task38a_phase3_findings_0417.md` |
-| 38b | **D** | §7 전면 재서술 | Task 38a 완료 (지금 착수 가능) | 수식 32×42→32×14, §7.7 서사 반전, §7.8 Pearson 반전. 프롬프트: docs/session_d_task38b_prompt.md |
+| 38b | **D** | §7 전면 재서술 ✓ | 완료 | 커밋 c548371. 수식 32×42→32×14, §7.2 P0~P3 DFT 전략 교체, §7.5 P3+C best 0.0250, §7.6 **best global JS=0.01479 ≈ full-song**, §7.7 first-module rank=5 (Tonnetz-specific), §7.8 Pearson 0.503→-0.054. `memory/project_task38b_section7_rewrite_0417.md` |
 | 39 | **A** | Wave 2 누락 실험 (T39-2/3/4/5) | 부분 착수 | 39-1 완료(2-1, Wave 2 보강 커밋 387f847). 39-4/5 서술만 완료, 실측 JSON 대기. 39-2/3 미착수. 프롬프트: docs/session_a_task39_prompt.md |
 
 ### 낮은 우선순위 (향후 과제)
