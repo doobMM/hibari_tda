@@ -1,0 +1,12 @@
+{
+  "output_json": "docs\\step3_data\\temporal_reorder_lstm_dft_gap0.json",
+  "dtw_change_pct": {
+    "segment_shuffle_retrain_x": 0.1064,
+    "block_permute32_retrain_x": 0.1225,
+    "markov_tau1_retrain_x": 0.3595,
+    "segment_shuffle_retrain_o": -1.0945
+  },
+  "reproduced_le_0_5pct": false,
+  "recommendation": "전면 재작성",
+  "elapsed_s": 347.6
+}
