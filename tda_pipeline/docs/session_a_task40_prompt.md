@@ -14,7 +14,7 @@ DFT α=0.25 조건으로 재실험한다. FC/LSTM 부분은 Task 39 / Task 39-4 
 본 Task 40은 **Transformer 전용**.
 
 **충돌 안전**: Task 39 (FC/LSTM), Task 39-4 LSTM, Task 38b (논문 md) 와 파일 영역 분리.
-밤새 돌려도 안전. 예상 소요 3~4시간.
+밤새 돌려도 안전. 예상 소요 4~5시간 (T40-3에 Transformer + FC 이중 모델 포함).
 
 ## 필수 참조 파일
 
