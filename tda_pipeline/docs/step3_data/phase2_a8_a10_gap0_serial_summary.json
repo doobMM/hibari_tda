@@ -1,0 +1,99 @@
+{
+  "phase": "Phase 2",
+  "tasks_requested": [
+    "A8",
+    "A9",
+    "A10-a",
+    "A10-b"
+  ],
+  "started_at": "2026-04-17T16:27:48",
+  "same_python_session": true,
+  "script": "run_dft_phase2_gap0_suite.py",
+  "status": "completed",
+  "tasks": {
+    "A8": {
+      "status": "done",
+      "elapsed_s": 31.75
+    },
+    "A9": {
+      "status": "done",
+      "elapsed_s": 1801.0
+    },
+    "A10-a": {
+      "status": "done",
+      "elapsed_s": 41.36
+    },
+    "A10-b": {
+      "status": "done",
+      "elapsed_s": 289.41
+    }
+  },
+  "outputs": {
+    "A8": "C:\\WK14\\tda_pipeline\\docs\\step3_data\\percycle_tau_dft_gap0_results.json",
+    "A9": "C:\\WK14\\tda_pipeline\\docs\\step3_data\\soft_activation_dft_gap0_results.json",
+    "A10-a": "C:\\WK14\\tda_pipeline\\docs\\step3_data\\alpha_grid_dft_gap0_results.json",
+    "A10-b": "C:\\WK14\\tda_pipeline\\docs\\step3_data\\complex_percycle_dft_gap0_results.json"
+  },
+  "notes_n": 23,
+  "a10b_algo2_plan": "fc_only",
+  "a10a_best_alpha": 0.25,
+  "a10b_selected": {
+    "alpha": 0.5,
+    "ow": 0.3,
+    "dw": 1.0,
+    "rc": 0.1,
+    "K": 35,
+    "ph_time_s": 0.8328874111175537,
+    "greedy_search_n": 1,
+    "algo1_n": 5,
+    "algo1_js_mean": 0.040331425434905414,
+    "algo1_js_std": 0.001638836842719048,
+    "algo1_all_js": [
+      0.04286620996909171,
+      0.039575230385031274,
+      0.04090065370800279,
+      0.0397345937876489,
+      0.03858043932475239
+    ],
+    "best_taus": [
+      0.4,
+      0.5,
+      0.35,
+      0.4,
+      0.7,
+      0.3,
+      0.4,
+      0.5,
+      0.6,
+      0.6,
+      0.6,
+      0.2,
+      0.1,
+      0.7,
+      0.7,
+      0.6,
+      0.5,
+      0.35,
+      0.4,
+      0.2,
+      0.6,
+      0.35,
+      0.5,
+      0.35,
+      0.6,
+      0.3,
+      0.4,
+      0.1,
+      0.7,
+      0.5,
+      0.5,
+      0.6,
+      0.7,
+      0.6,
+      0.7
+    ]
+  },
+  "a10b_best_algo2_model": "FC",
+  "a10b_best_algo2_js": 0.000554118870756309,
+  "completed_at": "2026-04-17T17:03:52"
+}
