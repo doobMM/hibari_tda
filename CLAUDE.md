@@ -274,7 +274,7 @@ gap_min=3 청취 평가 폐기 결정에 따른 §4 gap=0 롤백 + bugfix 이후
 | 33 | **B** | min_onset_gap 필드화 + run_dft_suite 파라미터화 + 메타표준 ✓ | 완료 | 커밋 71d2f2b. config.min_onset_gap, rename(R061), utils/result_meta, scripts 2개 |
 | 34 | **A** | Phase 2 (Task A8~A10) — DFT-hybrid 재탐색 ✓ | 완료 | 커밋 459eb24. **A8: DFT+per-cycle τ 0.0149★ Algo1 신기록** (p=2.48e-26), A9: FC-cont 유의 우위 p=1.66e-4, A10-a α=0.25 최적, A10-b pilot(α=0.5) 열세 → Task 34b로 α=0.25 재실험 |
 | 34b | **A** | A10-b α=0.25 재실험 (Phase 2 후속) ✓ | 완료 | 커밋 d83efc5. α=0.25, r_c ∈ {0.1, 0.3} 모두 A8 대비 p<1e-39로 유의 악화. **complex_tonnetz_only_effective 판정 확정** — DFT에서는 timeflow + per-cycle τ (A8 0.0149★) 선호. Algo2도 A9 0.00035 최저 유지 |
-| 35 | **D** | §4 gap0+DFT 재서술 | Task 32, 34 완료 | Phase 1+2 수치로 §4 전면 갱신. §4.3a FC-cont 0.00035. 프롬프트 `docs/session_d_task35_prompt.md`. ⚠ short.md gap3 비교 제외. **진행 중** — 연쇄 일관성(§5.1·§6.1·§6.2)은 커밋 8c4e3ae에 부분 반영, 남은 §3.2·§4 전체·초록 §4 부분은 진행 중 |
+| 35 | **D** | §4 gap0+DFT 재서술 ✓ | 완료 | 커밋 9873cdd (+ 8c4e3ae 연쇄 일관성). §4.1 38.2%/56.8%/62.4%, §4.2 Binary 0.0157, §4.3a FC-cont 0.00035 +83.9% p=1.50e-6. §3.2 gap_min=3 선언 제거. §4.1a/b "Tonnetz 조건 최적값" 언급 삭제. §3.x→§4.x 교차참조 일치 |
 | 36 | **D** | §6.7~§6.9 재서술 ✓ | 완료 | 커밋 8c4e3ae. §6.7.1 DFT per-cycle τ +58.7% (p=2.48e-26, JS=0.01489★), §6.7.2 FC-cont 0.000348★ (Transformer 대비 p=1.66e-4), §6.8 DFT hybrid α=0.25, §6.9 "Tonnetz 한정 유효" 서사 반전 + Task 34b 검증절 신설 |
 | 37 | **D** | §7 baseline 재설정 + §8 결론·초록 통일 | Task 35, 36 완료 후 | full-song DFT baseline, hibari 최적 설정 블록 갱신 (Algo1 0.0149 DFT+per-cycle τ, Algo2 0.00035 FC-cont). short.md 최종 결과 중심 |
 
