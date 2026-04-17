@@ -1,0 +1,57 @@
+{
+  "phase": "Phase 1",
+  "tasks_requested": [
+    "A1",
+    "A2",
+    "A3",
+    "A4",
+    "A5",
+    "A6",
+    "A7"
+  ],
+  "started_at": "2026-04-17T15:55:19",
+  "script": "run_dft_gap0_suite.py",
+  "same_python_session": true,
+  "precheck": {
+    "cache_metric_dft_exists": true,
+    "cache_metric_dft_path": "C:\\WK14\\tda_pipeline\\cache\\metric_dft.pkl",
+    "decayed_lag_dft_results_exists": true,
+    "decayed_lag_dft_results_path": "C:\\WK14\\tda_pipeline\\docs\\step3_data\\decayed_lag_dft_results.json"
+  },
+  "tasks": {
+    "A1_task25": {
+      "status": "done",
+      "elapsed_s": 3.64
+    },
+    "A2_task26": {
+      "status": "done",
+      "elapsed_s": 44.32
+    },
+    "A3_task27": {
+      "status": "done",
+      "elapsed_s": 32.67
+    },
+    "A4_task28a": {
+      "status": "skipped_reuse_existing_json",
+      "source_json": "C:\\WK14\\tda_pipeline\\docs\\step3_data\\decayed_lag_dft_results.json",
+      "dft_lag1_only_mean": 0.021075068646030298,
+      "dft_lag1to4_decayed_mean": 0.01958053240231509
+    },
+    "A5_task28": {
+      "status": "done",
+      "elapsed_s": 3.79
+    },
+    "A6_task29": {
+      "status": "done",
+      "elapsed_s": 488.75
+    },
+    "A7_task30": {
+      "status": "done",
+      "elapsed_s": 152.78
+    }
+  },
+  "a1_best_metric": "dft",
+  "a1_gate_passed": true,
+  "status": "completed",
+  "completed_at": "2026-04-17T16:07:25"
+}

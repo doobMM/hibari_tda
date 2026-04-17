@@ -1,0 +1,51 @@
+{
+  "n_repeats": 20,
+  "metric": "dft",
+  "min_onset_gap": 0,
+  "alpha": 0.5,
+  "octave_weight": 0.3,
+  "duration_weight": 1.0,
+  "post_bugfix": true,
+  "date": "2026-04-17T15:56:40",
+  "script": "run_dft_gap0_suite.py",
+  "A_binary": {
+    "js_divergence": {
+      "mean": 0.015720938138640762,
+      "std": 0.0017908937198295616
+    },
+    "density": 0.31259674922600617,
+    "K": 19
+  },
+  "B_continuous_direct": {
+    "js_divergence": {
+      "mean": 0.01862275438694544,
+      "std": 0.0014988745138992008
+    },
+    "density": 0.7278928018575851,
+    "K": 19
+  },
+  "C_tau_0.3": {
+    "js_divergence": {
+      "mean": 0.035950394547673306,
+      "std": 0.00293373672572188
+    },
+    "density": 0.36672794818878174,
+    "K": 19
+  },
+  "C_tau_0.5": {
+    "js_divergence": {
+      "mean": 0.05069755287166432,
+      "std": 0.0027259047244681906
+    },
+    "density": 0.19910991191864014,
+    "K": 19
+  },
+  "C_tau_0.7": {
+    "js_divergence": {
+      "mean": 0.04493055153529972,
+      "std": 0.0024195661933711235
+    },
+    "density": 0.06003289297223091,
+    "K": 19
+  }
+}
