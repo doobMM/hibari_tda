@@ -121,7 +121,15 @@ Transformer × 4 조건 × N=5 = 20 학습 ≈ 30~45분.
 
 ---
 
-## T40-3: §6.6 통합 실험 DFT (N=5)
+## T40-3: §6.6 통합 실험 DFT (N=5) — **Transformer + FC 이중 모델**
+
+### 설계 근거
+
+§6.7.2에서 DFT+gap0 조건 **FC-cont가 최우수로 통계 확정** (p=1.66e-4). §6.6은
+"위상 보존 변주"의 최종 통합 결과이므로 최적 모델 FC 반드시 포함.
+
+LSTM은 §6.7.2에서 continuous 입력 부적합 확정됨 → §6.6 통합에 포함 시 이미 알려진
+부적합만 재확인하므로 **제외**.
 
 ### 실험 조건
 
@@ -138,34 +146,60 @@ Transformer × 4 조건 × N=5 = 20 학습 ≈ 30~45분.
 | 7 | major | markov (τ=1.0) | binary | major_markov |
 | 8 | orig | none | continuous | orig_continuous |
 | 9 | major | none | continuous | major_continuous |
-| 10 | major | block_permute(32) | continuous | major_block32_continuous |
+| 10 | major | block_permute(32) | continuous | **major_block32_continuous** ★ (DFT 최적 조합 후보) |
 
 (기존 `combined_AB_results.json` 조합 확인 후 맞춤)
 
-모델: Transformer (PE 유지 + retrain). 입력: DFT continuous OM.
+**모델 2종 — 각 조합마다 둘 다 실행**:
+- **Transformer** (PE 유지 + retrain): §4.3 / §6.7.2와 동일 (2-layer, 4-head, d_model=128)
+- **FC** (§6.7.2 최적 모델): hidden=128, lr=0.001, dropout=0.3, epochs=200
 
-지표: vs 원곡 pJS, vs 원곡 DTW, vs ref pJS, val_loss.
+입력: DFT continuous OM. 지표: vs 원곡 pJS, vs 원곡 DTW, vs ref pJS, val_loss.
 
 ### 출력
 
 `docs/step3_data/combined_AB_dft_gap0.json`
 
-기존 `combined_AB_results.json` 구조 준수 (조합 리스트 + 각 조합의 4지표).
+구조 (Transformer와 FC 결과를 모델별로 분리):
+
+```json
+{
+  "metric": "dft", "alpha": 0.25, ...,
+  "models": {
+    "transformer": {
+      "orig_none":              { "vs_orig_pjs": ..., "vs_orig_dtw": ..., "vs_ref_pjs": ..., "val_loss": ... },
+      "orig_segment_shuffle":   { ... },
+      "major_block32":          { ... }, ...
+    },
+    "fc": {
+      "orig_none":              { ... }, ...
+    }
+  },
+  "comparison": {
+    "best_transformer":         { "setting": ..., "vs_orig_pjs": ..., ... },
+    "best_fc":                  { "setting": ..., ... },
+    "recommendation":           "FC 또는 Transformer 중 어느 것이 major_block32 조합에서 더 우수한가 판정"
+  }
+}
+```
 
 ### 보고
 
-- 각 조합 4지표 mean ± std
-- major_block32 최종 종합 표 재산출:
-  - ref pJS ("학습 정확도", 낮을수록 좋음)
-  - vs 원곡 DTW ("선율 차이", 높을수록 좋음)
-  - vs 원곡 pJS ("pitch 차이", 최댓값 10~30% 수준)
-  - scale match ("1.0이 C major 완전 일치")
-- 기존 Tonnetz 결과 (ref pJS=0.002, DTW=2.37/+31%, pJS=0.100) vs DFT 신규 비교
-- "위상 보존 + 선율 변화 + 화성 일관성" 균형 유지 여부
+- 각 모델 × 조합의 4지표 mean ± std
+- **major_block32 재산출 비교 (기존 Tonnetz-Transformer vs 신규 DFT-Transformer vs 신규 DFT-FC)**:
+  - ref pJS ("학습 정확도")
+  - vs 원곡 DTW ("선율 차이")
+  - vs 원곡 pJS ("pitch 차이")
+  - scale match
+- "위상 보존 + 선율 변화 + 화성 일관성" 3축 균형에서 FC vs Transformer 어느 쪽이 우수한지
+- 기존 Tonnetz Transformer 결과 (ref pJS=0.002, DTW=2.37/+31%, pJS=0.100) 대비 DFT
+  신규 비교
 
 ### 예상 소요
 
-Transformer × 8~10 조합 × N=5 = 40~50 학습 ≈ 80~120분.
+- Transformer × 10 조합 × N=5 = 50 학습 × ~2분 ≈ 100분
+- FC × 10 조합 × N=5 = 50 학습 × ~1분 ≈ 50분
+- **T40-3 합계 약 2.5~3시간**
 
 ---
 
@@ -207,7 +241,7 @@ Python 세션 정책: **같은 Python 세션에서 직렬 실행** (Phase 1·2·
 
 ## 예상 총 소요
 
-**3~4시간**. 밤새 실행 OK.
+**4~5시간** (T40-3에 FC 추가로 +1시간). 밤새 실행 OK.
 
 ## 주의사항
 
