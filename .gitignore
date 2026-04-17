@@ -28,3 +28,7 @@ tda_pipeline/cache/models/
 
 # ── 폰트 미리보기 (선택 완료) ──
 tda_pipeline/docs/font_preview_*.pdf
+
+# ── LaTeX 중간 산출물 ──
+*.aux
+*.out
