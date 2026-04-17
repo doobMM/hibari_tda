@@ -273,8 +273,10 @@ def generate_modules(model, overlap_matrix: np.ndarray,
 # ═══════════════════════════════════════════════════════════════════════════
 
 if __name__ == "__main__":
+    import argparse
     import pickle
     import pandas as pd
+    from config import PipelineConfig
     from generation import (
         MusicGeneratorLSTM, MusicGeneratorTransformer, MusicGeneratorFC,
         notes_to_xml
@@ -285,8 +287,15 @@ if __name__ == "__main__":
         group_notes_with_duration, build_chord_labels, chord_to_note_labels
     )
 
+    _parser = argparse.ArgumentParser(description="모듈 단위 음악 생성 (hibari tonnetz overlap)")
+    _parser.add_argument("--gap-min", type=int, default=None,
+                         help="min_onset_gap (미지정 시 PipelineConfig 기본값 사용)")
+    _args = _parser.parse_args()
+    _gap = _args.gap_min if _args.gap_min is not None else PipelineConfig().min_onset_gap
+
     print("=" * 60)
     print("  모듈 단위 음악 생성")
+    print(f"  min_onset_gap = {_gap}")
     print("=" * 60)
 
     # 데이터
@@ -362,7 +371,7 @@ if __name__ == "__main__":
             # FC 생성은 기존 방식
             from generation import generate_from_model
             gen = generate_from_model(model, overlap[:total_time], notes_label,
-                                       model_type='fc', min_onset_gap=3)
+                                       model_type='fc', min_onset_gap=_gap)
         else:
             history = train_module_model(
                 model, X_tr, y_tr, X_va, y_va,
@@ -370,7 +379,7 @@ if __name__ == "__main__":
             )
             gen = generate_modules(
                 model, overlap[:total_time], notes_label,
-                model_type=mtype, min_onset_gap=3
+                model_type=mtype, min_onset_gap=_gap
             )
 
         dt = time.time() - t0

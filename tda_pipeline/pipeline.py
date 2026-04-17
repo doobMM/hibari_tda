@@ -637,13 +637,14 @@ class TDAMusicPipeline:
         cycles_list = list(cycle_labeled.values())
         manager = CycleSetManager(cycle_labeled)
         
-        # 생성
+        # 생성 — min_onset_gap은 config에서 읽음 (2026-04-17 B 세션, 기본 0)
         generated = algorithm1_optimized(
             pool, inst_chord_heights,
             overlap.values,
             manager,
             max_resample=self.config.generation.max_resample_attempts,
-            verbose=verbose
+            verbose=verbose,
+            min_onset_gap=self.config.min_onset_gap,
         )
         
         # XML 출력

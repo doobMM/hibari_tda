@@ -304,6 +304,7 @@ def mode_dl(args):
             print(f"  [{label}] → {model_type} 생성")
             print(f"  {'─'*56}")
 
+            # min_onset_gap=0 — 시간 재배치 실험은 제약 없이 DL 모델 출력만 관찰 (의도된 0)
             gen = generate_from_model(
                 model, gen_overlap, data['notes_label'],
                 model_type=model_type, adaptive_threshold=True, min_onset_gap=0)

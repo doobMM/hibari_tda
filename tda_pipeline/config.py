@@ -87,11 +87,21 @@ class GenerationConfig:
 
 @dataclass
 class PipelineConfig:
-    """전체 파이프라인 설정"""
+    """전체 파이프라인 설정
+
+    min_onset_gap: Algorithm 1/2 생성 시 onset 간 최소 간격(8분음표 단위).
+        0 = 제약 없음 (신규 기본). 3 = 1.5박 sustain (이전 `run_dft_gap3_suite.py` 기본).
+        pipeline.run_generation_algo1()이 이 필드를 자동으로 algorithm1_optimized에 전달.
+
+    post_bugfix: refine_connectedness + pipeline ow/dw 버그픽스(2026-04-15) 이후
+        생성된 결과임을 표기하는 스냅샷 태그. utils.result_meta에서 JSON 헤더에 주입.
+    """
     midi: MIDIConfig = field(default_factory=MIDIConfig)
     metric: MetricConfig = field(default_factory=MetricConfig)
     homology: HomologyConfig = field(default_factory=HomologyConfig)
     overlap: OverlapConfig = field(default_factory=OverlapConfig)
     generation: GenerationConfig = field(default_factory=GenerationConfig)
+    min_onset_gap: int = 0
+    post_bugfix: bool = True
     output_dir: str = "./output"
     pickle_dir: str = "./pickle"
