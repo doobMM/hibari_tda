@@ -1,0 +1,27 @@
+{
+  "metric": "dft",
+  "alpha": 0.25,
+  "octave_weight": 0.3,
+  "duration_weight": 1.0,
+  "min_onset_gap": 0,
+  "n_repeats": 10,
+  "date": "2026-04-18T04:15:14",
+  "script": "run_phase3_task39_wave2.py",
+  "post_bugfix": true,
+  "commit_sha": "b3903abfb9fb",
+  "task": "T39-2",
+  "song": "solari",
+  "N": 34,
+  "T": 224,
+  "num_chords": 49,
+  "tempo": 28.999979216681563,
+  "a1_dft": {
+    "n_cycles": 15,
+    "ph_time_s": 6.57,
+    "density": 0.07083333333333333,
+    "js_mean": 0.08241524154085997,
+    "js_std": 0.0028948214679994453,
+    "js_min": 0.07733101903324227,
+    "cov_mean": 0.9529411764705882
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "metric": "dft",
+  "alpha": 0.25,
+  "octave_weight": 0.3,
+  "duration_weight": 1.0,
+  "min_onset_gap": 0,
+  "n_repeats": 10,
+  "date": "2026-04-18T04:16:54",
+  "script": "run_phase3_task39_wave2.py",
+  "post_bugfix": true,
+  "commit_sha": "b3903abfb9fb",
+  "task": "T39-3",
+  "song": "bach_fugue+ravel_pavane",
+  "use_decayed_inter": true,
+  "bach_fugue": {
+    "js_mean": 0.09505762248203167,
+    "js_std": 0.001205121681287193,
+    "js_min": 0.09327448257343146,
+    "cov_mean": 0.9868852459016393,
+    "K": 30,
+    "ph_time_s": 60.16,
+    "N": 61,
+    "T": 870,
+    "num_chords": 253
+  },
+  "ravel_pavane": {
+    "js_mean": 0.04944383315006029,
+    "js_std": 0.0033582769555906343,
+    "js_min": 0.04524835835680199,
+    "cov_mean": 0.9693877551020409,
+    "K": 37,
+    "ph_time_s": 36.4,
+    "N": 49,
+    "T": 548,
+    "num_chords": 230
+  }
+}

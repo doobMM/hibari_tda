@@ -1,0 +1,50 @@
+{
+  "script": "run_phase3_task39_wave2.py",
+  "date_start": "2026-04-18T04:15:08",
+  "same_python_session": true,
+  "status": "completed",
+  "config": {
+    "metric": "dft",
+    "alpha": 0.25,
+    "octave_weight": 0.3,
+    "duration_weight": 1.0,
+    "min_onset_gap": 0,
+    "post_bugfix": true
+  },
+  "tasks": {
+    "T39-2": {
+      "js_mean": 0.08241524154085997,
+      "js_std": 0.0028948214679994453,
+      "K": 15
+    },
+    "T39-3": {
+      "bach_js_mean": 0.09505762248203167,
+      "ravel_js_mean": 0.04944383315006029
+    },
+    "T39-4": {
+      "fc_conditions": 4,
+      "lstm_conditions": 8,
+      "n_cycles": 14
+    },
+    "T39-5": {
+      "fc_conditions": 4,
+      "lstm_conditions": 4
+    }
+  },
+  "outputs": {
+    "T39-2": "C:\\WK14\\tda_pipeline\\docs\\step3_data\\solari_dft_gap0_results.json",
+    "T39-3": "C:\\WK14\\tda_pipeline\\docs\\step3_data\\classical_contrast_dft_gap0_results.json",
+    "T39-4_fc": "C:\\WK14\\tda_pipeline\\docs\\step3_data\\temporal_reorder_fc_dft_gap0.json",
+    "T39-4_lstm": "C:\\WK14\\tda_pipeline\\docs\\step3_data\\temporal_reorder_lstm_dft_gap0.json",
+    "T39-5_fc": "C:\\WK14\\tda_pipeline\\docs\\step3_data\\harmony_fc_dft_gap0.json",
+    "T39-5_lstm": "C:\\WK14\\tda_pipeline\\docs\\step3_data\\harmony_lstm_dft_gap0.json"
+  },
+  "hibari_context": {
+    "n_cycles": 14,
+    "T": 1088,
+    "N": 23,
+    "ph_time_s": 12.7
+  },
+  "date_end": "2026-04-18T04:22:09",
+  "elapsed_s": 421.63
+}

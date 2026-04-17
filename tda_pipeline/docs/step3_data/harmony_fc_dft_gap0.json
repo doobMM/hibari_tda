@@ -1,0 +1,110 @@
+{
+  "metric": "dft",
+  "alpha": 0.25,
+  "octave_weight": 0.3,
+  "duration_weight": 1.0,
+  "min_onset_gap": 0,
+  "n_repeats": 1,
+  "date": "2026-04-18T04:20:44",
+  "script": "run_phase3_task39_wave2.py",
+  "post_bugfix": true,
+  "commit_sha": "b3903abfb9fb",
+  "task": "T39-5",
+  "model": "fc",
+  "overlap_type": "continuous",
+  "track": "hibari",
+  "n_cycles": 14,
+  "T": 1088,
+  "N": 23,
+  "epochs": 50,
+  "experiments": {
+    "original": {
+      "val_loss": 0.0364,
+      "n_notes": 3780,
+      "vs_original": {
+        "pitch_js": 0.000917,
+        "transition_js": 0.024732,
+        "dtw": 1.2605,
+        "ncd": 0.629562
+      },
+      "vs_ref": {
+        "pitch_js": 0.000917,
+        "transition_js": 0.024732,
+        "dtw": 1.2605,
+        "ncd": 0.629562
+      }
+    },
+    "baseline": {
+      "val_loss": 0.0361,
+      "n_notes": 3783,
+      "vs_original": {
+        "pitch_js": 0.440697,
+        "transition_js": 0.660581,
+        "dtw": 3.8285,
+        "ncd": 0.94708
+      },
+      "vs_ref": {
+        "pitch_js": 0.000461,
+        "transition_js": 0.045506,
+        "dtw": 2.021,
+        "ncd": 0.628524
+      },
+      "note_dist_error": 5.9597,
+      "cycle_dist_error": null,
+      "pitch_range_used": [
+        40,
+        88
+      ],
+      "n_pitch_classes": 12,
+      "best_scale_match": "C major"
+    },
+    "scale_major": {
+      "val_loss": 0.0337,
+      "n_notes": 3757,
+      "vs_original": {
+        "pitch_js": 0.323031,
+        "transition_js": 0.588021,
+        "dtw": 4.78025,
+        "ncd": 0.936709
+      },
+      "vs_ref": {
+        "pitch_js": 0.006311,
+        "transition_js": 0.044196,
+        "dtw": 2.5235,
+        "ncd": 0.622977
+      },
+      "note_dist_error": 5.8645,
+      "cycle_dist_error": null,
+      "pitch_range_used": [
+        40,
+        88
+      ],
+      "n_pitch_classes": 7,
+      "best_scale_match": "C major"
+    },
+    "scale_penta": {
+      "val_loss": 0.0373,
+      "n_notes": 3753,
+      "vs_original": {
+        "pitch_js": 0.431928,
+        "transition_js": 0.623675,
+        "dtw": 7.986,
+        "ncd": 0.959854
+      },
+      "vs_ref": {
+        "pitch_js": 0.006288,
+        "transition_js": 0.04887,
+        "dtw": 3.4105,
+        "ncd": 0.621441
+      },
+      "note_dist_error": 5.9773,
+      "cycle_dist_error": null,
+      "pitch_range_used": [
+        24,
+        108
+      ],
+      "n_pitch_classes": 5,
+      "best_scale_match": "C major"
+    }
+  }
+}
