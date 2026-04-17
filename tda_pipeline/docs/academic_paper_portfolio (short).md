@@ -787,7 +787,7 @@ TDA를 음악에 적용한 선행 연구는 몇 편이 있으며, 본 연구와 
 
 본 연구가 이들 대비 새로 기여하는 지점은 다음 네 가지이다.
 
-__(A) 네 가지 거리 함수의 체계적 비교.__ 선행 연구들은 frequency 기반 거리만을 사용했으나, 본 연구는 frequency, Tonnetz, voice leading, DFT 네 가지를 동일한 파이프라인 위에서 $N = 20$회 반복 실험으로 정량 비교하였다 (§3.1). 이를 통해 "DFT가 frequency 대비 JS divergence를 $38.2\%$, Tonnetz 대비 $56.8\%$, voice leading 대비 $62.4\%$ 낮춘다"는 음악이론적 정당성을 실증적으로 제공한다.
+__(A) 네 가지 거리 함수의 체계적 비교.__ 선행 연구들은 frequency 기반 거리만을 사용했으나, 본 연구는 frequency, Tonnetz, voice leading, DFT 네 가지를 동일한 파이프라인 위에서 $N = 20$회 반복 실험으로 정량 비교하였다 (§4.1). 이를 통해 "DFT가 frequency 대비 JS divergence를 $38.2\%$, Tonnetz 대비 $56.8\%$, voice leading 대비 $62.4\%$ 낮춘다"는 음악이론적 정당성을 실증적으로 제공한다.
 
 __(B) Continuous OM의 도입과 검증.__ 선행 연구들은 이진 OM만을 사용했다. 본 연구는 희귀도 가중치를 적용한 continuous 활성도 개념을 새로 도입했으며 (§2.5), $\tau = 0.5$ 임계값 이진화가 추가로 $11.4\%$ 개선을 주는 것을 통계 실험으로 검증하였다 (§4.2).
 
@@ -817,7 +817,7 @@ __(D) 위상 보존 음악 변주.__ 기존 TDA-music 연구는 분석(analysis)
 | Tonnetz | $39$ | $0.037$ | $0.063 \pm 0.003$ | $0.059$ |
 | voice leading | $25$ | $0.043$ | $0.078 \pm 0.004$ | $0.073$ |
 
-hibari에서는 DFT가 최우수($0.0213$)이며, solari에서는 **frequency와 Tonnetz가 거의 동일** ($0.063$ vs $0.063$)하며 voice leading이 가장 나쁘다. 이는 §3.6에서 분석한 solari의 12-PC 구조 — Tonnetz 그래프의 지름이 $2$에 불과하여 구별력이 낮음 — 과 일치한다.
+hibari에서는 DFT가 최우수($0.0213$)이며, solari에서는 **frequency와 Tonnetz가 거의 동일** ($0.063$ vs $0.063$)하며 voice leading이 가장 나쁘다. 이는 §4.5.3에서 분석한 solari의 12-PC 구조 — Tonnetz 그래프의 지름이 $2$에 불과하여 구별력이 낮음 — 과 일치한다.
 
 #### Algorithm 2 — DL 모델 비교
 
@@ -1386,10 +1386,10 @@ __본 실험의 관찰과 일관__. 만약 hibari 가 이 구조를 따른다면
 
 **핵심 경험적 결과:**
 
-1. **거리 함수 선택의 효과.** Algorithm 1 기준으로, DFT 거리가 frequency 대비 pitch JS divergence를 $38.7\%$, Tonnetz 대비 $56.8\%$, voice leading 대비 $63.0\%$ 낮춘다 (hibari). 이 효과는 hibari에 고유하며, solari에서는 frequency와 Tonnetz가 동등하다. 클래식 대조군 실험(§6.2)에서 Bach Fugue는 Tonnetz 우위 $54.8\%$를 보였으며, "counterpoint = voice leading 우위"라는 직관적 가설은 기각되었다.
+1. **거리 함수 선택의 효과.** Algorithm 1 기준으로, DFT 거리가 frequency 대비 pitch JS divergence를 $38.2\%$, Tonnetz 대비 $56.8\%$, voice leading 대비 $62.4\%$ 낮춘다 (hibari). 이 효과는 hibari에 고유하며, solari에서는 frequency와 Tonnetz가 동등하다. 클래식 대조군 실험(§6.2)에서 Bach Fugue는 Tonnetz 우위 $54.8\%$를 보였으며, "counterpoint = voice leading 우위"라는 직관적 가설은 기각되었다.
 2. **곡의 성격이 최적 모델을 결정한다.** hibari (diatonic, entropy $0.974$)에서는 FC가 최적이고, solari (chromatic, entropy $0.905$)에서는 Transformer가 최적이다 (§6.1). "곡의 미학과 모델 구조의 정합성"이라는 가설이 두 곡의 대비로 실증되었다.
 3. **위상 보존 음악 변주.** 화성 제약 기반 note 교체 (§6.5), 시간 재배치 (§6.4)를 결합하여, 원곡과 위상적으로 유사하면서 선율이 $+31\%$ (DTW) 다른 음악을 C major 조성 안에서 생성할 수 있음을 보였다 (§6.6, major_block32: ref pJS $0.002$).
-4. **OM의 정교화.** Per-cycle 임계값 최적화(§6.7.1)로 JS $+47.5\%$ 개선 ($p < 0.001$, $N=20$), continuous overlap의 직접 입력(§6.7.2)으로 FC 모델 JS $+88.6\%$ 및 val_loss 12배 감소를 달성하였다. Transformer도 $+79.4\%$의 개선을 보였으나 LSTM은 연속값 입력이 부적합하였다 ($-3.5\%$). 옥타브 가중치 $w_o$의 grid search(§4.1a)로 $-18.8\%$ 추가 개선이 이루어졌다.
+4. **OM의 정교화.** Per-cycle 임계값 최적화(§6.7.1)로 JS $+58.7\%$ 개선 (Welch $p = 2.48 \times 10^{-26}$, $N=20$, DFT gap=0 조건), continuous overlap의 직접 입력(§6.7.2)으로 FC 모델 JS $+83.9\%$ 개선 ($p = 1.50 \times 10^{-6}$)을 달성하였다. Transformer는 $+67.4\%$, LSTM은 $+27.3\%$ 개선. 옥타브 가중치 $w_o$의 grid search(§4.1a)로 $-18.8\%$ 추가 개선이 이루어졌다.
 
 5. **위상 구조를 보존한 음악의 미학적 타당성 (Q4).** 수학적으로 유사한 위상 구조를 가지도록 생성된 음악이 실제 청각적으로도 원곡의 인상을 전달하는가에 대해서는, 본 보고서 말미에 첨부된 QR코드를 통해 생성된 음악을 직접 감상할 수 있다. 체계적인 청취 실험(listening test)은 향후 연구 과제로 남겨둔다.
 
