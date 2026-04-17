@@ -10,7 +10,6 @@ Task 38a (§7 DFT 재수행)와 **파일 영역 분리**되어 병렬 실행 가
 
 | # | 대응 질문 | 범위 | 출력 JSON |
 |---|---|---|---|
-| T39-1 | 14-1 후반 / 2-1 | 원곡 MIDI duration 분포 + 16분음표 존재 여부 + GCD 판정 | `duration_distribution_analysis.json` |
 | T39-2 | 13 | §6.1 solari DFT 실험 추가 | `solari_dft_gap0_results.json` |
 | T39-3 | 14-2 | §6.2 Bach Fugue + Ravel Pavane DFT 실험 추가 | `classical_contrast_dft_gap0_results.json` |
 | T39-4 | 16-1 | §6.4 OM 시간 재배치 — FC · LSTM 추가 | `temporal_reorder_fc_dft_gap0.json`, `temporal_reorder_lstm_dft_gap0.json` |
@@ -54,63 +53,6 @@ post_bugfix = True
 **α 적용 주의**: hibari 최적 α=0.25는 7-PC diatonic 구조 기반. solari/aqua(12-PC) 및
 Bach/Ravel에서 α 최적이 다를 수 있으나 본 Task는 **hibari 확정값을 일관 적용**하고,
 "곡별 α 최적은 향후 과제"로 남긴다 (세션 D가 각주 처리).
-
----
-
-## T39-1: 원곡 MIDI duration 분포 분석 (Task 14-1 후반 + 2-1)
-
-### 목적
-
-1. **Task 14-1 후반 질문**: "16분음표 등 8분음표보다 작은 duration을 가진 note가
-   있었는지, duration의 GCD가 16분음표 기준은 아닌지" 확인.
-2. **Task 2-1**: aqua/solari 원곡 duration 분포가 어떻게 되는지, tie 정규화(GCD
-   기반 pitch-only labeling)가 합리적인지 판단.
-
-### 분석 대상
-
-- `hibari.mid` (또는 `hibari_*.mid`)
-- `solari.mid`
-- `aqua.mid`
-- `bach_fugue.mid` (파일명 확인)
-- `ravel_pavane.mid` (파일명 확인)
-
-### 산출 지표 (각 곡마다)
-
-- 원본 MIDI의 note duration 리스트 (tick 단위 + beat 단위 둘 다)
-- 분포 통계: min, max, median, p25/p75, unique value count
-- GCD (tick 기준 + beat 기준)
-- **16분음표(0.25 beat) 이하 duration 개수 + 비율**
-- **8분음표(0.5 beat) 양자화 시 손실되는 note 개수 + 비율**
-- 결론: "8분음표 양자화가 손실 없이 가능한가", "실제 GCD는 몇 beat인가"
-
-### 출력
-
-`docs/step3_data/duration_distribution_analysis.json`
-
-구조 예:
-```json
-{
-  "metric": "raw_midi_analysis",
-  "date": "...",
-  "songs": {
-    "hibari": { "unique_durations": [...], "stats": {...}, "gcd_beat": 0.5, "below_8th_note_count": 0, ... },
-    "solari": {...},
-    "aqua": {...},
-    "bach_fugue": {...},
-    "ravel_pavane": {...}
-  },
-  "conclusion": {
-    "hibari_gcd": 0.5,
-    "16th_note_present": {"hibari": false, "solari": ...},
-    "8th_quantization_safe": {"hibari": true, ...}
-  }
-}
-```
-
-### 보고
-
-각 곡별 1줄 요약 + 판정: "8분음표 양자화 합리적" vs "16분음표 정보 손실 발생". 세션 D가
-§3/§4.5/§6.2 서술 보강 시 참조.
 
 ---
 
