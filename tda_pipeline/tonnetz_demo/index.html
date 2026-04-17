@@ -86,7 +86,29 @@
         <div id="langTabs">
           <button class="lang-tab" data-lang="en">ENG</button><button class="lang-tab" data-lang="ko">KOR</button>
         </div>
+        <div id="metricPicker" style="margin-top:4px; display:flex; gap:4px;">
+          <button class="metric-btn active" data-metric="tonnetz"
+                  title="Tonnetz 거리 기반 사이클 (K=47)"
+                  style="font-size:11px; padding:2px 7px; border-radius:4px; border:1px solid #aaa; cursor:pointer; background:#4338CA; color:#fff;">Tonnetz</button>
+          <button class="metric-btn" data-metric="dft"
+                  title="DFT 거리 기반 사이클 (K=17) — hibari 최적"
+                  style="font-size:11px; padding:2px 7px; border-radius:4px; border:1px solid #aaa; cursor:pointer; background:#e5e7eb; color:#111;">DFT</button>
+        </div>
       </div>
+      <script>
+        document.addEventListener('DOMContentLoaded', function () {
+          document.querySelectorAll('.metric-btn').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+              var m = this.getAttribute('data-metric');
+              document.querySelectorAll('.metric-btn').forEach(function (b) {
+                b.style.background = '#e5e7eb'; b.style.color = '#111'; b.classList.remove('active');
+              });
+              this.style.background = '#4338CA'; this.style.color = '#fff'; this.classList.add('active');
+              if (window.hibariData && window.hibariData.setMetric) window.hibariData.setMetric(m);
+            });
+          });
+        });
+      </script>
 
       <div class="tab-content collapse col-xs-12 col-sm-10 col-sm-offset-1 col-md-8 col-md-offset-2" id="tabs">
 
@@ -895,6 +917,9 @@
     <!-- Inline TDA data (works with both http:// and file://) -->
     <script src="js/hibari_barcode_data.js"></script>
     <script src="js/hibari_overlap_data.js"></script>
+    <!-- DFT metric variant -->
+    <script src="js/hibari_barcode_dft_data.js"></script>
+    <script src="js/hibari_overlap_dft_data.js"></script>
     <script src="js/hibaridata.js"></script>
   </body>
 </html>

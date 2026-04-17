@@ -369,6 +369,8 @@
     if (overlapCanvas && overlapData) renderOverlapHeatmap();
   }
 
+  var currentMetric = 'tonnetz';
+
   // ── Init ──────────────────────────────────────────────────────────
   function init () {
     // Data is inlined via <script src="js/hibari_barcode_data.js"> etc.
@@ -395,11 +397,36 @@
     }, 0);
   }
 
+  function setMetric (metric) {
+    if (metric === currentMetric) return;
+    currentMetric = metric;
+
+    if (metric === 'dft') {
+      barcodeData = window.HIBARI_BARCODE_DFT_DATA || null;
+      overlapData = window.HIBARI_OVERLAP_DFT_DATA || null;
+    } else {
+      barcodeData = window.HIBARI_BARCODE_DATA || null;
+      overlapData = window.HIBARI_OVERLAP_DATA || null;
+    }
+
+    if (!barcodeData || !overlapData) {
+      console.warn('hibaridata: DFT data not loaded — check script tag order in index.html');
+      return;
+    }
+
+    normalize();
+    buildColToCycle();
+    applyRate(currentRate);
+    renderOverlapHeatmap();
+    console.log('[metric switch]', metric, 'cycle_ids:', (overlapData.cycle_ids || []).join(','));
+  }
+
   window.hibariData = {
     init: init,
     applyRate: applyRate,
     updatePlaybackCursor: updatePlaybackCursor,
     renderOverlapHeatmap: renderOverlapHeatmap,
+    setMetric: setMetric,
     renderBarcodeChart: function () {
       renderBarcodeChart(getRateEntry(currentRate));
     }

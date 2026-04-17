@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TonnetzViz — Design Options A & B</title>
+<link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&family=Fira+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: #111;
+  font-family: 'Fira Sans', sans-serif;
+  color: #eee;
+  padding: 24px 16px 40px;
+}
+h1 {
+  text-align: center;
+  font-size: 13px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #555;
+  margin-bottom: 28px;
+  font-weight: 400;
+}
+
+/* ── Layout ─────────────────────────────── */
+.compare {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+@media (max-width: 700px) {
+  .compare { grid-template-columns: 1fr; }
+}
+
+/* ── Card wrapper ────────────────────────── */
+.card {
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,0.08);
+}
+.card-label {
+  text-align: center;
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  padding: 10px 0 14px;
+  font-weight: 500;
+}
+
+/* ══════════════════════════════════════════
+   OPTION A — Zinc / Pink  (Generative AI Art)
+   ══════════════════════════════════════════ */
+.a-bg  { background: #18181B; }
+.a-panel { background: rgba(24,24,27,0.96); border: 1px solid rgba(236,72,153,0.22); border-radius: 8px; margin: 12px; overflow: hidden; }
+.a-heading { background: rgba(39,39,42,0.98); border-bottom: 1px solid rgba(236,72,153,0.2); padding: 7px 12px; font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: #a1a1aa; font-family: 'Fira Sans', sans-serif; }
+.a-body { padding: 12px; color: #d4d4d8; font-size: 12px; }
+.a-accent { color: #EC4899; }
+.a-btn-primary { background: rgba(236,72,153,0.25); color: #f9a8d4; border: 1px solid rgba(236,72,153,0.5); border-radius: 4px; padding: 4px 10px; font-size: 11px; font-family: 'Fira Code', monospace; cursor: pointer; }
+.a-btn { background: rgba(255,255,255,0.06); color: #a1a1aa; border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; padding: 4px 10px; font-size: 11px; font-family: 'Fira Code', monospace; cursor: pointer; }
+.a-progress { height: 4px; background: rgba(255,255,255,0.08); border-radius: 2px; margin: 10px 0 6px; position: relative; overflow: hidden; }
+.a-progress-fill { height: 100%; width: 42%; background: linear-gradient(90deg, #7C3AED, #EC4899); border-radius: 2px; }
+.a-overlay { background: rgba(18,18,21,0.90); border: 1px solid rgba(236,72,153,0.2); border-radius: 8px; margin: 12px; padding: 10px 12px; }
+.a-tx-label { color: #52525b; font-size: 9px; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 5px; }
+.a-tx-row { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 8px; }
+.a-note { display: inline-block; width: 26px; height: 26px; border-radius: 50%; background: rgba(236,72,153,0.18); border: 1.5px solid rgba(236,72,153,0.45); font-size: 10px; font-family: 'Fira Code', monospace; text-align: center; line-height: 24px; color: #f9a8d4; }
+.a-note.active { background: rgba(236,72,153,0.5); border-color: #EC4899; color: #fff; box-shadow: 0 0 10px rgba(236,72,153,0.6); }
+.a-time { font-family: 'Fira Code', monospace; font-size: 11px; color: #71717a; }
+.a-label { color: #52525b; font-size: 11px; }
+.a-tag { background: rgba(236,72,153,0.15); color: #f472b6; font-size: 10px; padding: 1px 6px; border-radius: 3px; font-family: 'Fira Code', monospace; }
+
+/* ══════════════════════════════════════════
+   OPTION B — Carbon / Gold  (Architecture)
+   ══════════════════════════════════════════ */
+.b-bg  { background: #171717; }
+.b-panel { background: rgba(23,23,23,0.97); border: 1px solid rgba(212,175,55,0.18); border-radius: 8px; margin: 12px; overflow: hidden; }
+.b-heading { background: rgba(30,30,30,0.99); border-bottom: 1px solid rgba(212,175,55,0.18); padding: 7px 12px; font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: #a3a3a3; font-family: 'Fira Sans', sans-serif; }
+.b-body { padding: 12px; color: #d4d4d4; font-size: 12px; }
+.b-accent { color: #D4AF37; }
+.b-btn-primary { background: rgba(212,175,55,0.18); color: #fbbf24; border: 1px solid rgba(212,175,55,0.45); border-radius: 4px; padding: 4px 10px; font-size: 11px; font-family: 'Fira Code', monospace; cursor: pointer; }
+.b-btn { background: rgba(255,255,255,0.05); color: #737373; border: 1px solid rgba(255,255,255,0.09); border-radius: 4px; padding: 4px 10px; font-size: 11px; font-family: 'Fira Code', monospace; cursor: pointer; }
+.b-progress { height: 4px; background: rgba(255,255,255,0.07); border-radius: 2px; margin: 10px 0 6px; position: relative; overflow: hidden; }
+.b-progress-fill { height: 100%; width: 42%; background: linear-gradient(90deg, #92400E, #D4AF37); border-radius: 2px; }
+.b-overlay { background: rgba(17,17,17,0.93); border: 1px solid rgba(212,175,55,0.15); border-radius: 8px; margin: 12px; padding: 10px 12px; }
+.b-tx-label { color: #525252; font-size: 9px; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 5px; }
+.b-tx-row { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 8px; }
+.b-note { display: inline-block; width: 26px; height: 26px; border-radius: 50%; background: rgba(212,175,55,0.12); border: 1.5px solid rgba(212,175,55,0.35); font-size: 10px; font-family: 'Fira Code', monospace; text-align: center; line-height: 24px; color: #d4af37; }
+.b-note.active { background: rgba(212,175,55,0.38); border-color: #D4AF37; color: #fff; box-shadow: 0 0 10px rgba(212,175,55,0.5); }
+.b-time { font-family: 'Fira Code', monospace; font-size: 11px; color: #525252; }
+.b-label { color: #525252; font-size: 11px; }
+.b-tag { background: rgba(212,175,55,0.12); color: #fbbf24; font-size: 10px; padding: 1px 6px; border-radius: 3px; font-family: 'Fira Code', monospace; }
+
+/* ── Fake Tonnetz canvas ────────────────── */
+.tonnetz-bg {
+  width: 100%;
+  height: 160px;
+  position: relative;
+  overflow: hidden;
+}
+.tonnetz-bg canvas-sim {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+svg.tz { width: 100%; height: 160px; }
+
+/* ── Shared misc ────────────────────────── */
+hr.dim { border: none; border-top: 1px solid rgba(255,255,255,0.06); margin: 4px 0 8px; }
+.row { display: flex; gap: 6px; align-items: center; margin-bottom: 6px; }
+.spacer { flex: 1; }
+</style>
+</head>
+<body>
+<h1>TonnetzViz — Design Preview</h1>
+<div class="compare">
+
+  <!-- ══ OPTION A ════════════════════════════ -->
+  <div class="card">
+    <div class="card-label" style="background:#18181B; color:#EC4899; border-bottom:1px solid rgba(236,72,153,0.2)">
+      Option A &nbsp;·&nbsp; <span style="color:#71717a;font-weight:300">Zinc / Pink</span>
+    </div>
+    <div class="a-bg" style="padding-bottom:16px">
+
+      <!-- fake navbar -->
+      <div style="background:rgba(9,9,11,0.98); padding:8px 14px; display:flex; align-items:center; border-bottom:1px solid rgba(236,72,153,0.15)">
+        <span style="font-size:12px; color:#d4d4d8; font-weight:500; letter-spacing:0.3px">TonnetzViz</span>
+        <span style="margin-left:8px; font-size:10px; color:#3f3f46">hibari</span>
+        <div style="margin-left:auto; display:flex; gap:2px">
+          <span style="background:rgba(255,255,255,0.07); color:#71717a; font-size:10px; padding:2px 8px; border-radius:3px 0 0 3px; border:1px solid rgba(255,255,255,0.1)">ENG</span>
+          <span style="background:rgba(236,72,153,0.28); color:#f9a8d4; font-size:10px; padding:2px 8px; border-radius:0 3px 3px 0; border:1px solid rgba(236,72,153,0.4)">KOR</span>
+        </div>
+      </div>
+
+      <!-- fake tonnetz grid -->
+      <div class="tonnetz-bg">
+        <svg class="tz" viewBox="0 0 400 160" xmlns="http://www.w3.org/2000/svg">
+          <rect width="400" height="160" fill="#18181B"/>
+          <!-- grid lines -->
+          <g stroke="rgba(236,72,153,0.12)" stroke-width="0.8">
+            <line x1="0" y1="80" x2="400" y2="80"/>
+            <line x1="0" y1="40" x2="400" y2="40"/>
+            <line x1="0" y1="120" x2="400" y2="120"/>
+            <line x1="40" y1="0" x2="40" y2="160"/>
+            <line x1="110" y1="0" x2="110" y2="160"/>
+            <line x1="180" y1="0" x2="180" y2="160"/>
+            <line x1="250" y1="0" x2="250" y2="160"/>
+            <line x1="320" y1="0" x2="320" y2="160"/>
+            <!-- diagonals -->
+            <line x1="0" y1="0" x2="400" y2="160" opacity="0.5"/>
+            <line x1="0" y1="160" x2="400" y2="0" opacity="0.5"/>
+            <line x1="-70" y1="0" x2="330" y2="160" opacity="0.5"/>
+            <line x1="70" y1="0" x2="470" y2="160" opacity="0.5"/>
+          </g>
+          <!-- active triangle (chord) -->
+          <polygon points="180,40 110,80 250,80" fill="rgba(236,72,153,0.18)" stroke="rgba(236,72,153,0.7)" stroke-width="1.5"/>
+          <!-- nodes -->
+          <circle cx="40" cy="80" r="7" fill="#27272A" stroke="rgba(255,255,255,0.15)" stroke-width="1"/>
+          <circle cx="110" cy="80" r="8" fill="rgba(236,72,153,0.45)" stroke="#EC4899" stroke-width="1.5"/>
+          <circle cx="180" cy="40" r="8" fill="rgba(236,72,153,0.45)" stroke="#EC4899" stroke-width="1.5"/>
+          <circle cx="250" cy="80" r="8" fill="rgba(236,72,153,0.45)" stroke="#EC4899" stroke-width="1.5"/>
+          <circle cx="320" cy="80" r="7" fill="#27272A" stroke="rgba(255,255,255,0.15)" stroke-width="1"/>
+          <circle cx="40" cy="120" r="7" fill="#27272A" stroke="rgba(255,255,255,0.15)" stroke-width="1"/>
+          <circle cx="110" cy="120" r="7" fill="#27272A" stroke="rgba(255,255,255,0.15)" stroke-width="1"/>
+          <circle cx="180" cy="120" r="7" fill="#27272A" stroke="rgba(255,255,255,0.15)" stroke-width="1"/>
+          <circle cx="250" cy="120" r="7" fill="#27272A" stroke="rgba(255,255,255,0.15)" stroke-width="1"/>
+          <circle cx="320" cy="120" r="7" fill="#27272A" stroke="rgba(255,255,255,0.15)" stroke-width="1"/>
+          <circle cx="75" cy="40" r="7" fill="#27272A" stroke="rgba(255,255,255,0.15)" stroke-width="1"/>
+          <circle cx="215" cy="40" r="7" fill="#27272A" stroke="rgba(255,255,255,0.15)" stroke-width="1"/>
+          <circle cx="355" cy="40" r="7" fill="#27272A" stroke="rgba(255,255,255,0.15)" stroke-width="1"/>
+          <!-- glow on active -->
+          <circle cx="180" cy="40" r="14" fill="none" stroke="rgba(236,72,153,0.25)" stroke-width="1"/>
+          <!-- note labels -->
+          <text x="110" y="84" text-anchor="middle" font-size="7" fill="#f9a8d4" font-family="Fira Code, monospace">E</text>
+          <text x="180" y="44" text-anchor="middle" font-size="7" fill="#f9a8d4" font-family="Fira Code, monospace">G</text>
+          <text x="250" y="84" text-anchor="middle" font-size="7" fill="#f9a8d4" font-family="Fira Code, monospace">B</text>
+        </svg>
+      </div>
+
+      <!-- panel -->
+      <div class="a-panel">
+        <div class="a-heading">Playback</div>
+        <div class="a-body">
+          <div class="row">
+            <button class="a-btn-primary">▶ Bach — Toccata &amp; Fugue</button>
+            <button class="a-btn">Pavane</button>
+          </div>
+          <hr class="dim">
+          <div class="row">
+            <span class="a-tag">Playing</span>
+            <span class="a-time">1:24 / 3:47</span>
+          </div>
+          <div class="a-progress"><div class="a-progress-fill"></div></div>
+          <div class="row" style="margin-top:6px">
+            <button class="a-btn">⏸</button>
+            <button class="a-btn">⏹</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- transform overlay -->
+      <div class="a-overlay">
+        <div class="a-tx-label">Transforms &nbsp;<span style="color:#3f3f46;font-size:8px">−</span></div>
+        <div class="a-tx-label" style="margin-top:4px">Neo-Riemannian</div>
+        <div class="a-tx-row">
+          <button class="a-btn" style="color:#f9a8d4;border-color:rgba(236,72,153,0.4)">P</button>
+          <button class="a-btn">L</button>
+          <button class="a-btn">R</button>
+          <button class="a-btn" style="opacity:0.6">N</button>
+          <button class="a-btn" style="opacity:0.6">S</button>
+          <button class="a-btn" style="opacity:0.6">H</button>
+        </div>
+        <div class="a-tx-label" style="margin-top:4px">Transpose &nbsp;<span class="a-accent" style="font-family:'Fira Code',monospace;font-size:10px">+0</span></div>
+        <div class="a-tx-row">
+          <button class="a-btn">−12</button><button class="a-btn">−7</button><button class="a-btn">−1</button>
+          <button class="a-btn" style="color:#f87171;border-color:rgba(248,113,113,0.3)">0</button>
+          <button class="a-btn">+1</button><button class="a-btn">+7</button><button class="a-btn">+12</button>
+        </div>
+      </div>
+
+      <!-- active notes hint -->
+      <div style="display:flex; gap:6px; padding:0 12px; align-items:center">
+        <span class="a-label">Active:</span>
+        <span class="a-note active">E</span>
+        <span class="a-note active">G</span>
+        <span class="a-note active">B</span>
+        <span class="a-note">C</span>
+        <span class="a-note">D</span>
+        <span style="color:#3f3f46;font-size:10px">…tap canvas to play</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ OPTION B ════════════════════════════ -->
+  <div class="card">
+    <div class="card-label" style="background:#171717; color:#D4AF37; border-bottom:1px solid rgba(212,175,55,0.15)">
+      Option B &nbsp;·&nbsp; <span style="color:#525252;font-weight:300">Carbon / Gold</span>
+    </div>
+    <div class="b-bg" style="padding-bottom:16px">
+
+      <!-- fake navbar -->
+      <div style="background:rgba(10,10,10,0.99); padding:8px 14px; display:flex; align-items:center; border-bottom:1px solid rgba(212,175,55,0.12)">
+        <span style="font-size:12px; color:#d4d4d4; font-weight:400; letter-spacing:0.3px">TonnetzViz</span>
+        <span style="margin-left:8px; font-size:10px; color:#404040">hibari</span>
+        <div style="margin-left:auto; display:flex; gap:2px">
+          <span style="background:rgba(255,255,255,0.05); color:#525252; font-size:10px; padding:2px 8px; border-radius:3px 0 0 3px; border:1px solid rgba(255,255,255,0.08)">ENG</span>
+          <span style="background:rgba(212,175,55,0.22); color:#fbbf24; font-size:10px; padding:2px 8px; border-radius:0 3px 3px 0; border:1px solid rgba(212,175,55,0.4)">KOR</span>
+        </div>
+      </div>
+
+      <!-- fake tonnetz grid -->
+      <div class="tonnetz-bg">
+        <svg class="tz" viewBox="0 0 400 160" xmlns="http://www.w3.org/2000/svg">
+          <rect width="400" height="160" fill="#171717"/>
+          <g stroke="rgba(212,175,55,0.09)" stroke-width="0.8">
+            <line x1="0" y1="80" x2="400" y2="80"/>
+            <line x1="0" y1="40" x2="400" y2="40"/>
+            <line x1="0" y1="120" x2="400" y2="120"/>
+            <line x1="40" y1="0" x2="40" y2="160"/>
+            <line x1="110" y1="0" x2="110" y2="160"/>
+            <line x1="180" y1="0" x2="180" y2="160"/>
+            <line x1="250" y1="0" x2="250" y2="160"/>
+            <line x1="320" y1="0" x2="320" y2="160"/>
+            <line x1="0" y1="0" x2="400" y2="160" opacity="0.5"/>
+            <line x1="0" y1="160" x2="400" y2="0" opacity="0.5"/>
+            <line x1="-70" y1="0" x2="330" y2="160" opacity="0.5"/>
+            <line x1="70" y1="0" x2="470" y2="160" opacity="0.5"/>
+          </g>
+          <polygon points="180,40 110,80 250,80" fill="rgba(212,175,55,0.12)" stroke="rgba(212,175,55,0.6)" stroke-width="1.5"/>
+          <circle cx="40" cy="80" r="7" fill="#1C1C1C" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+          <circle cx="110" cy="80" r="8" fill="rgba(212,175,55,0.35)" stroke="#D4AF37" stroke-width="1.5"/>
+          <circle cx="180" cy="40" r="8" fill="rgba(212,175,55,0.35)" stroke="#D4AF37" stroke-width="1.5"/>
+          <circle cx="250" cy="80" r="8" fill="rgba(212,175,55,0.35)" stroke="#D4AF37" stroke-width="1.5"/>
+          <circle cx="320" cy="80" r="7" fill="#1C1C1C" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+          <circle cx="40" cy="120" r="7" fill="#1C1C1C" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+          <circle cx="110" cy="120" r="7" fill="#1C1C1C" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+          <circle cx="180" cy="120" r="7" fill="#1C1C1C" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+          <circle cx="250" cy="120" r="7" fill="#1C1C1C" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+          <circle cx="320" cy="120" r="7" fill="#1C1C1C" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+          <circle cx="75" cy="40" r="7" fill="#1C1C1C" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+          <circle cx="215" cy="40" r="7" fill="#1C1C1C" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+          <circle cx="355" cy="40" r="7" fill="#1C1C1C" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+          <circle cx="180" cy="40" r="14" fill="none" stroke="rgba(212,175,55,0.2)" stroke-width="1"/>
+          <text x="110" y="84" text-anchor="middle" font-size="7" fill="#fbbf24" font-family="Fira Code, monospace">E</text>
+          <text x="180" y="44" text-anchor="middle" font-size="7" fill="#fbbf24" font-family="Fira Code, monospace">G</text>
+          <text x="250" y="84" text-anchor="middle" font-size="7" fill="#fbbf24" font-family="Fira Code, monospace">B</text>
+        </svg>
+      </div>
+
+      <!-- panel -->
+      <div class="b-panel">
+        <div class="b-heading">Playback</div>
+        <div class="b-body">
+          <div class="row">
+            <button class="b-btn-primary">▶ Bach — Toccata &amp; Fugue</button>
+            <button class="b-btn">Pavane</button>
+          </div>
+          <hr class="dim">
+          <div class="row">
+            <span class="b-tag">Playing</span>
+            <span class="b-time">1:24 / 3:47</span>
+          </div>
+          <div class="b-progress"><div class="b-progress-fill"></div></div>
+          <div class="row" style="margin-top:6px">
+            <button class="b-btn">⏸</button>
+            <button class="b-btn">⏹</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- transform overlay -->
+      <div class="b-overlay">
+        <div class="b-tx-label">Transforms &nbsp;<span style="color:#3a3a3a;font-size:8px">−</span></div>
+        <div class="b-tx-label" style="margin-top:4px">Neo-Riemannian</div>
+        <div class="b-tx-row">
+          <button class="b-btn" style="color:#fbbf24;border-color:rgba(212,175,55,0.4)">P</button>
+          <button class="b-btn">L</button>
+          <button class="b-btn">R</button>
+          <button class="b-btn" style="opacity:0.6">N</button>
+          <button class="b-btn" style="opacity:0.6">S</button>
+          <button class="b-btn" style="opacity:0.6">H</button>
+        </div>
+        <div class="b-tx-label" style="margin-top:4px">Transpose &nbsp;<span class="b-accent" style="font-family:'Fira Code',monospace;font-size:10px">+0</span></div>
+        <div class="b-tx-row">
+          <button class="b-btn">−12</button><button class="b-btn">−7</button><button class="b-btn">−1</button>
+          <button class="b-btn" style="color:#f87171;border-color:rgba(248,113,113,0.25)">0</button>
+          <button class="b-btn">+1</button><button class="b-btn">+7</button><button class="b-btn">+12</button>
+        </div>
+      </div>
+
+      <!-- active notes hint -->
+      <div style="display:flex; gap:6px; padding:0 12px; align-items:center">
+        <span class="b-label">Active:</span>
+        <span class="b-note active">E</span>
+        <span class="b-note active">G</span>
+        <span class="b-note active">B</span>
+        <span class="b-note">C</span>
+        <span class="b-note">D</span>
+        <span style="color:#3a3a3a;font-size:10px">…tap canvas to play</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>
