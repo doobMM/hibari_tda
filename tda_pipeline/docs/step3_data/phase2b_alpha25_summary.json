@@ -1,0 +1,11 @@
+{
+  "task": "A10-b-prime_alpha25",
+  "started_at": "2026-04-17T17:17:18",
+  "same_python_session": true,
+  "script": "run_dft_phase2b_alpha25.py",
+  "status": "completed",
+  "outputs": {
+    "result_json": "C:\\WK14\\tda_pipeline\\docs\\step3_data\\complex_percycle_dft_gap0_alpha25_results.json"
+  },
+  "completed_at": "2026-04-17T17:23:16"
+}
