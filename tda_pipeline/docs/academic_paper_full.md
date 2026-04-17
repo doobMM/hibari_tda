@@ -11,7 +11,7 @@
 
 본 연구는 사카모토 류이치의 2009년 앨범 *out of noise* 수록곡 "hibari"를 대상으로, 음악의 구조를 **위상수학적으로 분석**하고 그 위상 구조를 **보존하면서 새로운 음악을 생성**하는 파이프라인을 제안한다. 전체 과정은 네 단계로 구성된다. (1) MIDI 전처리: 두 악기를 분리하고 8분음표 단위로 양자화. (2) Persistent Homology: 네 가지 거리 함수(frequency, Tonnetz, voice leading, DFT)로 note 간 거리 행렬을 구성한 뒤 Vietoris-Rips 복합체의 $H_1$ cycle을 추출. (3) 중첩행렬 구축: cycle의 시간별 활성화를 이진 또는 연속값 행렬로 기록. (4) 음악 생성: (3)에서 구한 중첩행렬을 seed로 사용하여 확률적 샘플링 기반의 Algorithm 1과 FC / LSTM / Transformer 신경망 기반의 Algorithm 2 두 방식을 제공.
 
-$N = 20$회 통계적 반복을 통한 정량 검증에서, **Algorithm 1**(확률적 샘플링) 기반으로 DFT 거리 함수가 frequency 거리 함수 대비 pitch Jensen-Shannon divergence를 $0.0344 \pm 0.0023$에서 $0.0213 \pm 0.0021$로 **약 $38.2\%$ 감소**시켰으며, 이는 Welch's $t$-test $p < 10^{-20}$의 극도로 유의한 개선이다. 파라미터 최적화 ($w_o = 0.3$, $w_d = 1.0$) 후 DFT 이진 OM에서 Algorithm 1 JS $0.0157 \pm 0.0018$을 달성하였다. **Algorithm 2**(DL 기반 생성)에서 동일 DFT 조건의 연속값 중첩행렬을 입력으로 하는 FC 신경망이 JS $0.00035 \pm 0.00015$ ($N = 10$)를 달성하였고, Transformer 대비 Welch $p = 1.66 \times 10^{-4}$로 통계적으로 유의한 우위를 보였다. 이는 hibari가 수록된 *out of noise* 앨범의 미학적 성격 — 전통적 선율 인과보다 음들의 공간적 배치에 의존 — 과 정확히 공명하는 관찰이다.
+$N = 20$회 통계적 반복을 통한 정량 검증에서, **Algorithm 1**(확률적 샘플링) 기반으로 DFT 거리 함수가 frequency 거리 함수 대비 pitch Jensen-Shannon divergence를 $0.0344 \pm 0.0023$에서 $0.0213 \pm 0.0021$로 **약 $38.2\%$ 감소**시켰으며, 이는 Welch's $t$-test $p < 10^{-20}$의 극도로 유의한 개선이다. 이후 DFT 기반 continuous OM에서 per-cycle $\tau_c$ 최적화를 적용하여 Algorithm 1 JS를 $\mathbf{0.01489 \pm 0.00143}$까지 낮추었고 (uniform $\tau = 0.35$ 대비 $+58.7\%$, Welch $p = 2.48 \times 10^{-26}$), 이는 Algorithm 1 기준 연구 전체 최저 성능이다. **Algorithm 2**(DL 기반 생성)에서는 동일 DFT 조건의 연속값 중첩행렬을 입력으로 하는 FC 신경망이 $\mathbf{0.00035 \pm 0.00015}$ ($N = 10$)를 달성하였고, Transformer 대비 Welch $p = 1.66 \times 10^{-4}$로 통계적으로 유의한 우위를 보였다. 이 두 최저값은 이론적 최댓값 $\log 2 \approx 0.693$의 각각 약 $2.15\%$ (Algo1)와 $0.05\%$ (Algo2)에 해당한다.
 
 본 연구의 intra / inter / simul 세 갈래 가중치 분리 설계는 hibari의 두 악기 구조 — inst 1은 쉼 없이 연속 연주, inst 2는 모듈마다 규칙적 쉼을 두며 겹쳐 배치 — 를 수학적 구조에 반영한 것이며, 두 악기의 활성/쉼 패턴 관측 (inst 1 쉼 $0$개, inst 2 쉼 $64$개) 이 이 설계를 경험적으로 정당화한다. 본 논문은 수학적 정의부터 통계 실험, 시각자료, 향후 연구 방향까지를 하나의 일관된 흐름으로 정리한다.
 
@@ -1776,7 +1776,9 @@ __P4 (flat) 의 의미.__ 시간 정보를 의도적으로 제거한 negative co
 
 __P3 (module-local PH) 는 §7.5 에서 별도 구현 + 평가__ 한다. 본 §7.2 의 위 4개 전략 모두는 *원곡 전체로부터 추출된 cycle 집합* $\{V(c)\}_{c=1}^{42}$ 을 그대로 사용하면서 prototype overlap 만 다르게 만든다는 공통점이 있다. P3 는 그것과 근본적으로 다른 접근 — *대상 모듈만의 데이터로 새로 cycle 을 발견* 하는 가장 원칙적인 방법 — 이라 별도의 절에서 다룬다.
 
-### 결과 ($N = 10$ trials, baseline full-song Tonnetz JS $= 0.0488$)
+### 결과 ($N = 10$ trials, baseline full-song DFT JS $= 0.0213 \pm 0.0021$)
+
+> 참고: 위 baseline은 "거리 함수 효과" 비교를 위한 §4.1 기준값이다. 최종 설정에서는 §6.7.1의 $0.01489$까지 추가 하향이 가능하다.
 
 | 전략 | Density | JS Divergence (mean ± std) | Best trial | Note coverage |
 |---|---|---|---|---|
@@ -1791,7 +1793,7 @@ __발견 1: P1 (mean continuous, density ≈ 0.999) 은 사실상 random samplin
 
 __발견 2: 더 sparse 한 prototype은 의미 있는 cycle 구조를 보존한다.__ P0 ($\tau = 0.5$ 이진화, density $0.160$) 은 "33개 모듈의 절반 이상에서 활성이었던 cell만 선택" 이라는 selective 기준을 사용한다. P2 (median 모듈, density $0.375$) 도 비슷한 의의를 갖는다 — 실제로 존재하는 한 모듈의 활성화 패턴을 prototype으로 사용한다.
 
-__발견 3: 평균 JS는 전략 차이보다 module-level randomness가 dominant 하다.__ 세 전략(P0/P1/P2)의 평균 JS는 $0.094 \sim 0.110$로 모두 baseline $0.040$보다 약 $2.5$배 나쁘며, 표준편차도 $0.028 \sim 0.031$로 비슷하다. 이는 prototype 선택보다 *모듈 1개를 생성할 때 한 번 이루어지는 random choice가 33회 복제되어 amplify되는 것* 이 분산의 주된 원인임을 시사한다 (§7.4 한계 1 참조).
+__발견 3: 평균 JS는 전략 차이보다 module-level randomness가 dominant 하다.__ 세 전략(P0/P1/P2)의 평균 JS는 $0.094 \sim 0.110$로 모두 baseline $0.0213$보다 약 $4.4 \sim 5.2$배 나쁘며, 표준편차도 $0.028 \sim 0.031$로 비슷하다. 이는 prototype 선택보다 *모듈 1개를 생성할 때 한 번 이루어지는 random choice가 33회 복제되어 amplify되는 것* 이 분산의 주된 원인임을 시사한다 (§7.4 한계 1 참조).
 
 __발견 4: P4 (시간 정보 제거) 는 catastrophic 하게 실패한다.__ 32 timesteps 모두에 동일한 cycle activation 벡터를 적용하는 P4 는 JS $0.341$로 다른 전략들보다 약 $3$배 나쁘다. 이는 *Algorithm 1이 시간에 따른 cycle 활성화 변화를 의미 있게 활용하고 있음*을 negative control 측면에서 입증한다.
 
@@ -1823,15 +1825,15 @@ P0 (mean → $\tau = 0.5$) prototype을 사용하여 $N = 10$회 독립 반복 (
 
 | 방식 | JS Divergence | 소요 시간 | 비고 |
 |---|---|---|---|
-| §4.1 Full-song Tonnetz (baseline) | $0.0488 \pm 0.0040$ | $\sim 40$ ms | $N = 20$ |
+| §4.1 Full-song DFT (baseline) | $0.0213 \pm 0.0021$ | $\sim 40$ ms | $N = 20$ |
 | __§7 (P0 selective, 본 보고)__ | $0.1103 \pm 0.0313$ | $\sim 2$ ms | $N = 10$ |
 | §7 (P0, best trial) | $\mathbf{0.0683}$ | $\sim 2$ ms | seed 7108 |
 
 ### 세 가지 관찰
 
-__관찰 1: 최우수 trial은 여전히 baseline에 근접__. 본 실험의 best trial (seed 7108) 은 JS $= 0.0683$로 baseline ($0.0488$) 의 $1.4$배이다. P0 의 best 는 cycle 구조에 기반한 결과라는 점에서 의미가 있다.
+__관찰 1: 최우수 trial도 baseline과 격차가 크다.__ 본 실험의 best trial (seed 7108)은 JS $= 0.0683$로 baseline ($0.0213$) 의 약 $3.2$배이다. P0 의 best 는 cycle 구조에 기반한 결과라는 점에서 의미가 있다.
 
-__관찰 2: 평균은 baseline의 약 $2.8$배__. P0 의 평균 JS는 baseline 대비 약 $2.8$배 나쁘다. 이는 prototype 전략 자체의 한계가 아니라 module-level randomness의 amplification 때문이다 (§7.4).
+__관찰 2: 평균은 baseline의 약 $5.2$배__. P0 의 평균 JS는 baseline 대비 약 $5.2$배 나쁘다. 이는 prototype 전략 자체의 한계가 아니라 module-level randomness의 amplification 때문이다 (§7.4).
 
 __관찰 3: 50배 빠른 생성 속도는 그대로__. 모듈 1개 생성에 $\sim 2$ ms (full-song $\sim 40$ ms 대비 $\mathbf{20}$배 빠름). 총 재배치까지 포함해도 $< 5$ ms 수준이며, 실시간 인터랙티브 작곡 도구에 충분히 적합한 속도를 유지한다.
 
@@ -1873,7 +1875,7 @@ __개선 P3 — Module-local persistent homology.__ 가장 원칙적인 접근. 
 
 __P3 + C 결합.__ 모듈-local cycle 위에서 best-of-$k$ selection 을 동시에 적용. P3 의 의미 있는 cycle 구조와 C 의 randomness 통제를 결합한다.
 
-### 결과 ($N = 10$, baseline full-song JS $= 0.0488 \pm 0.0040$)
+### 결과 ($N = 10$, baseline full-song JS $= 0.0213 \pm 0.0021$)
 
 | 전략 | JS Divergence (mean ± std) | best | full-coverage | per-trial 시간 |
 |---|---|---|---|---|
@@ -1886,15 +1888,15 @@ __P3 + C 결합.__ 모듈-local cycle 위에서 best-of-$k$ selection 을 동시
 
 __핵심 발견.__
 
-1. __P3 + C 가 최우수__: 평균 $0.0590 \pm 0.0148$ 로, P0 baseline ($0.1141$) 대비 $48\%$ 감소. 표준편차도 $0.0387 \to 0.0148$ 로 $62\%$ 감소. Full-song Tonnetz baseline ($0.0488$) 의 $1.21$배에 불과하며, **best trial $0.0348$ 은 baseline mean 보다도 낮다**.
+1. __P3 + C 가 최우수__: 평균 $0.0590 \pm 0.0148$ 로, P0 baseline ($0.1141$) 대비 $48\%$ 감소. 표준편차도 $0.0387 \to 0.0148$ 로 $62\%$ 감소. Full-song DFT baseline ($0.0213$) 대비로는 약 $2.77$배이며, best trial $0.0348$도 baseline 대비 약 $1.63$배로 아직 높다.
 2. __P3 단독 만으로도 큰 효과__: $30$ ms 추가 비용 없이 (3 ms) baseline 의 거의 절반 ($0.0655$, $-43\%$) 까지 도달. 이는 module-local PH 가 *원곡 전체의 cycle 을 평균낸 prototype* 과 *원곡 전체에 등장한 모든 cycle 의 통합* 보다도 더 강한 신호임을 의미한다.
-3. __C 의 best trial 이 가장 낮음__ ($0.0236$): 10개 candidate 중 best 를 고르는 단순 전략이 일부 trial 에서 *full-song baseline 보다 좋은* 결과를 만들 수 있음.
+3. __C 의 best trial 이 가장 낮음__ ($0.0236$): 10개 candidate 중 best 를 고르는 단순 전략이 큰 개선을 만들지만, full-song DFT baseline ($0.0213$) 대비로는 약 $1.11$배로 아직 소폭 높다.
 4. __D 단독 은 std 가 가장 안정__ ($0.0222$): coverage 보장이 분산을 가장 효과적으로 줄임. 평균은 C 보다 약간 나쁘지만 더 일관적이다.
 5. __C + D 결합은 C 와 동일__: best-of-10 이 이미 high coverage 모듈을 자연스럽게 선택하므로 D 의 추가 제약이 효과 없음.
 
 ### Best trial 분석 — P3 + C, seed 9305
 
-이 실험의 best trial (P3 + C, seed 9305) 는 JS $0.0348$, coverage $0.96$ ($22/23$), 모듈 내 52개 note 를 사용하였다. 이는 본 §7 의 모든 전략 중 가장 낮은 JS 이며, full-song Tonnetz baseline의 평균 ($0.0488$) 보다도 낮다. __즉, "곡 전체를 한 번에 생성" 하는 것보다 "잘 만든 모듈 1개를 33번 복제" 하는 것이 *적어도 일부 seed 에서는* 더 좋은 결과를 낼 수 있다.__
+이 실험의 best trial (P3 + C, seed 9305) 는 JS $0.0348$, coverage $0.96$ ($22/23$), 모듈 내 52개 note 를 사용하였다. 이는 본 §7 의 모든 전략 중 가장 낮은 JS이지만, full-song DFT baseline 평균 ($0.0213$) 대비로는 약 $1.63$배 높다. __즉, 모듈 1개 복제 전략은 품질을 크게 끌어올렸지만, full-song 생성을 대체하기보다는 보완하는 접근으로 해석하는 것이 타당하다.__
 
 ### 한계 해결 정도 정리
 
@@ -1908,7 +1910,7 @@ __핵심 발견.__
 
 __§7 의 핵심 주장 재정의.__ 본 §7 구현 + 한계 해결 (§7.5) 의 결과로 다음을 주장할 수 있게 되었다.
 
-> __모듈 단위 생성 + 구조적 재배치는 단순한 효율 트릭이 아니라, 적절한 후처리와 결합되면 full-song 생성과 비교 가능한 품질에 도달할 수 있는 독립적 방법이다.__ 본 실험에서 P3 + C 의 평균 JS $0.0590$ 은 full-song Tonnetz baseline $0.0488$ 의 $1.21$배에 불과하며, 최우수 trial 은 baseline 평균을 능가한다.
+> __모듈 단위 생성 + 구조적 재배치는 단순한 효율 트릭이 아니라, 적절한 후처리와 결합될 때 full-song 생성에 접근 가능한 품질을 제공하는 독립적 방법이다.__ 본 실험에서 P3 + C 의 평균 JS $0.0590$ 은 full-song DFT baseline $0.0213$ 대비 약 $2.77$배이며, 최우수 trial $0.0348$도 baseline 대비 약 $1.63$배 수준이다.
 
 이는 §7.4 의 한계 1 ("randomness 가 33× amplify 되는 본질적 한계") 가 *실제로 본질적이지는 않으며*, 적절한 selection mechanism (C) 과 진짜 local topology (P3) 의 결합으로 거의 완전히 통제 가능함을 의미한다.
 
@@ -1946,7 +1948,7 @@ __시작 모듈 간 변동__: 평균 JS의 cross-module 분산 $= 0.0656 \pm 0.0
 
 그럼에도 흥미로운 패턴이 관찰된다.
 
-1. __Start module 0 이 실제로 가장 좋음__: 평균 JS $0.0539$ (모든 8개 모듈 중 최저), best trial $0.0258$ (§7.5 의 P3+C 전체 실험 best $0.0348$ 보다 낮은, **본 연구 전체에서 관측된 최저 JS**). **단, 이 구간 ($t \in [0,32)$) 에서는 inst 1만 연주 중이므로, 두 악기의 상호작용에서 비롯되는 중첩 구조가 전혀 반영되지 않는다. 수치적 우수성이 "더 단순한 단일 악기 위상 구조"에 기인한 것일 가능성을 배제할 수 없다.**
+1. __Start module 0 이 실제로 가장 좋음__: 평균 JS $0.0539$ (모든 8개 모듈 중 최저), best trial $0.0258$ (§7.5 의 P3+C 전체 실험 best $0.0348$ 보다 낮은, **§7 모듈 실험 내 관측 최저 JS**). **단, 이 구간 ($t \in [0,32)$) 에서는 inst 1만 연주 중이므로, 두 악기의 상호작용에서 비롯되는 중첩 구조가 전혀 반영되지 않는다. 수치적 우수성이 "더 단순한 단일 악기 위상 구조"에 기인한 것일 가능성을 배제할 수 없다.**
 2. __Start module 0 은 cycle 수가 가장 적음__ ($24$개, 나머지는 $34 \sim 41$). 이는 "첫 모듈은 다른 모듈들보다 단순한 위상 구조를 가진다" 는 관측을 뒷받침한다 — inst 2가 없어 note 간 inter-instrument 관계가 형성되지 않으므로 자연히 cycle 수가 적어진다.
 3. __Start module 0 의 prototype density 가 가장 낮음__ ($0.517$, 나머지는 $0.63 \sim 0.81$). 더 sparse 한 prototype이 Algorithm 1 에게 *더 선택적인* cycle 교집합 정보를 주는 것으로 해석할 수 있다.
 
@@ -1970,12 +1972,12 @@ __본 실험의 관찰과 일관__. 만약 hibari 가 이 구조를 따른다면
 - __설정__: P3 + C, start module $= 0$, seed $9302$
 - __Module 내부__: $54$개 note, coverage $21/23$ ($91.3\%$)
 - __전체 곡__: $3{,}510$개 note, coverage $91.3\%$
-- __JS divergence__: $\mathbf{0.0258}$ (full-song Tonnetz baseline $0.0488$ 의 $52.9\%$)
+- __JS divergence__: $\mathbf{0.0258}$ (full-song DFT baseline $0.0213$의 $121.1\%$, 즉 약 $1.21$배)
 - __MusicXML__: `output/step71_v4_best_m00_s9302_20260408_214553.musicxml`
 - __MIDI__: `output/step71_v4_best_m00_s9302.mid`
 - __Piano WAV__: `output/step71_v4_best_m00_s9302_piano.wav` (Acoustic Grand Piano 음색, $22050$ Hz, $\sim 496$ s, $\sim 21$ MB)
 
-이 trial 은 §7 전체에서 유일하게 *full-song baseline 의 평균을 능가*하는 결과이다. 즉 본 §7 의 주장 — "모듈 단위 생성이 full-song 생성과 비교 가능하다" — 을 증명하는 핵심 증거이다.
+이 trial 은 §7 전체에서 가장 낮은 JS 결과이지만, full-song DFT baseline ($0.0213$) 대비로는 아직 높다. 즉 본 §7 의 주장 — "모듈 단위 생성이 full-song 생성과 비교 가능한 품질에 접근할 수 있다" — 을 뒷받침하는 핵심 증거이다.
 
 ---
 
@@ -2027,12 +2029,12 @@ __본 실험의 관찰과 일관__. 만약 hibari 가 이 구조를 따른다면
 
 **핵심 경험적 결과:**
 
-1. **거리 함수 선택의 효과.** Algorithm 1 기준으로, DFT 거리가 frequency 대비 pitch JS divergence를 $38.2\%$, Tonnetz 대비 $56.8\%$, voice leading 대비 $62.4\%$ 낮춘다 (hibari, §4.1). 이 효과는 hibari에 고유하며, solari에서는 frequency와 Tonnetz가 동등하다. 클래식 대조군 실험(§6.2a)에서 Bach Fugue는 Tonnetz 우위 $54.8\%$를 보였으며, "counterpoint = voice leading 우위"라는 직관적 가설은 기각되었다.
-2. **곡의 성격이 최적 모델을 결정한다.** hibari (diatonic, entropy $0.974$)에서는 FC가 최적이고, solari (chromatic, entropy $0.905$)에서는 Transformer가 최적이다 (§6.2). "곡의 미학과 모델 구조의 정합성"이라는 가설이 두 곡의 대비로 실증되었다.
-3. **위상 보존 음악 변주.** Tonnetz 최소매칭 거리 기반 note 재분배 (§6.3), 시간 재배치 (§6.4), 화성 제약 (§6.5)을 결합하여, 원곡과 위상적으로 유사하면서 선율이 $+31\%$ (DTW) 다른 음악을 C major 조성 안에서 생성할 수 있음을 보였다 (§6.6, major_block32: ref pJS $0.002$).
-4. **OM의 정교화.** Per-cycle 임계값 최적화(§6.7.1)로 JS $+58.7\%$ 개선 (Welch $p = 2.48 \times 10^{-26}$, $N=20$, DFT gap=0 조건), continuous overlap의 직접 입력(§6.7.2)으로 FC 모델 JS $+83.9\%$ 개선 ($p = 1.50 \times 10^{-6}$)을 달성하였다. Transformer는 $+67.4\%$, LSTM은 $+27.3\%$ 개선. 옥타브 가중치 $w_o$의 grid search(§4.1a)로 $-18.8\%$ 추가 개선이 이루어졌다.
-
-5. **위상 구조를 보존한 음악의 미학적 타당성 (Q4).** 수학적으로 유사한 위상 구조를 가지도록 생성된 음악이 실제 청각적으로도 원곡의 인상을 전달하는가에 대해서는, 본 보고서 말미에 첨부된 QR코드를 통해 생성된 음악을 직접 감상할 수 있다. 체계적인 청취 실험(listening test)은 향후 연구 과제로 남겨둔다.
+1. **거리 함수 선택의 효과.** hibari의 Algorithm 1에서 DFT 거리는 frequency 대비 $38.2\%$, Tonnetz 대비 $56.8\%$, voice leading 대비 $62.4\%$ 낮은 JS를 달성했다 ($N = 20$, §4.1). 반면 곡 일반화에서는 solari가 frequency≈Tonnetz 동률, Bach Fugue가 Tonnetz 우위, Ravel Pavane이 frequency 우위를 보이며 "곡의 성격이 최적 도구를 결정한다"는 관찰이 유지된다 (§6.2).
+2. **곡의 성격이 최적 모델을 결정한다.** hibari (diatonic, entropy $0.974$)에서는 FC가 최적이고, solari (chromatic)에서는 Transformer가 최적이다. 특히 hibari + gap=0 조건에서 FC-cont는 Transformer-cont 대비 Welch $p = 1.66 \times 10^{-4}$로 유의하게 우수하다 (§6.7.2).
+3. **위상 보존 음악 변주.** Tonnetz 최소매칭 기반 note 재분배, 시간 재배치, 화성 제약을 결합하면 원곡과 위상적으로 유사하면서 선율은 유의미하게 다른 변주를 생성할 수 있다 (§6.4~§6.6, major_block32).
+4. **OM의 정교화.** DFT continuous OM 기반 per-cycle 임계값 최적화는 JS를 $+58.7\%$ 개선했다 (uniform $\tau=0.35$ 대비, Welch $p = 2.48 \times 10^{-26}$, $N=20$). 연속값 overlap 직접 입력은 FC에서 $+83.9\%$ 개선을 만들었고 ($p = 1.50 \times 10^{-6}$, $N=10$), LSTM은 개선폭이 제한적이어서 연속값 입력과의 구조적 적합성이 낮음을 확인했다. 또한 DFT 조건 옥타브 가중치 grid search에서 $w_o = 0.3$이 최적(JS $0.0163$)이며, $w_o = 0.5$ 대비 약 $10.5\%$ 개선된다 (§4.1a).
+5. **위상 구조를 보존한 음악의 미학적 타당성 (Q4).** 수학적으로 유사한 위상 구조를 가지도록 생성된 음악이 실제 청각적으로도 원곡의 인상을 전달하는가에 대해서는, 본 보고서 말미의 QR 코드로 직접 확인할 수 있다. 체계적 listening test는 향후 과제로 남는다.
+6. **Complex 모드는 distance-specific이다.** simul 혼합은 Tonnetz 조건에서는 유효할 수 있으나, DFT + $\alpha=0.25$에서는 $r_c=0.1, 0.3$ 모두 timeflow 대비 유의한 성능 악화를 보였다 (각각 Welch $p = 4.74 \times 10^{-39}$, $1.12 \times 10^{-48}$, §6.9 Task 34b).
 
 **핵심 해석적 기여:** FC 모델의 우위를 *out of noise* 앨범의 작곡 철학과 연결한 것, 그리고 가중치 행렬의 intra / inter / simul 분리가 작곡가 본인의 작업 방식에서 유도된 설계라는 점이 본 연구의 특징적 해석 구조이다. 그림 2.9의 관측 (inst 1 쉼 $0$개 vs inst 2 쉼 $64$개) 이 이 설계를 경험적으로 정당화한다.
 
