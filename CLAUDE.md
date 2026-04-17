@@ -273,9 +273,9 @@ gap_min=3 청취 평가 폐기 결정에 따른 §4 gap=0 롤백 + bugfix 이후
 | 32 | **A** | gap_min=0 롤백 Phase 1 (§4 DFT 재실험 Task A1~A7) ✓ | 완료 | 커밋 bb4ab4d. DFT 0.0213★, w_d=1.0 / w_o=0.3 확정. **A6: FC≈Transformer (가설 수정)**, **A7: FC_cont 0.00032 잠정 최저** |
 | 33 | **B** | min_onset_gap 필드화 + run_dft_suite 파라미터화 + 메타표준 ✓ | 완료 | 커밋 71d2f2b. config.min_onset_gap, rename(R061), utils/result_meta, scripts 2개 |
 | 34 | **A** | Phase 2 (Task A8~A10) — DFT-hybrid 재탐색 ✓ | 완료 | 커밋 459eb24. **A8: DFT+per-cycle τ 0.0149★ Algo1 신기록** (p=2.48e-26), A9: FC-cont 유의 우위 p=1.66e-4, A10-a α=0.25 최적, A10-b pilot(α=0.5) 열세 → Task 34b로 α=0.25 재실험 |
-| 34b | **A** | A10-b α=0.25 재실험 (Phase 2 후속) | Task 34 | pilot α=0.5가 A10-a 최적 α=0.25와 달라서 재확인. 프롬프트: docs/session_a_phase2b_alpha25_prompt.md |
+| 34b | **A** | A10-b α=0.25 재실험 (Phase 2 후속) ✓ | 완료 | 커밋 d83efc5. α=0.25, r_c ∈ {0.1, 0.3} 모두 A8 대비 p<1e-39로 유의 악화. **complex_tonnetz_only_effective 판정 확정** — DFT에서는 timeflow + per-cycle τ (A8 0.0149★) 선호. Algo2도 A9 0.00035 최저 유지 |
 | 35 | **D** | §4 gap0+DFT 재서술 | Task 32, 34 완료 | Phase 1+2 수치로 §4 전면 갱신. §4.3a FC-cont 0.00035로 갱신. ⚠ short.md에선 gap3 비교 제외 (full.md만) — `feedback_short_md_gap_comparison_exclude.md` |
-| 36 | **D** | §6.7~§6.9 재서술 | Task 34 완료 (34b 결과 포함 권장) | §6.7 per-cycle τ +58.7% (p=2.48e-26). §6.8 DFT α-hybrid α=0.25 최적. §6.9 complex는 Tonnetz 한정 유효 결론. ⚠ short.md 비교 제외 |
+| 36 | **D** | §6.7~§6.9 재서술 | Task 34, 34b 완료 (착수 가능) | §6.7 per-cycle τ +58.7% (p=2.48e-26). §6.8 DFT α-hybrid α=0.25 최적. §6.9 complex는 Tonnetz 한정 유효 확정 (34b에서 p<1e-39). ⚠ short.md 비교 제외 |
 | 37 | **D** | §7 baseline 재설정 + §8 결론·초록 통일 | Task 35, 36 완료 후 | full-song DFT baseline, hibari 최적 설정 블록 갱신 (Algo1 0.0149 DFT+per-cycle τ, Algo2 0.00035 FC-cont). short.md 최종 결과 중심 |
 
 ### 낮은 우선순위 (향후 과제)
