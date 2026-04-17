@@ -1,0 +1,96 @@
+{
+  "track": "hibari",
+  "metric": "tonnetz",
+  "n_cycles": 42,
+  "T": 1088,
+  "N": 17,
+  "epochs": 50,
+  "experiments": {
+    "baseline": {
+      "val_loss": 0.4838,
+      "n_notes": 2774,
+      "pitch_js": 0.00768,
+      "transition_js": 0.118236,
+      "dtw": 1.8095,
+      "ncd": 0.950048
+    },
+    "noPE_baseline": {
+      "val_loss": 0.4082,
+      "n_notes": 2774,
+      "pitch_js": 0.006507,
+      "transition_js": 0.12997,
+      "dtw": 1.84425,
+      "ncd": 0.936242
+    },
+    "noPE_segment_shuffle": {
+      "n_notes": 2774,
+      "pitch_js": 0.006507,
+      "transition_js": 0.136126,
+      "dtw": 1.8795,
+      "ncd": 0.966829
+    },
+    "noPE_block_permute_block_size32": {
+      "n_notes": 2774,
+      "pitch_js": 0.006507,
+      "transition_js": 0.129434,
+      "dtw": 1.87475,
+      "ncd": 0.936737
+    },
+    "noPE_markov_resample_temperature1.0": {
+      "n_notes": 2776,
+      "pitch_js": 0.009618,
+      "transition_js": 0.142216,
+      "dtw": 1.8585,
+      "ncd": 0.913679
+    },
+    "retrain_segment_shuffle": {
+      "val_loss": 0.6427,
+      "n_notes": 2774,
+      "pitch_js": 0.019221,
+      "transition_js": 0.140574,
+      "dtw": 1.843,
+      "ncd": 0.959087
+    },
+    "retrain_block_permute_block_size32": {
+      "val_loss": 0.5477,
+      "n_notes": 2774,
+      "pitch_js": 0.032561,
+      "transition_js": 0.159923,
+      "dtw": 1.85725,
+      "ncd": 0.958801
+    },
+    "retrain_markov_resample_temperature1.0": {
+      "val_loss": 0.591,
+      "n_notes": 2774,
+      "pitch_js": 0.03278,
+      "transition_js": 0.182612,
+      "dtw": 1.82325,
+      "ncd": 0.958635
+    },
+    "noPE_retrain_segment_shuffle": {
+      "val_loss": 0.5022,
+      "n_notes": 2775,
+      "pitch_js": 0.136128,
+      "transition_js": 0.355297,
+      "dtw": 2.0615,
+      "ncd": 0.979615
+    },
+    "noPE_retrain_block_permute_block_size32": {
+      "val_loss": 0.4878,
+      "n_notes": 2774,
+      "pitch_js": 0.057194,
+      "transition_js": 0.262682,
+      "dtw": 1.87275,
+      "ncd": 0.959763
+    },
+    "noPE_retrain_markov_resample_temperature1.0": {
+      "val_loss": 0.494,
+      "n_notes": 2843,
+      "pitch_js": 0.167583,
+      "transition_js": 0.413509,
+      "dtw": 2.15875,
+      "ncd": 0.954386
+    }
+  },
+  "elapsed_s": 195.7
+}

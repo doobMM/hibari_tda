@@ -1,0 +1,242 @@
+{
+  "track": "hibari",
+  "metric": "tonnetz",
+  "matching_mode": "tonnetz_nearest",
+  "n_cycles": 15,
+  "N": 17,
+  "n_trials": 5,
+  "baseline": {
+    "pitch_js": 0.021213,
+    "transition_js": 0.245422,
+    "dtw": 2.2166,
+    "ncd": 0.998033
+  },
+  "experiments": {
+    "no_wasserstein": {
+      "note_dist_error": 3.2662,
+      "cycle_dist_error": 0.0,
+      "wasserstein_dist": 0.0,
+      "total_cost": 1.6331,
+      "new_pitches": [
+        40,
+        53,
+        55,
+        45,
+        47,
+        60,
+        74,
+        64,
+        41,
+        70,
+        69,
+        71,
+        72,
+        86,
+        84,
+        75,
+        77
+      ],
+      "avg_metrics": {
+        "pitch_js": 0.363111,
+        "transition_js": 0.591554,
+        "dtw": 3.86075,
+        "ncd": 1.024234
+      },
+      "elapsed_s": 4.7
+    },
+    "wasserstein_0.3": {
+      "note_dist_error": 3.482,
+      "cycle_dist_error": 0.0,
+      "wasserstein_dist": 1.4142,
+      "total_cost": 2.1653,
+      "new_pitches": [
+        68,
+        53,
+        67,
+        48,
+        59,
+        60,
+        50,
+        64,
+        65,
+        79,
+        69,
+        71,
+        80,
+        74,
+        88,
+        75,
+        77
+      ],
+      "avg_metrics": {
+        "pitch_js": 0.287499,
+        "transition_js": 0.521033,
+        "dtw": 3.0382,
+        "ncd": 1.018296
+      },
+      "elapsed_s": 2.2
+    },
+    "wasserstein_0.5": {
+      "note_dist_error": 3.482,
+      "cycle_dist_error": 0.0,
+      "wasserstein_dist": 1.4142,
+      "total_cost": 2.4481,
+      "new_pitches": [
+        68,
+        53,
+        67,
+        48,
+        59,
+        60,
+        50,
+        64,
+        65,
+        79,
+        69,
+        71,
+        80,
+        74,
+        88,
+        75,
+        77
+      ],
+      "avg_metrics": {
+        "pitch_js": 0.287499,
+        "transition_js": 0.521033,
+        "dtw": 3.0382,
+        "ncd": 1.018296
+      },
+      "elapsed_s": 0.7
+    },
+    "wasserstein_1.0": {
+      "note_dist_error": 3.482,
+      "cycle_dist_error": 0.0,
+      "wasserstein_dist": 1.4142,
+      "total_cost": 3.1552,
+      "new_pitches": [
+        68,
+        53,
+        67,
+        48,
+        59,
+        60,
+        50,
+        64,
+        65,
+        79,
+        69,
+        71,
+        80,
+        74,
+        88,
+        75,
+        77
+      ],
+      "avg_metrics": {
+        "pitch_js": 0.287499,
+        "transition_js": 0.521033,
+        "dtw": 3.0382,
+        "ncd": 1.018296
+      },
+      "elapsed_s": 0.4
+    },
+    "scale_major_wass_0.5": {
+      "note_dist_error": 2.2735,
+      "cycle_dist_error": 0.0,
+      "wasserstein_dist": 0.3536,
+      "total_cost": 1.3135,
+      "new_pitches": [
+        52,
+        53,
+        55,
+        57,
+        59,
+        72,
+        62,
+        64,
+        65,
+        67,
+        69,
+        71,
+        84,
+        50,
+        76,
+        79,
+        81
+      ],
+      "avg_metrics": {
+        "pitch_js": 0.120179,
+        "transition_js": 0.392268,
+        "dtw": 2.7143,
+        "ncd": 1.006297
+      },
+      "elapsed_s": 0.7,
+      "scale_root": "C"
+    },
+    "no_wasserstein_wide": {
+      "note_dist_error": 3.2132,
+      "cycle_dist_error": 0.0,
+      "wasserstein_dist": 0.0,
+      "total_cost": 1.6066,
+      "new_pitches": [
+        56,
+        53,
+        55,
+        49,
+        59,
+        72,
+        62,
+        64,
+        77,
+        67,
+        69,
+        71,
+        84,
+        78,
+        76,
+        70,
+        73
+      ],
+      "avg_metrics": {
+        "pitch_js": 0.290546,
+        "transition_js": 0.54709,
+        "dtw": 2.64085,
+        "ncd": 1.019619
+      },
+      "elapsed_s": 0.4
+    },
+    "wasserstein_0.3_wide": {
+      "note_dist_error": 3.4948,
+      "cycle_dist_error": 0.0,
+      "wasserstein_dist": 0.7071,
+      "total_cost": 1.9595,
+      "new_pitches": [
+        52,
+        50,
+        63,
+        57,
+        59,
+        60,
+        62,
+        64,
+        65,
+        70,
+        81,
+        71,
+        72,
+        82,
+        80,
+        79,
+        84
+      ],
+      "avg_metrics": {
+        "pitch_js": 0.2799,
+        "transition_js": 0.55766,
+        "dtw": 2.9494,
+        "ncd": 1.019483
+      },
+      "elapsed_s": 0.5
+    }
+  },
+  "total_elapsed_s": 265.8
+}

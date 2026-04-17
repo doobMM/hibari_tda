@@ -1,0 +1,98 @@
+{
+  "metric": "dft",
+  "alpha": 0.5,
+  "octave_weight": 0.3,
+  "duration_weight": 0.3,
+  "min_onset_gap": 3,
+  "n_repeats": 20,
+  "date": "2026-04-17T16:04:10",
+  "script": "run_dft_suite.py",
+  "post_bugfix": true,
+  "commit_sha": "6b29a8e15f68",
+  "task": 25,
+  "frequency": {
+    "js_divergence": {
+      "mean": 0.03188889909674894,
+      "std": 0.002700893921211504
+    },
+    "coverage": {
+      "mean": 0.9565217391304346,
+      "std": 2.278129578503827e-16
+    },
+    "pitch_count": {
+      "mean": 16.0,
+      "std": 0.0
+    },
+    "n_notes": {
+      "mean": 1028.05,
+      "std": 6.847781046671827
+    },
+    "K": 1,
+    "alpha": 1.0
+  },
+  "tonnetz": {
+    "js_divergence": {
+      "mean": 0.05544695925836335,
+      "std": 0.005505144577399821
+    },
+    "coverage": {
+      "mean": 1.0,
+      "std": 0.0
+    },
+    "pitch_count": {
+      "mean": 17.0,
+      "std": 0.0
+    },
+    "n_notes": {
+      "mean": 959.3,
+      "std": 6.424459838035125
+    },
+    "K": 47,
+    "alpha": 0.5,
+    "improvement_vs_frequency_pct": -73.87542633610748
+  },
+  "voice_leading": {
+    "js_divergence": {
+      "mean": 0.06193679381761524,
+      "std": 0.003347621583094914
+    },
+    "coverage": {
+      "mean": 0.9804347826086955,
+      "std": 0.02219207763191479
+    },
+    "pitch_count": {
+      "mean": 16.55,
+      "std": 0.5104177855340405
+    },
+    "n_notes": {
+      "mean": 968.3,
+      "std": 10.598411003045396
+    },
+    "K": 19,
+    "alpha": 0.5,
+    "improvement_vs_frequency_pct": -94.22681739404943
+  },
+  "dft": {
+    "js_divergence": {
+      "mean": 0.028926472359752327,
+      "std": 0.003796163778692591
+    },
+    "coverage": {
+      "mean": 0.9913043478260869,
+      "std": 0.01784310177539397
+    },
+    "pitch_count": {
+      "mean": 17.0,
+      "std": 0.0
+    },
+    "n_notes": {
+      "mean": 1058.05,
+      "std": 5.744333592424158
+    },
+    "K": 17,
+    "alpha": 0.5,
+    "improvement_vs_frequency_pct": 9.289836968058367
+  },
+  "best_metric": "dft",
+  "gate_passed": true
+}
