@@ -36,7 +36,7 @@
 
 | 실험 | 핵심 결과 |
 |---|---|
-| §3.1 거리 함수 비교 (N=20) | DFT 0.0211★ (frequency -38.7%, Tonnetz -56.8%) |
+| §4.1 거리 함수 비교 (N=20) | DFT 0.0213★ (frequency -38.2%, Tonnetz -56.8%, voice_leading -62.4%) |
 | §3.3a Continuous overlap (N=20) | τ=0.7 이진화가 추가 -39.1% (0.0488→0.0297) |
 | §3.4a 개선 F (N=5) | Continuous + FC → JS 0.0004 ★ 본 연구 최저 |
 | §3.6 곡 고유 구조 | deep scale, entropy 0.974, phase shifting |
@@ -65,11 +65,16 @@
 ### hibari 현재 최적 설정
 
 ```
-거리 함수: DFT
-Lag: 감쇄 가중 (lag 1~4, w=[0.4, 0.3, 0.2, 0.1])
-중첩행렬: continuous activation + per-cycle τ_c 이진화
-생성 모델: FC (soft activation 입력)
-온도: T=3.0 (빈도 스케일링)
+거리 함수: DFT (w_o=0.3, w_d=1.0)
+Hybrid α: 0.25 (§6.8 확정, DFT α-hybrid grid)
+모드: timeflow (Complex는 Tonnetz 한정 유효 — §6.9 Task 34b 확정)
+Lag: lag 1~4 감쇄 가중 (DFT에서 lag=1 대비 -7.1%, `decayed_lag_dft_results.json`)
+중첩행렬: continuous activation + per-cycle τ_c (DFT continuous OM 기반)
+생성 모델:
+  - Algorithm 1: DFT + per-cycle τ → JS=0.01489±0.00143 (N=20) ★
+  - Algorithm 2: FC + continuous 입력 → JS=0.00035±0.00015 (N=10, Welch p=1.66e-4) ★
+gap_min: 0
+온도: T=3.0 (`section77_experiments.json` best_temperature)
 ```
 
 ### 다음 할 작업 (세션별)
@@ -276,7 +281,7 @@ gap_min=3 청취 평가 폐기 결정에 따른 §4 gap=0 롤백 + bugfix 이후
 | 34b | **A** | A10-b α=0.25 재실험 (Phase 2 후속) ✓ | 완료 | 커밋 d83efc5. α=0.25, r_c ∈ {0.1, 0.3} 모두 A8 대비 p<1e-39로 유의 악화. **complex_tonnetz_only_effective 판정 확정** — DFT에서는 timeflow + per-cycle τ (A8 0.0149★) 선호. Algo2도 A9 0.00035 최저 유지 |
 | 35 | **D** | §4 gap0+DFT 재서술 ✓ | 완료 | 커밋 9873cdd (+ 8c4e3ae 연쇄 일관성). §4.1 38.2%/56.8%/62.4%, §4.2 Binary 0.0157, §4.3a FC-cont 0.00035 +83.9% p=1.50e-6. §3.2 gap_min=3 선언 제거. §4.1a/b "Tonnetz 조건 최적값" 언급 삭제. §3.x→§4.x 교차참조 일치 |
 | 36 | **D** | §6.7~§6.9 재서술 ✓ | 완료 | 커밋 8c4e3ae. §6.7.1 DFT per-cycle τ +58.7% (p=2.48e-26, JS=0.01489★), §6.7.2 FC-cont 0.000348★ (Transformer 대비 p=1.66e-4), §6.8 DFT hybrid α=0.25, §6.9 "Tonnetz 한정 유효" 서사 반전 + Task 34b 검증절 신설 |
-| 37 | **D** | §7 baseline 재설정 + §8 결론·초록 통일 | Task 35, 36 완료 후 | full-song DFT baseline, hibari 최적 설정 블록 갱신 (Algo1 0.0149 DFT+per-cycle τ, Algo2 0.00035 FC-cont). short.md 최종 결과 중심 |
+| 37 | **D** | §7 baseline 재설정 + §8 결론·초록 통일 ✓ | 완료 | §7 baseline Tonnetz 0.0488 → DFT 0.0213±0.0021 교체. §8 결론 수치 통일 (38.2%/56.8%/62.4%, per-cycle τ +58.7%, FC-cont +83.9%). 초록 Algo1 0.01489±0.00143★, Algo2 0.00035±0.00015★ (log2 대비 2.15% / 0.05%). CLAUDE.md 현재 최적 설정 블록 갱신 완료. **gap0+DFT 통합 재서술 프로젝트 종결** |
 
 ### 낮은 우선순위 (향후 과제)
 
