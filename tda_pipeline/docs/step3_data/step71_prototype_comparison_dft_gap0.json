@@ -1,0 +1,459 @@
+{
+  "metric": "dft",
+  "alpha": 0.25,
+  "octave_weight": 0.3,
+  "duration_weight": 1.0,
+  "min_onset_gap": 0,
+  "n_repeats": 10,
+  "date": "2026-04-18T03:43:28",
+  "script": "run_phase3_task38a_dft_gap0.py",
+  "post_bugfix": true,
+  "commit_sha": "604d6a93a23b",
+  "task": "T38a-2",
+  "K": 14,
+  "cycle_count": 14,
+  "reference_full_song_baseline_js": 0.0213,
+  "best_strategy_by_mean_js": "P3_module_specific",
+  "results": {
+    "P0_first_module_copy": {
+      "density": 0.017857142857142856,
+      "js_mean": 0.10398776171405663,
+      "js_std": 0.021864194458456974,
+      "js_min": 0.06981542575005024,
+      "js_max": 0.14168154983439382,
+      "cov_mean": 0.808695652173913,
+      "module_cov_mean": 18.6,
+      "ratio_vs_full_song_baseline_0_0213": 4.882054540566039,
+      "tonnetz_reference_js_mean": null,
+      "delta_pct_vs_tonnetz_reference": null,
+      "best_trial": {
+        "js": 0.06981542575005024,
+        "coverage": 0.9130434782608695,
+        "n_notes": 3445,
+        "mod_n_notes": 53,
+        "seed": 7202,
+        "module_coverage": 21
+      },
+      "worst_trial": {
+        "js": 0.14168154983439382,
+        "coverage": 0.7391304347826086,
+        "n_notes": 2925,
+        "mod_n_notes": 45,
+        "seed": 7200,
+        "module_coverage": 17
+      },
+      "trials": [
+        {
+          "js": 0.14168154983439382,
+          "coverage": 0.7391304347826086,
+          "n_notes": 2925,
+          "mod_n_notes": 45,
+          "seed": 7200,
+          "module_coverage": 17
+        },
+        {
+          "js": 0.10255593228155035,
+          "coverage": 0.8260869565217391,
+          "n_notes": 3120,
+          "mod_n_notes": 48,
+          "seed": 7201,
+          "module_coverage": 19
+        },
+        {
+          "js": 0.06981542575005024,
+          "coverage": 0.9130434782608695,
+          "n_notes": 3445,
+          "mod_n_notes": 53,
+          "seed": 7202,
+          "module_coverage": 21
+        },
+        {
+          "js": 0.11697469078970907,
+          "coverage": 0.8695652173913043,
+          "n_notes": 3120,
+          "mod_n_notes": 48,
+          "seed": 7203,
+          "module_coverage": 20
+        },
+        {
+          "js": 0.10378223629230396,
+          "coverage": 0.782608695652174,
+          "n_notes": 3380,
+          "mod_n_notes": 52,
+          "seed": 7204,
+          "module_coverage": 18
+        },
+        {
+          "js": 0.08149096849688377,
+          "coverage": 0.8695652173913043,
+          "n_notes": 3510,
+          "mod_n_notes": 54,
+          "seed": 7205,
+          "module_coverage": 20
+        },
+        {
+          "js": 0.09829152830818505,
+          "coverage": 0.782608695652174,
+          "n_notes": 3185,
+          "mod_n_notes": 49,
+          "seed": 7206,
+          "module_coverage": 18
+        },
+        {
+          "js": 0.10837403510741873,
+          "coverage": 0.7391304347826086,
+          "n_notes": 3380,
+          "mod_n_notes": 52,
+          "seed": 7207,
+          "module_coverage": 17
+        },
+        {
+          "js": 0.130196695734423,
+          "coverage": 0.6956521739130435,
+          "n_notes": 2730,
+          "mod_n_notes": 42,
+          "seed": 7208,
+          "module_coverage": 16
+        },
+        {
+          "js": 0.08671455454564844,
+          "coverage": 0.8695652173913043,
+          "n_notes": 3900,
+          "mod_n_notes": 60,
+          "seed": 7209,
+          "module_coverage": 20
+        }
+      ]
+    },
+    "P1_union_of_active": {
+      "density": 1.0,
+      "js_mean": 0.06208047313280877,
+      "js_std": 0.01673911594251159,
+      "js_min": 0.04221622086862788,
+      "js_max": 0.08698537205002266,
+      "cov_mean": 0.8,
+      "module_cov_mean": 18.4,
+      "ratio_vs_full_song_baseline_0_0213": 2.9145762034182523,
+      "tonnetz_reference_js_mean": 0.10814728923918528,
+      "delta_pct_vs_tonnetz_reference": -42.596366890428726,
+      "best_trial": {
+        "js": 0.04221622086862788,
+        "coverage": 0.8695652173913043,
+        "n_notes": 3315,
+        "mod_n_notes": 51,
+        "seed": 7303,
+        "module_coverage": 20
+      },
+      "worst_trial": {
+        "js": 0.08698537205002266,
+        "coverage": 0.7391304347826086,
+        "n_notes": 3770,
+        "mod_n_notes": 58,
+        "seed": 7307,
+        "module_coverage": 17
+      },
+      "trials": [
+        {
+          "js": 0.08340408604441439,
+          "coverage": 0.7391304347826086,
+          "n_notes": 3900,
+          "mod_n_notes": 60,
+          "seed": 7300,
+          "module_coverage": 17
+        },
+        {
+          "js": 0.04269758771743038,
+          "coverage": 0.8695652173913043,
+          "n_notes": 3640,
+          "mod_n_notes": 56,
+          "seed": 7301,
+          "module_coverage": 20
+        },
+        {
+          "js": 0.06957665155362568,
+          "coverage": 0.782608695652174,
+          "n_notes": 3640,
+          "mod_n_notes": 56,
+          "seed": 7302,
+          "module_coverage": 18
+        },
+        {
+          "js": 0.04221622086862788,
+          "coverage": 0.8695652173913043,
+          "n_notes": 3315,
+          "mod_n_notes": 51,
+          "seed": 7303,
+          "module_coverage": 20
+        },
+        {
+          "js": 0.06736225157933719,
+          "coverage": 0.7391304347826086,
+          "n_notes": 3900,
+          "mod_n_notes": 60,
+          "seed": 7304,
+          "module_coverage": 17
+        },
+        {
+          "js": 0.05181254048099093,
+          "coverage": 0.8260869565217391,
+          "n_notes": 3575,
+          "mod_n_notes": 55,
+          "seed": 7305,
+          "module_coverage": 19
+        },
+        {
+          "js": 0.04725649764005569,
+          "coverage": 0.782608695652174,
+          "n_notes": 3510,
+          "mod_n_notes": 54,
+          "seed": 7306,
+          "module_coverage": 18
+        },
+        {
+          "js": 0.08698537205002266,
+          "coverage": 0.7391304347826086,
+          "n_notes": 3770,
+          "mod_n_notes": 58,
+          "seed": 7307,
+          "module_coverage": 17
+        },
+        {
+          "js": 0.05349824966473851,
+          "coverage": 0.782608695652174,
+          "n_notes": 3640,
+          "mod_n_notes": 56,
+          "seed": 7308,
+          "module_coverage": 18
+        },
+        {
+          "js": 0.07599527372884436,
+          "coverage": 0.8695652173913043,
+          "n_notes": 3575,
+          "mod_n_notes": 55,
+          "seed": 7309,
+          "module_coverage": 20
+        }
+      ]
+    },
+    "P2_exclusive_to_module": {
+      "density": 0.0,
+      "js_mean": 0.08996586490150921,
+      "js_std": 0.03078029859005296,
+      "js_min": 0.05151819984908304,
+      "js_max": 0.1378953403941345,
+      "cov_mean": 0.808695652173913,
+      "module_cov_mean": 18.6,
+      "ratio_vs_full_song_baseline_0_0213": 4.223749525892451,
+      "tonnetz_reference_js_mean": null,
+      "delta_pct_vs_tonnetz_reference": null,
+      "best_trial": {
+        "js": 0.05151819984908304,
+        "coverage": 0.8260869565217391,
+        "n_notes": 3705,
+        "mod_n_notes": 57,
+        "seed": 7407,
+        "module_coverage": 19
+      },
+      "worst_trial": {
+        "js": 0.1378953403941345,
+        "coverage": 0.7391304347826086,
+        "n_notes": 3055,
+        "mod_n_notes": 47,
+        "seed": 7400,
+        "module_coverage": 17
+      },
+      "trials": [
+        {
+          "js": 0.1378953403941345,
+          "coverage": 0.7391304347826086,
+          "n_notes": 3055,
+          "mod_n_notes": 47,
+          "seed": 7400,
+          "module_coverage": 17
+        },
+        {
+          "js": 0.12753527172245063,
+          "coverage": 0.7391304347826086,
+          "n_notes": 3055,
+          "mod_n_notes": 47,
+          "seed": 7401,
+          "module_coverage": 17
+        },
+        {
+          "js": 0.10470528491679773,
+          "coverage": 0.782608695652174,
+          "n_notes": 2860,
+          "mod_n_notes": 44,
+          "seed": 7402,
+          "module_coverage": 18
+        },
+        {
+          "js": 0.11087916717762308,
+          "coverage": 0.782608695652174,
+          "n_notes": 2795,
+          "mod_n_notes": 43,
+          "seed": 7403,
+          "module_coverage": 18
+        },
+        {
+          "js": 0.053171229974874216,
+          "coverage": 0.9130434782608695,
+          "n_notes": 3380,
+          "mod_n_notes": 52,
+          "seed": 7404,
+          "module_coverage": 21
+        },
+        {
+          "js": 0.09196565442664778,
+          "coverage": 0.6956521739130435,
+          "n_notes": 2730,
+          "mod_n_notes": 42,
+          "seed": 7405,
+          "module_coverage": 16
+        },
+        {
+          "js": 0.0876453340591512,
+          "coverage": 0.9130434782608695,
+          "n_notes": 3185,
+          "mod_n_notes": 49,
+          "seed": 7406,
+          "module_coverage": 21
+        },
+        {
+          "js": 0.05151819984908304,
+          "coverage": 0.8260869565217391,
+          "n_notes": 3705,
+          "mod_n_notes": 57,
+          "seed": 7407,
+          "module_coverage": 19
+        },
+        {
+          "js": 0.07906525143873525,
+          "coverage": 0.782608695652174,
+          "n_notes": 2730,
+          "mod_n_notes": 42,
+          "seed": 7408,
+          "module_coverage": 18
+        },
+        {
+          "js": 0.05527791505559467,
+          "coverage": 0.9130434782608695,
+          "n_notes": 3055,
+          "mod_n_notes": 47,
+          "seed": 7409,
+          "module_coverage": 21
+        }
+      ]
+    },
+    "P3_module_specific": {
+      "density": 0.29910714285714285,
+      "js_mean": 0.04736152584998532,
+      "js_std": 0.018656605069302244,
+      "js_min": 0.022602649557110967,
+      "js_max": 0.08171218759249924,
+      "cov_mean": 0.8173913043478261,
+      "module_cov_mean": 18.8,
+      "ratio_vs_full_song_baseline_0_0213": 2.2235458145533014,
+      "tonnetz_reference_js_mean": 0.15312318266537323,
+      "delta_pct_vs_tonnetz_reference": -69.06965684387156,
+      "best_trial": {
+        "js": 0.022602649557110967,
+        "coverage": 0.8695652173913043,
+        "n_notes": 4355,
+        "mod_n_notes": 67,
+        "seed": 7508,
+        "module_coverage": 20
+      },
+      "worst_trial": {
+        "js": 0.08171218759249924,
+        "coverage": 0.782608695652174,
+        "n_notes": 4485,
+        "mod_n_notes": 69,
+        "seed": 7509,
+        "module_coverage": 18
+      },
+      "trials": [
+        {
+          "js": 0.02641309383694547,
+          "coverage": 0.8695652173913043,
+          "n_notes": 4550,
+          "mod_n_notes": 70,
+          "seed": 7500,
+          "module_coverage": 20
+        },
+        {
+          "js": 0.04716433404592018,
+          "coverage": 0.782608695652174,
+          "n_notes": 4875,
+          "mod_n_notes": 75,
+          "seed": 7501,
+          "module_coverage": 18
+        },
+        {
+          "js": 0.06560687070093653,
+          "coverage": 0.8260869565217391,
+          "n_notes": 4615,
+          "mod_n_notes": 71,
+          "seed": 7502,
+          "module_coverage": 19
+        },
+        {
+          "js": 0.05030654409713991,
+          "coverage": 0.8260869565217391,
+          "n_notes": 4355,
+          "mod_n_notes": 67,
+          "seed": 7503,
+          "module_coverage": 19
+        },
+        {
+          "js": 0.04044407664859008,
+          "coverage": 0.8260869565217391,
+          "n_notes": 4615,
+          "mod_n_notes": 71,
+          "seed": 7504,
+          "module_coverage": 19
+        },
+        {
+          "js": 0.04614790661478996,
+          "coverage": 0.782608695652174,
+          "n_notes": 4680,
+          "mod_n_notes": 72,
+          "seed": 7505,
+          "module_coverage": 18
+        },
+        {
+          "js": 0.06255796214699089,
+          "coverage": 0.782608695652174,
+          "n_notes": 4420,
+          "mod_n_notes": 68,
+          "seed": 7506,
+          "module_coverage": 18
+        },
+        {
+          "js": 0.030659633258930067,
+          "coverage": 0.8260869565217391,
+          "n_notes": 4550,
+          "mod_n_notes": 70,
+          "seed": 7507,
+          "module_coverage": 19
+        },
+        {
+          "js": 0.022602649557110967,
+          "coverage": 0.8695652173913043,
+          "n_notes": 4355,
+          "mod_n_notes": 67,
+          "seed": 7508,
+          "module_coverage": 20
+        },
+        {
+          "js": 0.08171218759249924,
+          "coverage": 0.782608695652174,
+          "n_notes": 4485,
+          "mod_n_notes": 69,
+          "seed": 7509,
+          "module_coverage": 18
+        }
+      ]
+    }
+  }
+}

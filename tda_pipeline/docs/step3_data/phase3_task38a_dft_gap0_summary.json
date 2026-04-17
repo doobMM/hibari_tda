@@ -1,0 +1,84 @@
+{
+  "script": "run_phase3_task38a_dft_gap0.py",
+  "date_start": "2026-04-18T03:43:16",
+  "same_python_session": true,
+  "status": "completed",
+  "config": {
+    "metric": "dft",
+    "alpha": 0.25,
+    "octave_weight": 0.3,
+    "duration_weight": 1.0,
+    "min_onset_gap": 0,
+    "post_bugfix": true
+  },
+  "tasks": {
+    "T38a-1": {
+      "K": 14
+    },
+    "T38a-2": {
+      "best_strategy": "P3_module_specific",
+      "best_mean_js": 0.04736152584998532
+    },
+    "T38a-3": {
+      "mean_js": 0.10816222881001611,
+      "std_js": 0.02405303772212281,
+      "best_js": 0.07008264230781118,
+      "best_seed": 7105
+    },
+    "T38a-4": {
+      "best_strategy": "P3_plus_C_best_of_10",
+      "best_mean_js": 0.04399426051135142,
+      "p3_cycle_count": 9
+    },
+    "T38a-5": {
+      "best_global_js": 0.014789530078758847,
+      "best_global_info": {
+        "start_module": 1,
+        "seed": 9309,
+        "module_coverage": 21,
+        "coverage": 0.9130434782608695,
+        "n_notes": 3575,
+        "module_count": 65,
+        "used_note_count": 21,
+        "best_j": 1
+      },
+      "first_module_advantage": false,
+      "first_module_rank": 5
+    },
+    "T38a-6": {
+      "pearson_w_js": -0.05414118878087057,
+      "w_mean": 0.5490294959741573,
+      "js_mean": 0.0417278986628513
+    }
+  },
+  "outputs": {
+    "T38a-1": "C:\\WK14\\tda_pipeline\\docs\\step3_data\\step71_prototype_om_dft_gap0.json",
+    "T38a-2": "C:\\WK14\\tda_pipeline\\docs\\step3_data\\step71_prototype_comparison_dft_gap0.json",
+    "T38a-3": "C:\\WK14\\tda_pipeline\\docs\\step3_data\\step71_module_results_dft_gap0.json",
+    "T38a-4": "C:\\WK14\\tda_pipeline\\docs\\step3_data\\step71_improvements_dft_gap0.json",
+    "T38a-5": "C:\\WK14\\tda_pipeline\\docs\\step3_data\\section77_experiments_dft_gap0.json",
+    "T38a-6": "C:\\WK14\\tda_pipeline\\docs\\step3_data\\step_barcode_dft_gap0.json"
+  },
+  "cache_check_metric_dft": {
+    "path": "C:\\WK14\\tda_pipeline\\cache\\metric_dft.pkl",
+    "exists": true,
+    "alpha": 0.5,
+    "K": 17,
+    "overlap_shape": [
+      1088,
+      17
+    ]
+  },
+  "setup": {
+    "num_notes": 23,
+    "num_chords": 17,
+    "total_length": 1088
+  },
+  "alpha025_bundle_cache": {
+    "used_cache": false,
+    "cache_path": "C:\\WK14\\tda_pipeline\\cache\\metric_dft_alpha0p25_ow0p3_dw1p0.pkl",
+    "build_elapsed_s": 10.89
+  },
+  "date_end": "2026-04-18T03:44:12",
+  "elapsed_s": 55.25
+}

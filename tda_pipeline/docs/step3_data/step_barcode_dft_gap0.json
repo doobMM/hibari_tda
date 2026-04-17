@@ -1,0 +1,219 @@
+{
+  "metric": "dft",
+  "alpha": 0.25,
+  "octave_weight": 0.3,
+  "duration_weight": 1.0,
+  "min_onset_gap": 0,
+  "n_repeats": 10,
+  "date": "2026-04-18T03:44:11",
+  "script": "run_phase3_task38a_dft_gap0.py",
+  "post_bugfix": true,
+  "commit_sha": "604d6a93a23b",
+  "task": "T38a-6",
+  "start_module": 0,
+  "rates": [
+    0.0,
+    0.5,
+    1.0
+  ],
+  "k_best": 10,
+  "description": "DFT alpha=0.25 Wasserstein barcode vs JS correlation",
+  "ref_diagrams_size": {
+    "0.0": 9,
+    "0.5": 9,
+    "1.0": 9
+  },
+  "results": [
+    {
+      "seed": 9400,
+      "best_j": 4,
+      "w_total": 0.6309787834459404,
+      "w_by_rate": {
+        "0.0": 0.2103262611486468,
+        "0.5": 0.2103262611486468,
+        "1.0": 0.2103262611486468
+      },
+      "js": 0.04335609180903828,
+      "coverage": 0.8695652173913043,
+      "n_notes": 3510,
+      "module_coverage": 20,
+      "n_cycles": 7,
+      "n_chords": 27
+    },
+    {
+      "seed": 9401,
+      "best_j": 4,
+      "w_total": 0.5309624218280378,
+      "w_by_rate": {
+        "0.0": 0.17698747394267925,
+        "0.5": 0.17698747394267925,
+        "1.0": 0.17698747394267925
+      },
+      "js": 0.047405937208182335,
+      "coverage": 0.8695652173913043,
+      "n_notes": 3900,
+      "module_coverage": 20,
+      "n_cycles": 5,
+      "n_chords": 27
+    },
+    {
+      "seed": 9402,
+      "best_j": 5,
+      "w_total": 0.4153940125141581,
+      "w_by_rate": {
+        "0.0": 0.1384646708380527,
+        "0.5": 0.1384646708380527,
+        "1.0": 0.1384646708380527
+      },
+      "js": 0.06235203936903536,
+      "coverage": 0.8260869565217391,
+      "n_notes": 3120,
+      "module_coverage": 19,
+      "n_cycles": 3,
+      "n_chords": 25
+    },
+    {
+      "seed": 9403,
+      "best_j": 5,
+      "w_total": 0.6021416767427035,
+      "w_by_rate": {
+        "0.0": 0.2007138922475678,
+        "0.5": 0.2007138922475678,
+        "1.0": 0.2007138922475678
+      },
+      "js": 0.02612775890105811,
+      "coverage": 0.8695652173913043,
+      "n_notes": 3510,
+      "module_coverage": 20,
+      "n_cycles": 6,
+      "n_chords": 26
+    },
+    {
+      "seed": 9404,
+      "best_j": 9,
+      "w_total": 0.5427730060159657,
+      "w_by_rate": {
+        "0.0": 0.18092433533865523,
+        "0.5": 0.18092433533865523,
+        "1.0": 0.18092433533865523
+      },
+      "js": 0.04319057991393515,
+      "coverage": 0.8260869565217391,
+      "n_notes": 3575,
+      "module_coverage": 19,
+      "n_cycles": 5,
+      "n_chords": 27
+    },
+    {
+      "seed": 9405,
+      "best_j": 9,
+      "w_total": 0.52561231351562,
+      "w_by_rate": {
+        "0.0": 0.17520410450520665,
+        "0.5": 0.17520410450520665,
+        "1.0": 0.17520410450520665
+      },
+      "js": 0.0623568605375881,
+      "coverage": 0.8260869565217391,
+      "n_notes": 3445,
+      "module_coverage": 19,
+      "n_cycles": 2,
+      "n_chords": 27
+    },
+    {
+      "seed": 9406,
+      "best_j": 7,
+      "w_total": 0.7050513679043328,
+      "w_by_rate": {
+        "0.0": 0.2350171226347776,
+        "0.5": 0.2350171226347776,
+        "1.0": 0.2350171226347776
+      },
+      "js": 0.04100853939091353,
+      "coverage": 0.8695652173913043,
+      "n_notes": 3640,
+      "module_coverage": 20,
+      "n_cycles": 6,
+      "n_chords": 28
+    },
+    {
+      "seed": 9407,
+      "best_j": 6,
+      "w_total": 0.6241061872545558,
+      "w_by_rate": {
+        "0.0": 0.2080353957515186,
+        "0.5": 0.2080353957515186,
+        "1.0": 0.2080353957515186
+      },
+      "js": 0.04443317142690404,
+      "coverage": 0.9130434782608695,
+      "n_notes": 3250,
+      "module_coverage": 21,
+      "n_cycles": 3,
+      "n_chords": 26
+    },
+    {
+      "seed": 9408,
+      "best_j": 4,
+      "w_total": 0.49808198521881913,
+      "w_by_rate": {
+        "0.0": 0.16602732840627304,
+        "0.5": 0.16602732840627304,
+        "1.0": 0.16602732840627304
+      },
+      "js": 0.02287401081147466,
+      "coverage": 0.9130434782608695,
+      "n_notes": 3640,
+      "module_coverage": 21,
+      "n_cycles": 4,
+      "n_chords": 27
+    },
+    {
+      "seed": 9409,
+      "best_j": 5,
+      "w_total": 0.41519320530143927,
+      "w_by_rate": {
+        "0.0": 0.13839773510047976,
+        "0.5": 0.13839773510047976,
+        "1.0": 0.13839773510047976
+      },
+      "js": 0.024173997260383433,
+      "coverage": 0.8695652173913043,
+      "n_notes": 3965,
+      "module_coverage": 20,
+      "n_cycles": 4,
+      "n_chords": 28
+    }
+  ],
+  "summary": {
+    "w_mean": 0.5490294959741573,
+    "w_std": 0.09356880701697078,
+    "w_min": 0.41519320530143927,
+    "js_mean": 0.0417278986628513,
+    "js_std": 0.014152929416520221,
+    "js_min": 0.02287401081147466,
+    "pearson_w_js": -0.05414118878087057
+  },
+  "best_trial": {
+    "seed": 9409,
+    "best_j": 5,
+    "w_total": 0.41519320530143927,
+    "w_by_rate": {
+      "0.0": 0.13839773510047976,
+      "0.5": 0.13839773510047976,
+      "1.0": 0.13839773510047976
+    },
+    "js": 0.024173997260383433,
+    "coverage": 0.8695652173913043,
+    "n_notes": 3965,
+    "module_coverage": 20,
+    "n_cycles": 4,
+    "n_chords": 28
+  },
+  "cautions_unchanged": [
+    "Wasserstein and JS optimize different targets",
+    "module-level barcode does not capture full-song instrument interaction",
+    "chord support mismatch can distort distance interpretation",
+    "rate-grid sensitivity remains"
+  ]
+}
