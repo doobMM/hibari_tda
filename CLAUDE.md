@@ -30,7 +30,7 @@
    Algorithm 2: FC / LSTM / Transformer 신경망 (학습 기반, ~30s-3min)
 ```
 
-## 현재 상태 (2026-04-13 기준)
+## 현재 상태 (2026-04-17 기준)
 
 ### 완료된 주요 실험
 
@@ -214,7 +214,7 @@ A~D 세션의 상위 조율자. 어떤 세션에도 속하지 않으며, 세션 
 - `/update-paper` — JSON 최신 수치 → 논문 표 자동 반영 (세션 D)
 - `/research-next` — 선행연구 + 다음 방향 제안 (세션 A/D)
 
-## 다음 우선 작업 (2026-04-15 기준)
+## 다음 우선 작업 (2026-04-17 기준)
 
 ### 높은 우선순위 (연구 결과에 직접 영향)
 
@@ -250,6 +250,32 @@ A~D 세션의 상위 조율자. 어떤 세션에도 속하지 않으며, 세션 
 | 23 | **B** | pipeline.py ow/dw 버그 수정 커밋 | 완료(코드 수정됨) | config.py duration_weight 추가 + _apply_metric ow/dw 전달 수정 — 미커밋 상태 |
 | 24 | **A** | 실험 C/D/E N=20 재검증 + 절대 최저 확정 ✓ | 완료 | **B(α=0.25,ow=0.0,rc=0.1) JS=0.0183±0.0009 N=20 ★확정**. D(α=0.5)=0.0218, E(rc=0.3)=0.0214. B vs D/E 모두 p<0.001 유의. Algo2 D=0.0005(B=0.0003 유지). complex_percycle_n20_results.json (2026-04-15) |
 | 25 | **D** | §6.9 신설 — complex+per-cycle τ 통합 실험 결과 논문 반영 ✓ | 완료 | §6.9 in full.md. Algo1: 0.0183±0.0009 N=20 (−24.1% vs timeflow). Algo2: 0.0003. B vs D p<0.001 (2026-04-15) |
+
+### DFT baseline 재실험 과제 (2026-04-17 추가)
+
+§4.1b Duration Weight 튜닝이 Tonnetz 조건으로 수행됨. §4.1에서 DFT가 hibari 최적이므로 이후 실험들의 baseline을 DFT로 통일해야 함. 영향 범위:
+
+| # | 세션 | 작업 | 의존성 | 비고 |
+|---|------|------|--------|------|
+| 26 | **A** | §4.1b w_d grid search — DFT 조건으로 재실험 (N=10) ✓ | 완료 | **w_d=1.0 최적** (JS=0.0199). Tonnetz 최적(0.3)과 다름. dw_gridsearch_dft_results.json (2026-04-17) |
+| 27 | **A** | §4.1a w_o grid search — DFT 조건으로 재실험 (N=10) ✓ | 완료 | **w_o=0.3 유지** (JS=0.0184). ow_gridsearch_dft_results.json (2026-04-17) |
+| 28 | **A** | §4.2 Continuous OM 실험 — DFT 조건으로 재실험 (N=20) ✓ | 완료 | **Binary 최적** (JS=0.0185). Continuous는 열세. step3_continuous_dft_gap3_results.json (2026-04-17) |
+| 29 | **A** | §4.3 DL 모델 비교 — DFT 기반 OM으로 재실험 ✓ | 완료 | **Transformer=0.00276★**, FC=0.00354, LSTM=0.240(열화). dl_comparison_dft_gap3_results.json (2026-04-17) |
+| 30 | **A** | §4.3a FC-cont — DFT 기반으로 재실험 ✓ | 완료 | **FC-cont 이점 없음** (0.00383 vs 0.00363). fc_cont_dft_gap3_results.json (2026-04-17) |
+| 31 | **D** | 재실험 결과 논문 §4.1a~§4.3a 표 갱신 ✓ | 완료 | Task 25 포함 전체 재서술. short.md 전면 업데이트 (2026-04-17). ⚠ gap_min=0 롤백 결정으로 Task 35에서 gap0+DFT 수치로 재서술 예정 |
+
+### gap_min=0 롤백 + §6~§7 DFT-hybrid 통합 과제 (2026-04-17 추가)
+
+gap_min=3 청취 평가 폐기 결정에 따른 §4 gap=0 롤백 + bugfix 이후 DFT baseline을 §6~§7까지 통합하는 과제. 배경 · Phase 1 결과는 `memory/project_gap0_dft_integration_0417.md` · `memory/project_phase1_gap0_findings_0417.md` 참조.
+
+| # | 세션 | 작업 | 의존성 | 비고 |
+|---|------|------|--------|------|
+| 32 | **A** | gap_min=0 롤백 Phase 1 (§4 DFT 재실험 Task A1~A7) ✓ | 완료 | 커밋 bb4ab4d. DFT 0.0213★, w_d=1.0 / w_o=0.3 확정. **A6: FC≈Transformer (가설 수정)**, **A7: FC_cont 0.00032 잠정 최저** |
+| 33 | **B** | min_onset_gap 필드화 + run_dft_suite 파라미터화 + 메타표준 ✓ | 완료 | 커밋 71d2f2b. config.min_onset_gap, rename(R061), utils/result_meta, scripts 2개 |
+| 34 | **A** | Phase 2 (Task A8~A10) — DFT-hybrid 재탐색 | Task 32 완료 | 진행 중. A9는 N=10 + Welch t-test로 보강. 프롬프트: docs/codex_prompt_dft_gap0_rerun.md + docs/session_a_phase2_prompt.md |
+| 35 | **D** | §4 gap0+DFT 재서술 (부분 착수 가능) | Task 32 완료 | Phase 1 수치만으로 §4/§4.1~§4.3a 서술 교체 가능. gap3 표기 전면 제거. A6/A7 발견 반영 |
+| 36 | **D** | §6.7~§6.9 재서술 | Task 34 완료 후 | Phase 2 DFT-hybrid 결과로 교체. "절대 최저" 확정 반영 |
+| 37 | **D** | §7 baseline 재설정 + §8 결론·초록 통일 | Task 34 완료 후 | full-song DFT baseline, hibari 최적 설정 블록 갱신 |
 
 ### 낮은 우선순위 (향후 과제)
 
