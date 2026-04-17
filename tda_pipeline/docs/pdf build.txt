@@ -1,4 +1,2 @@
 cd c:\WK14\tda_pipeline\docs
-
-python build_academic_pdf.py "academic_paper_full.md"
 python build_academic_pdf.py "academic_paper_portfolio (short).md"
