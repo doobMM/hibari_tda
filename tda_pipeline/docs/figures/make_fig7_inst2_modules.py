@@ -33,7 +33,7 @@ def compute_active_mask(notes, t_max):
     return active
 
 
-def draw_activity_band(ax, active_mask, t_start, t_end, color, label):
+def draw_activity_band(ax, active_mask, t_start, t_end, color, label, module_label_offset=0):
     """한 악기의 활성도를 얇은 띠 형태로 표시. 활성=진한 색, 쉼=흰색."""
     # 모듈 배경
     for m in range(N_MODULES + 1):
@@ -73,7 +73,7 @@ def draw_activity_band(ax, active_mask, t_start, t_end, color, label):
         if t_start <= mt <= t_end:
             ax.axvline(x=mt, color='#27ae60', linewidth=1.4,
                        alpha=0.75, zorder=3)
-            module_num = m + 1
+            module_num = m + module_label_offset
             ax.text(mt + MODULE_LEN / 2, 1.08, f'Module {module_num}',
                     fontsize=9.5, color='#27ae60', ha='center',
                     fontweight='bold')
@@ -201,7 +201,7 @@ def main():
 
     ax_a = fig.add_subplot(gs[0])
     draw_activity_band(ax_a, active1, t_start_show, t_end_show,
-                       color='#2980b9', label='Inst 1\n')
+                       color='#2980b9', label='Inst 1\n', module_label_offset=1)
     ax_a.set_title(
         f'(a) Inst 1 — {N_SHOW_MODULES}개 모듈 ($t \\in [{t_start_show}, {t_end_show})$)  '
         '연속된 활성. 모듈 사이에 쉼이 거의 없음',
@@ -218,7 +218,7 @@ def main():
     ax_c = fig.add_subplot(gs[2])
     draw_inst2_zoom(ax_c, inst2, zoom_start, zoom_end)
     ax_c.set_title(
-        f'(c) Inst 2 한 모듈 확대 (Module {SHOW_START_MODULE+1}, '
+        f'(c) Inst 2 한 모듈 확대 (Module {SHOW_START_MODULE}, '
         f'$t \\in [{zoom_start}, {zoom_end})$)  '
         '— 쉼 구간 흰색 박스로 강조, note는 빨강',
         fontsize=11, color='#2c3e50', loc='left', pad=10)
