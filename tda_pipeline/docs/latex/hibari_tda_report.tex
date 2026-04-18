@@ -96,10 +96,10 @@ $N=20$회 독립 반복 실험에서, Algorithm~1 기준 DFT 거리가
 frequency 대비 pitch JS divergence를
 $0.0344 \pm 0.0023 \to 0.0213 \pm 0.0021$로
 $38.2\%$ 감소시켰다 (Welch $p < 10^{-20}$).
-또한 DFT continuous OM에서 per-cycle $\tau_c$ 최적화를 적용하면
-JS가 $\mathbf{0.01489 \pm 0.00143}$로 낮아지며
-(uniform $\tau=0.35$ 대비 $+58.7\%$, Welch
-$p = 2.48 \times 10^{-26}$), Algorithm~1 최저 성능을 달성한다.
+또한 DFT continuous OM에서 per-cycle $\tau_c$ (Phase~1, $\alpha=0.5$) 적용: JS $0.01489 \pm 0.00143$ ($+58.7\%$).
+Phase~2 ($\alpha=0.25$, $K=14$) 재탐색으로 신기록 $\mathbf{0.01156 \pm 0.00147}$
+($-22.35\%$, $p=4.94\times10^{-11}$).
+(Welch $p = 2.48 \times 10^{-26}$), Algorithm~1 최저 성능을 달성한다.
 Algorithm~2에서는 FC + continuous 입력이
 $\mathbf{0.00035 \pm 0.00015}$ ($N=10$)로 최우수이며,
 Transformer 대비 Welch $p = 1.66 \times 10^{-4}$로 유의 우위다.
@@ -107,7 +107,7 @@ Transformer 대비 Welch $p = 1.66 \times 10^{-4}$로 유의 우위다.
 모듈 단위 생성(DFT $\alpha=0.25$, $K=14$)에서는
 P3\_local + C 조합의 best trial이 $0.0250$이고,
 33개 시작 모듈 전수 탐색의 전역 최저 trial은
-$\mathbf{0.01479}$로 full-song 최저값($0.01489$)과 사실상 동등하다.
+$\mathbf{0.01479}$로 전곡 Phase~1 최저($0.01489$)와 동등 ($\alpha=0.25$ 신기록 $0.01156$ 대비 $+28.0\%$ 열세).
 이 결과는 거리 함수의 절대 우열보다
 ``거리 함수 $\times$ 음악적 목적'' 정합성이 핵심임을 보여준다.
 
@@ -648,7 +648,7 @@ start=0은 평균 JS 기준 5위이며 특별히 우수하지 않았다.
 여기서 $k=10$은 seed 내부 best-of-$k$ 후보 수, $N=10$은 시작 모듈당
 독립 반복 횟수이다. 전역 최저 trial은
 start=1, seed=9309에서 JS $=0.01479$로,
-full-song per-cycle 최저값($0.01489$)과 사실상 동등하다.
+전곡 Phase~1 per-cycle 최저($0.01489$)와 동등 ($\alpha=0.25$ 신기록 $0.01156$ 대비 $+28.0\%$ 열세).
 
 \subsection{일반화: \emph{solari}, Bach, Ravel}
 \label{subsec:generalization}
@@ -754,14 +754,15 @@ $\tau_c \in \{0.1, 0.2, \ldots, 0.7\}$를 탐색하였다:
 \midrule
 균일 $\tau = 0.35$ & $0.03605 \pm 0.00237$ & --- \\
 단일 $\tau = 0.5$ & $0.01591 \pm 0.00192$ & $+55.9\%$ \\
-\textbf{Cycle별 $\tau_c$} & $\mathbf{0.01489 \pm 0.00143}$ & $\mathbf{+58.7\%}$ \\
+Cycle별 $\tau_c$ (Phase~1, $\alpha=0.5$) & $0.01489 \pm 0.00143$ & $+58.7\%$ \\
+\textbf{Cycle별 $\tau_c$ $\star$ (Phase~2, $\alpha=0.25$)} & $\mathbf{0.01156 \pm 0.00147}$ & $\mathbf{-22.35\%}$ \\
 \bottomrule
 \end{tabular}
 \end{table}
 
 Cycle별 최적화는 균일 임계값 대비 Welch
 $p = 2.48 \times 10^{-26}$로 유의하며, Algorithm~1 기준 연구 전체
-최저 성능(0.01489)을 제공한다.
+최저 성능 — Phase~1: $0.01489$, Phase~2 신기록: $\mathbf{0.01156}$ ($p=4.94	imes10^{-11}$).
 
 \subsection{Soft Activation: 전체 아키텍처}
 \label{subsec:soft}
@@ -849,14 +850,14 @@ DFT에서는 악화되므로, 최종 DFT 설정에서는 timeflow-only를 유지
       Welch $p = 1.66 \times 10^{-4}$로 유의 우위다.
 
 \item \textbf{연속값 OM 정교화의 효과.}
-      per-cycle $\tau_c$ 최적화로
-      $0.01489 \pm 0.00143$ (uniform 대비 $+58.7\%$)을 달성했고,
+      per-cycle $\tau_c$ Phase~1 ($\alpha=0.5$): $0.01489$;
+      Phase~2 ($\alpha=0.25$) 신기록 $\mathbf{0.01156 \pm 0.00147}$ ($p=4.94\times10^{-11}$).
       FC-cont는 $0.00035 \pm 0.00015$로 Algorithm~2 최저를 기록했다.
 
 \item \textbf{모듈 단위 생성의 full-song 품질 도달.}
       P3\_local + C best trial은 $0.0250$,
       33모듈 전수 탐색 전역 최저는 $0.01479$로
-      full-song 최저($0.01489$)와 사실상 동등하다.
+      전곡 Phase~1 최저 $0.01489$와 동등 ($\alpha=0.25$ 신기록 $0.01156$ 대비 $+28.0\%$ 열세).
 
 \item \textbf{거리 함수 $\times$ 목적 정합성(메타 통찰).}
       구조 정밀도 목적(원곡 재현, cycle 분리, 모듈 탐색)에는 DFT가 강하고,

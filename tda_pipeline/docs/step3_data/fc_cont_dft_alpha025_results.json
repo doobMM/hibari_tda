@@ -1,0 +1,120 @@
+{
+  "task": "51",
+  "metric": "dft",
+  "alpha": 0.25,
+  "octave_weight": 0.3,
+  "duration_weight": 1.0,
+  "min_onset_gap": 0,
+  "K": 14,
+  "model": "FC",
+  "input": "activation_continuous",
+  "hidden_dim": 256,
+  "dropout": 0.3,
+  "epochs": 200,
+  "n_trials": 10,
+  "date": "2026-04-18T23:01:06",
+  "script": "run_fc_cont_dft_alpha025.py",
+  "post_bugfix": true,
+  "FC_cont_alpha025": {
+    "js_mean": 0.0005722971632582378,
+    "js_std": 0.000457427963194565,
+    "n_trials": 10,
+    "trials": [
+      {
+        "seed": 6000,
+        "val_loss": 0.028970669955015182,
+        "js": 0.00043612637570074743,
+        "n_notes": 3809,
+        "elapsed_s": 28.13178062438965
+      },
+      {
+        "seed": 6037,
+        "val_loss": 0.026554202660918236,
+        "js": 0.00043612637570074743,
+        "n_notes": 3809,
+        "elapsed_s": 19.685920000076294
+      },
+      {
+        "seed": 6074,
+        "val_loss": 0.02743704989552498,
+        "js": 0.00029231785497099976,
+        "n_notes": 3759,
+        "elapsed_s": 20.885055780410767
+      },
+      {
+        "seed": 6111,
+        "val_loss": 0.028247389942407608,
+        "js": 0.0014557225541699127,
+        "n_notes": 3789,
+        "elapsed_s": 18.264983654022217
+      },
+      {
+        "seed": 6148,
+        "val_loss": 0.026925425976514816,
+        "js": 0.00022049012500796286,
+        "n_notes": 3766,
+        "elapsed_s": 19.18705439567566
+      },
+      {
+        "seed": 6185,
+        "val_loss": 0.028987091034650803,
+        "js": 0.000482095572741247,
+        "n_notes": 3819,
+        "elapsed_s": 18.663497924804688
+      },
+      {
+        "seed": 6222,
+        "val_loss": 0.027935823425650597,
+        "js": 0.00043612637570074743,
+        "n_notes": 3809,
+        "elapsed_s": 19.999152898788452
+      },
+      {
+        "seed": 6259,
+        "val_loss": 0.02868608571588993,
+        "js": 0.00027926305189007305,
+        "n_notes": 3769,
+        "elapsed_s": 26.857239961624146
+      },
+      {
+        "seed": 6296,
+        "val_loss": 0.02732822299003601,
+        "js": 0.00029231785497099976,
+        "n_notes": 3759,
+        "elapsed_s": 26.309494495391846
+      },
+      {
+        "seed": 6333,
+        "val_loss": 0.027158426120877266,
+        "js": 0.0013923854917289409,
+        "n_notes": 3785,
+        "elapsed_s": 26.38821506500244
+      }
+    ],
+    "total_elapsed_s": 230.4
+  },
+  "reference_alpha05": {
+    "js_mean": 0.00034788699141400525,
+    "js_std": 0.00014861920005811188,
+    "n_trials": 10,
+    "source": "soft_activation_dft_gap0_results.json"
+  },
+  "comparison": {
+    "delta_pct_alpha025_vs_alpha05": 64.50662927409428,
+    "verdict": "동등",
+    "welch_test": {
+      "label_a": "FC_cont_alpha05",
+      "label_b": "FC_cont_alpha025",
+      "mean_a": 0.00034788699141400525,
+      "mean_b": 0.0005722971632582378,
+      "delta_pct_b_vs_a": 64.50662927409428,
+      "t_statistic": -1.4754633598078888,
+      "p_value": 0.1684333852472993,
+      "significant_p_lt_0_05": false
+    }
+  },
+  "summary_table": {
+    "alpha05_FC_cont": "0.00035 ± 0.00015",
+    "alpha025_FC_cont": "0.00057 ± 0.00046"
+  }
+}

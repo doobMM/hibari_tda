@@ -71,7 +71,7 @@ Hybrid α: 0.25 (§6.8 확정, DFT α-hybrid grid)
 Lag: lag 1~4 감쇄 가중 (DFT에서 lag=1 대비 -7.1%, `decayed_lag_dft_results.json`)
 중첩행렬: continuous activation + per-cycle τ_c (DFT continuous OM 기반)
 생성 모델:
-  - Algorithm 1: DFT + per-cycle τ → JS=0.01489±0.00143 (N=20) ★
+  - Algorithm 1: DFT + per-cycle τ (α=0.25, K=14) → JS=0.01156±0.00147 (N=20) ★
   - Algorithm 2: FC + continuous 입력 → JS=0.00035±0.00015 (N=10, Welch p=1.66e-4) ★
 gap_min: 0
 온도: T=3.0 (`section77_experiments.json` best_temperature)

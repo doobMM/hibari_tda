@@ -72,9 +72,11 @@ Over $N=20$ repetitions, DFT is the best Algorithm~1 distance:
 pitch JS decreases from $0.0344 \pm 0.0023$ (frequency) to
 $0.0213 \pm 0.0021$ ($-38.2\%$, Welch $p < 10^{-20}$), with
 $-56.8\%$ vs Tonnetz and $-62.4\%$ vs voice-leading. With DFT continuous
-overlap, per-cycle threshold optimization reaches
-$\mathbf{0.01489 \pm 0.00143}$ ($+58.7\%$ vs uniform $\tau=0.35$,
-Welch $p = 2.48 \times 10^{-26}$), the best Algorithm~1 result.
+overlap, per-cycle $\tau_c$ (Phase~1, $\alpha=0.5$, $K=19$) reaches
+$0.01489 \pm 0.00143$ ($+58.7\%$, $p=2.48\times10^{-26}$); re-optimizing
+at $\alpha=0.25$, $K=14$ (Phase~2) yields the new Algorithm~1 best:
+$\mathbf{0.01156 \pm 0.00147}$ ($-22.35\%$, Welch $p=4.94\times10^{-11}$),
+confirming $\alpha=0.25$ optimal in both binary-OM and per-cycle $\tau_c$.
 For Algorithm~2, FC with continuous overlap reaches
 $\mathbf{0.00035 \pm 0.00015}$ ($N=10$), significantly outperforming
 Transformer (Welch $p = 1.66 \times 10^{-4}$).
@@ -82,7 +84,7 @@ Transformer (Welch $p = 1.66 \times 10^{-4}$).
 In module-level generation (DFT $\alpha=0.25$, $K=14$), the best
 P3+C trial reaches JS $0.0250$, and exhaustive search over 33 start
 modules yields a global best of $0.01479$, essentially matching the
-full-song per-cycle result ($0.01489$).
+full-song Phase~1 ($\alpha=0.5$) per-cycle result ($0.01489$); Phase~2 record ($\alpha=0.25$, $0.01156$) is $+28.0\%$ ahead.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -692,7 +694,7 @@ mode (rank~5 by mean JS). Here $k=10$ is the best-of-$k$ candidate count
 within each seed, and $N=10$ is the number of independent seeds per start
 module. The global best trial is start~module~1, seed~9309, JS~$=0.01479$,
 essentially matching the
-full-song per-cycle best ($0.01489$).
+full-song Phase~1 per-cycle best ($0.01489$); Phase~2 record ($0.01156$) is $+28.0\%$ ahead.
 
 \subsection{Generalization: \emph{solari}, Bach, Ravel}
 \label{subsec:generalization}
@@ -849,14 +851,14 @@ Setting & JS (mean $\pm$ std) & Improvement \\
 \midrule
 Uniform $\tau = 0.35$ & $0.03605 \pm 0.00237$ & --- \\
 Single $\tau = 0.5$   & $0.01591 \pm 0.00192$ & $+55.9\%$ \\
-\textbf{Per-cycle $\tau_c$} & $\mathbf{0.01489 \pm 0.00143}$ & $\mathbf{+58.7\%}$ \\
-\bottomrule
-\end{tabular}
+Per-cycle $\tau_c$ (Phase~1, $\alpha=0.5$) & $0.01489 \pm 0.00143$ & $+58.7\%$ \\
+\textbf{Per-cycle $\tau_c$ $\star$ (Phase~2, $\alpha=0.25$)} & $\mathbf{0.01156 \pm 0.00147}$ & $\mathbf{-22.35\%}$ \\
+\bottomrule\end{tabular}
 \end{table}
 
-Per-cycle optimization reaches the best Algorithm~1 result in this study
-(Welch $p = 2.48 \times 10^{-26}$ vs uniform $\tau=0.35$), showing that
-cycle-specific activation scales matter.
+Per-cycle $\tau_c$ Phase~1 ($\alpha=0.5$, JS $0.01489$) and Phase~2 ($\alpha=0.25$, JS $\mathbf{0.01156}$)
+confirm that cycle-specific activation thresholds matter
+(Phase~1 Welch $p = 2.48\times10^{-26}$; Phase~2 $p = 4.94\times10^{-11}$).
 
 \subsection{Soft Activation: All Architectures}
 \label{subsec:soft}
@@ -963,14 +965,14 @@ structure.  Key findings:
       Transformer (Welch $p=1.66\times10^{-4}$).
 
 \item \textbf{Continuous-overlap refinement is substantial.}
-      Per-cycle $\tau_c$ reaches
-      $0.01489 \pm 0.00143$ ($+58.7\%$ vs uniform $\tau=0.35$),
+      Per-cycle $\tau_c$ (Phase~1, $\alpha=0.5$) reaches $0.01489 \pm 0.00143$ ($+58.7\%$);
+      Phase~2 ($\alpha=0.25$) re-optimization: $\mathbf{0.01156 \pm 0.00147}$ ($-22.35\%$, $p=4.94\times10^{-11}$),
       and FC-cont reaches
       $0.00035 \pm 0.00015$.
 
 \item \textbf{Module-level generation can match full-song quality.}
       P3\_local+C gives best trial $0.0250$; exhaustive 33-module search
-      reaches $0.01479$, essentially equal to full-song best $0.01489$.
+      reaches $0.01479$ (matches Phase~1 best $0.01489$; $+28.0\%$ vs Phase~2 record $0.01156$).
 
 \item \textbf{Metric-objective alignment is the meta principle.}
       DFT is stronger for structural precision; Tonnetz is stronger for
