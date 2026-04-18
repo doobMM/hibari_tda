@@ -1,0 +1,50 @@
+{
+  "script": "run_section66_dft_transformer.py",
+  "date_start": "2026-04-18T04:31:18",
+  "same_python_session": true,
+  "status": "completed",
+  "config": {
+    "metric": "dft",
+    "alpha": 0.25,
+    "octave_weight": 0.3,
+    "duration_weight": 1.0,
+    "min_onset_gap": 0,
+    "post_bugfix": true
+  },
+  "outputs": {
+    "T40-1": "docs\\step3_data\\temporal_reorder_transformer_dft_gap0.json",
+    "T40-2": "docs\\step3_data\\harmony_transformer_dft_gap0.json",
+    "T40-3": "docs\\step3_data\\combined_AB_dft_gap0.json"
+  },
+  "tasks": {
+    "T40-1": {
+      "dilemma_reproduced": true,
+      "segment_retrain_dtw_mean": 2.2523
+    },
+    "T40-2": {
+      "scale_major_best_kept": true,
+      "scale_major_vs_ref_pjs": 0.015156
+    },
+    "T40-3": {
+      "recommendation": "FC 우세",
+      "best_transformer": "orig_continuous",
+      "best_fc": "orig_continuous"
+    }
+  },
+  "missing_requested_reference_files": [
+    "memory\\project_phase2_gap0_findings_0417.md",
+    "memory\\project_wave2_d_completed_0417.md"
+  ],
+  "context": {
+    "n_cycles": 14,
+    "T": 1088,
+    "N": 23,
+    "cache_meta": {
+      "path": "C:\\WK14\\tda_pipeline\\cache\\metric_dft_alpha0p25_ow0p3_dw1p0.pkl",
+      "used_cache": true,
+      "alpha_in_cache": 0.25
+    }
+  },
+  "date_end": "2026-04-18T05:31:32",
+  "elapsed_s": 3614.68
+}
