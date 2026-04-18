@@ -192,7 +192,7 @@ xelatex hibari_tda_report.tex
 
 **중요:**
 - `hibari_tda_ko.tex` / `hibari_tda_report.tex`는 **pdflatex로 컴파일 불가** (fontspec 한글 폰트 때문). 반드시 `xelatex`.
-- **PDF 커밋 관례**: `hibari_tda.pdf` + `hibari_tda_ko.pdf`만 git tracked, `hibari_tda_report.pdf`는 untracked 유지 (보고서는 너무 길어 리포지토리 부담).
+- **PDF 커밋 관례**: `hibari_tda.pdf` / `hibari_tda_ko.pdf` / `hibari_tda_report.pdf` **3파일 모두 tracked** (2026-04-19 bcd35ed 이후). 논문 수정 시 3파일 PDF 동시 재빌드 후 커밋.
 - 컴파일 성공 검증 3항: 에러 0 / undefined ref 0 / citation 0.
 
 ## 세션 운용 가이드
