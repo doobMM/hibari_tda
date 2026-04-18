@@ -104,10 +104,10 @@ Algorithm~2에서는 FC + continuous 입력이
 $\mathbf{0.00035 \pm 0.00015}$ ($N=10$)로 최우수이며,
 Transformer 대비 Welch $p = 1.66 \times 10^{-4}$로 유의 우위다.
 
-모듈 단위 생성(DFT $\alpha=0.25$, $K=14$)에서는
-P3\_local + C 조합의 best trial이 $0.0250$이고,
-33개 시작 모듈 전수 탐색의 전역 최저 trial은
-$\mathbf{0.01479}$로 전곡 Phase~1 최저($0.01489$)와 동등 ($\alpha=0.25$ 신기록 $0.01156$ 대비 $+28.0\%$ 열세).
+마디 단위 생성(DFT $\alpha=0.25$, $K=14$; Option~B 동일 창, 2026-04-19)에서는
+P3\_local + C 조합의 best trial이 $\mathbf{0.0167}$ (전곡 $0.0213$ 하회)이고,
+32개 시작 마디 전수 탐색의 전역 최저 trial은
+$\mathbf{0.01479}$ ($m=0$, seed~9309)로 전곡 Phase~1 최저($0.01489$)와 동등 ($\alpha=0.25$ 신기록 $0.01156$ 대비 $+28.0\%$ 열세).
 이 결과는 거리 함수의 절대 우열보다
 ``거리 함수 $\times$ 음악적 목적'' 정합성이 핵심임을 보여준다.
 
@@ -614,40 +614,44 @@ FC~$>$~Transformer라는 결과는 ``더 많은 시간적 모델링이 항상
 \section{확장 실험}
 \label{sec:extensions}
 
-\subsection{모듈 단위 생성}
+\subsection{마디 단위 생성}
 \label{subsec:module}
 
 \emph{hibari}의 32-step 모듈 구조를 직접 활용하여,
-단일 모듈을 생성한 뒤 전체 곡으로 재배치하는 접근을 검증하였다.
-여기서 모듈은 32-step(음악적 4마디) 길이의 A-B-A'-C 반복 선율 단위이며
-inst~1에서 33회 반복된다. 또한 \S7.2 재실험에서 $1088$행 전체를
-$34\times32$ 블록으로 재해석했다(``마디''는 계산용 32-step 블록).
-해당 재실험의 프로토타입 비교에서 P3\_local의 best trial JS는 $0.0360$이었다.
-DFT $\alpha=0.25$ 조건에서 module PH는 $K=14$이며,
-개선 조합(C/D/P3\_local/P3\_local+C)을 비교하였다:
+단일 마디(32 timestep)를 생성한 뒤 전체 곡으로 재배치하는 접근을 검증하였다.
+여기서 \emph{모듈}은 32-step(음악적 4마디) 길이의 A-B-A'-C 반복 선율 단위를
+가리키는 배치 용어이며 inst~1에서 33회 반복된다. 반면
+P3\_local 계열 전략은 대상 32-step 마디 구간에서 persistent homology를
+재계산하므로 이를 \emph{마디-local PH}라 부른다.
+2026-04-19 Option~B 설계에서는 두 악기 모두 $[32(m+1),32(m+2))$ 동일 창을
+사용하여 index lag과 physical lag을 일치시켰다. DFT $\alpha=0.25$ 조건에서
+전곡 PH는 $K=14$ cycle을 가지며, 개선 조합(C/D/P3\_local/P3\_local+C)을
+비교하였다:
 
 \begin{table}[H]
 \centering
-\caption{모듈 단위 생성 전략 ($N=10$).}
+\caption{마디 단위 생성 전략 — Option~B ($N=10$).}
 \label{tab:module}
 \begin{tabular}{lcccc}
 \toprule
 전략 & JS (평균$\pm$표준편차) & 최저 & Cov. \\
 \midrule
-P0 기준선          & $0.1082 \pm 0.0241$ & $0.0701$ & $0.826$ \\
+P0 기준선          & $0.1082 \pm 0.0241$ & $0.0701$ & $0.787$ \\
 C: best-of-10      & $0.0800 \pm 0.0171$ & $0.0570$ & $0.913$ \\
 D: cov$\ge$20/23   & $0.0808 \pm 0.0171$ & $0.0570$ & $0.887$ \\
-P3\_local          & $0.0721 \pm 0.0275$ & $0.0288$ & $0.813$ \\
-\textbf{P3\_local + C} & $\mathbf{0.0440 \pm 0.0158}$ & $\mathbf{0.0250}$ & $0.896$ \\
+P3\_local          & $0.0636 \pm 0.0207$ & $0.0335$ & $0.791$ \\
+\textbf{P3\_local + C} & $\mathbf{0.0417 \pm 0.0145}$ & $\mathbf{0.0167}$ & $0.900$ \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-33개 시작 모듈(inst~1 기준 start~module $0\ldots32$) 전수 탐색 결과,
-start=0은 평균 JS 기준 5위이며 특별히 우수하지 않았다.
-여기서 $k=10$은 seed 내부 best-of-$k$ 후보 수, $N=10$은 시작 모듈당
+32개 시작 마디($m = 0\ldots31$, 분석 창 $[32(m+1),32(m+2))$은 두 악기가 공유;
+원곡 첫 마디 $[0,32)$는 Option~B 창 규약상 탐색 대상에서 제외) 전수 탐색 결과,
+$m=0$은 평균 JS 기준 rank $16/32$로 특별히 우수하지 않았다
+(이전 비대칭 창 기반의 rank~5 우위는 Option~B 창 통일 후 소실).
+여기서 $k=10$은 seed 내부 best-of-$k$ 후보 수, $N=10$은 시작 마디당
 독립 반복 횟수이다. 전역 최저 trial은
-start=1, seed=9309에서 JS $=0.01479$로,
+$m=0$, seed=9309에서 JS $=0.01479$로,
 전곡 Phase~1 per-cycle 최저($0.01489$)와 동등 ($\alpha=0.25$ 신기록 $0.01156$ 대비 $+28.0\%$ 열세).
 
 \subsection{일반화: \emph{solari}, Bach, Ravel}
@@ -826,17 +830,20 @@ $1.0$ (pure freq.) & 1 & $0.03386 \pm 0.00186$ & 축퇴 ($K=1$) \\
 DFT-hybrid에서는 양 끝점이 모두 축퇴($K=1$)하며,
 $\alpha=0.25$에서 최저 JS와 유효한 위상 구조를 동시에 확보한다.
 
-\subsection{Barcode Wasserstein 모듈 선택}
+\subsection{Barcode Wasserstein 마디 선택}
 
-DFT $\alpha=0.25$ 조건에서 모듈 국소 barcode와 전곡 barcode의
-Wasserstein 거리와 생성 JS의 Pearson 상관은
-$r = -0.054$로 사실상 무상관이다. 즉 DFT 조건에서는 Wasserstein
-기반 모듈 선택을 권장할 수 없다.
+DFT $\alpha=0.25$ + Option~B (두 악기 모두 $[32(m+1),32(m+2))$ 동일 창) 조건에서
+32개 시작 마디의 국소 barcode와 전곡 barcode의 Wasserstein 거리와
+생성 JS의 Pearson 상관은 $r = +0.2457$로 약한 양의 상관이 회복되었다.
+이는 이전 비대칭 창 설계에서 보고된 $r = -0.054$의 부호 반전으로,
+두 악기 창 통일(index lag = physical lag)이 본래 설계 의도를
+수치적으로 검증했음을 의미한다.
 
-이 값은 Tonnetz 조건에서 관찰된 $r=0.503$과 부호까지 반대이며,
-barcode 기반 선택 역시 거리 함수 의존적임을 보여준다.
-또한 complex(simul 혼합) 모드도 Tonnetz에서는 유효할 수 있으나
-DFT에서는 악화되므로, 최종 DFT 설정에서는 timeflow-only를 유지한다.
+상관 강도는 여전히 Tonnetz($r=0.503$)보다 약하므로
+Wasserstein 기반 마디 선택은 DFT 조건에서 초벌 screening 용도에 한해
+사용하고, 최종 선택은 JS 직접 평가(\S\ref{subsec:module} 전수 탐색)로 수행한다.
+또한 complex(simul 혼합) 모드는 Tonnetz에서는 유효하나 DFT에서는 악화되므로,
+최종 DFT 설정에서는 timeflow-only를 유지한다.
 
 
 % ═════════════════════════════════════════════════════════════════════════
@@ -866,19 +873,20 @@ DFT에서는 악화되므로, 최종 DFT 설정에서는 timeflow-only를 유지
       Phase~2 ($\alpha=0.25$) 신기록 $\mathbf{0.01156 \pm 0.00147}$ ($p=4.94\times10^{-11}$).
       FC-cont는 $0.00035 \pm 0.00015$로 Algorithm~2 최저를 기록했다.
 
-\item \textbf{모듈 단위 생성의 full-song 품질 도달.}
-      P3\_local + C best trial은 $0.0250$,
-      33모듈 전수 탐색 전역 최저는 $0.01479$로
+\item \textbf{마디 단위 생성의 full-song Phase~1 품질 도달.}
+      Option~B 동일 창에서 P3\_local + C best trial은 $\mathbf{0.0167}$ (전곡 $0.0213$ 하회),
+      32-마디 전수 탐색 전역 최저는 $m=0$, seed~9309에서 $\mathbf{0.01479}$로
       전곡 Phase~1 최저 $0.01489$와 동등 ($\alpha=0.25$ 신기록 $0.01156$ 대비 $+28.0\%$ 열세).
 
 \item \textbf{거리 함수 $\times$ 목적 정합성(메타 통찰).}
-      구조 정밀도 목적(원곡 재현, cycle 분리, 모듈 탐색)에는 DFT가 강하고,
+      구조 정밀도 목적(원곡 재현, cycle 분리, 마디 탐색)에는 DFT가 강하고,
       화성 정합성 목적(scale 제약 변주)에는 Tonnetz가 강하다.
 
 \item \textbf{distance-specific 현상.}
-      DFT 조건에서 Wasserstein 모듈 선택 상관은
-      $r=-0.054$로 붕괴하며, complex(simul 혼합)도 악화된다.
-      따라서 해당 기법들은 거리 함수 조건부로 사용해야 한다.
+      DFT 조건에서 complex(simul 혼합)는 악화된다.
+      Wasserstein 마디 선택 상관은 비대칭 창 설계에서 $r=-0.054$까지 붕괴했으나
+      Option~B 창 통일 후 $r=+0.2457$로 회복되었다 (Tonnetz $r=0.503$보다 여전히 약함).
+      두 기법 모두 거리 함수 조건부로 사용해야 한다.
 \end{enumerate}
 
 본 연구는 TDA가 분석 도구일 뿐 아니라 \emph{음악 창작을 위한

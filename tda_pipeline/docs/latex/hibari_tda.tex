@@ -81,9 +81,9 @@ For Algorithm~2, FC with continuous overlap reaches
 $\mathbf{0.00035 \pm 0.00015}$ ($N=10$), significantly outperforming
 Transformer (Welch $p = 1.66 \times 10^{-4}$).
 
-In module-level generation (DFT $\alpha=0.25$, $K=14$), the best
-P3+C trial reaches JS $0.0250$, and exhaustive search over 33 start
-modules yields a global best of $0.01479$, essentially matching the
+In bar-level generation (DFT $\alpha=0.25$, $K=14$; Option~B window, 2026-04-19), the best
+P3+C trial reaches JS $0.0167$, and exhaustive search over 32 start
+markers yields a global best of $0.01479$ (start $m=0$, seed $9309$), essentially matching the
 full-song Phase~1 ($\alpha=0.5$) per-cycle result ($0.01489$); Phase~2 record ($\alpha=0.25$, $0.01156$) is $+28.0\%$ ahead.
 \end{abstract}
 
@@ -635,66 +635,73 @@ Compared to prior TDA--music work \cite{tran2021,lee2024}:
 \section{Extension Experiments}
 \label{sec:extensions}
 
-\subsection{Module-Level Generation}
+\subsection{Bar-Level Generation}
 \label{subsec:module}
 
 \emph{hibari}'s 32-step modular structure motivates generating one
-module and replicating it across the full timeline. Here, a module is a
-32-step (four-bar) repeating melodic unit with an A-B-A'-C form, repeated
-33 times in instrument~1. Under DFT $\alpha=0.25$, module PH yields $K=14$
-cycles (prototype OM: $32\times14$). In a Section~7.2 rerun, we also
-reinterpret the full 1088 rows as $34\times32$ blocks (``bar'' there means
-a computational 32-step block). We first compare four prototype strategies:
+bar and replicating it across the full timeline. Here, a \emph{module}
+(used as a naming for the repeated melodic arrangement unit) is a
+32-step four-bar repeating unit with an A-B-A'-C form, repeated
+33 times in instrument~1; the \emph{P3\_local} family recomputes
+persistent homology within a single 32-step bar, and we therefore refer
+to it as \emph{bar-local PH}. Under DFT $\alpha=0.25$, full-song PH
+yields $K=14$ cycles. We first compare four prototype strategies for
+constructing the $32\times14$ prototype overlap matrix:
 \begin{itemize}[nosep]
-\item \textbf{P0}: first-block copy.
-\item \textbf{P1}: OR over 34 blocks.
-\item \textbf{P2}: majority vote over 34 blocks.
-\item \textbf{P3\_local}: recomputed local PH.
+\item \textbf{P0}: first-block copy (density $\approx 0.018$).
+\item \textbf{P1}: OR over 34 blocks (density $=1.000$).
+\item \textbf{P2}: exclusive (AND) over 34 blocks (density $\approx 0$).
+\item \textbf{P3\_local}: recomputed bar-local PH on the common window
+  $[32(m+1),32(m+2))$ for both instruments (2026-04-19 Option~B design;
+  index lag equals physical lag).
 \end{itemize}
 
 \begin{table}[t]
 \centering
-\caption{Prototype strategy comparison (DFT $\alpha=0.25$, $N=10$).}
+\caption{Prototype strategy comparison under Option~B (DFT $\alpha=0.25$, $N=10$).}
 \label{tab:module_proto}
 \begin{tabular}{lccc}
 \toprule
 Strategy & Density & JS (mean$\pm$std) & Best \\
 \midrule
-P0 (first\_block) & $0.018$ & $0.0957 \pm 0.0136$ & $0.0678$ \\
-P1 (OR-34) & $1.000$ & $0.0586 \pm 0.0187$ & $0.0367$ \\
-P2 (majority) & $0.049$ & $0.0692 \pm 0.0112$ & $0.0543$ \\
-\textbf{P3\_local} & \textbf{$0.531$} & \textbf{$0.0575 \pm 0.0141$} & \textbf{$0.0360$} \\
+P0 (first\_block) & $0.018$ & $0.1040 \pm 0.0219$ & $0.0698$ \\
+P1 (OR-34) & $1.000$ & $0.0621 \pm 0.0167$ & $0.0422$ \\
+P2 (exclusive, AND) & $0.000$ & $0.0900 \pm 0.0308$ & $0.0515$ \\
+\textbf{P3\_local} & \textbf{$0.299$} & \textbf{$0.0474 \pm 0.0187$} & \textbf{$0.0226$} \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-We then evaluate post-processing improvements on top of the module setting:
+We then evaluate post-processing improvements on top of the bar setting:
 
 \begin{table}[t]
 \centering
-\caption{Module-level improvements (DFT, baseline full-song
+\caption{Bar-level improvements under Option~B (DFT, baseline full-song
 $0.0213 \pm 0.0021$).}
 \label{tab:module}
 \begin{tabular}{lcccc}
 \toprule
 Strategy & JS (mean$\pm$std) & Best & Cov. \\
 \midrule
-P0 baseline      & $0.1082 \pm 0.0241$ & $0.0701$ & $0.826$ \\
+P0 baseline      & $0.1082 \pm 0.0241$ & $0.0701$ & $0.787$ \\
 C: best-of-10    & $0.0800 \pm 0.0171$ & $0.0570$ & $0.913$ \\
 D: cov$\ge$20/23 & $0.0808 \pm 0.0171$ & $0.0570$ & $0.887$ \\
-P3\_local        & $0.0721 \pm 0.0275$ & $0.0288$ & $0.813$ \\
-\textbf{P3\_local + C} & $\mathbf{0.0440 \pm 0.0158}$ & $\mathbf{0.0250}$ & $0.896$ \\
+P3\_local        & $0.0636 \pm 0.0207$ & $0.0335$ & $0.791$ \\
+\textbf{P3\_local + C} & $\mathbf{0.0417 \pm 0.0145}$ & $\mathbf{0.0167}$ & $0.900$ \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-Exhaustive start-module search over all 33 modules (inst~1 basis,
-start~module $0\ldots32$) shows that start~0 is not uniquely best in DFT
-mode (rank~5 by mean JS). Here $k=10$ is the best-of-$k$ candidate count
-within each seed, and $N=10$ is the number of independent seeds per start
-module. The global best trial is start~module~1, seed~9309, JS~$=0.01479$,
-essentially matching the
-full-song Phase~1 per-cycle best ($0.01489$); Phase~2 record ($0.01156$) is $+28.0\%$ ahead.
+Exhaustive start-marker search over 32 markers ($m = 0\ldots31$, analysis
+window $[32(m+1),32(m+2))$ shared by both instruments; the original first
+bar $[0,32)$ is thus excluded by the Option~B convention) shows that
+$m=0$ is not uniquely best in DFT mode (rank $16/32$ by mean JS; the
+previously reported rank~5 under the asymmetric window did not survive
+Option~B window unification). Here $k=10$ is the best-of-$k$ candidate
+count within each seed, and $N=10$ is the number of independent seeds
+per start marker. The global best trial is start marker $m=0$, seed~9309,
+JS~$=0.01479$, essentially matching the full-song Phase~1 per-cycle best
+($0.01489$); Phase~2 record ($0.01156$) is $+28.0\%$ ahead.
 
 \subsection{Generalization: \emph{solari}, Bach, Ravel}
 \label{subsec:generalization}
@@ -922,29 +929,32 @@ In DFT-hybrid mode, both endpoints are degenerate ($K=1$). The best
 trade-off is $\alpha=0.25$ (adopted), while $\alpha=0.5$ remains a
 historical default from earlier runs.
 
-\subsection{Barcode Wasserstein Module Selection}
+\subsection{Barcode Wasserstein Bar Selection}
 \label{subsec:wasserstein}
 
-Under DFT $\alpha=0.25$, we compare module-local barcodes against the
-full-song barcode via Wasserstein distance (33 start modules).
+Under DFT $\alpha=0.25$ with Option~B (common window $[32(m+1),32(m+2))$
+for both instruments), we compare bar-local barcodes against the
+full-song barcode via Wasserstein distance (32 start markers).
 The observed correlation with generation JS is
-\textbf{Pearson $r=-0.054$}, i.e., effectively no correlation.
-Hence Wasserstein-based module ranking is not reliable in this DFT
-setting.
+\textbf{Pearson $r = +0.2457$}, a weak-to-moderate positive correlation.
+This is a reversal of the previously reported $r=-0.054$ under the
+asymmetric-window design: unifying the two instrument windows restored
+the intended design semantics (index lag equals physical lag) and
+recovered a positive barcode--JS relation. The correlation is, however,
+still weaker than the Tonnetz observation ($r=0.503$): Wasserstein-based
+bar ranking remains useful only as a coarse screening step in DFT mode;
+final selection should still rely on direct JS evaluation (the
+exhaustive search of \S\ref{subsec:module}).
 
-This result reverses the earlier Tonnetz observation ($r=0.503$),
-showing that barcode-Wasserstein usefulness is distance-dependent.
 Three caveats remain:
 \begin{enumerate}[nosep]
-\item \textbf{Chord-space mismatch}: module-local PD is computed from
+\item \textbf{Correlation strength below moderate}: $|r|=0.246$ is in the
+      weak-to-moderate range; the best $W$-trial ($W=0.288$) achieves
+      JS $=0.0760$, still far from the global minimum $0.01479$.
+\item \textbf{Chord-space mismatch}: bar-local PD is computed from
       a 32-step window, whose chord vocabulary is a strict subset of
       the full song's.  The resulting PD inhabits a smaller simplicial
       complex.
-\item \textbf{Asymmetric window-alignment limitation}: module-local PH uses
-      both windows (inst1 $[32m,32m+32)$ and inst2 $[32m+33,32m+65)$), but
-      their fixed 33-step offset makes the inst2 contribution
-      start-dependent, introducing structural bias against direct 1:1
-      comparison with full-song PD.
 \item \textbf{Scale sensitivity}: $W_1$ is sensitive to the absolute
       scale of birth/death coordinates, which differ between a 32-step
       and a 1{,}088-step filtration.
@@ -981,18 +991,22 @@ structure.  Key findings:
       and FC-cont reaches
       $0.00035 \pm 0.00015$.
 
-\item \textbf{Module-level generation can match full-song quality.}
-      P3\_local+C gives best trial $0.0250$; exhaustive 33-module search
-      reaches $0.01479$ (matches Phase~1 best $0.01489$; $+28.0\%$ vs Phase~2 record $0.01156$).
+\item \textbf{Bar-level generation can match full-song Phase~1.}
+      Under Option~B common window, P3\_local+C gives best trial $0.0167$
+      (below full-song $0.0213$); exhaustive 32-marker search reaches
+      $0.01479$ at $m=0$, seed $9309$ (matches Phase~1 best $0.01489$;
+      $+28.0\%$ vs Phase~2 record $0.01156$).
 
 \item \textbf{Metric-objective alignment is the meta principle.}
       DFT is stronger for structural precision; Tonnetz is stronger for
       harmony-constrained variation quality.
 
 \item \textbf{Complex/simul and Wasserstein are distance-specific.}
-      In DFT settings, simul mixing degrades performance and
-      barcode-Wasserstein correlation collapses ($r=-0.054$), so both
-      require metric-conditioned use.
+      In DFT settings, simul mixing degrades performance. Under the
+      earlier asymmetric-window design the barcode--Wasserstein
+      correlation collapsed ($r=-0.054$); unifying both instrument
+      windows (Option~B) restored it to $r=+0.2457$, still weaker than
+      Tonnetz ($r=0.503$). Both therefore require metric-conditioned use.
 \end{enumerate}
 
 This work demonstrates that TDA can serve not only as an analysis tool
