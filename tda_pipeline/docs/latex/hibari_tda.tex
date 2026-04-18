@@ -885,6 +885,17 @@ FC with continuous input is best (JS $=0.000348$), and FC-cont
 significantly outperforms Transformer-cont (Welch
 $p = 1.66 \times 10^{-4}$).
 
+\paragraph{Remark on Algo\,2 $\alpha$ setting (Task~51).}
+After confirming $\alpha=0.25$ optimal for Algorithm~1
+(\S\ref{subsec:percycle} and \S\ref{subsec:alpha}), we retested
+FC-cont at $\alpha=0.25$ ($K=14$, DFT, gap=0, $N=10$,
+\texttt{fc\_cont\_dft\_alpha025\_results.json}).
+Result: JS $= 0.00057 \pm 0.00046$ vs.\ $\alpha=0.5$
+JS $0.000348$; Welch $p = 0.168$ (not significant).
+Reducing $K$ from 19 to 14 decreases the learning signal for FC,
+reversing the benefit seen in Algorithm~1.
+\textbf{Algorithm~2 best remains $\alpha=0.5$, JS $=0.000348$.}
+
 \subsection{DFT-Hybrid $\alpha$ Grid Search}
 \label{subsec:alpha}
 

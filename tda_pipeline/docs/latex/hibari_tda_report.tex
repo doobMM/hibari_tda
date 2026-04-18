@@ -789,6 +789,18 @@ FC + 연속 입력이 최우수이며(JS $=0.000348$),
 Transformer 연속 입력보다도 유의하게 우수하다
 (Welch $p = 1.66 \times 10^{-4}$).
 
+\paragraph{비고: Algo~2의 $\alpha$ 설정 (Task~51).}
+Algorithm~1에서 $\alpha=0.25$가 최적임을 확인한 후
+(\S\ref{subsec:percycle}, \S\ref{subsec:alpha}),
+동일 DFT·gap=0·연속 OM 조건에서 $\alpha=0.25$ ($K=14$)
+FC-cont를 $N=10$으로 재실험하였다
+(\texttt{fc\_cont\_dft\_alpha025\_results.json}).
+결과: JS $= 0.00057 \pm 0.00046$ vs.\ $\alpha=0.5$ JS $0.000348$;
+Welch $p = 0.168$ (비유의).
+$K$ 감소(19→14)로 FC 학습 신호가 감소하여 Algorithm~1의
+이점이 역전된다.
+\textbf{Algorithm~2 최저는 $\alpha=0.5$, JS $=0.000348$을 유지.}
+
 \subsection{DFT-Hybrid $\alpha$ 격자 탐색}
 \label{subsec:alpha}
 
