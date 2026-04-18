@@ -755,7 +755,7 @@ __음악적 효과.__ 이 서로소 구조는 §4.5.2 에서 관찰한 근균등
 | voice leading | $25$ | $0.043$ | $0.078 \pm 0.004$ | $0.073$ |
 | DFT | $15$ | $0.071$ | $0.0824 \pm 0.0029$ | $0.0773$ |
 
-hibari에서는 DFT가 최우수($0.0213$)였지만, solari에서는 frequency/Tonnetz가 동률에 가깝고 DFT는 오히려 악화된다. 12-PC 구조에서는 Tonnetz 지름 한계와 함께 DFT의 분해능도 제한되어($K=15$) 구조 구별력이 떨어진다.
+hibari에서는 DFT가 최우수($0.0213$)였지만, solari에서는 frequency/Tonnetz가 동률에 가깝고 DFT는 오히려 악화된다. 12-PC 구조에서는 Tonnetz 지름 한계와 함께 DFT의 분해능도 제한된다($K=15$). 분해능 제한의 원인: 12-PC 전체를 사용하면 indicator vector가 $(1,1,\ldots,1)$에 가까워져 비영 Fourier 계수 $|\hat{\chi}(k)|$가 0에 수렴하고, PC 집합 간 DFT 거리 차이가 소실되어 구조 구별력이 떨어진다.
 
 #### Algorithm 2 — DL 모델 비교
 
