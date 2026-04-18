@@ -59,32 +59,30 @@ Pohang, Republic of Korea}
 % ABSTRACT
 % ═══════════════════════════════════════════════════════════════════════════
 \begin{abstract}
-We present a computational pipeline that extracts the topological structure
-of a musical composition via persistent homology and re-synthesizes new
-musical pieces that preserve that structure.  Applied to Ryuichi Sakamoto's
-\emph{hibari} (from the 2009 album \emph{out of noise}), the pipeline
-(i)~constructs a weighted note-network from the MIDI quantization,
-(ii)~computes $H_1$ persistent homology under four distance functions
-(frequency, Tonnetz, voice-leading, DFT),
-(iii)~builds an overlap matrix recording cycle activations across the
-timeline, and (iv)~generates new music via either probabilistic sampling
+We present a computational pipeline that extracts topological structure
+from music via persistent homology and re-synthesizes new pieces that
+preserve that structure. Applied to Ryuichi Sakamoto's \emph{hibari}
+(\emph{out of noise}, 2009), the pipeline has four stages:
+(i)~MIDI preprocessing, (ii)~$H_1$ persistent homology under four
+distances (frequency, Tonnetz, voice-leading, DFT), (iii)~overlap-matrix
+construction, and (iv)~music generation via probabilistic sampling
 (Algorithm~1) or deep learning (Algorithm~2; FC / LSTM / Transformer).
 
-Over $N=20$ independent trials, the Tonnetz distance reduces pitch
-Jensen--Shannon divergence from $0.0753 \pm 0.0033$ (frequency baseline)
-to $0.0398 \pm 0.0031$, a $47\%$ improvement (Welch $t = 35.1$,
-$p < 10^{-20}$, Cohen's $d = 11.1$).  Continuous overlap with per-cycle
-thresholding adds a further $47.5\%$ gain ($p < 0.001$), and soft
-activation input to the FC model achieves JS~$= 0.0004$, less than
-$0.1\%$ of the theoretical maximum~$\ln 2$.  The simplest FC model
-outperforms LSTM and Transformer on \emph{hibari}, while this ranking
-reverses on the chromatic \emph{solari}---confirming that a composition's
-aesthetic character determines the optimal model architecture.
+Over $N=20$ repetitions, DFT is the best Algorithm~1 distance:
+pitch JS decreases from $0.0344 \pm 0.0023$ (frequency) to
+$0.0213 \pm 0.0021$ ($-38.2\%$, Welch $p < 10^{-20}$), with
+$-56.8\%$ vs Tonnetz and $-62.4\%$ vs voice-leading. With DFT continuous
+overlap, per-cycle threshold optimization reaches
+$\mathbf{0.01489 \pm 0.00143}$ ($+58.7\%$ vs uniform $\tau=0.35$,
+Welch $p = 2.48 \times 10^{-26}$), the best Algorithm~1 result.
+For Algorithm~2, FC with continuous overlap reaches
+$\mathbf{0.00035 \pm 0.00015}$ ($N=10$), significantly outperforming
+Transformer (Welch $p = 1.66 \times 10^{-4}$).
 
-We further extend the pipeline to topology-preserving \emph{variation}:
-note redistribution under Tonnetz matching constraints (DTW $+61.4\%$),
-temporal reordering, and harmonic constraints, producing music that is
-topologically similar yet melodically distinct from the original.
+In module-level generation (DFT $\alpha=0.25$, $K=14$), the best
+P3+C trial reaches JS $0.0250$, and exhaustive search over 33 start
+modules yields a global best of $0.01479$, essentially matching the
+full-song per-cycle result ($0.01489$).
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -396,30 +394,29 @@ metric is pitch JS divergence.
 
 \begin{table}[t]
 \centering
-\caption{JS divergence of Algorithm~1 under four distance functions
-($N = 20$, decayed lag $\ell \in \{1,\ldots,4\}$).}
+\caption{Algorithm~1 pitch JS under four distances (hibari, $N=20$).}
 \label{tab:baselines}
 \begin{tabular}{lccc}
 \toprule
 Distance & $K$ & JS (mean $\pm$ std) & Coverage \\
 \midrule
-frequency      & 43 & $0.0753 \pm 0.0033$ & $0.991$ \\
-\textbf{Tonnetz} & \textbf{46} & $\mathbf{0.0398 \pm 0.0031}$ & $1.000$ \\
-voice-leading  & 22 & $0.0891 \pm 0.0048$ & $1.000$ \\
-DFT            & 20 & $0.0511 \pm 0.0029$ & $1.000$ \\
+frequency      & 1  & $0.0344 \pm 0.0023$ & $0.957$ \\
+Tonnetz        & 47 & $0.0493 \pm 0.0038$ & $1.000$ \\
+voice-leading  & 19 & $0.0566 \pm 0.0027$ & $0.989$ \\
+\textbf{DFT}   & \textbf{17} & $\mathbf{0.0213 \pm 0.0021}$ & $1.000$ \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-Tonnetz reduces JS by $47\%$ relative to frequency (Table~\ref{tab:baselines}).
-Welch's $t = 35.1$, $\nu \approx 38$, $p < 10^{-20}$, Cohen's $d = 11.1$.
+DFT is best on \emph{hibari}: $-38.2\%$ vs frequency, $-56.8\%$ vs Tonnetz,
+and $-62.4\%$ vs voice-leading (Table~\ref{tab:baselines}).
 
 \subsection{Octave Weight Tuning}
 \label{subsec:octave}
 
-Grid search over $w_o \in \{0.1, 0.3, 0.5, 0.7, 1.0\}$ ($N = 10$)
-found $w_o = 0.3$ optimal (JS $0.0479$, $-18.8\%$ vs.\ $w_o = 0.5$),
-consistent with \emph{hibari}'s narrow 2-octave pitch range (MIDI 52--81).
+Under DFT, grid search over $w_o \in \{0.1, 0.3, 0.5, 0.7, 1.0\}$
+($N=10$) selects $w_o=0.3$ (best JS $0.0163$), consistent with
+\emph{hibari}'s narrow pitch range.
 
 \subsection{Cycle Subset Ablation}
 
@@ -621,76 +618,88 @@ Compared to prior TDA--music work \cite{tran2021,lee2024}:
 \subsection{Module-Level Generation}
 \label{subsec:module}
 
-\emph{hibari}'s 32-step modular structure motivates generating a single
-module and replicating it $33\times$.  Five prototype strategies for
-constructing a 32-step module overlap vector were compared:
+\emph{hibari}'s 32-step modular structure motivates generating one
+module and replicating it across the full timeline. Under DFT
+$\alpha=0.25$, module PH yields $K=14$ cycles (prototype OM:
+$32\times14$). We first compare four prototype strategies:
 \begin{itemize}[nosep]
-\item \textbf{P0}: element-wise OR of all module instances (any-active).
-\item \textbf{P1}: element-wise mean across modules, binarized at $\tau{=}0.5$.
-\item \textbf{P2}: element-wise mean without binarization (continuous prototype).
-\item \textbf{P3}: element-wise median across modules.
-\item \textbf{P5}: flat control (all entries set to the global mean).
+\item \textbf{P0}: first-module copy.
+\item \textbf{P1}: union-of-active.
+\item \textbf{P2}: exclusive-to-module.
+\item \textbf{P3}: module-specific median-activity module.
 \end{itemize}
-P4 takes a different approach: instead of aggregating the full-song
-overlap matrix, it runs module-local persistent homology on the first
-module alone ($K{=}24$ cycles).  P4 combined with best-of-10
-selection~(C) achieved the best result:
 
 \begin{table}[t]
 \centering
-\caption{Module-level generation strategies ($N=10$).}
+\caption{Prototype strategy comparison (DFT $\alpha=0.25$, $N=10$).}
+\label{tab:module_proto}
+\begin{tabular}{lccc}
+\toprule
+Strategy & Density & JS (mean$\pm$std) & Best \\
+\midrule
+P0 & $0.018$ & $0.1040 \pm 0.0219$ & $0.0698$ \\
+P1 & $1.000$ & $0.0621 \pm 0.0167$ & $0.0422$ \\
+P2 & $0.000$ & $0.0900 \pm 0.0308$ & $0.0515$ \\
+\textbf{P3} & \textbf{$0.299$} & \textbf{$0.0474 \pm 0.0187$} & \textbf{$0.0226$} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+We then evaluate post-processing improvements on top of the module setting:
+
+\begin{table}[t]
+\centering
+\caption{Module-level improvements (DFT, baseline full-song
+$0.0213 \pm 0.0021$).}
 \label{tab:module}
 \begin{tabular}{lcccc}
 \toprule
 Strategy & JS (mean$\pm$std) & Best & Cov. \\
 \midrule
-P1 baseline      & $0.114 \pm 0.039$ & $0.074$ & $0.77$ \\
-C: best-of-10    & $0.074 \pm 0.027$ & $0.024$ & $0.90$ \\
-D: cov$\ge$20/23 & $0.082 \pm 0.022$ & $0.050$ & $0.88$ \\
-P4: local PH     & $0.066 \pm 0.019$ & $0.038$ & $0.84$ \\
-\textbf{P4+C}    & $\mathbf{0.059 \pm 0.015}$ & $\mathbf{0.026}$ & $0.89$ \\
+P0 baseline      & $0.1082 \pm 0.0241$ & $0.0701$ & $0.826$ \\
+C: best-of-10    & $0.0800 \pm 0.0171$ & $0.0570$ & $0.913$ \\
+D: cov$\ge$20/23 & $0.0808 \pm 0.0171$ & $0.0570$ & $0.887$ \\
+P3\_local        & $0.0721 \pm 0.0275$ & $0.0288$ & $0.813$ \\
+\textbf{P3\_local + C} & $\mathbf{0.0440 \pm 0.0158}$ & $\mathbf{0.0250}$ & $0.896$ \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-Start-module analysis over 8 positions confirmed module~0
-($t \in [0,32)$) as optimal (JS~$0.054$, best~$0.026$), consistent with
-minimalist composition practice of presenting core material in the
-opening module.  The best single trial (seed~9302, JS~$= 0.0258$)
-outperforms the full-song baseline mean ($0.0398$).
+Exhaustive start-module search over all 33 modules shows that module~0 is
+not uniquely best in DFT mode (rank~5 by mean JS). The global best trial is
+start~module~1, seed~9309, JS~$=0.01479$, essentially matching the
+full-song per-cycle best ($0.01489$).
 
 \subsection{Generalization: \emph{solari}, Bach, Ravel}
 \label{subsec:generalization}
 
 \begin{table}[t]
 \centering
-\caption{Cross-composition summary.  ``---'' indicates that Algorithm~2
-(deep learning) was not tested for that piece; only Algorithm~1 results
-are reported.}
+\caption{Cross-composition summary (Algorithm~1 distance comparison).}
 \label{tab:generalization}
 \begin{tabular}{lcccc}
 \toprule
 Piece & PCs & Best dist. & Best model & Interpretation \\
 \midrule
-hibari & 7 & Tonnetz & FC & Spatial placement \\
-solari & 12 & freq/Ton. & Transformer & Melodic progression \\
+hibari & 7 & DFT & FC & Spectral-diatonic structure \\
+solari & 12 & freq./Ton.\ (tie) & Transformer & Melodic progression \\
 aqua   & 12 & Tonnetz & --- & Tonnetz $+26.3\%$ \\
 Bach   & 12 & Tonnetz & --- & Tonnetz $-54.8\%$ \\
-Ravel  & 12 & frequency & FC & Rich distribution \\
+Ravel  & 12 & frequency & --- & Rich note distribution \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-On \emph{solari} (12-PC, chromatic), Transformer is optimal
-(JS~$0.016$), exactly reversing \emph{hibari}'s FC dominance
-(Table~\ref{tab:generalization}).  On Bach Fugue, Tonnetz achieves
-$-54.8\%$, the largest improvement observed.  On Ravel Pavane ($N{=}49$
-notes), frequency is optimal, suggesting that rich note diversity favors
-frequency-based separation.
+Only \emph{hibari} is DFT-optimal; \emph{solari}/\emph{aqua}/Bach/Ravel favor
+Tonnetz or frequency depending on musical structure. This supports a
+purpose-dependent metric design rather than a single universal distance.
 
 \subsection{Direction A: Two-Strategy Note Redistribution}
 \label{subsec:dirA}
 
+In the variation stage, we keep the experimental axis Tonnetz-based by
+default: scale-constrained harmony and local harmonic neighborhood
+structure align better with Tonnetz than with DFT in this objective.
 The overlap matrix is preserved intact; only note identities change.
 We compare two exclusive matching strategies over $n_{\mathrm{cand}}=1000$
 candidate pitch sets ($N=20$ trials, \emph{hibari}, Tonnetz, MIDI~48--84).
@@ -762,13 +771,15 @@ was inferior to wide (48--84) in all conditions; wide is adopted.
 \subsection{Direction B: Temporal Reordering}
 \label{subsec:dirB}
 
-Two strategies were tested: block permutation (dividing the sequence
-into fixed-size blocks and randomly permuting them; also called
-``segment shuffle'' in our codebase) and Markov resampling.
-With PE removal and retraining, Transformer
-achieves DTW~$+21.7\%$, but pitch JS degrades from $0.007$ to $0.173$.
-Direction~B alone cannot simultaneously preserve pitch distribution and
-alter melody; it requires combination with Direction~A.
+Temporal reordering was evaluated with block permutation and Markov
+resampling. Model behavior is strongly architecture-specific:
+FC is effectively timepoint-independent (nearly unchanged under
+reordering), LSTM changes remain marginal ($\le 0.5\%$ DTW shift in
+measurement), while Transformer is sensitive to positional encoding.
+With PE removal and retraining, Transformer can raise DTW to
+$+21.7\%$, but pitch JS degrades (distribution collapse), so Direction~B
+alone cannot satisfy both ``different melody'' and ``stable pitch
+distribution.''
 
 \subsection{Harmonic Constraints}
 \label{subsec:harmony}
@@ -781,100 +792,112 @@ average dissonance $0.412 \to 0.361$.
 \subsection{Combined A+B: Final Integration}
 \label{subsec:combined}
 
-The best combined setting (\textbf{major\_block32}):
-scale\_major redistribution + block permutation(32) + continuous
-overlap + Transformer achieves:
-ref~pJS $= 0.002$ (near-perfect learning),
-DTW $+31\%$ (different melody),
-C~major scale match $= 1.00$.
+\subsubsection{Tonnetz-Based Success}
+Under Tonnetz, \textbf{major\_block32}
+(scale\_major redistribution + block permutation(32) +
+continuous overlap + Transformer) achieves
+ref~pJS~$=0.0034$, DTW~$+31\%$, and C-major scale match~$=1.00$.
+
+\subsubsection{DFT Transfer Failure}
+When the same integration is transferred to DFT, ref~pJS worsens
+substantially (Transformer $0.0798$, FC $0.0412$), despite higher DTW.
+This indicates that the Tonnetz-designed variation stack does not
+transfer directly to DFT in the same objective.
+
+\subsubsection{Meta Insight}
+Distance-function choice is objective-dependent:
+DFT is strongest for structural precision and module search, while
+Tonnetz is stronger for harmony-constrained variation quality.
 
 \subsection{Per-Cycle Threshold Optimization}
 \label{subsec:percycle}
 
-Greedy coordinate descent over
-$\tau_c \in \{0.1, 0.2, \ldots, 0.7\}$ for each cycle:
+On DFT continuous overlap, we apply greedy coordinate descent over
+$\tau_c \in \{0.1, 0.2, \ldots, 0.7\}$ for each cycle.
 
 \begin{table}[t]
 \centering
-\caption{Per-cycle $\tau_c$ optimization ($N=20$).}
+\caption{Per-cycle $\tau_c$ optimization (DFT, $N=20$).}
 \label{tab:percycle}
 \begin{tabular}{lcc}
 \toprule
 Setting & JS (mean $\pm$ std) & Improvement \\
 \midrule
-Uniform $\tau = 0.35$ & $0.0460 \pm 0.0034$ & --- \\
-\textbf{Per-cycle $\tau_c$} & $\mathbf{0.0241 \pm 0.0023}$ & $\mathbf{+47.5\%}$ \\
+Uniform $\tau = 0.35$ & $0.03605 \pm 0.00237$ & --- \\
+Single $\tau = 0.5$   & $0.01591 \pm 0.00192$ & $+55.9\%$ \\
+\textbf{Per-cycle $\tau_c$} & $\mathbf{0.01489 \pm 0.00143}$ & $\mathbf{+58.7\%}$ \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-$47.5\%$ improvement ($p < 0.001$; Table~\ref{tab:percycle}).  The
-majority of cycles prefer $\tau < 0.35$, suggesting that ``accompaniment-type'' cycles were
-previously suppressed.  No overfitting: N=5 greedy result ($0.0238$) matches N=20 ($0.0241$).
+Per-cycle optimization reaches the best Algorithm~1 result in this study
+(Welch $p = 2.48 \times 10^{-26}$ vs uniform $\tau=0.35$), showing that
+cycle-specific activation scales matter.
 
 \subsection{Soft Activation: All Architectures}
 \label{subsec:soft}
 
 \begin{table}[t]
 \centering
-\caption{Binary vs.\ continuous input ($N=5$).}
+\caption{Binary vs.\ continuous overlap input (DFT, $N=10$).}
 \label{tab:soft}
 \begin{tabular}{llccc}
 \toprule
 Model & Input & JS & Val Loss & $\Delta$JS \\
 \midrule
-FC   & Binary & $0.0035$ & $0.307$ & --- \\
-\textbf{FC} & \textbf{Cont.} & $\mathbf{0.0004}$ & $\mathbf{0.026}$ & $\mathbf{+88.6\%}$ \\
-Trans. & Binary & $0.0034$ & $0.465$ & --- \\
-\textbf{Trans.} & \textbf{Cont.} & $\mathbf{0.0007}$ & $\mathbf{0.121}$ & $\mathbf{+79.4\%}$ \\
-LSTM & Binary & $0.280$ & $0.411$ & --- \\
-LSTM & Cont. & $0.290$ & $0.411$ & $-3.5\%$ \\
+FC   & Binary & $0.00217$ & $0.3395$ & --- \\
+\textbf{FC} & \textbf{Cont.} & $\mathbf{0.000348}$ & $\mathbf{0.0232}$ & $\mathbf{+84.0\%}$ \\
+Trans. & Binary & $0.00251$ & $0.836$ & --- \\
+Trans. & Cont. & $0.000818$ & $0.152$ & $+67.4\%$ \\
+LSTM & Binary & $0.233$ & $0.408$ & --- \\
+LSTM & Cont. & $0.170$ & $0.395$ & $+27.3\%$ \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-FC and Transformer show massive improvement with continuous input;
-LSTM is incompatible (Table~\ref{tab:soft}).  FC + continuous
-achieves JS~$= 0.0004$---the overall best in this study.
+FC with continuous input is best (JS $=0.000348$), and FC-cont
+significantly outperforms Transformer-cont (Welch
+$p = 1.66 \times 10^{-4}$).
 
-\subsection{Tonnetz $\alpha$ Grid Search}
+\subsection{DFT-Hybrid $\alpha$ Grid Search}
 \label{subsec:alpha}
 
 \begin{table}[t]
 \centering
-\caption{$\alpha$ grid search ($N=20$).}
+\caption{DFT-hybrid $\alpha$ grid search ($N=20$).}
 \label{tab:alpha}
 \begin{tabular}{cccc}
 \toprule
 $\alpha$ & $K$ & JS (mean $\pm$ std) & Note \\
 \midrule
-$0.0$ & 14 & $\mathbf{0.0574 \pm 0.0023}$ & Best among $K \ge 14$ \\
-$0.3$ & 48 & $0.0870 \pm 0.0046$ & Worst \\
-$0.5$ & 42 & $0.0594 \pm 0.0033$ & Default \\
-$1.0$ & 1  & $0.0351 \pm 0.0020$ & Degenerate ($K{=}1$) \\
+$0.0$ (pure DFT) & 1  & $0.0728 \pm 0.00432$ & Degenerate \\
+$0.1$            & 13 & $0.01602 \pm 0.00204$ &  \\
+\textbf{$0.25$}  & \textbf{14} & \textbf{$0.01593 \pm 0.00181$} & Best \\
+$0.3$            & 16 & $0.02025 \pm 0.00134$ &  \\
+$0.5$            & 19 & $0.01691 \pm 0.00143$ & Legacy default \\
+$0.7$            & 24 & $0.03140 \pm 0.00270$ &  \\
+$1.0$ (pure freq.) & 1 & $0.03386 \pm 0.00186$ & Degenerate \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-$\alpha = 0.0$ (pure Tonnetz) is individually optimal, but combined
-with $w_o = 0.3$ and decayed lag, cycle count collapses to $K = 14$.
-To maintain topological diversity ($K = 42$), we retain
-$\alpha = 0.5$ as the default (Table~\ref{tab:alpha}).
+In DFT-hybrid mode, both endpoints are degenerate ($K=1$). The best
+trade-off is $\alpha=0.25$ (adopted), while $\alpha=0.5$ remains a
+historical default from earlier runs.
 
 \subsection{Barcode Wasserstein Module Selection}
 \label{subsec:wasserstein}
 
-For each candidate start module at position~$m$, we compute the
-persistence diagram $\mathrm{PD}_m$ from the module-local chord
-sequence (32~timepoints, single instrument) and compare it to the
-full-song persistence diagram~$\mathrm{PD}_{\mathrm{full}}$ via the
-Wasserstein distance $W_1(\mathrm{PD}_m, \mathrm{PD}_{\mathrm{full}})$.
-The hypothesis is that modules whose local topology most closely
-resembles the global topology will yield lower generation JS.
+Under DFT $\alpha=0.25$, we compare module-local barcodes against the
+full-song barcode via Wasserstein distance (33 start modules).
+The observed correlation with generation JS is
+\textbf{Pearson $r=-0.054$}, i.e., effectively no correlation.
+Hence Wasserstein-based module ranking is not reliable in this DFT
+setting.
 
-Across 8~start positions, the Pearson correlation between $W_1$ and
-generation JS is $r = 0.503$---moderate but not decisive.  Three
-caveats limit its applicability:
+This result reverses the earlier Tonnetz observation ($r=0.503$),
+showing that barcode-Wasserstein usefulness is distance-dependent.
+Three caveats remain:
 \begin{enumerate}[nosep]
 \item \textbf{Chord-space mismatch}: module-local PD is computed from
       a 32-step window, whose chord vocabulary is a strict subset of
@@ -888,8 +911,10 @@ caveats limit its applicability:
       scale of birth/death coordinates, which differ between a 32-step
       and a 1{,}088-step filtration.
 \end{enumerate}
-We therefore position Wasserstein module selection as a supplementary
-tiebreaker rather than a primary selection criterion.
+
+Relatedly, complex (simul-mixed) weighting is useful in Tonnetz
+conditions but degrades DFT performance; we therefore keep
+timeflow-only settings for DFT production runs.
 
 % ═══════════════════════════════════════════════════════════════════════════
 % SECTION 8: CONCLUSION
@@ -902,28 +927,34 @@ music via persistent homology and generates new music preserving that
 structure.  Key findings:
 
 \begin{enumerate}
-\item \textbf{Distance function matters.} Tonnetz reduces JS by $47\%$
-      on \emph{hibari} ($p < 10^{-20}$), but this advantage is
-      composition-specific: Bach Fugue shows $-54.8\%$ Tonnetz
-      improvement, while Ravel Pavane favors frequency.
+\item \textbf{Distance choice is decisive but piece-dependent.}
+      On \emph{hibari}, DFT outperforms frequency by $38.2\%$, Tonnetz
+      by $56.8\%$, and voice-leading by $62.4\%$.
+      Across pieces, the best distance varies (DFT / Tonnetz / frequency).
 
-\item \textbf{Composition character determines optimal model.}
-      \emph{hibari} (diatonic, entropy $0.974$) $\to$ FC;
-      \emph{solari} (chromatic, entropy $0.905$) $\to$ Transformer.
+\item \textbf{Model optimality follows composition character.}
+      \emph{hibari} favors FC; \emph{solari} favors Transformer.
+      Under DFT continuous input, FC is significantly better than
+      Transformer (Welch $p=1.66\times10^{-4}$).
 
-\item \textbf{Continuous overlap is powerful.} Per-cycle thresholding
-      adds $47.5\%$ ($p < 0.001$); soft activation input yields
-      $+88.6\%$ (FC) and $+79.4\%$ (Transformer).
+\item \textbf{Continuous-overlap refinement is substantial.}
+      Per-cycle $\tau_c$ reaches
+      $0.01489 \pm 0.00143$ ($+58.7\%$ vs uniform $\tau=0.35$),
+      and FC-cont reaches
+      $0.00035 \pm 0.00015$.
 
-\item \textbf{Topology-preserving variation is feasible.} Note
-      redistribution + temporal reordering + harmonic constraints
-      produce music with DTW $+31\%$ (different melody), ref pJS $0.002$
-      (accurate learning), and perfect C major scale match.
+\item \textbf{Module-level generation can match full-song quality.}
+      P3\_local+C gives best trial $0.0250$; exhaustive 33-module search
+      reaches $0.01479$, essentially equal to full-song best $0.01489$.
 
-\item \textbf{Module-level generation is competitive.} P4+C achieves
-      JS~$0.059$ (average) with best trial $0.026$ outperforming the
-      full-song baseline---extending the pipeline to real-time
-      interactive composition tools.
+\item \textbf{Metric-objective alignment is the meta principle.}
+      DFT is stronger for structural precision; Tonnetz is stronger for
+      harmony-constrained variation quality.
+
+\item \textbf{Complex/simul and Wasserstein are distance-specific.}
+      In DFT settings, simul mixing degrades performance and
+      barcode-Wasserstein correlation collapses ($r=-0.054$), so both
+      require metric-conditioned use.
 \end{enumerate}
 
 This work demonstrates that TDA can serve not only as an analysis tool
