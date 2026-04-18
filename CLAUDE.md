@@ -293,6 +293,8 @@ gap_min=3 청취 평가 폐기 결정에 따른 §4 gap=0 롤백 + bugfix 이후
 | 40 | **A** | §6.3~§6.6 DFT 전환 재실험 (Transformer + FC) ✓ | 완료 | 커밋 a67977d. §6.4 딜레마 재현 ✓, §6.5 scale_major 최적 유지 ✓. **§6.6 Tonnetz가 DFT 대비 ref pJS 27배 우수** — 메타 통찰 "거리 함수는 목적에 따라 최적 다름". 세션 D Task 41에서 (A/B/C) 선택. `memory/project_task40_section66_findings_0417.md` |
 | 41 | **D** | §6.1~§6.6 재서술 + §8 메타 통찰 ✓ | 완료 | 커밋 b2f9b51. (C) 채택 — §6.1/§6.2 DFT 열 추가, §6.3 "Tonnetz 기반" 선언, §6.4 세 모델 실증, §6.5 FC/LSTM 확장, §6.6 3분할 (Tonnetz 성공 / DFT 실패 / 메타 통찰), §8 6항 "거리 함수 × 음악적 목적". **Phase 3 종결** |
 | 42 | **A** | T39-4/5 N=5 std 재검증 ✓ | 완료 | 커밋 901eab0. 사전검사 전원 n=1 → N=5 전체 재실행. LSTM dtwverify 1.09% 재현 (Task 39-4 결과 일관). **FC 재배치에서 DTW +30~48% 발견** → §6.4 FC 서술 "구조적 불가능" 과장 수정 필요 (Task 44 신설). scale_major 최적 유지 |
+| 43-A | **D** | LaTeX 영문 IEEE + report 동기화 ✓ | 완료 | 커밋 fe85f53. hibari_tda.tex + hibari_tda_report.tex + hibari_tda.pdf — Phase 3 최신 반영. Task 44 중 선행 처리됨 |
+| 43-B | **D** | LaTeX 한글본 동기화 + 3파일 컴파일 검증 | 대기 | hibari_tda_ko.tex + 3파일 undefined ref 검증. 프롬프트: docs/session_d_task43b_latex_finalize_prompt.md |
 | 44 | **D** | §6.4 FC 서술 교체 + §6.5 ±std + §6.6.3 메타 보강 ✓ | 완료 | 커밋 19df059. §6.4 "구조적 불가능" → "pitch 분포 유지 + DTW +30~48% 실측". §6.5 ±std (FC/LSTM). §6.6.3 FC 특성 단락 추가 (DFT-FC 우수성 해석 + note 선택 논지 강화) | T39-2 solari DFT 0.0824 K=15 / T39-3 Bach 0.0951 K=30, Ravel 0.0494 K=37 (타곡 모두 기존 최적 거리 유지 — hibari만 DFT 최적). T39-4 FC 시점 독립성 실증, LSTM pitch_js 0.26~0.28. T39-5 FC/LSTM 화성 제약. ⚠ T39-4/5는 N=5 반복 재실행 검토 여지 있음 |
 
 ### 낮은 우선순위 (향후 과제)
