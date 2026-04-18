@@ -1,0 +1,5 @@
+{
+  "D": "output/listening_test/stimulus_D_tonnetz_transformer.wav",
+  "E": "output/listening_test/stimulus_E_dft_transformer.wav",
+  "F": "output/listening_test/stimulus_F_dft_fc.wav"
+}

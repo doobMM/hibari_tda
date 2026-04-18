@@ -239,6 +239,12 @@ def parse_args() -> argparse.Namespace:
         default=SCRIPT_DIR / "stimuli_overrides.json",
         help="자극 코드별 수동 경로 매핑 JSON 파일",
     )
+    parser.add_argument(
+        "--regen-meta",
+        type=Path,
+        default=OUTPUT_DIR / "def_regen_metadata.json",
+        help="Task45-B D/E/F 재생성 메타데이터(JSON) 경로",
+    )
     return parser.parse_args()
 
 
@@ -255,6 +261,35 @@ def load_overrides(path: Path) -> Dict[str, str]:
             continue
         normalized[k.strip().upper()] = v.strip()
     return normalized
+
+
+def load_regen_meta(path: Path) -> Dict[str, dict]:
+    if not path.exists():
+        return {}
+    with path.open("r", encoding="utf-8") as f:
+        payload = json.load(f)
+    outputs = payload.get("outputs", []) if isinstance(payload, dict) else []
+    if not isinstance(outputs, list):
+        return {}
+
+    out: Dict[str, dict] = {}
+    for item in outputs:
+        if not isinstance(item, dict):
+            continue
+        code = str(item.get("code", "")).strip().upper()
+        if not code:
+            continue
+        selected = item.get("selected_trial", {})
+        metrics = selected.get("metrics", {}) if isinstance(selected, dict) else {}
+        out[code] = {
+            "regen_seed": selected.get("seed"),
+            "regen_vs_ref_pjs": metrics.get("vs_ref_pitch_js"),
+            "regen_vs_orig_pjs": metrics.get("vs_orig_pitch_js"),
+            "regen_metric": item.get("metric"),
+            "regen_model": item.get("model_type"),
+            "regen_generated_at": item.get("generated_at"),
+        }
+    return out
 
 
 def resolve_source(spec: StimulusSpec, overrides: Dict[str, str]) -> Tuple[Optional[Path], str]:
@@ -363,6 +398,12 @@ def write_catalog_csv(rows: List[dict], path: Path) -> None:
         "output_wav",
         "clip_start_sec",
         "clip_duration_sec",
+        "regen_seed",
+        "regen_vs_ref_pjs",
+        "regen_vs_orig_pjs",
+        "regen_metric",
+        "regen_model",
+        "regen_generated_at",
         "notes",
     ]
     with path.open("w", encoding="utf-8", newline="") as f:
@@ -379,6 +420,12 @@ def build_html(rows: List[dict], output_path: Path, clip_mode: str) -> None:
     card_html = []
     for row in available:
         rel_audio = Path(row["output_wav"]).relative_to(OUTPUT_DIR).as_posix()
+        regen_line = ""
+        if row.get("regen_seed") not in ("", None):
+            regen_line = (
+                f" | seed: {row.get('regen_seed')} "
+                f"| vs_ref_pJS: {row.get('regen_vs_ref_pjs', '-')}"
+            )
         card_html.append(
             f"""
 <article class="card">
@@ -386,7 +433,7 @@ def build_html(rows: List[dict], output_path: Path, clip_mode: str) -> None:
   <p class="meta">{row['condition']}</p>
   <p>{row['purpose']}</p>
   <audio controls preload="none" src="{rel_audio}"></audio>
-  <p class="small">JS ref: {row['js_reference']} | clip: {row.get('clip_duration_sec', '-')}s</p>
+  <p class="small">JS ref: {row['js_reference']} | clip: {row.get('clip_duration_sec', '-')}s{regen_line}</p>
 </article>
 """.strip()
         )
@@ -521,6 +568,7 @@ def build_stimuli(args: argparse.Namespace) -> int:
         specs.extend(OPTIONAL_STIMULI)
 
     overrides = load_overrides(args.overrides)
+    regen_meta = load_regen_meta(args.regen_meta)
     rows: List[dict] = []
     missing_required = 0
     temp_dir = OUTPUT_DIR / "_tmp_render"
@@ -541,8 +589,16 @@ def build_stimuli(args: argparse.Namespace) -> int:
             "output_wav": "",
             "clip_start_sec": "",
             "clip_duration_sec": "",
+            "regen_seed": "",
+            "regen_vs_ref_pjs": "",
+            "regen_vs_orig_pjs": "",
+            "regen_metric": "",
+            "regen_model": "",
+            "regen_generated_at": "",
             "notes": "",
         }
+        if spec.code in regen_meta:
+            row.update(regen_meta[spec.code])
 
         if source is None:
             row["notes"] = "source_not_found"
