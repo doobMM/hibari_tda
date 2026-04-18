@@ -1,0 +1,147 @@
+{
+  "metric": "dft",
+  "alpha": 0.25,
+  "octave_weight": 0.3,
+  "duration_weight": 1.0,
+  "min_onset_gap": 0,
+  "n_repeats": 5,
+  "date": "2026-04-18T11:18:55",
+  "script": "run_temporal_reorder_lstm_dft.py",
+  "post_bugfix": true,
+  "commit_sha": "d62438ffd231",
+  "model": "lstm",
+  "track": "hibari",
+  "overlap_type": "continuous",
+  "task": "T39-4",
+  "conditions": {
+    "baseline": {
+      "pitch_js": {
+        "mean": 0.277027,
+        "std": 0.00893
+      },
+      "transition_js": {
+        "mean": 0.527584,
+        "std": 0.014658
+      },
+      "dtw": {
+        "mean": 2.48965,
+        "std": 0.093202
+      },
+      "val_loss": {
+        "mean": 0.395844,
+        "std": 0.011677
+      },
+      "n_notes": {
+        "mean": 3753.2,
+        "std": 0.447214
+      },
+      "n_samples": 5
+    },
+    "segment_shuffle_retrain_x": {
+      "pitch_js": {
+        "mean": 0.277895,
+        "std": 0.009238
+      },
+      "transition_js": {
+        "mean": 0.528491,
+        "std": 0.01558
+      },
+      "dtw": {
+        "mean": 2.4923,
+        "std": 0.086942
+      },
+      "val_loss": {
+        "mean": 0.395844,
+        "std": 0.011677
+      },
+      "n_notes": {
+        "mean": 3753.2,
+        "std": 0.447214
+      },
+      "n_samples": 5
+    },
+    "block_permute32_retrain_x": {
+      "pitch_js": {
+        "mean": 0.279679,
+        "std": 0.008653
+      },
+      "transition_js": {
+        "mean": 0.529809,
+        "std": 0.014381
+      },
+      "dtw": {
+        "mean": 2.4927,
+        "std": 0.095626
+      },
+      "val_loss": {
+        "mean": 0.395844,
+        "std": 0.011677
+      },
+      "n_notes": {
+        "mean": 3753.0,
+        "std": 0.0
+      },
+      "n_samples": 5
+    },
+    "markov_tau1_retrain_x": {
+      "pitch_js": {
+        "mean": 0.278229,
+        "std": 0.008224
+      },
+      "transition_js": {
+        "mean": 0.528518,
+        "std": 0.014379
+      },
+      "dtw": {
+        "mean": 2.4986,
+        "std": 0.094459
+      },
+      "val_loss": {
+        "mean": 0.395844,
+        "std": 0.011677
+      },
+      "n_notes": {
+        "mean": 3753.2,
+        "std": 0.447214
+      },
+      "n_samples": 5
+    },
+    "segment_shuffle_retrain_o": {
+      "pitch_js": {
+        "mean": 0.279427,
+        "std": 0.004447
+      },
+      "transition_js": {
+        "mean": 0.524285,
+        "std": 0.015369
+      },
+      "dtw": {
+        "mean": 2.4624,
+        "std": 0.1222
+      },
+      "val_loss": {
+        "mean": 0.39539,
+        "std": 0.012693
+      },
+      "n_notes": {
+        "mean": 3753.2,
+        "std": 0.447214
+      },
+      "n_samples": 5
+    }
+  },
+  "dtw_change_pct": {
+    "segment_shuffle_retrain_x": 0.1064,
+    "block_permute32_retrain_x": 0.1225,
+    "markov_tau1_retrain_x": 0.3595,
+    "segment_shuffle_retrain_o": -1.0945
+  },
+  "verdict": {
+    "threshold_0_5_pct_reproduced": false,
+    "max_dtw_change_pct": 1.0945,
+    "recommendation": "전면 재작성"
+  },
+  "elapsed_s": 186.9,
+  "purpose": "n_repeat_verification_task42",
+  "task42_split_note": "Task39-4 focused LSTM rerun output"
+}

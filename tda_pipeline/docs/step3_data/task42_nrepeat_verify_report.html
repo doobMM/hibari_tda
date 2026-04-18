@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Task42 N=5 ??? ???</title>
+<style>
+:root { --bg:#f7f9fc; --card:#ffffff; --ink:#10223a; --muted:#4a5b73; --line:#d7e0ea; --good:#0b6b3a; --warn:#8a4b00; }
+* { box-sizing:border-box; }
+body { margin:0; background:var(--bg); color:var(--ink); font-family: "Segoe UI", "Apple SD Gothic Neo", sans-serif; line-height:1.5; }
+main { max-width:980px; margin:0 auto; padding:16px; }
+.card { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:14px; margin:0 0 14px; }
+h1 { font-size:1.3rem; margin:0 0 8px; }
+h2 { font-size:1.02rem; margin:0 0 8px; }
+p,li { margin:6px 0; color:var(--muted); }
+.kv { display:grid; grid-template-columns:120px 1fr; gap:6px 10px; font-size:.95rem; }
+.badge { display:inline-block; padding:2px 8px; border-radius:999px; font-size:.8rem; border:1px solid var(--line); }
+.good { color:var(--good); border-color:#97d6b2; background:#edf9f2; }
+.warn { color:var(--warn); border-color:#f3c78a; background:#fff6ea; }
+table { width:100%; border-collapse:collapse; font-size:.9rem; }
+th,td { border-bottom:1px solid var(--line); padding:8px 6px; text-align:left; vertical-align:top; }
+th { color:var(--muted); font-weight:600; }
+small { color:var(--muted); }
+a { color:#0a58ca; text-decoration:none; }
+a:hover { text-decoration:underline; }
+@media (max-width:640px) { .kv { grid-template-columns:1fr; } th,td { font-size:.82rem; padding:7px 4px; } }
+</style>
+</head>
+<body>
+<main>
+  <section class="card">
+    <h1>Task42 N=5 ??? ???</h1>
+    <div class="kv">
+      <div>??</div><div><span class="badge good">completed</span></div>
+      <div>????</div><div>1084.81s</div>
+      <div>Python ??</div><div>same_python_session=True</div>
+      <div>?? ??</div><div>metric=dft, alpha=0.25, ow=0.3, dw=1.0, gap=0, n_repeats=5</div>
+    </div>
+    <p><small>????: 2026-04-18T11:33:53</small></p>
+  </section>
+
+  <section class="card">
+    <h2>???? ??</h2>
+    <p>?? 4? ?? JSON? ?? <b>n_repeats=1</b>, <b>mean/std ??</b>? ???? ???? ??????.</p>
+  </section>
+
+  <section class="card">
+    <h2>T42-1 FC ????? (N=5)</h2>
+    <table><thead><tr><th>??</th><th>pitch_js (mean?std)</th><th>transition_js (mean?std)</th><th>DTW (mean?std)</th></tr></thead><tbody><tr><td>baseline</td><td>0.000373 ? 0.000281</td><td>0.026357 ? 0.000406</td><td>1.2673 ? 0.018367</td></tr><tr><td>segment_shuffle</td><td>0.000373 ? 0.000281</td><td>0.066598 ? 0.000949</td><td>1.8727 ? 0.018464</td></tr><tr><td>block_permute_block_size32</td><td>0.000373 ? 0.000281</td><td>0.026354 ? 0.000406</td><td>1.6511 ? 0.022139</td></tr><tr><td>markov_resample_temperature1.0</td><td>0.001030 ? 0.000087</td><td>0.028646 ? 0.001166</td><td>1.6998 ? 0.011655</td></tr></tbody></table>
+  </section>
+
+  <section class="card">
+    <h2>T42-2 FC ???? (N=5)</h2>
+    <table><thead><tr><th>??</th><th>vs_orig pitch_js</th><th>vs_ref pitch_js</th><th>val_loss</th></tr></thead><tbody><tr><td>original</td><td>0.000867 ? 0.000258</td><td>0.000867 ? 0.000258</td><td>0.035374 ? 0.004484</td></tr><tr><td>baseline</td><td>0.448155 ? 0.010002</td><td>0.002839 ? 0.003212</td><td>0.036084 ? 0.004821</td></tr><tr><td>scale_major</td><td>0.322445 ? 0.006974</td><td>0.005131 ? 0.002600</td><td>0.039286 ? 0.007003</td></tr><tr><td>scale_penta</td><td>0.430169 ? 0.011456</td><td>0.004970 ? 0.004608</td><td>0.036292 ? 0.004864</td></tr></tbody></table>
+  </section>
+
+  <section class="card">
+    <h2>T42-3 LSTM ???? (N=5)</h2>
+    <table><thead><tr><th>??</th><th>vs_orig pitch_js</th><th>vs_ref pitch_js</th><th>val_loss</th></tr></thead><tbody><tr><td>original</td><td>0.278054 ? 0.004922</td><td>0.278054 ? 0.004922</td><td>0.401009 ? 0.005350</td></tr><tr><td>baseline</td><td>0.629544 ? 0.026339</td><td>0.283845 ? 0.001485</td><td>0.395173 ? 0.011659</td></tr><tr><td>scale_major</td><td>0.521135 ? 0.016792</td><td>0.283212 ? 0.001186</td><td>0.397168 ? 0.007522</td></tr><tr><td>scale_penta</td><td>0.561428 ? 0.027632</td><td>0.283358 ? 0.001778</td><td>0.391390 ? 0.016836</td></tr></tbody></table>
+  </section>
+
+  <section class="card">
+    <h2>T42-4 LSTM ???? ??/??</h2>
+    <p>`temporal_reorder_lstm_dft_gap0.json`? Wave2 ????(n=1)? ???? <b>_wave2</b>? ?? ????, ?? ??? <b>_dtwverify</b>? N=5 ???????.</p>
+    <table><thead><tr><th>??</th><th>DTW (mean?std)</th><th>pitch_js (mean?std)</th><th>val_loss (mean?std)</th></tr></thead><tbody><tr><td>baseline</td><td>2.4897 ? 0.093202</td><td>0.277027 ? 0.008930</td><td>0.395844 ? 0.011677</td></tr><tr><td>segment_shuffle_retrain_x</td><td>2.4923 ? 0.086942</td><td>0.277895 ? 0.009238</td><td>0.395844 ? 0.011677</td></tr><tr><td>block_permute32_retrain_x</td><td>2.4927 ? 0.095626</td><td>0.279679 ? 0.008653</td><td>0.395844 ? 0.011677</td></tr><tr><td>markov_tau1_retrain_x</td><td>2.4986 ? 0.094459</td><td>0.278229 ? 0.008224</td><td>0.395844 ? 0.011677</td></tr><tr><td>segment_shuffle_retrain_o</td><td>2.4624 ? 0.122200</td><td>0.279427 ? 0.004447</td><td>0.395390 ? 0.012693</td></tr></tbody></table>
+    <p>verdict: {&#x27;threshold_0_5_pct_reproduced&#x27;: False, &#x27;max_dtw_change_pct&#x27;: 1.0945, &#x27;recommendation&#x27;: &#x27;전면 재작성&#x27;}</p>
+  </section>
+
+  <section class="card">
+    <h2>??? ??</h2>
+    <ul>
+      <li><a href="temporal_reorder_fc_dft_gap0_n5.json">temporal_reorder_fc_dft_gap0_n5.json</a></li>
+      <li><a href="harmony_fc_dft_gap0_n5.json">harmony_fc_dft_gap0_n5.json</a></li>
+      <li><a href="harmony_lstm_dft_gap0_n5.json">harmony_lstm_dft_gap0_n5.json</a></li>
+      <li><a href="temporal_reorder_lstm_dft_gap0_dtwverify.json">temporal_reorder_lstm_dft_gap0_dtwverify.json</a></li>
+      <li><a href="temporal_reorder_lstm_dft_gap0_wave2.json">temporal_reorder_lstm_dft_gap0_wave2.json</a></li>
+      <li><a href="phase3_task42_nrepeat_verify_summary.json">phase3_task42_nrepeat_verify_summary.json</a></li>
+    </ul>
+  </section>
+</main>
+</body>
+</html>

@@ -1,0 +1,150 @@
+{
+  "script": "run_phase3_task42_nrepeat_verify.py",
+  "date_start": "2026-04-18T11:15:48",
+  "same_python_session": true,
+  "status": "completed",
+  "config": {
+    "metric": "dft",
+    "alpha": 0.25,
+    "octave_weight": 0.3,
+    "duration_weight": 1.0,
+    "min_onset_gap": 0,
+    "post_bugfix": true,
+    "n_repeats": 5
+  },
+  "precheck": {
+    "temporal_reorder_fc_dft_gap0.json": {
+      "file": "temporal_reorder_fc_dft_gap0.json",
+      "exists": true,
+      "n_repeats": 1,
+      "has_mean_std": false,
+      "needs_rerun_n5": true,
+      "experiments_keys": [
+        "baseline",
+        "segment_shuffle",
+        "block_permute_block_size32",
+        "markov_resample_temperature1.0"
+      ]
+    },
+    "temporal_reorder_lstm_dft_gap0.json": {
+      "file": "temporal_reorder_lstm_dft_gap0.json",
+      "exists": true,
+      "n_repeats": 1,
+      "has_mean_std": false,
+      "needs_rerun_n5": true,
+      "experiments_keys": [
+        "retrainX_baseline",
+        "retrainX_segment_shuffle",
+        "retrainX_block_permute_block_size32",
+        "retrainX_markov_resample_temperature1.0",
+        "retrainO_baseline",
+        "retrainO_segment_shuffle",
+        "retrainO_block_permute_block_size32",
+        "retrainO_markov_resample_temperature1.0"
+      ]
+    },
+    "harmony_fc_dft_gap0.json": {
+      "file": "harmony_fc_dft_gap0.json",
+      "exists": true,
+      "n_repeats": 1,
+      "has_mean_std": false,
+      "needs_rerun_n5": true,
+      "experiments_keys": [
+        "original",
+        "baseline",
+        "scale_major",
+        "scale_penta"
+      ]
+    },
+    "harmony_lstm_dft_gap0.json": {
+      "file": "harmony_lstm_dft_gap0.json",
+      "exists": true,
+      "n_repeats": 1,
+      "has_mean_std": false,
+      "needs_rerun_n5": true,
+      "experiments_keys": [
+        "original",
+        "baseline",
+        "scale_major",
+        "scale_penta"
+      ]
+    }
+  },
+  "tasks": {
+    "T42-4": {
+      "wave2_snapshot_written": true,
+      "dtwverify_rerun": true,
+      "current_temporal_is_wave2_layout": true,
+      "current_temporal_n_repeats": 1,
+      "current_temporal_has_mean_std": false,
+      "wave2_snapshot_path": "C:\\WK14\\tda_pipeline\\docs\\step3_data\\temporal_reorder_lstm_dft_gap0_wave2.json",
+      "dtwverify_precheck": {
+        "file": "temporal_reorder_lstm_dft_gap0_dtwverify.json",
+        "exists": false,
+        "n_repeats": null,
+        "has_mean_std": false,
+        "needs_rerun_n5": true,
+        "experiments_keys": []
+      },
+      "dtwverify_path": "C:\\WK14\\tda_pipeline\\docs\\step3_data\\temporal_reorder_lstm_dft_gap0_dtwverify.json",
+      "dtwverify_postcheck": {
+        "file": "temporal_reorder_lstm_dft_gap0_dtwverify.json",
+        "exists": true,
+        "n_repeats": 5,
+        "has_mean_std": true,
+        "needs_rerun_n5": false,
+        "experiments_keys": []
+      }
+    },
+    "T42-1": {
+      "output": "C:\\WK14\\tda_pipeline\\docs\\step3_data\\temporal_reorder_fc_dft_gap0_n5.json",
+      "baseline_pitch_js_mean": 0.000373,
+      "pitch_js_delta_pct_vs_baseline": {
+        "segment_shuffle": 0.0,
+        "block_permute_block_size32": 0.0,
+        "markov_resample_temperature1.0": 176.1394
+      },
+      "max_abs_pitch_js_delta_pct": 176.1394
+    },
+    "T42-2": {
+      "output": "C:\\WK14\\tda_pipeline\\docs\\step3_data\\harmony_fc_dft_gap0_n5.json",
+      "best_vs_original_pitch_js_condition": "original",
+      "vs_original_pitch_js_mean": {
+        "original": 0.000867,
+        "baseline": 0.448155,
+        "scale_major": 0.322445,
+        "scale_penta": 0.430169
+      }
+    },
+    "T42-3": {
+      "output": "C:\\WK14\\tda_pipeline\\docs\\step3_data\\harmony_lstm_dft_gap0_n5.json",
+      "best_vs_original_pitch_js_condition": "original",
+      "vs_original_pitch_js_mean": {
+        "original": 0.278054,
+        "baseline": 0.629544,
+        "scale_major": 0.521135,
+        "scale_penta": 0.561428
+      }
+    }
+  },
+  "outputs": {
+    "T42-4_dtwverify": "C:\\WK14\\tda_pipeline\\docs\\step3_data\\temporal_reorder_lstm_dft_gap0_dtwverify.json",
+    "T42-4_wave2_snapshot": "C:\\WK14\\tda_pipeline\\docs\\step3_data\\temporal_reorder_lstm_dft_gap0_wave2.json",
+    "T42-1_fc_temporal_n5": "C:\\WK14\\tda_pipeline\\docs\\step3_data\\temporal_reorder_fc_dft_gap0_n5.json",
+    "T42-2_fc_harmony_n5": "C:\\WK14\\tda_pipeline\\docs\\step3_data\\harmony_fc_dft_gap0_n5.json",
+    "T42-3_lstm_harmony_n5": "C:\\WK14\\tda_pipeline\\docs\\step3_data\\harmony_lstm_dft_gap0_n5.json"
+  },
+  "hibari_context": {
+    "n_cycles": 14,
+    "T": 1088,
+    "N": 23,
+    "ph_time_s": 9.4
+  },
+  "direction_check": {
+    "t42_1_fc_temporal_independence_supported": false,
+    "t42_2_fc_harmony_best": "original",
+    "t42_3_lstm_harmony_best": "original"
+  },
+  "date_end": "2026-04-18T11:33:53",
+  "elapsed_s": 1084.81
+}
