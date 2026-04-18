@@ -170,9 +170,30 @@ python run_any_track.py --all
 # hibari 전체 파이프라인 (pkl 기반, 빠름)
 python run_test.py
 
-# 논문 PDF 빌드
+# 논문 PDF 빌드 (Markdown)
 cd docs && python build_academic_pdf.py academic_paper_full.md
+cd docs && python build_academic_pdf.py "academic_paper_portfolio (short).md"
 ```
+
+### LaTeX 빌드 레시피
+
+```bash
+cd docs/latex
+
+# 영문 IEEE — xelatex/pdflatex 모두 가능
+xelatex hibari_tda.tex
+
+# 한글본 — XeLaTeX 전용 (fontspec이 Xe/Lua 엔진 요구)
+xelatex hibari_tda_ko.tex
+
+# 보고서 — XeLaTeX 전용 (동일 사유)
+xelatex hibari_tda_report.tex
+```
+
+**중요:**
+- `hibari_tda_ko.tex` / `hibari_tda_report.tex`는 **pdflatex로 컴파일 불가** (fontspec 한글 폰트 때문). 반드시 `xelatex`.
+- **PDF 커밋 관례**: `hibari_tda.pdf` + `hibari_tda_ko.pdf`만 git tracked, `hibari_tda_report.pdf`는 untracked 유지 (보고서는 너무 길어 리포지토리 부담).
+- 컴파일 성공 검증 3항: 에러 0 / undefined ref 0 / citation 0.
 
 ## 세션 운용 가이드
 
