@@ -301,10 +301,11 @@ gap_min=3 청취 평가 폐기 결정에 따른 §4 gap=0 롤백 + bugfix 이후
 | 47 | **A** | 응답 데이터 분석 | Task 46 완료 후 | analysis_template.py 실행 — Spearman / Mann-Whitney / Wilcoxon |
 | 48 | **D** | §8 또는 §9 청취 실험 결과 반영 | Task 47 완료 후 | 수치-청각 정합성, gap=0 근거, 위상 보존 변주 청각 평가 |
 | 49 | **D** | §2.4/§2.5 methodological note (metric 공리 + Heo et al. 2025) ✓ | 완료 | full.md §2.4 #### 주석(표+3단락), short.md 1단락, LaTeX 3파일 \paragraph{Remark} 삽입. Cohen-Steiner et al. (2007) 참고문헌 전 파일 추가. 컴파일 에러 0/undefined 0/citation 0. short.md PDF 재빌드 성공 |
-| 50 | **D** | §6.7.1 / §6.8 / §8 / 초록 수치 전면 갱신 — α=0.25 per-cycle τ, JS=0.01156 | A-3 완료 (ac093ad, 2026-04-18) | **Algo1 전역 신기록 0.01489 → 0.01156 (-22.35%, N=20, p=4.94e-11)**. α=0.25가 per-cycle τ에도 최적임 확정. short.md + full.md + LaTeX 3파일. `memory/project_a3_new_record_0418.md` |
-| 51 | **A** | Algo2 FC-cont α=0.25 재실험 (현재 0.00035가 α=0.5 기반) | A-3 완료 | per-cycle τ에서 α=0.25 우위 확인됐으므로 FC-cont도 α=0.25에서 추가 개선 가능성. N=10~20 |
-| 52 | **A** | §7 모듈 단위 생성 α=0.25 per-cycle τ 재탐색 | A-3 완료 (독립) | 모듈 best global 0.01479 기록을 α=0.25로 초과 가능? 긴 작업 |
-| 53 | **E** | CLAUDE.md "현재 최적 설정" 블록 Algo1 수치 갱신 | Task 50 완료 후 | 규칙: D가 논문 반영한 뒤에만 E가 블록 수정. 0.01489 → 0.01156 |
+| 50 | **D** | §6.7.1 / §6.8 / §8 / 초록 수치 전면 갱신 — α=0.25 per-cycle τ, JS=0.01156 ✓ | 완료 | 커밋 2125055 → 06c852d → **8a14d80** (2026-04-19). full.md 구조 재편(§5↔§7 스왑) + short.md + LaTeX 3파일 + PDF 2종. 초록/§5.7/§5.8.1/§6.7/§8 전부 갱신. LaTeX xelatex/pdflatex 에러 0/undef 0/cit 0 검증. `memory/project_a3_new_record_0418.md` |
+| 51 | **A** | Algo2 FC-cont α=0.25 재실험 ✓ | 완료 | **α=0.25 FC-cont JS=0.00057±0.00046 (N=10) vs α=0.5 0.00035±0.00015, Welch p=0.168 비유의** — **Algo2 최저 α=0.5 유지**. K=14로 감소 영향. `run_fc_cont_dft_alpha025.py` + `fc_cont_dft_alpha025_results.json` (커밋 8a14d80). `memory/project_task51_fc_cont_alpha025_0418.md` |
+| 51-b | **D** | Task 51 결과 논문 반영 (짧은 각주) | Task 51 완료, 선택 사항 | §5.8.2 또는 §4.5에 "α=0.25 시험(N=10) 비유의 (p=0.168), Algo2 최저 α=0.5 유지" 1문장 각주. 우선순위 낮음 |
+| 52 | **A** | §7 모듈 단위 생성 α=0.25 per-cycle τ 재탐색 | A-3 완료 (독립) | 모듈 best global 0.01479 기록을 α=0.25로 초과 가능? 긴 작업. **주의**: Task 51에서 Algo2는 α=0.25 비유의였으므로, 모듈 Algo1도 negative 가능성 있음 |
+| 53 | **E** | CLAUDE.md "현재 최적 설정" 블록 Algo1 수치 갱신 ✓ | 완료 | 8a14d80에서 D가 직접 갱신 (규칙 예외). `Algorithm 1: DFT + per-cycle τ (α=0.25, K=14) → JS=0.01156±0.00147`. Algo2는 α=0.5 유지 명시 (Task 51 정합) |
 | 44 | **D** | §6.4 FC 서술 교체 + §6.5 ±std + §6.6.3 메타 보강 ✓ | 완료 | 커밋 19df059. §6.4 "구조적 불가능" → "pitch 분포 유지 + DTW +30~48% 실측". §6.5 ±std (FC/LSTM). §6.6.3 FC 특성 단락 추가 (DFT-FC 우수성 해석 + note 선택 논지 강화) | T39-2 solari DFT 0.0824 K=15 / T39-3 Bach 0.0951 K=30, Ravel 0.0494 K=37 (타곡 모두 기존 최적 거리 유지 — hibari만 DFT 최적). T39-4 FC 시점 독립성 실증, LSTM pitch_js 0.26~0.28. T39-5 FC/LSTM 화성 제약. ⚠ T39-4/5는 N=5 반복 재실행 검토 여지 있음 |
 
 ### 낮은 우선순위 (향후 과제)
