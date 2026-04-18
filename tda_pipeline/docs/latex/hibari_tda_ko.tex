@@ -580,14 +580,18 @@ FC~$>$~Transformer라는 결과는 ``더 많은 시간적 모델링이 항상
 \label{subsec:module}
 
 \emph{hibari}의 32-step 모듈 구조를 바탕으로, 단일 모듈을 생성하여
-전 타임라인에 복제하는 설정을 실험하였다. DFT $\alpha=0.25$에서
+전 타임라인에 복제하는 설정을 실험하였다. 여기서 모듈은
+32-step(음악적 4마디) 길이의 A-B-A'-C 반복 선율 단위이며,
+inst~1에서 33회 반복된다. DFT $\alpha=0.25$에서
 모듈 PH는 $K=14$ cycle(프로토타입 중첩행렬 크기: $32\times14$)을 갖는다.
+추가로 \S7.2 재실험에서 $1088$행 전체를 $34\times32$ 블록으로 재해석했다
+(여기서 ``마디''는 계산용 32-step 블록).
 먼저 네 가지 프로토타입 전략을 비교하였다:
 \begin{itemize}[nosep]
-\item \textbf{P0}: 첫 모듈 복사
-\item \textbf{P1}: 활성 cycle 합집합
-\item \textbf{P2}: 모듈 고유 cycle
-\item \textbf{P3}: 모듈별 활성 중앙값 기반 선택
+\item \textbf{P0}: 첫 블록 복사
+\item \textbf{P1}: 34블록 OR 합집합
+\item \textbf{P2}: 34블록 다수결(majority)
+\item \textbf{P3\_local}: local PH 재계산
 \end{itemize}
 
 \begin{table}[t]
@@ -598,10 +602,10 @@ FC~$>$~Transformer라는 결과는 ``더 많은 시간적 모델링이 항상
 \toprule
 전략 & Density & JS (평균$\pm$표준편차) & 최저 \\
 \midrule
-P0 & $0.018$ & $0.1040 \pm 0.0219$ & $0.0698$ \\
-P1 & $1.000$ & $0.0621 \pm 0.0167$ & $0.0422$ \\
-P2 & $0.000$ & $0.0900 \pm 0.0308$ & $0.0515$ \\
-\textbf{P3} & \textbf{$0.299$} & \textbf{$0.0474 \pm 0.0187$} & \textbf{$0.0226$} \\
+P0 (first\_block) & $0.018$ & $0.0957 \pm 0.0136$ & $0.0678$ \\
+P1 (OR-34) & $1.000$ & $0.0586 \pm 0.0187$ & $0.0367$ \\
+P2 (majority) & $0.049$ & $0.0692 \pm 0.0112$ & $0.0543$ \\
+\textbf{P3\_local} & \textbf{$0.531$} & \textbf{$0.0575 \pm 0.0141$} & \textbf{$0.0360$} \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -626,9 +630,11 @@ P3\_local       & $0.0721 \pm 0.0275$ & $0.0288$ & $0.813$ \\
 \end{tabular}
 \end{table}
 
-33개 시작 모듈 전수 탐색 결과, DFT 모드에서 모듈~0은 평균 JS 기준
-rank~5로 최적이 아니다. 전역 최저 단일 시행은
-start~module~1, seed~9309에서 JS~$=0.01479$이며,
+33개 시작 모듈 전수 탐색(inst~1 기준 start~module $0\ldots32$) 결과,
+DFT 모드에서 start~0은 평균 JS 기준 rank~5로 최적이 아니다.
+여기서 $k=10$은 seed 내부 best-of-$k$ 후보 수, $N=10$은 시작 모듈당
+독립 반복 횟수이다. 전역 최저 단일 시행은 start~module~1, seed~9309에서
+JS~$=0.01479$이며,
 전곡 per-cycle 최적값($0.01489$)과 사실상 동일하다.
 
 \subsection{일반화: \emph{solari}, Bach, Ravel}
@@ -856,8 +862,9 @@ barcode-Wasserstein의 유효성이 거리함수 의존적임을 시사한다.
 \begin{enumerate}[nosep]
 \item \textbf{화음 공간 불일치}: 32-step 모듈의 chord vocabulary는
       전곡 vocabulary의 진부분집합이며, 결과 barcode가 더 작은 복합체에서 형성된다.
-\item \textbf{단일 악기 한계}: 모듈 국소 PH는 단일 악기 시퀀스만 사용하므로,
-      큰 JS 개선에 기여하는 악기 간 가중 정보가 누락된다.
+\item \textbf{비대칭 창 정렬 한계}: 모듈 국소 PH는 inst1 $[32m,32m+32)$와
+      inst2 $[32m+33,32m+65)$를 함께 사용하지만, 33-step offset 정렬 때문에
+      시작 모듈에 따라 inst2 기여도가 달라진다.
 \item \textbf{스케일 민감도}: $W_1$는 birth/death 절대 스케일에 민감하며,
       32-step과 1088-step filtration 간 좌표 스케일이 다르다.
 \end{enumerate}

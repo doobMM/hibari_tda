@@ -637,14 +637,17 @@ Compared to prior TDA--music work \cite{tran2021,lee2024}:
 \label{subsec:module}
 
 \emph{hibari}'s 32-step modular structure motivates generating one
-module and replicating it across the full timeline. Under DFT
-$\alpha=0.25$, module PH yields $K=14$ cycles (prototype OM:
-$32\times14$). We first compare four prototype strategies:
+module and replicating it across the full timeline. Here, a module is a
+32-step (four-bar) repeating melodic unit with an A-B-A'-C form, repeated
+33 times in instrument~1. Under DFT $\alpha=0.25$, module PH yields $K=14$
+cycles (prototype OM: $32\times14$). In a Section~7.2 rerun, we also
+reinterpret the full 1088 rows as $34\times32$ blocks (``bar'' there means
+a computational 32-step block). We first compare four prototype strategies:
 \begin{itemize}[nosep]
-\item \textbf{P0}: first-module copy.
-\item \textbf{P1}: union-of-active.
-\item \textbf{P2}: exclusive-to-module.
-\item \textbf{P3}: module-specific median-activity module.
+\item \textbf{P0}: first-block copy.
+\item \textbf{P1}: OR over 34 blocks.
+\item \textbf{P2}: majority vote over 34 blocks.
+\item \textbf{P3\_local}: recomputed local PH.
 \end{itemize}
 
 \begin{table}[t]
@@ -655,10 +658,10 @@ $32\times14$). We first compare four prototype strategies:
 \toprule
 Strategy & Density & JS (mean$\pm$std) & Best \\
 \midrule
-P0 & $0.018$ & $0.1040 \pm 0.0219$ & $0.0698$ \\
-P1 & $1.000$ & $0.0621 \pm 0.0167$ & $0.0422$ \\
-P2 & $0.000$ & $0.0900 \pm 0.0308$ & $0.0515$ \\
-\textbf{P3} & \textbf{$0.299$} & \textbf{$0.0474 \pm 0.0187$} & \textbf{$0.0226$} \\
+P0 (first\_block) & $0.018$ & $0.0957 \pm 0.0136$ & $0.0678$ \\
+P1 (OR-34) & $1.000$ & $0.0586 \pm 0.0187$ & $0.0367$ \\
+P2 (majority) & $0.049$ & $0.0692 \pm 0.0112$ & $0.0543$ \\
+\textbf{P3\_local} & \textbf{$0.531$} & \textbf{$0.0575 \pm 0.0141$} & \textbf{$0.0360$} \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -683,9 +686,12 @@ P3\_local        & $0.0721 \pm 0.0275$ & $0.0288$ & $0.813$ \\
 \end{tabular}
 \end{table}
 
-Exhaustive start-module search over all 33 modules shows that module~0 is
-not uniquely best in DFT mode (rank~5 by mean JS). The global best trial is
-start~module~1, seed~9309, JS~$=0.01479$, essentially matching the
+Exhaustive start-module search over all 33 modules (inst~1 basis,
+start~module $0\ldots32$) shows that start~0 is not uniquely best in DFT
+mode (rank~5 by mean JS). Here $k=10$ is the best-of-$k$ candidate count
+within each seed, and $N=10$ is the number of independent seeds per start
+module. The global best trial is start~module~1, seed~9309, JS~$=0.01479$,
+essentially matching the
 full-song per-cycle best ($0.01489$).
 
 \subsection{Generalization: \emph{solari}, Bach, Ravel}
@@ -921,10 +927,11 @@ Three caveats remain:
       a 32-step window, whose chord vocabulary is a strict subset of
       the full song's.  The resulting PD inhabits a smaller simplicial
       complex.
-\item \textbf{Single-instrument limitation}: module-local PH uses only
-      one instrument's note sequence, so inter-instrument weight
-      information (which contributes the largest JS gains via decayed
-      lag weighting) is entirely absent.
+\item \textbf{Asymmetric window-alignment limitation}: module-local PH uses
+      both windows (inst1 $[32m,32m+32)$ and inst2 $[32m+33,32m+65)$), but
+      their fixed 33-step offset makes the inst2 contribution
+      start-dependent, introducing structural bias against direct 1:1
+      comparison with full-song PD.
 \item \textbf{Scale sensitivity}: $W_1$ is sensitive to the absolute
       scale of birth/death coordinates, which differ between a 32-step
       and a 1{,}088-step filtration.
