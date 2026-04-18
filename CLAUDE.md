@@ -289,7 +289,9 @@ gap_min=3 청취 평가 폐기 결정에 따른 §4 gap=0 롤백 + bugfix 이후
 |---|------|------|--------|------|
 | 38a | **A** | §7 DFT α=0.25 전면 재수행 ✓ | 완료 | 커밋 dafdff3. **K=42→14**, P3 best 유지, P3+C best 0.0250. **§7.7 first-module 우위 미재현 (rank=5)**, **§7.8 Pearson 0.503→-0.054 — 반전**. best global JS=0.01479 (§6.7.1 0.01489와 동등 ★). `memory/project_task38a_phase3_findings_0417.md` |
 | 38b | **D** | §7 전면 재서술 ✓ | 완료 | 커밋 c548371. 수식 32×42→32×14, §7.2 P0~P3 DFT 전략 교체, §7.5 P3+C best 0.0250, §7.6 **best global JS=0.01479 ≈ full-song**, §7.7 first-module rank=5 (Tonnetz-specific), §7.8 Pearson 0.503→-0.054. `memory/project_task38b_section7_rewrite_0417.md` |
-| 39 | **A** | Wave 2 누락 실험 (T39-2/3/4/5) ✓ | 완료 (N=5 반복 재검증 과제) | 커밋 5fb01b2. T39-2 solari DFT 0.0824 K=15 / T39-3 Bach 0.0951 K=30, Ravel 0.0494 K=37 (타곡 모두 기존 최적 거리 유지 — hibari만 DFT 최적). T39-4 FC 시점 독립성 실증, LSTM pitch_js 0.26~0.28. T39-5 FC/LSTM 화성 제약. ⚠ T39-4/5는 N=5 반복 재실행 검토 여지 있음 |
+| 39 | **A** | Wave 2 누락 실험 (T39-2/3/4/5) ✓ | 완료 (N=5 반복 재검증 과제) | 커밋 5fb01b2. hibari만 DFT 최적, 타곡(solari/Bach/Ravel) 기존 거리 유지 확정 |
+| 40 | **A** | §6.3~§6.6 DFT 전환 재실험 (Transformer + FC) ✓ | 완료 | 커밋 a67977d. §6.4 딜레마 재현 ✓, §6.5 scale_major 최적 유지 ✓. **§6.6 Tonnetz가 DFT 대비 ref pJS 27배 우수** — 메타 통찰 "거리 함수는 목적에 따라 최적 다름". 세션 D Task 41에서 (A/B/C) 선택. `memory/project_task40_section66_findings_0417.md` |
+| 41 | **D** | §6.3~§6.6 재서술 | Task 40 완료 + 사용자 결정 대기 | 선택지: (A) DFT-FC 교체 / (B) Tonnetz 유지 + 각주 / (C) 두 결과 병기 + 메타 통찰 ★ |  T39-2 solari DFT 0.0824 K=15 / T39-3 Bach 0.0951 K=30, Ravel 0.0494 K=37 (타곡 모두 기존 최적 거리 유지 — hibari만 DFT 최적). T39-4 FC 시점 독립성 실증, LSTM pitch_js 0.26~0.28. T39-5 FC/LSTM 화성 제약. ⚠ T39-4/5는 N=5 반복 재실행 검토 여지 있음 |
 
 ### 낮은 우선순위 (향후 과제)
 
