@@ -1,0 +1,130 @@
+{
+  "frequency": {
+    "nonnegativity": {
+      "pass": true,
+      "violations": 0,
+      "worst_example": []
+    },
+    "identity_of_indiscernibles": {
+      "pass": false,
+      "violations": 23,
+      "worst_example": [
+        "diag_nonzero",
+        13,
+        [
+          65,
+          5
+        ],
+        7.25
+      ]
+    },
+    "symmetry": {
+      "pass": true,
+      "violations": 0,
+      "worst_example": []
+    },
+    "triangle_inequality": {
+      "pass": false,
+      "violations": 1327,
+      "worst_example": [
+        21,
+        10,
+        21,
+        [
+          76,
+          1
+        ],
+        [
+          64,
+          2
+        ],
+        [
+          76,
+          1
+        ],
+        7.25,
+        0.005128205128205128,
+        7.244871794871795
+      ]
+    }
+  },
+  "tonnetz": {
+    "nonnegativity": {
+      "pass": true,
+      "violations": 0,
+      "worst_example": []
+    },
+    "identity_of_indiscernibles": {
+      "pass": true,
+      "violations": 0,
+      "worst_example": []
+    },
+    "symmetry": {
+      "pass": true,
+      "violations": 0,
+      "worst_example": []
+    },
+    "triangle_inequality": {
+      "pass": true,
+      "violations": 0,
+      "worst_example": []
+    }
+  },
+  "voice_leading": {
+    "nonnegativity": {
+      "pass": true,
+      "violations": 0,
+      "worst_example": []
+    },
+    "identity_of_indiscernibles": {
+      "pass": true,
+      "violations": 0,
+      "worst_example": []
+    },
+    "symmetry": {
+      "pass": true,
+      "violations": 0,
+      "worst_example": []
+    },
+    "triangle_inequality": {
+      "pass": true,
+      "violations": 0,
+      "worst_example": []
+    }
+  },
+  "dft": {
+    "nonnegativity": {
+      "pass": true,
+      "violations": 0,
+      "worst_example": []
+    },
+    "identity_of_indiscernibles": {
+      "pass": false,
+      "violations": 66,
+      "worst_example": [
+        "offdiag_nonpositive",
+        1,
+        2,
+        [
+          52,
+          2
+        ],
+        [
+          53,
+          2
+        ],
+        0.0
+      ]
+    },
+    "symmetry": {
+      "pass": true,
+      "violations": 0,
+      "worst_example": []
+    },
+    "triangle_inequality": {
+      "pass": true,
+      "violations": 0,
+      "worst_example": []
+    }
+  }
+}

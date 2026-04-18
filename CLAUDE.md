@@ -300,6 +300,7 @@ gap_min=3 청취 평가 폐기 결정에 따른 §4 gap=0 롤백 + bugfix 이후
 | 46 | **C** | 청취 실험 파일럿 실행 | Task 45-B 완료 (인간 주도) | 피험자 모집 + 응답 수집. 파일럿 N=10 비공식 가능. stimuli 길이 (45초 vs 전체) 결정 필요 |
 | 47 | **A** | 응답 데이터 분석 | Task 46 완료 후 | analysis_template.py 실행 — Spearman / Mann-Whitney / Wilcoxon |
 | 48 | **D** | §8 또는 §9 청취 실험 결과 반영 | Task 47 완료 후 | 수치-청각 정합성, gap=0 근거, 위상 보존 변주 청각 평가 |
+| 49 | **D** | §2.4/§2.5 methodological note (metric 공리 + Heo et al. 2025) | A-1 완료 (2026-04-18) | frequency(identity+triangle)/dft(identity) 공리 위반 → Heo-Choi-Jung (2025) path-representable + cost-dominated 프레임워크 Thm 3.4로 정당화. full.md + short.md + LaTeX 3파일 참고문헌 추가. `memory/project_metric_axiom_pathrep_0418.md` 초안 참조 |
 | 44 | **D** | §6.4 FC 서술 교체 + §6.5 ±std + §6.6.3 메타 보강 ✓ | 완료 | 커밋 19df059. §6.4 "구조적 불가능" → "pitch 분포 유지 + DTW +30~48% 실측". §6.5 ±std (FC/LSTM). §6.6.3 FC 특성 단락 추가 (DFT-FC 우수성 해석 + note 선택 논지 강화) | T39-2 solari DFT 0.0824 K=15 / T39-3 Bach 0.0951 K=30, Ravel 0.0494 K=37 (타곡 모두 기존 최적 거리 유지 — hibari만 DFT 최적). T39-4 FC 시점 독립성 실증, LSTM pitch_js 0.26~0.28. T39-5 FC/LSTM 화성 제약. ⚠ T39-4/5는 N=5 반복 재실행 검토 여지 있음 |
 
 ### 낮은 우선순위 (향후 과제)
