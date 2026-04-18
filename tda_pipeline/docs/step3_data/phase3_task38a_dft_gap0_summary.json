@@ -1,6 +1,6 @@
 {
   "script": "run_phase3_task38a_dft_gap0.py",
-  "date_start": "2026-04-18T03:43:16",
+  "date_start": "2026-04-19T01:40:02",
   "same_python_session": true,
   "status": "completed",
   "config": {
@@ -27,13 +27,13 @@
     },
     "T38a-4": {
       "best_strategy": "P3_plus_C_best_of_10",
-      "best_mean_js": 0.04399426051135142,
-      "p3_cycle_count": 9
+      "best_mean_js": 0.04173774424124477,
+      "p3_cycle_count": 11
     },
     "T38a-5": {
       "best_global_js": 0.014789530078758847,
       "best_global_info": {
-        "start_module": 1,
+        "start_module": 0,
         "seed": 9309,
         "module_coverage": 21,
         "coverage": 0.9130434782608695,
@@ -43,12 +43,12 @@
         "best_j": 1
       },
       "first_module_advantage": false,
-      "first_module_rank": 5
+      "first_module_rank": 16
     },
     "T38a-6": {
-      "pearson_w_js": -0.05414118878087057,
-      "w_mean": 0.5490294959741573,
-      "js_mean": 0.0417278986628513
+      "pearson_w_js": 0.24571668822455464,
+      "w_mean": 0.48613558869165097,
+      "js_mean": 0.05675225548946396
     }
   },
   "outputs": {
@@ -75,10 +75,9 @@
     "total_length": 1088
   },
   "alpha025_bundle_cache": {
-    "used_cache": false,
-    "cache_path": "C:\\WK14\\tda_pipeline\\cache\\metric_dft_alpha0p25_ow0p3_dw1p0.pkl",
-    "build_elapsed_s": 10.89
+    "used_cache": true,
+    "cache_path": "C:\\WK14\\tda_pipeline\\cache\\metric_dft_alpha0p25_ow0p3_dw1p0.pkl"
   },
-  "date_end": "2026-04-18T03:44:12",
-  "elapsed_s": 55.25
+  "date_end": "2026-04-19T01:40:29",
+  "elapsed_s": 26.09
 }

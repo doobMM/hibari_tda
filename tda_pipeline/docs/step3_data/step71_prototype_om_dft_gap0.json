@@ -5,14 +5,14 @@
   "duration_weight": 1.0,
   "min_onset_gap": 0,
   "n_repeats": 0,
-  "date": "2026-04-18T03:43:27",
+  "date": "2026-04-19T01:40:03",
   "script": "run_phase3_task38a_dft_gap0.py",
   "post_bugfix": true,
-  "commit_sha": "604d6a93a23b",
+  "commit_sha": "f1448d7213ad",
   "task": "T38a-1",
   "K": 14,
   "cycle_count": 14,
-  "cache_used": false,
+  "cache_used": true,
   "overlap_shape_binary": [
     1088,
     14
@@ -81,9 +81,8 @@
       ]
     },
     "alpha025_cache": {
-      "used_cache": false,
-      "cache_path": "C:\\WK14\\tda_pipeline\\cache\\metric_dft_alpha0p25_ow0p3_dw1p0.pkl",
-      "build_elapsed_s": 10.89
+      "used_cache": true,
+      "cache_path": "C:\\WK14\\tda_pipeline\\cache\\metric_dft_alpha0p25_ow0p3_dw1p0.pkl"
     }
   },
   "ph_time_s": 10.9
