@@ -364,13 +364,21 @@ def compute_module_local_ph(
     num_chords = data["num_chords"]
     n_notes = len(notes_label)
 
-    t1_lo = start_module * MODULE_LEN
-    t1_hi = t1_lo + MODULE_LEN
-    t2_lo = t1_lo + INST2_INIT_OFFSET
-    t2_hi = min(t2_lo + MODULE_LEN, data["T"])
+    # 2026-04-19 Task 56 Option B: 두 악기 동일 물리 시각 창 [32(m+1), 32(m+2))
+    # 이유: 기존 t2_lo = t1_lo + 33은 index lag=1을 physical 34-step lag로 왜곡.
+    # Option B는 seq_a/seq_b 동기(같은 물리 t 참조) → inter lag=1 = physical 1.
+    window_lo = (start_module + 1) * MODULE_LEN
+    window_hi = window_lo + MODULE_LEN
+    if window_hi > data["T"]:
+        return None, None, 0
 
-    cs1 = data["chord_seq1"][t1_lo:t1_hi]
-    cs2 = data["chord_seq2"][t2_lo:t2_hi]
+    t1_lo = window_lo
+    t1_hi = window_hi
+    t2_lo = window_lo
+    t2_hi = window_hi
+
+    cs1 = data["chord_seq1"][window_lo:window_hi]
+    cs2 = data["chord_seq2"][window_lo:window_hi]
 
     if sum(1 for c in cs1 if c is not None) < 2 or sum(1 for c in cs2 if c is not None) < 2:
         return None, None, 0
@@ -419,18 +427,16 @@ def compute_module_local_ph(
 
     nodes_list = list(range(1, n_notes + 1))
     ntd = np.zeros((MODULE_LEN, n_notes), dtype=int)
-    inst1_mod = [(s, p, e) for (s, p, e) in inst1 if t1_lo <= s < t1_hi]
-    inst2_mod = [(s, p, e) for (s, p, e) in inst2 if t2_lo <= s < t2_hi]
+    # Option B: 두 악기 동일 창이므로 window_lo 기준으로 일괄 변환
+    inst1_mod = [(s, p, e) for (s, p, e) in inst1 if window_lo <= s < window_hi]
+    inst2_mod = [(s, p, e) for (s, p, e) in inst2 if window_lo <= s < window_hi]
     for s, p, e in inst1_mod + inst2_mod:
         d = e - s
         key = (p, d)
         if key not in notes_label:
             continue
         lbl = notes_label[key]
-        if s >= t2_lo:
-            t_start = s - t2_lo
-        else:
-            t_start = s - t1_lo
+        t_start = s - window_lo
         t_end = min(t_start + d, MODULE_LEN)
         for t in range(max(0, t_start), max(0, t_end)):
             if 0 <= t < MODULE_LEN:
@@ -892,9 +898,11 @@ def task_5(data: dict[str, Any]) -> tuple[str, dict[str, Any]]:
     k_best = 10
     base_seeds = list(range(9300, 9300 + n_repeats))
 
-    # Feedback #22 source file is not available in this workspace.
-    # Use the established 33 start-module basis for consistency.
-    start_modules = list(range(33))
+    # 2026-04-19 Task 56 Option B: 두 악기 동일 창 [32(m+1), 32(m+2)) 정책.
+    # T=1088, MODULE_LEN=32 → window_hi = 32(m+2) ≤ T → m ≤ 32.
+    # 단 m=32일 때 창 [1056, 1088)은 inst1 없이 inst2만 → PH 불안정 → 제외.
+    # m ∈ [0, 31] (32개) 사용. start_module=m 창은 inst1 module (m+1) 구간.
+    start_modules = list(range(32))
 
     results: dict[str, Any] = {}
     best_global = {"js": float("inf"), "info": None}
@@ -972,12 +980,12 @@ def task_5(data: dict[str, Any]) -> tuple[str, dict[str, Any]]:
             extra={
                 "task": "T38a-5",
                 "k_best": k_best,
-                "start_module_basis": 33,
+                "start_module_basis": 32,
             },
         ),
         "study_scope": {
-            "start_module_basis": 33,
-            "reason": "feedback #22 file not found; keep established 33-module basis for consistency",
+            "start_module_basis": 32,
+            "reason": "Task 56 Option B: window [32(m+1), 32(m+2)), m in [0, 31] (32 modules; m=32 excluded — inst1 missing)",
             "start_modules": start_modules,
             "k_best": k_best,
             "n_repeats_per_start_module": n_repeats,
