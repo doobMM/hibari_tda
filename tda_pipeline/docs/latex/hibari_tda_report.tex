@@ -247,6 +247,21 @@ d(n_1, n_2) = d_{\mathrm{base}} + w_o |o_1 - o_2| + w_d \frac{|d_1 - d_2|}{\max(
 여기서 $w_o = 0.3$ (격자 탐색으로 최적화, \S\ref{subsec:octave}),
 $w_d = 0.3$이다.
 
+\paragraph{주석 --- metric 공리와 이론적 정당성}
+\label{para:metric_axioms}
+실험적 검증에 따르면, Tonnetz와 voice-leading은 metric 공리를 모두 만족하나,
+frequency는 identity 공리($23$건) 및 삼각 부등식($1{,}327$건)을 위반하며(non-metric),
+dft는 identity 공리($66$건)를 위반한다(pseudometric --- magnitude-only 설계의 의도된 귀결).
+Cohen-Steiner et al.\,\cite{cohensteiner2007}의 고전적 stability 정리(metric 입력에 대해
+$d_B \le \|d_1-d_2\|_\infty$ 보장)는 따라서 이 두 거리에 직접 적용할 수 없다.
+대신 Heo et al.\,\cite{heo2025}를 적용한다:
+거리 행렬 $D$를 완전그래프 $K_n$의 edge weight로 부여하면 path-representable +
+cost-dominated 조건이 자명하게 성립하며, Theorem~3.4에 의해
+$d_i \le d_j$ 관계 하에서 $\mathrm{bcd}_1(d_i)\hookrightarrow\mathrm{bcd}_1(d_j)$의
+order-preserving injection이 보장된다.
+따라서 네 거리 함수 모두에서 1-cycle 분석은 이론적으로 정당화된다
+($k \ge 2$에는 미적용 --- \cite{heo2025}의 Theorem~5.1).
+
 \subsection{가중치 분해와 Rate 파라미터}
 \label{subsec:weights}
 
@@ -874,6 +889,12 @@ G.~Carlsson, ``Topology and data,''
 \bibitem{edelsbrunner2010}
 H.~Edelsbrunner and J.~Harer,
 \emph{Computational Topology: An Introduction}. AMS, 2010.
+
+\bibitem{cohensteiner2007}
+D.~Cohen-Steiner, H.~Edelsbrunner, and J.~Harer,
+``Stability of persistence diagrams,''
+\emph{Discrete \& Computational Geometry}, vol.~37, no.~1,
+pp.~103--120, 2007.
 
 \bibitem{tymoczko2012}
 D.~Tymoczko, ``The generalized Tonnetz,''

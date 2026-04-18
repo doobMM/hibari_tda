@@ -300,7 +300,7 @@ gap_min=3 청취 평가 폐기 결정에 따른 §4 gap=0 롤백 + bugfix 이후
 | 46 | **C** | 청취 실험 파일럿 실행 | Task 45-B 완료 (인간 주도) | 피험자 모집 + 응답 수집. 파일럿 N=10 비공식 가능. stimuli 길이 (45초 vs 전체) 결정 필요 |
 | 47 | **A** | 응답 데이터 분석 | Task 46 완료 후 | analysis_template.py 실행 — Spearman / Mann-Whitney / Wilcoxon |
 | 48 | **D** | §8 또는 §9 청취 실험 결과 반영 | Task 47 완료 후 | 수치-청각 정합성, gap=0 근거, 위상 보존 변주 청각 평가 |
-| 49 | **D** | §2.4/§2.5 methodological note (metric 공리 + Heo et al. 2025) | A-1 완료 (2026-04-18) | frequency(identity+triangle)/dft(identity) 공리 위반 → Heo-Choi-Jung (2025) path-representable + cost-dominated 프레임워크 Thm 3.4로 정당화. full.md + short.md + LaTeX 3파일 참고문헌 추가. `memory/project_metric_axiom_pathrep_0418.md` 초안 참조 |
+| 49 | **D** | §2.4/§2.5 methodological note (metric 공리 + Heo et al. 2025) ✓ | 완료 | full.md §2.4 #### 주석(표+3단락), short.md 1단락, LaTeX 3파일 \paragraph{Remark} 삽입. Cohen-Steiner et al. (2007) 참고문헌 전 파일 추가. 컴파일 에러 0/undefined 0/citation 0. short.md PDF 재빌드 성공 |
 | 50 | **D** | §6.7.1 / §6.8 / §8 / 초록 수치 전면 갱신 — α=0.25 per-cycle τ, JS=0.01156 | A-3 완료 (ac093ad, 2026-04-18) | **Algo1 전역 신기록 0.01489 → 0.01156 (-22.35%, N=20, p=4.94e-11)**. α=0.25가 per-cycle τ에도 최적임 확정. short.md + full.md + LaTeX 3파일. `memory/project_a3_new_record_0418.md` |
 | 51 | **A** | Algo2 FC-cont α=0.25 재실험 (현재 0.00035가 α=0.5 기반) | A-3 완료 | per-cycle τ에서 α=0.25 우위 확인됐으므로 FC-cont도 α=0.25에서 추가 개선 가능성. N=10~20 |
 | 52 | **A** | §7 모듈 단위 생성 α=0.25 per-cycle τ 재탐색 | A-3 완료 (독립) | 모듈 best global 0.01479 기록을 α=0.25로 초과 가능? 긴 작업 |

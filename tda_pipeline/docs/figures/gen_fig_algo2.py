@@ -7,16 +7,34 @@ img = Image.new('RGB', (W, H), '#FFFFFF')
 draw = ImageDraw.Draw(img)
 
 FD = r'C:\Users\82104\AppData\Roaming\Claude\local-agent-mode-sessions\skills-plugin\c7bf07f7-1002-4049-9e02-01ea99ddb5fe\246d5b4c-791e-4fbf-b7e9-43d2e2418f22\skills\canvas-design\canvas-fonts'
-ft_title = ImageFont.truetype(os.path.join(FD, 'InstrumentSans-Bold.ttf'), 20)
-ft_sec = ImageFont.truetype(os.path.join(FD, 'InstrumentSans-Bold.ttf'), 14)
-ft_label = ImageFont.truetype(os.path.join(FD, 'InstrumentSans-Regular.ttf'), 12)
-ft_sm = ImageFont.truetype(os.path.join(FD, 'InstrumentSans-Regular.ttf'), 10)
-ft_rb = ImageFont.truetype(os.path.join(FD, 'InstrumentSans-Bold.ttf'), 11)
-ft_rule = ImageFont.truetype(os.path.join(FD, 'InstrumentSans-Regular.ttf'), 11)
-ft_mono = ImageFont.truetype(os.path.join(FD, 'GeistMono-Regular.ttf'), 10)
-ft_mono_sm = ImageFont.truetype(os.path.join(FD, 'GeistMono-Regular.ttf'), 9)
-ft_tiny = ImageFont.truetype(os.path.join(FD, 'GeistMono-Regular.ttf'), 7)
-ft_or = ImageFont.truetype(os.path.join(FD, 'InstrumentSans-Bold.ttf'), 12)
+SYSF = os.path.join(os.environ.get('WINDIR', r'C:\Windows'), 'Fonts')
+
+def _safe_font(font_name, size, *, mono=False, bold=False):
+    candidates = [os.path.join(FD, font_name)]
+    if mono:
+        candidates += [os.path.join(SYSF, 'consola.ttf'), os.path.join(SYSF, 'cour.ttf')]
+    elif bold:
+        candidates += [os.path.join(SYSF, 'segoeuib.ttf'), os.path.join(SYSF, 'arialbd.ttf')]
+    else:
+        candidates += [os.path.join(SYSF, 'segoeui.ttf'), os.path.join(SYSF, 'arial.ttf')]
+    for path in candidates:
+        if path and os.path.exists(path):
+            try:
+                return ImageFont.truetype(path, size)
+            except OSError:
+                pass
+    return ImageFont.load_default()
+
+ft_title = _safe_font('InstrumentSans-Bold.ttf', 20, bold=True)
+ft_sec = _safe_font('InstrumentSans-Bold.ttf', 14, bold=True)
+ft_label = _safe_font('InstrumentSans-Regular.ttf', 12)
+ft_sm = _safe_font('InstrumentSans-Regular.ttf', 10)
+ft_rb = _safe_font('InstrumentSans-Bold.ttf', 11, bold=True)
+ft_rule = _safe_font('InstrumentSans-Regular.ttf', 11)
+ft_mono = _safe_font('GeistMono-Regular.ttf', 10, mono=True)
+ft_mono_sm = _safe_font('GeistMono-Regular.ttf', 9, mono=True)
+ft_tiny = _safe_font('GeistMono-Regular.ttf', 7, mono=True)
+ft_or = _safe_font('InstrumentSans-Bold.ttf', 12, bold=True)
 
 TEAL = '#1A9E96'; TEAL_D = '#0D6B65'; TEAL_L = '#D4F0ED'
 GRAY = '#CCCCCC'; GRAY_T = '#666666'; DARK = '#1A1A1A'; BG = '#F7FAFA'
@@ -83,7 +101,11 @@ for i, (name, border, text_c, bg_c, spec, desc_lines) in enumerate(models):
     draw.rounded_rectangle([(bx+2, by_+2), (bx+box_w-2, by_+34)], radius=4, fill=bg_c)
     draw.text((bx+box_w//2, by_+17), name, fill=text_c, font=ft_sec, anchor='mm')
     draw.text((bx+box_w//2, by_+46), spec, fill=GRAY_T, font=ft_mono_sm, anchor='mt')
-    vy=by_+65
+    base_vy = by_ + 65
+    if name in ('FC', 'LSTM'):
+        vy = base_vy + 14
+    else:
+        vy = base_vy + 18
     if name=='FC':
         layers=[4,5,4,3]
         for li,n in enumerate(layers):
@@ -103,12 +125,19 @@ for i, (name, border, text_c, bg_c, spec, desc_lines) in enumerate(models):
                 draw.line([(cx,cy+11),(cx,cy+31)], fill=PURPLE, width=1)
                 draw.polygon([(cx,cy+31),(cx-3,cy+26),(cx+3,cy+26)], fill=PURPLE)
     else:
-        for ai in range(4):
-            for aj in range(4):
-                cx=bx+28+ai*25; cy=vy+aj*25; intensity=max(0,200-abs(ai-aj)*60); r=7
-                fc=f'#{255-intensity:02x}{220-intensity//2:02x}{180-intensity//3:02x}'
+        grid_n = 4
+        step = 25
+        grid_span = (grid_n - 1) * step
+        gx0 = bx + (box_w - grid_span) // 2
+        for ai in range(grid_n):
+            for aj in range(grid_n):
+                cx = gx0 + ai * step
+                cy = vy + aj * step
+                intensity = max(0, 200 - abs(ai - aj) * 60)
+                r = 7
+                fc = f'#{255-intensity:02x}{220-intensity//2:02x}{180-intensity//3:02x}'
                 draw.ellipse([(cx-r,cy-r),(cx+r,cy+r)], fill=fc, outline=WARM)
-        draw.text((bx+box_w//2, vy+4*25+4), 'attention weights', fill=GRAY_T, font=ft_mono_sm, anchor='mt')
+        draw.text((bx+box_w//2, vy+grid_span+18), 'attention weights', fill=GRAY_T, font=ft_mono_sm, anchor='mt')
     for di, line in enumerate(desc_lines):
         draw.text((bx+box_w//2, by_+box_h-30+di*13), line, fill=GRAY_T, font=ft_sm, anchor='mt')
     if i<2:

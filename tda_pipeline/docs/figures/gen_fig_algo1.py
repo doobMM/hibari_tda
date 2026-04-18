@@ -9,14 +9,32 @@ draw = ImageDraw.Draw(img)
 
 # Fonts
 FD = r'C:\Users\82104\AppData\Roaming\Claude\local-agent-mode-sessions\skills-plugin\c7bf07f7-1002-4049-9e02-01ea99ddb5fe\246d5b4c-791e-4fbf-b7e9-43d2e2418f22\skills\canvas-design\canvas-fonts'
-ft_title = ImageFont.truetype(os.path.join(FD, 'InstrumentSans-Bold.ttf'), 22)
-ft_sec = ImageFont.truetype(os.path.join(FD, 'InstrumentSans-Bold.ttf'), 15)
-ft_label = ImageFont.truetype(os.path.join(FD, 'InstrumentSans-Regular.ttf'), 12)
-ft_sm = ImageFont.truetype(os.path.join(FD, 'InstrumentSans-Regular.ttf'), 10)
-ft_rule = ImageFont.truetype(os.path.join(FD, 'InstrumentSans-Regular.ttf'), 11)
-ft_rb = ImageFont.truetype(os.path.join(FD, 'InstrumentSans-Bold.ttf'), 11)
-ft_mono = ImageFont.truetype(os.path.join(FD, 'GeistMono-Regular.ttf'), 10)
-ft_mono_sm = ImageFont.truetype(os.path.join(FD, 'GeistMono-Regular.ttf'), 9)
+SYSF = os.path.join(os.environ.get('WINDIR', r'C:\Windows'), 'Fonts')
+
+def _safe_font(font_name, size, *, mono=False, bold=False):
+    candidates = [os.path.join(FD, font_name)]
+    if mono:
+        candidates += [os.path.join(SYSF, 'consola.ttf'), os.path.join(SYSF, 'cour.ttf')]
+    elif bold:
+        candidates += [os.path.join(SYSF, 'segoeuib.ttf'), os.path.join(SYSF, 'arialbd.ttf')]
+    else:
+        candidates += [os.path.join(SYSF, 'segoeui.ttf'), os.path.join(SYSF, 'arial.ttf')]
+    for path in candidates:
+        if path and os.path.exists(path):
+            try:
+                return ImageFont.truetype(path, size)
+            except OSError:
+                pass
+    return ImageFont.load_default()
+
+ft_title = _safe_font('InstrumentSans-Bold.ttf', 22, bold=True)
+ft_sec = _safe_font('InstrumentSans-Bold.ttf', 15, bold=True)
+ft_label = _safe_font('InstrumentSans-Regular.ttf', 12)
+ft_sm = _safe_font('InstrumentSans-Regular.ttf', 10)
+ft_rule = _safe_font('InstrumentSans-Regular.ttf', 11)
+ft_rb = _safe_font('InstrumentSans-Bold.ttf', 11, bold=True)
+ft_mono = _safe_font('GeistMono-Regular.ttf', 10, mono=True)
+ft_mono_sm = _safe_font('GeistMono-Regular.ttf', 9, mono=True)
 
 # Colors
 TEAL = '#1A9E96'
@@ -38,7 +56,7 @@ s1x, s1y, s1w, s1h = 40, 80, 300, 540
 draw.rounded_rectangle([(s1x, s1y), (s1x+s1w, s1y+s1h)], radius=6, fill=BG, outline=GRAY)
 draw.text((s1x+s1w//2, s1y+16), 'Overlap Matrix  O[t, c]', fill=DARK, font=ft_sec, anchor='mt')
 
-gx, gy = s1x+55, s1y+50
+gx, gy = s1x+55, s1y+74
 cw, ch = 34, 34
 rows, cols = 12, 6
 clabels = ['c1','c2','c3','c4','c5','c6']
@@ -80,7 +98,7 @@ for i, ch_ in enumerate('time'):
 hy1 = gy + 1*ch
 draw.rectangle([(gx-2, hy1-1), (gx+cols*cw+2, hy1+ch+1)], outline=WARM, width=2)
 hy2 = gy + 7*ch
-draw.rectangle([(gx-2, hy2-1), (gx+cols*cw+2, hy2+ch+1)], outline=TEAL_D, width=2)
+draw.rectangle([(gx-2, hy2-1), (gx+cols*cw+2, hy2+ch+1)], outline=TEAL, width=2)
 
 # Legend
 ly = gy + rows*ch + 20

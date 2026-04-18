@@ -219,6 +219,24 @@ d(n_1, n_2) = d_{\mathrm{base}} + w_o |o_1 - o_2| + w_d \frac{|d_1 - d_2|}{\max(
 with $w_o = 0.3$ (optimized via grid search, \S\ref{subsec:octave})
 and $w_d = 0.3$.
 
+\paragraph{Remark on metric axioms}
+\label{para:metric_axioms}
+Experimental verification shows that Tonnetz and voice-leading satisfy all
+metric axioms, while frequency violates identity ($23$ cases) and the triangle
+inequality ($1{,}327$ cases; non-metric), and DFT violates identity
+($66$ cases; pseudometric---an intentional consequence of its magnitude-only
+design).
+The classical stability theorem of Cohen-Steiner et al.\ \cite{cohensteiner2007}
+(bounding bottleneck distance by $\|d_1-d_2\|_\infty$ for metric inputs)
+therefore does not apply directly.
+Instead, we invoke Heo et al.\ \cite{heo2025}: assigning $D$ as edge
+weights on the complete graph $K_n$ trivially satisfies their
+\emph{path-representable} and \emph{cost-dominated} conditions.
+By Theorem~3.4 thereof, an order-preserving injection
+$\mathrm{bcd}_1(d_i)\hookrightarrow\mathrm{bcd}_1(d_j)$ exists for $d_i\le d_j$,
+justifying 1-cycle analysis for all four distances.
+(The guarantee does not extend to $k\ge 2$; see Theorem~5.1 of \cite{heo2025}.)
+
 \subsection{Weight Decomposition and Rate Parameter}
 \label{subsec:weights}
 
@@ -985,6 +1003,12 @@ G.~Carlsson, ``Topology and data,''
 \bibitem{edelsbrunner2010}
 H.~Edelsbrunner and J.~Harer,
 \emph{Computational Topology: An Introduction}. AMS, 2010.
+
+\bibitem{cohensteiner2007}
+D.~Cohen-Steiner, H.~Edelsbrunner, and J.~Harer,
+``Stability of persistence diagrams,''
+\emph{Discrete \& Computational Geometry}, vol.~37, no.~1,
+pp.~103--120, 2007.
 
 \bibitem{tymoczko2012}
 D.~Tymoczko, ``The generalized Tonnetz,''
