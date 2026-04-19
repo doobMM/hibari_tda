@@ -330,6 +330,15 @@ gap_min=3 청취 평가 폐기 결정에 따른 §4 gap=0 롤백 + bugfix 이후
 | 56 | **B+D** | §6 P3_local window 재설계 (Option B) — `[32(m+1), 32(m+2))` both instruments ✓ | 완료 | 커밋 148b16d (B 코드) + 101ffa7 (B JSON) + **6c83ddc (D 재서술)**. §6.2 P3 mean `0.0474±0.0187`, §6.5 P3+C best **`0.0167`** (seed 7300, baseline 하회), §6.7 32개 시작 마디 (best global JS=0.01479 유지, Phase1 동등 / Phase2 0.01156 미달 +28%), **§6.8 Pearson −0.054 → +0.2457 반전 ★** (설계 의도 부합 검증). 용어 "모듈→마디" rename + 비대칭 창 한계 서술 제거 + history footnote. PDF 4종 재빌드 + 3항 검증 통과. `memory/project_task56_b_execution_0419.md` + `project_task56_d_revision_checklist_0419.md` |
 | 44 | **D** | §6.4 FC 서술 교체 + §6.5 ±std + §6.6.3 메타 보강 ✓ | 완료 | 커밋 19df059. §6.4 "구조적 불가능" → "pitch 분포 유지 + DTW +30~48% 실측". §6.5 ±std (FC/LSTM). §6.6.3 FC 특성 단락 추가 (DFT-FC 우수성 해석 + note 선택 논지 강화) | T39-2 solari DFT 0.0824 K=15 / T39-3 Bach 0.0951 K=30, Ravel 0.0494 K=37 (타곡 모두 기존 최적 거리 유지 — hibari만 DFT 최적). T39-4 FC 시점 독립성 실증, LSTM pitch_js 0.26~0.28. T39-5 FC/LSTM 화성 제약. ⚠ T39-4/5는 N=5 반복 재실행 검토 여지 있음 |
 
+### 260419 피드백 후속 과제 (2026-04-19 신설)
+
+| # | 세션 | 작업 | 의존성 | 비고 |
+|---|------|------|--------|------|
+| 57 | **D** | LaTeX 3파일 260419 sweep 동기화 | 260419 sweep 완료 (커밋 2aac918) | md에 반영된 사항(Algo1 0.00902, α-grid 표, tie 정규화, §6.3~§6.4 DFT 관련, Bach/Ravel 수치 등) → hibari_tda.tex / ko.tex / report.tex 적용. 컴파일 에러 0 검증 필수 |
+| 58 | **D** | §2.4~§2.5 stability + path-representable 완성 | Heo et al. (2025) PDF 첨부 후 | **대기 중** — 사용자가 논문 PDF 제공 시 D 세션에서 수식 정리. Task 49 기반 추가 보강 |
+| 59 | **D** | 밑도드리 연구 퍼블리시 연도 확인 | 없음 | §1 또는 참고문헌 날짜 검증. 짧은 작업 |
+| 60 | **D** | QR 코드 첨부 | 없음 | 논문 내 관련 링크(코드 저장소 등) QR 이미지 삽입. 별도 Task |
+
 ### 낮은 우선순위 (향후 과제)
 
 | # | 세션 | 작업 | 비고 |
