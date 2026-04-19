@@ -73,6 +73,11 @@ def load_alpha025_cache():
 
 
 def setup_hibari():
+# --- path_bootstrap ---
+import os as _rp_os, sys as _rp_sys
+_rp_sys.path.insert(0, _rp_os.path.dirname(_rp_os.path.dirname(_rp_os.path.abspath(__file__))))
+# --- end path_bootstrap ---
+
     from preprocessing import (
         build_chord_labels, build_note_labels, chord_to_note_labels,
         group_notes_with_duration, load_and_quantize, prepare_lag_sequences,

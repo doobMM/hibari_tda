@@ -9,6 +9,11 @@ import pandas as pd
 
 sys.path.insert(0, ".")
 
+# --- path_bootstrap ---
+import os as _rp_os, sys as _rp_sys
+_rp_sys.path.insert(0, _rp_os.path.dirname(_rp_os.path.dirname(_rp_os.path.abspath(__file__))))
+# --- end path_bootstrap ---
+
 from eval_metrics import evaluate_generation
 from generation import NodePool, CycleSetManager, algorithm1_optimized
 from musical_metrics import compute_note_distance_matrix, compute_hybrid_distance

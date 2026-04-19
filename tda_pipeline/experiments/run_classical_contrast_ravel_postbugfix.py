@@ -10,6 +10,11 @@ from __future__ import annotations
 import json
 import os
 
+# --- path_bootstrap ---
+import os as _rp_os, sys as _rp_sys
+_rp_sys.path.insert(0, _rp_os.path.dirname(_rp_os.path.dirname(_rp_os.path.abspath(__file__))))
+# --- end path_bootstrap ---
+
 from config import PipelineConfig
 from run_any_track import ALPHA, METRICS, N_ALGO1, process_one
 from utils.result_meta import build_result_header

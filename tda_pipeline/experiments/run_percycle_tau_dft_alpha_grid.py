@@ -23,6 +23,11 @@ from typing import Any
 import numpy as np
 from scipy import stats
 
+# --- path_bootstrap ---
+import os as _rp_os, sys as _rp_sys
+_rp_sys.path.insert(0, _rp_os.path.dirname(_rp_os.path.dirname(_rp_os.path.abspath(__file__))))
+# --- end path_bootstrap ---
+
 import run_dft_gap0_suite as suite
 
 

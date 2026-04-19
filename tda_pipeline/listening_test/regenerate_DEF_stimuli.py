@@ -36,8 +36,10 @@ except Exception:
     torch = None
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-if str(BASE_DIR) not in sys.path:
-    sys.path.insert(0, str(BASE_DIR))
+for _p in (BASE_DIR, BASE_DIR / "tools", BASE_DIR / "experiments"):
+    _sp = str(_p)
+    if _sp not in sys.path:
+        sys.path.insert(0, _sp)
 
 from generation import (
     MusicGeneratorFC,

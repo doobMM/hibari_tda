@@ -20,6 +20,11 @@ try:
 except Exception:  # pragma: no cover
     torch = None
 
+# --- path_bootstrap ---
+import os as _rp_os, sys as _rp_sys
+_rp_sys.path.insert(0, _rp_os.path.dirname(_rp_os.path.dirname(_rp_os.path.abspath(__file__))))
+# --- end path_bootstrap ---
+
 from config import PipelineConfig
 from generation import (
     MusicGeneratorFC,

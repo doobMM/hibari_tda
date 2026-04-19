@@ -34,6 +34,11 @@ import numpy as np
 import pandas as pd
 from persim import wasserstein as pers_wasserstein
 
+# --- path_bootstrap ---
+import os as _rp_os, sys as _rp_sys
+_rp_sys.path.insert(0, _rp_os.path.dirname(_rp_os.path.dirname(_rp_os.path.abspath(__file__))))
+# --- end path_bootstrap ---
+
 from config import PipelineConfig
 from eval_metrics import evaluate_generation
 from generation import CycleSetManager, NodePool, algorithm1_optimized

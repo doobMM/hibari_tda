@@ -24,6 +24,11 @@ from typing import Any
 
 import numpy as np
 
+# --- path_bootstrap ---
+import os as _rp_os, sys as _rp_sys
+_rp_sys.path.insert(0, _rp_os.path.dirname(_rp_os.path.dirname(_rp_os.path.abspath(__file__))))
+# --- end path_bootstrap ---
+
 from config import PipelineConfig
 from eval_metrics import evaluate_generation
 from utils.result_meta import build_result_header

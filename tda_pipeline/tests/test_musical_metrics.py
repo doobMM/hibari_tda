@@ -16,6 +16,11 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 
 if __name__ == "__main__":
+# --- path_bootstrap ---
+import os as _rp_os, sys as _rp_sys
+_rp_sys.path.insert(0, _rp_os.path.dirname(_rp_os.path.dirname(_rp_os.path.abspath(__file__))))
+# --- end path_bootstrap ---
+
     from musical_metrics import (
         tonnetz_distance, _build_tonnetz_distance_table,
         compute_note_distance_matrix, compute_hybrid_distance

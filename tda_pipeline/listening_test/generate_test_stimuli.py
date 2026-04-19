@@ -32,8 +32,10 @@ TDA_DIR = SCRIPT_DIR.parent
 OUTPUT_DIR = TDA_DIR / "output" / "listening_test"
 STIMULI_DIR = OUTPUT_DIR / "stimuli"
 
-if str(TDA_DIR) not in sys.path:
-    sys.path.insert(0, str(TDA_DIR))
+for _p in (TDA_DIR, TDA_DIR / "tools", TDA_DIR / "experiments"):
+    _sp = str(_p)
+    if _sp not in sys.path:
+        sys.path.insert(0, _sp)
 
 from wav_renderer import render_midi_to_wav  # noqa: E402
 

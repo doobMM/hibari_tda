@@ -42,6 +42,11 @@ def train_and_eval(X_train, y_train, X_valid, y_valid,
                     num_cycles, num_notes, seed):
     """FC 모델 하나 학습 + 생성 + JS 측정."""
     import torch
+# --- path_bootstrap ---
+import os as _rp_os, sys as _rp_sys
+_rp_sys.path.insert(0, _rp_os.path.dirname(_rp_os.path.dirname(_rp_os.path.abspath(__file__))))
+# --- end path_bootstrap ---
+
     from generation import (
         MusicGeneratorFC, train_model, generate_from_model,
     )

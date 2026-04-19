@@ -23,6 +23,11 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 def build_data():
     """학습에 필요한 데이터를 모두 준비합니다."""
     import pandas as pd
+# --- path_bootstrap ---
+import os as _rp_os, sys as _rp_sys
+_rp_sys.path.insert(0, _rp_os.path.dirname(_rp_os.path.dirname(_rp_os.path.abspath(__file__))))
+# --- end path_bootstrap ---
+
     from preprocessing import (
         load_and_quantize, split_instruments,
         group_notes_with_duration, build_chord_labels, build_note_labels,

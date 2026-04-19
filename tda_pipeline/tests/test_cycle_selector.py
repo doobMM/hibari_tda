@@ -18,6 +18,11 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 def build_overlap_from_pipeline():
     """파이프라인을 실행하여 overlap matrix + cycle_labeled를 구합니다."""
+# --- path_bootstrap ---
+import os as _rp_os, sys as _rp_sys
+_rp_sys.path.insert(0, _rp_os.path.dirname(_rp_os.path.dirname(_rp_os.path.abspath(__file__))))
+# --- end path_bootstrap ---
+
     from preprocessing import (
         load_and_quantize, split_instruments,
         group_notes_with_duration, build_chord_labels, build_note_labels,
