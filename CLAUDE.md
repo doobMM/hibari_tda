@@ -92,6 +92,7 @@ C:\WK14\
 │   └── explain-research/         ← 비전공자용 연구 설명
 │
 └── tda_pipeline/                 ← 주 작업 폴더
+    │  ── 메인 파이프라인 (9) ──
     ├── config.py                 ← 모든 설정 (dataclass)
     ├── preprocessing.py          ← MIDI→화음/note 레이블링
     ├── weights.py                ← 가중치/거리 행렬
@@ -102,31 +103,48 @@ C:\WK14\
     ├── pipeline.py               ← 전체 흐름 조율 + 캐싱
     ├── topology.py               ← generateBarcode numpy wrapper
     │
+    │  ── 진입점 + core 도메인 ──
     ├── run_any_track.py          ← 임의 MIDI에 파이프라인 적용 (일반화)
     ├── run_aqua.py               ← aqua 전용 실험
-    ├── run_solari.py             ← solari 전용 실험 (Algo1 + Algo2)
-    ├── run_improvement_F.py      ← 개선 F (continuous + DL)
-    ├── run_module_generation.py  ← §7.1 모듈 단위 생성 (P1)
-    ├── run_module_generation_v3.py ← §7.1 개선 C/D/P4
-    ├── run_module_generation_v4.py ← §7.1 시작 모듈 정당성 검증
-    ├── run_step3_experiments.py   ← §3.1 통계 실험 (N=20)
-    ├── run_step3_continuous.py    ← §3.3a continuous overlap
+    ├── run_solari.py             ← solari 전용 실험
+    ├── run_test.py               ← hibari smoke test (pkl 기반)
+    ├── note_reassign.py          ← 방향 A 재분배 core
+    ├── temporal_reorder.py       ← 방향 B 재배치 core
+    ├── sequence_metrics.py       ← DTW / pitch JS 평가
+    ├── cycle_selector.py         ← cycle 선택 유틸
+    ├── precompute_metrics.py     ← 사전계산 스크립트
+    ├── professor.py              ← 교수님 원본 (수정 금지)
+    │
+    │  ── 재편된 서브폴더 (2026-04-19 7876d62) ──
+    ├── experiments/              ← run_*.py × 49 (path_bootstrap 포함)
+    ├── tests/                    ← test_*.py × 4
+    ├── tools/                    ← gen_* / visualize* / wav_renderer
+    ├── debug/                    ← diagnose* / benchmark / dashboard*
+    ├── archive/                  ← unused (adaptive_search / module_generation / duration_restore)
+    ├── utils/                    ← result_meta.py 등
+    ├── listening_test/           ← 청취 실험 stimuli + 웹 플레이어
+    ├── hibari_dashboard/         ← 분석 대시보드
+    ├── scripts/                  ← 빌드/배포 스크립트
     │
     ├── docs/
-    │   ├── academic_paper_full.md  ← 학술 원고 통합본 (1630 lines)
-    │   ├── academic_paper_general.md ← 비전공자용 요약 (15페이지)
-    │   ├── academic_paper_step1~4.md ← 섹션별 개별 빌드
-    │   ├── academic_paper_step71.md  ← §7.1 구현 보고
-    │   ├── build_academic_pdf.py     ← md→PDF 변환
-    │   ├── build_full_paper.py       ← 전체 합치기
-    │   ├── latex/hibari_tda.tex      ← IEEE LaTeX 원고
-    │   ├── figures/                  ← Figure 1-8 PNG + 생성 스크립트
-    │   └── step3_data/               ← 실험 결과 JSON
+    │   ├── academic_paper_full.md         ← 학술 원고 통합본
+    │   ├── academic_paper_portfolio (short).md ← 포트폴리오용 축약
+    │   ├── academic_paper_general.md      ← 비전공자용 요약
+    │   ├── build_academic_pdf.py          ← md→PDF 변환
+    │   ├── latex/                         ← IEEE 영문/한글본/report
+    │   ├── figures/                       ← Figure PNG + 생성 스크립트
+    │   └── step3_data/                    ← 실험 결과 JSON
     │
+    ├── memory/                   ← 세션 간 메모 (gitignored는 아님)
     ├── cache/                    ← metric별 PH 결과 캐시 (pkl)
     ├── output/                   ← 생성된 MusicXML/MIDI/WAV (gitignored)
     └── *.mid                     ← 원곡 MIDI 파일들 (gitignored)
 ```
+
+**실행 규칙 (2026-04-19 이후):**
+- `experiments/`, `tests/` 내 스크립트는 첫 줄에 `path_bootstrap` 블록이 있어 **루트에서 `python experiments/run_xxx.py` 형태로 실행**하거나 **스크립트 경로 직접 호출** 모두 가능
+- `tools/wav_renderer.py`를 참조하는 `listening_test/*.py`는 sys.path에 루트 + tools + experiments 3경로를 주입
+- 루트에서 직접 실행하던 `run_improvement_F`, `run_module_generation*`, `run_step3_*` 등은 `experiments/` 아래로 이동됨
 
 ## 코드 컨벤션 및 주의사항
 
