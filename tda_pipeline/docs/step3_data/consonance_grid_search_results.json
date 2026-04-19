@@ -1,0 +1,119 @@
+﻿[
+    {
+        "alpha_note":  0.3,
+        "beta_diss":  0.1,
+        "mean_js":  0.448355,
+        "std_js":  0.001548,
+        "mean_dist_err":  4.696571,
+        "mean_consonance":  0.403349,
+        "mean_scale_match":  0.666667,
+        "pitch_range":  [
+                            48,
+                            84
+                        ]
+    },
+    {
+        "alpha_note":  0.3,
+        "beta_diss":  0.3,
+        "mean_js":  0.448355,
+        "std_js":  0.001548,
+        "mean_dist_err":  4.696571,
+        "mean_consonance":  0.403349,
+        "mean_scale_match":  0.666667,
+        "pitch_range":  [
+                            48,
+                            84
+                        ]
+    },
+    {
+        "alpha_note":  0.3,
+        "beta_diss":  1.0,
+        "mean_js":  0.448355,
+        "std_js":  0.001548,
+        "mean_dist_err":  4.696571,
+        "mean_consonance":  0.403349,
+        "mean_scale_match":  0.666667,
+        "pitch_range":  [
+                            48,
+                            84
+                        ]
+    },
+    {
+        "alpha_note":  0.5,
+        "beta_diss":  0.1,
+        "mean_js":  0.381393,
+        "std_js":  0.002759,
+        "mean_dist_err":  4.68188,
+        "mean_consonance":  0.475317,
+        "mean_scale_match":  0.7,
+        "pitch_range":  [
+                            48,
+                            84
+                        ]
+    },
+    {
+        "alpha_note":  0.5,
+        "beta_diss":  0.3,
+        "mean_js":  0.448355,
+        "std_js":  0.001548,
+        "mean_dist_err":  4.696571,
+        "mean_consonance":  0.403349,
+        "mean_scale_match":  0.666667,
+        "pitch_range":  [
+                            48,
+                            84
+                        ]
+    },
+    {
+        "alpha_note":  0.5,
+        "beta_diss":  1.0,
+        "mean_js":  0.448355,
+        "std_js":  0.001548,
+        "mean_dist_err":  4.696571,
+        "mean_consonance":  0.403349,
+        "mean_scale_match":  0.666667,
+        "pitch_range":  [
+                            48,
+                            84
+                        ]
+    },
+    {
+        "alpha_note":  1.0,
+        "beta_diss":  0.1,
+        "mean_js":  0.381393,
+        "std_js":  0.002759,
+        "mean_dist_err":  4.68188,
+        "mean_consonance":  0.475317,
+        "mean_scale_match":  0.7,
+        "pitch_range":  [
+                            48,
+                            84
+                        ]
+    },
+    {
+        "alpha_note":  1.0,
+        "beta_diss":  0.3,
+        "mean_js":  0.448355,
+        "std_js":  0.001548,
+        "mean_dist_err":  4.696571,
+        "mean_consonance":  0.403349,
+        "mean_scale_match":  0.666667,
+        "pitch_range":  [
+                            48,
+                            84
+                        ]
+    },
+    {
+        "alpha_note":  1.0,
+        "beta_diss":  1.0,
+        "mean_js":  0.448355,
+        "std_js":  0.001548,
+        "mean_dist_err":  4.696571,
+        "mean_consonance":  0.403349,
+        "mean_scale_match":  0.666667,
+        "pitch_range":  [
+                            48,
+                            84
+                        ]
+    }
+]

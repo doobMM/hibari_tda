@@ -1,0 +1,52 @@
+{
+  "metric": "multi",
+  "alpha": 0.5,
+  "octave_weight": 0.3,
+  "duration_weight": 0.3,
+  "min_onset_gap": 0,
+  "n_repeats": 10,
+  "date": "2026-04-19T18:48:51",
+  "script": "run_classical_contrast_ravel_postbugfix.py",
+  "post_bugfix": true,
+  "commit_sha": "d971e1222916",
+  "song": "ravel_pavane",
+  "midi_file": "maurice-ravel-pavane-pour-une-infante-defunte-m-19.mid",
+  "metrics": [
+    "frequency",
+    "tonnetz",
+    "voice_leading"
+  ],
+  "runner": "run_any_track.process_one",
+  "experiment": "section_5_2_classical_contrast_independent_rerun",
+  "result": {
+    "T": 548,
+    "N": 49,
+    "num_chords": 230,
+    "inst1_n": 890,
+    "inst2_n": 552,
+    "frequency": {
+      "n_cycles": 83,
+      "ph_time_s": 65.7,
+      "js_mean": 0.0337,
+      "js_std": 0.0017,
+      "js_min": 0.0314
+    },
+    "tonnetz": {
+      "n_cycles": 81,
+      "ph_time_s": 56.0,
+      "js_mean": 0.0415,
+      "js_std": 0.0028,
+      "js_min": 0.0366
+    },
+    "voice_leading": {
+      "n_cycles": 12,
+      "ph_time_s": 70.2,
+      "js_mean": 0.0798,
+      "js_std": 0.0038,
+      "js_min": 0.0755
+    },
+    "best_metric": "frequency",
+    "best_js": 0.0337,
+    "tonnetz_improvement": -23.1
+  }
+}

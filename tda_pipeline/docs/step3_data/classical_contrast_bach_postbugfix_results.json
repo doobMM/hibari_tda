@@ -1,0 +1,52 @@
+{
+  "metric": "multi",
+  "alpha": 0.5,
+  "octave_weight": 0.3,
+  "duration_weight": 0.3,
+  "min_onset_gap": 0,
+  "n_repeats": 10,
+  "date": "2026-04-19T18:45:12",
+  "script": "run_classical_contrast_bach_postbugfix.py",
+  "post_bugfix": true,
+  "commit_sha": "d971e1222916",
+  "song": "bach_fugue",
+  "midi_file": "bach-toccata-and-fugue-in-d-minor-piano-solo.mid",
+  "metrics": [
+    "frequency",
+    "tonnetz",
+    "voice_leading"
+  ],
+  "runner": "run_any_track.process_one",
+  "experiment": "section_5_2_classical_contrast_independent_rerun",
+  "result": {
+    "T": 870,
+    "N": 61,
+    "num_chords": 253,
+    "inst1_n": 933,
+    "inst2_n": 856,
+    "frequency": {
+      "n_cycles": 83,
+      "ph_time_s": 93.1,
+      "js_mean": 0.0902,
+      "js_std": 0.0027,
+      "js_min": 0.0864
+    },
+    "tonnetz": {
+      "n_cycles": 92,
+      "ph_time_s": 158.4,
+      "js_mean": 0.0417,
+      "js_std": 0.0012,
+      "js_min": 0.0403
+    },
+    "voice_leading": {
+      "n_cycles": 39,
+      "ph_time_s": 325.0,
+      "js_mean": 0.1242,
+      "js_std": 0.0037,
+      "js_min": 0.1176
+    },
+    "best_metric": "tonnetz",
+    "best_js": 0.0417,
+    "tonnetz_improvement": 53.8
+  }
+}

@@ -1,6 +1,6 @@
 {
   "script": "run_phase3_task38a_dft_gap0.py",
-  "date_start": "2026-04-19T01:40:02",
+  "date_start": "2026-04-19T18:46:42",
   "same_python_session": true,
   "status": "completed",
   "config": {
@@ -78,6 +78,6 @@
     "used_cache": true,
     "cache_path": "C:\\WK14\\tda_pipeline\\cache\\metric_dft_alpha0p25_ow0p3_dw1p0.pkl"
   },
-  "date_end": "2026-04-19T01:40:29",
-  "elapsed_s": 26.09
+  "date_end": "2026-04-19T18:47:37",
+  "elapsed_s": 55.09
 }

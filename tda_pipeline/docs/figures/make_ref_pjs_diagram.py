@@ -84,7 +84,7 @@ label(MX+BW/2, MY3+BH*0.28, '재구성', fs=10.5, color='#D5D8DC')
 
 rbox(MX, MY2, BW, BH, C_PROC)
 label(MX+BW/2, MY2+BH*0.65, 'DL 재학습', fs=13, bold=True)
-label(MX+BW/2, MY2+BH*0.28, '(LSTM / Transformer)', fs=10.5, color='#D5D8DC')
+label(MX+BW/2, MY2+BH*0.28, '(FC / LSTM / Transformer)', fs=10.5, color='#D5D8DC')
 
 rbox(MX, MY1, BW, BH, C_GEN)
 label(MX+BW/2, MY1+BH/2, '생성곡', fs=15, bold=True)
