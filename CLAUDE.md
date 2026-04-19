@@ -325,16 +325,16 @@ gap_min=3 청취 평가 폐기 결정에 따른 §4 gap=0 롤백 + bugfix 이후
 | 50 | **D** | §6.7.1 / §6.8 / §8 / 초록 수치 전면 갱신 — α=0.25 per-cycle τ, JS=0.01156 ✓ | 완료 | 커밋 2125055 → 06c852d → **8a14d80** (2026-04-19). full.md 구조 재편(§5↔§7 스왑) + short.md + LaTeX 3파일 + PDF 2종. 초록/§5.7/§5.8.1/§6.7/§8 전부 갱신. LaTeX xelatex/pdflatex 에러 0/undef 0/cit 0 검증. `memory/project_a3_new_record_0418.md` |
 | 51 | **A** | Algo2 FC-cont α=0.25 재실험 ✓ | 완료 | **α=0.25 FC-cont JS=0.00057±0.00046 (N=10) vs α=0.5 0.00035±0.00015, Welch p=0.168 비유의** — **Algo2 최저 α=0.5 유지**. K=14로 감소 영향. `run_fc_cont_dft_alpha025.py` + `fc_cont_dft_alpha025_results.json` (커밋 8a14d80). `memory/project_task51_fc_cont_alpha025_0418.md` |
 | 51-b | **D** | Task 51 결과 논문 반영 (짧은 각주) ✓ | 완료 | 커밋 bcd35ed. full.md §5.8.2 Remark 2단락 + short.md 1문장 + LaTeX 3파일 \\paragraph{비고} + PDF 3종 재빌드. 컴파일 에러 0/undef 0/cit 0 |
-| 52 | **A** | §6 마디 단위 생성 α=0.25 per-cycle τ 재탐색 | Task 56 완료 (착수 가능) | 마디 best global 0.01479 기록을 α=0.25로 초과 가능? 긴 작업. **주의**: Task 51에서 Algo2는 α=0.25 비유의였으므로, 마디 Algo1도 negative 가능성 있음. Option B 창 baseline 재산정 완료 (best 0.01479 @ m=0,seed=9309) |
+| 52 | **A** | §6 블록 단위 생성 α=0.25 per-cycle τ 재탐색 | Task 56 완료 (착수 가능) | 블록 best global 0.01479 기록을 α=0.25로 초과 가능? 긴 작업. **주의**: Task 51에서 Algo2는 α=0.25 비유의였으므로, 블록 Algo1도 negative 가능성 있음. Option B 창 baseline 재산정 완료 (best 0.01479 @ m=0,seed=9309) |
 | 53 | **E** | CLAUDE.md "현재 최적 설정" 블록 Algo1 수치 갱신 ✓ | 완료 | 8a14d80에서 D가 직접 갱신 (규칙 예외). `Algorithm 1: DFT + per-cycle τ (α=0.25, K=14) → JS=0.01156±0.00147`. Algo2는 α=0.5 유지 명시 (Task 51 정합) |
-| 56 | **B+D** | §6 P3_local window 재설계 (Option B) — `[32(m+1), 32(m+2))` both instruments ✓ | 완료 | 커밋 148b16d (B 코드) + 101ffa7 (B JSON) + **6c83ddc (D 재서술)**. §6.2 P3 mean `0.0474±0.0187`, §6.5 P3+C best **`0.0167`** (seed 7300, baseline 하회), §6.7 32개 시작 마디 (best global JS=0.01479 유지, Phase1 동등 / Phase2 0.01156 미달 +28%), **§6.8 Pearson −0.054 → +0.2457 반전 ★** (설계 의도 부합 검증). 용어 "모듈→마디" rename + 비대칭 창 한계 서술 제거 + history footnote. PDF 4종 재빌드 + 3항 검증 통과. `memory/project_task56_b_execution_0419.md` + `project_task56_d_revision_checklist_0419.md` |
+| 56 | **B+D** | §6 P3_local window 재설계 (Option B) — `[32(m+1), 32(m+2))` both instruments ✓ | 완료 | 커밋 148b16d (B 코드) + 101ffa7 (B JSON) + **6c83ddc (D 재서술)**. §6.2 P3 mean `0.0474±0.0187`, §6.5 P3+C best **`0.0167`** (seed 7300, baseline 하회), §6.7 32개 시작 블록 (best global JS=0.01479 유지, Phase1 동등 / Phase2 0.01156 미달 +28%), **§6.8 Pearson −0.054 → +0.2457 반전 ★** (설계 의도 부합 검증). 용어 "모듈→마디" rename + 비대칭 창 한계 서술 제거 + history footnote. PDF 4종 재빌드 + 3항 검증 통과. `memory/project_task56_b_execution_0419.md` + `project_task56_d_revision_checklist_0419.md` |
 | 44 | **D** | §6.4 FC 서술 교체 + §6.5 ±std + §6.6.3 메타 보강 ✓ | 완료 | 커밋 19df059. §6.4 "구조적 불가능" → "pitch 분포 유지 + DTW +30~48% 실측". §6.5 ±std (FC/LSTM). §6.6.3 FC 특성 단락 추가 (DFT-FC 우수성 해석 + note 선택 논지 강화) | T39-2 solari DFT 0.0824 K=15 / T39-3 Bach 0.0951 K=30, Ravel 0.0494 K=37 (타곡 모두 기존 최적 거리 유지 — hibari만 DFT 최적). T39-4 FC 시점 독립성 실증, LSTM pitch_js 0.26~0.28. T39-5 FC/LSTM 화성 제약. ⚠ T39-4/5는 N=5 반복 재실행 검토 여지 있음 |
 
 ### 260419 피드백 후속 과제 (2026-04-19 신설)
 
 | # | 세션 | 작업 | 의존성 | 비고 |
 |---|------|------|--------|------|
-| 57 | **D** | LaTeX 3파일 260419 sweep 동기화 | 260419 sweep 완료 (커밋 2aac918) | md에 반영된 사항(Algo1 0.00902, α-grid 표, tie 정규화, §6.3~§6.4 DFT 관련, Bach/Ravel 수치 등) → hibari_tda.tex / ko.tex / report.tex 적용. 컴파일 에러 0 검증 필수 |
+| 57 | **D** | LaTeX 3파일 260419 sweep + Task 61 블록 rename 동기화 | 260419 sweep 완료 (커밋 2aac918) + Task 61 완료 | md에 반영된 사항(Algo1 0.00902, α-grid 표, tie 정규화, §6.3~§6.4 DFT 관련, Bach/Ravel 수치 등) + §6 "마디→블록" rename → hibari_tda.tex / ko.tex / report.tex 적용. 컴파일 에러 0 검증 필수 |
 | 60 | **D** | QR 코드 첨부 | 없음 | 논문 내 관련 링크(코드 저장소 등) QR 이미지 삽입. 별도 Task |
 
 ### 낮은 우선순위 (향후 과제)
