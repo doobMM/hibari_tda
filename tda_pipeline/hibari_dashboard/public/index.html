@@ -1,88 +1,63 @@
 <!doctype html>
-<html lang="ko">
+<html lang="ko" data-theme="light">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Hibari Overlap Matrix Dashboard</title>
+  <title>Hibari · Overlap Matrix Dashboard</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/tokens.css?v=2.2">
+  <link rel="stylesheet" href="css/style.css?v=2.2">
 </head>
 <body>
 
+  <!-- ── Header ─────────────────────────────────────────────────────────── -->
   <header class="app-header">
-    <div class="app-title">
-      <span class="app-icon">◴</span>
-      <h1>Hibari Overlap Matrix Dashboard</h1>
-      <span class="app-subtitle">TDA 기반 음악 생성 · 실험 B (complex + per-cycle τ)</span>
+    <div class="app-header__brand">
+      <span class="app-header__glyph" aria-hidden="true">◴</span>
+      <h1 class="app-header__title">Hibari Overlap Matrix</h1>
+      <span class="app-header__sub">TDA 기반 음악 생성 · DFT hybrid α=0.25 + per-cycle τ (K=14)</span>
     </div>
-    <div class="app-status" id="appStatus">데이터 로드 대기…</div>
+    <div class="app-header__right">
+      <div class="app-status" id="appStatus">데이터 로드 대기…</div>
+      <button class="theme-toggle" id="themeToggle" aria-label="다크/라이트 모드 전환" title="다크/라이트 모드">
+        <span class="theme-toggle__icon--dark"  aria-hidden="true">○</span>
+        <span class="theme-toggle__icon--light" aria-hidden="true">●</span>
+      </button>
+    </div>
   </header>
 
+  <!-- ── Main 3-column grid ─────────────────────────────────────────────── -->
   <main class="app-main">
 
-    <!-- 상단 안정성 배너 (Phase 6 에서 채움) -->
-    <section id="oodBanner" class="ood-banner ood-hidden">
-      <span class="ood-label">안정성</span>
-      <span class="ood-score" id="oodScore">--</span>
-      <span class="ood-level" id="oodLevel">--</span>
-      <span class="ood-detail" id="oodDetail">편집 시작 후 계산됩니다</span>
+    <!-- OOD Banner — spans full width via grid-area -->
+    <section id="oodBanner" class="ood-banner ood-hidden" role="status" aria-live="polite">
+      <span class="ood-banner__label">안정성</span>
+      <span class="ood-banner__score" id="oodScore">--</span>
+      <span class="ood-banner__level" id="oodLevel">--</span>
+      <span class="ood-banner__detail" id="oodDetail">편집 시작 후 계산됩니다</span>
     </section>
 
-    <!-- 2-column matrix view -->
-    <section class="matrix-grid">
+    <!-- ── LEFT PANEL — edit controls ──────────────────────────────────── -->
+    <aside class="panel--left" aria-label="편집 컨트롤">
 
-      <!-- 참조 matrix -->
-      <div class="matrix-card">
-        <header class="card-header">
-          <h2>참조 overlap (hibari)</h2>
-          <span class="card-meta" id="refMeta">T=? × K=?</span>
-        </header>
-        <div class="matrix-canvas-wrap">
-          <canvas id="refCanvas" width="700" height="360"></canvas>
-        </div>
-        <footer class="card-footer">
-          <span class="legend"><span class="legend-dot legend-on"></span> 활성</span>
-          <span class="legend"><span class="legend-dot legend-off"></span> 비활성</span>
-          <span class="card-meta">읽기 전용</span>
-        </footer>
-      </div>
-
-      <!-- 편집 matrix -->
-      <div class="matrix-card">
-        <header class="card-header">
-          <h2>편집 overlap</h2>
-          <span class="card-meta" id="editMeta">density 0.00%</span>
-        </header>
-        <div class="matrix-canvas-wrap">
-          <canvas id="editCanvas" width="700" height="360"></canvas>
-          <div class="hover-tooltip" id="hoverTooltip" hidden></div>
-        </div>
-        <footer class="card-footer">
-          <span class="legend"><span class="legend-dot legend-on"></span> 활성</span>
-          <span class="legend"><span class="legend-dot legend-diff"></span> 참조와 다름</span>
-          <span class="card-meta">좌클릭: 토글 · 우클릭: 지우기 · Shift+드래그: 팬</span>
-        </footer>
-      </div>
-
-    </section>
-
-    <!-- 컨트롤 패널 -->
-    <section class="control-panel">
+      <!-- Section: 편집 -->
       <div class="control-group">
-        <h3>편집</h3>
+        <h2 class="control-group__heading">편집</h2>
         <button class="btn" id="btnReset">초기화 (참조 복구)</button>
         <button class="btn" id="btnClear">모두 지우기</button>
         <label class="toggle">
-          <input type="checkbox" id="toggleDiff"> <span>참조와 diff 하이라이트</span>
+          <input type="checkbox" id="toggleDiff">
+          <span>참조와 diff 하이라이트</span>
         </label>
       </div>
 
+      <!-- Section: 변형 -->
       <div class="control-group">
-        <h3>변형 (density 유지)</h3>
+        <h2 class="control-group__heading">변형 (density 유지)</h2>
         <p class="hint" id="variantHint">참조 overlap 을 재배치해서 비슷한 분포의 다른 곡을 탐색합니다.</p>
-        <select class="select" id="variantMode">
+        <select class="select" id="variantMode" aria-label="변형 모드 선택">
           <option value="block">블록 셔플 (국소 구조 유지)</option>
           <option value="jitter">참조 왜곡 (local jitter)</option>
           <option value="shift">원형 이동 (phase shift)</option>
@@ -92,57 +67,139 @@
           <option value="flood">흐름 무늬 (물 번짐)</option>
           <option value="bernoulli">독립 Bernoulli (공간 구조 無)</option>
         </select>
-        <div class="slider-row">
-          <label for="sliderVariant">강도</label>
-          <input type="range" id="sliderVariant" min="0" max="1" step="0.05" value="0.3">
-          <span id="sliderVariantVal">0.30</span>
+        <div class="slider-row" aria-label="변형 강도">
+          <span class="slider-row__label">강도</span>
+          <input class="slider-row__track" type="range" id="sliderVariant"
+                 min="0" max="1" step="0.05" value="0.3" aria-label="강도">
+          <span class="slider-row__value" id="sliderVariantVal">0.30</span>
         </div>
-        <button class="btn btn-primary" id="btnVariant">▷ 참조에 변형 적용</button>
+        <button class="btn btn--primary" id="btnVariant">▷ 참조에 변형 적용</button>
         <label class="toggle">
-          <input type="checkbox" id="toggleFromCurrent"> <span>참조 대신 현재 편집본에 적용</span>
+          <input type="checkbox" id="toggleFromCurrent">
+          <span>참조 대신 현재 편집본에 적용</span>
         </label>
       </div>
 
+    </aside>
+
+    <!-- ── CENTER — matrix canvases ────────────────────────────────────── -->
+    <section class="matrix-area" aria-label="overlap matrix">
+
+      <!-- 참조 matrix — read-only -->
+      <article class="matrix-card matrix-card--ref">
+        <header class="matrix-card__header">
+          <h2 class="matrix-card__title">참조 overlap (hibari)</h2>
+          <span class="matrix-card__meta" id="refMeta">T=? × K=?</span>
+        </header>
+        <div class="matrix-card__canvas-wrap">
+          <canvas id="refCanvas" width="700" height="360"></canvas>
+        </div>
+        <footer class="matrix-card__footer">
+          <span class="legend">
+            <span class="legend__dot legend__dot--on"  aria-hidden="true"></span>활성
+          </span>
+          <span class="legend">
+            <span class="legend__dot legend__dot--off" aria-hidden="true"></span>비활성
+          </span>
+          <span class="matrix-card__meta" style="margin-left:auto">읽기 전용</span>
+        </footer>
+      </article>
+
+      <!-- 편집 matrix — interactive -->
+      <article class="matrix-card matrix-card--edit">
+        <header class="matrix-card__header">
+          <h2 class="matrix-card__title">편집 overlap</h2>
+          <span class="matrix-card__meta" id="editMeta">density 0.00%</span>
+        </header>
+        <div class="matrix-card__canvas-wrap">
+          <canvas id="editCanvas" width="700" height="360"></canvas>
+          <div class="hover-tooltip" id="hoverTooltip" hidden></div>
+        </div>
+        <footer class="matrix-card__footer">
+          <span class="legend">
+            <span class="legend__dot legend__dot--on"   aria-hidden="true"></span>활성
+          </span>
+          <span class="legend">
+            <span class="legend__dot legend__dot--diff" aria-hidden="true"></span>참조와 다름
+          </span>
+          <span class="matrix-card__meta" style="margin-left:auto">
+            좌클릭: 토글 · 우클릭: 지우기 · Shift+드래그: 팬
+          </span>
+        </footer>
+      </article>
+
+    </section>
+
+    <!-- ── RIGHT PANEL — generation + playback ─────────────────────────── -->
+    <aside class="panel--right" aria-label="생성 및 재생 컨트롤">
+
+      <!-- Section: 생성 -->
       <div class="control-group">
-        <h3>생성</h3>
+        <h2 class="control-group__heading">생성</h2>
         <div class="radio-row">
-          <label><input type="radio" name="algo" value="algo1" checked> Algorithm 1 (샘플링)</label>
-          <label><input type="radio" name="algo" value="algo2"> Algorithm 2 (FC)</label>
+          <label>
+            <input type="radio" name="algo" value="algo1" checked>
+            Algorithm 1 (샘플링)
+          </label>
+          <label>
+            <input type="radio" name="algo" value="algo2">
+            Algorithm 2 (FC)
+          </label>
         </div>
-        <div class="slider-row">
-          <label for="sliderTemp">Temperature</label>
-          <input type="range" id="sliderTemp" min="0.5" max="5.0" step="0.1" value="3.0">
-          <span id="sliderTempVal">3.0</span>
+        <div class="radio-row" aria-label="생성 길이">
+          <label>
+            <input type="radio" name="lenMode" value="slice" checked>
+            30초 × 3 (2 마디)
+          </label>
+          <label>
+            <input type="radio" name="lenMode" value="full">
+            전곡 (~9분)
+          </label>
         </div>
-        <div class="slider-row">
-          <label for="sliderSeed">Seed</label>
-          <input type="number" id="sliderSeed" min="0" max="99999" step="1" value="42">
-          <button class="btn btn-small" id="btnRandomSeed">🎲</button>
+        <div class="slider-row" aria-label="Temperature">
+          <span class="slider-row__label">Temperature</span>
+          <input class="slider-row__track" type="range" id="sliderTemp"
+                 min="0.5" max="5.0" step="0.1" value="3.0" aria-label="Temperature">
+          <span class="slider-row__value" id="sliderTempVal">3.0</span>
+        </div>
+        <div class="seed-row">
+          <span class="seed-row__label">Seed</span>
+          <input class="seed-row__input" type="number" id="sliderSeed"
+                 min="0" max="99999" step="1" value="42" aria-label="Seed">
+          <button class="btn btn--small" id="btnRandomSeed" title="무작위 seed">&#x1F3B2;</button>
         </div>
       </div>
 
+      <!-- Section: 재생 -->
       <div class="control-group">
-        <h3>재생</h3>
-        <button class="btn btn-primary" id="btnGenerate">▶ 생성 + 재생</button>
-        <button class="btn" id="btnStop" disabled>■ 정지</button>
-        <button class="btn" id="btnDownloadMidi" disabled>💾 MIDI 저장</button>
-        <div class="progress-bar">
-          <div class="progress-fill" id="progressFill"></div>
+        <h2 class="control-group__heading">재생</h2>
+        <button class="btn btn--primary" id="btnGenerate">▶ 생성 + 재생</button>
+        <div class="candidate-tabs" id="candidateTabs" hidden aria-label="생성 후보 선택">
+          <button class="btn btn--small candidate-tab" data-cand="0" disabled>A</button>
+          <button class="btn btn--small candidate-tab" data-cand="1" disabled>B</button>
+          <button class="btn btn--small candidate-tab" data-cand="2" disabled>C</button>
+        </div>
+        <button class="btn" id="btnStop" disabled>&#x25A0; 정지</button>
+        <button class="btn" id="btnDownloadMidi" disabled>&#x1F4BE; MIDI 저장</button>
+        <div class="progress-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100">
+          <div class="progress-bar__fill" id="progressFill"></div>
         </div>
         <div class="meta-row" id="playbackMeta">대기 중</div>
       </div>
 
+      <!-- Section: 원곡 참고 -->
       <div class="control-group">
-        <h3>참고 재생</h3>
+        <h2 class="control-group__heading">원곡 참고</h2>
         <button class="btn" id="btnPlayOriginal">▶ 원곡 재생</button>
-        <button class="btn" id="btnStopOriginal" disabled>■ 원곡 정지</button>
+        <button class="btn" id="btnStopOriginal" disabled>&#x25A0; 원곡 정지</button>
       </div>
-    </section>
 
-    <!-- 상태 / 로그 패널 -->
-    <section class="log-panel">
-      <h3>세션 로그</h3>
-      <pre id="logArea"></pre>
+    </aside>
+
+    <!-- ── Log panel — spans full width ─────────────────────────────────── -->
+    <section class="log-panel" aria-label="세션 로그">
+      <h2 class="log-panel__heading">세션 로그</h2>
+      <pre class="log-panel__pre" id="logArea" aria-live="polite" aria-label="로그 출력"></pre>
     </section>
 
   </main>
@@ -152,15 +209,41 @@
     <span>Phase 6 — OOD · ready</span>
   </footer>
 
-  <!-- 내부 스크립트 + ONNX runtime (Phase 5 에서만 지연 로드) -->
-  <script src="js/data-loader.js"></script>
-  <script src="js/overlap-editor.js"></script>
-  <script src="js/generation-algo1.js"></script>
-  <script src="js/generation-algo2.js"></script>
-  <script src="js/midi-io.js"></script>
-  <script src="js/audio-playback.js"></script>
-  <script src="js/ood-detector.js"></script>
-  <script src="js/ui-bootstrap.js"></script>
+  <!-- ── Theme toggle script (inline, no framework) ───────────────────── -->
+  <script>
+    (function () {
+      var btn = document.getElementById('themeToggle');
+      var html = document.documentElement;
+      // Restore saved preference (light 기본, dark는 명시 저장된 경우만)
+      try {
+        var saved = localStorage.getItem('hibari_theme');
+        if (saved === 'dark') html.setAttribute('data-theme', 'dark');
+      } catch (e) {}
+      btn.addEventListener('click', function () {
+        var current = html.getAttribute('data-theme');
+        var next = current === 'light' ? 'dark' : 'light';
+        html.setAttribute('data-theme', next);
+        try { localStorage.setItem('hibari_theme', next); } catch (e) {}
+        // 캔버스는 CSS var를 render 시점에 읽으므로 강제 재렌더 필요
+        try {
+          if (window.HibariUI) {
+            window.HibariUI.refEditor && window.HibariUI.refEditor.render();
+            window.HibariUI.editEditor && window.HibariUI.editEditor.render();
+          }
+        } catch (e) {}
+      });
+    })();
+  </script>
+
+  <!-- ── App scripts ────────────────────────────────────────────────────── -->
+  <script src="js/data-loader.js?v=2.2"></script>
+  <script src="js/overlap-editor.js?v=2.2"></script>
+  <script src="js/generation-algo1.js?v=2.2"></script>
+  <script src="js/generation-algo2.js?v=2.2"></script>
+  <script src="js/midi-io.js?v=2.2"></script>
+  <script src="js/audio-playback.js?v=2.2"></script>
+  <script src="js/ood-detector.js?v=2.2"></script>
+  <script src="js/ui-bootstrap.js?v=2.2"></script>
 
 </body>
 </html>

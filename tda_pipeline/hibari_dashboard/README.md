@@ -27,7 +27,7 @@ hibari_dashboard/
 │   │   ├── ood-detector.js         # Hamming + density + persistence-weighted
 │   │   └── ui-bootstrap.js         # DOM 배선
 │   └── models/
-│       ├── fc_model.onnx           # 173 KB, 40→128→256→23
+│       ├── fc_model.onnx           # ~160 KB, 14→128→256→23
 │       └── fc_model_meta.json      # label → (pitch, dur) 매핑
 ├── scripts/
 │   ├── export_hibari_data.py       # Phase 1 데이터 export
@@ -37,7 +37,8 @@ hibari_dashboard/
 
 ## 데이터 재생성
 
-실험 B 최적 설정(complex α=0.25, ow=0.0, dw=0.3, r_c=0.1 + per-cycle τ)으로
+현재 최적 설정(DFT hybrid α=0.25, w_o=0.3, w_d=1.0, timeflow + decayed lag 1~4,
+per-cycle τ, K=14 — Algo1 JS=0.00902±0.00170 N=20)으로
 overlap matrix / notes meta / cycles meta 를 재계산:
 
 ```bash
@@ -46,12 +47,12 @@ python hibari_dashboard/scripts/export_hibari_data.py
 ```
 
 출력:
-- `data/overlap_matrix_reference.json`   — 이진 overlap (T=1088, K=40)
+- `data/overlap_matrix_reference.json`   — 이진 overlap (T=1088, K=14)
 - `data/overlap_matrix_continuous.json`  — 연속 activation (soft Algo2 입력)
 - `data/notes_metadata.json`             — 23종 note 메타데이터
-- `data/cycles_metadata.json`            — 40개 cycle 구성·persistence
+- `data/cycles_metadata.json`            — 14개 cycle 구성·persistence
 - `data/original_hibari.mid`             — 원곡 복사
-- `data/manifest.json`                   — 버전·경로 manifest
+- `data/manifest.json`                   — 버전(2.0)·경로 manifest + best JS 수치
 
 ## 로컬 실행
 
@@ -95,7 +96,7 @@ python hibari_dashboard/scripts/train_fc_and_export.py
 ## 기능 요약
 
 - **에디터** (편집 matrix): 좌클릭 토글, 우클릭 지움, Shift+드래그 팬, 휠 줌, 더블클릭 리셋
-- **참조 matrix**: 읽기 전용. 실험 B 최적 설정의 이진 overlap.
+- **참조 matrix**: 읽기 전용. 현재 최적 설정(DFT α=0.25 per-cycle τ, K=14)의 이진 overlap.
 - **diff 하이라이트**: 토글 시 참조 대비 추가/삭제 셀을 청록/핑크로 표시
 - **Algorithm 1**: 확률적 샘플링 (mulberry32 seed, temperature로 분포 스케일). 20 ms 내외
 - **Algorithm 2 (FC)**: ONNX 추론 (CDN 로드). temperature 는 adaptive threshold 의 targetOnRatio 로 사용
@@ -108,9 +109,11 @@ python hibari_dashboard/scripts/train_fc_and_export.py
 
 - 기존 `tda_pipeline/` 파일은 **읽기 전용**. 본 대시보드는
   `hibari_dashboard/` 하위에만 새 코드를 둔다.
-- 데이터는 실험 B (N=20 재검증) 기준. 다른 설정으로 바꾸려면
-  `scripts/export_hibari_data.py` 의 `EXP_B_CONFIG` 수정 후
-  `train_fc_and_export.py` 를 재실행하여 FC 모델도 함께 갱신.
+- 데이터는 현재 최적 설정(DFT α=0.25 per-cycle τ, N=20) 기준.
+  다른 설정으로 바꾸려면 `scripts/export_hibari_data.py` 의 `OPTIMAL_CONFIG`
+  수정 후 `train_fc_and_export.py` 를 재실행하여 FC 모델도 함께 갱신.
+- localStorage 스키마 버전: `hibari_dashboard_edit_v2`. manifest `version=2.0` 의
+  K=14 이진 matrix 기반. v1 편집본(K=40)은 자동 폐기됨.
 - 외부 의존: onnxruntime-web 은 jsdelivr CDN 에서 지연 로드
   (Algorithm 2 첫 실행 시). 오프라인 배포 시 `public/vendor/` 에
   ort.min.js + .wasm 사본을 두고 `generation-algo2.js` 의

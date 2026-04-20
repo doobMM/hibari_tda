@@ -1,12 +1,12 @@
 {
-  "version": "1.0",
-  "architecture": "MusicGeneratorFC (40 → 128 → 256 → 23)",
-  "num_cycles": 40,
+  "version": "2.0",
+  "architecture": "MusicGeneratorFC (14 → 128 → 256 → 23)",
+  "num_cycles": 14,
   "num_notes": 23,
   "input": {
     "shape": [
       null,
-      40
+      14
     ],
     "dtype": "float32",
     "description": "Binary overlap row [0/1]. (T, C) 배치도 가능 (C=num_cycles)."
@@ -167,8 +167,8 @@
   },
   "training": {
     "epochs": 300,
-    "final_train_loss": 0.0227,
-    "final_val_loss": 0.03836,
+    "final_train_loss": 0.11884,
+    "final_val_loss": 0.14346,
     "augmentation": "circular shift × 4 + noise(p=0.03) × 3",
     "loss": "BCEWithLogitsLoss",
     "optimizer": "Adam (lr=1e-3)"

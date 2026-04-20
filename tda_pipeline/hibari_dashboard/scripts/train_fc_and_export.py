@@ -8,7 +8,8 @@ train_fc_and_export.py — FC 모델 학습 + ONNX export
   1. Phase 1 export 산출물(`data/overlap_matrix_reference.json` — 이진 T×K) 로드
   2. `preprocessing.run_preprocess` 호출하여 원곡 `music_notes` + `notes_label` 획득
   3. (T, N) multi-hot 타깃 행렬 y 구성
-  4. MusicGeneratorFC 아키텍처(40→128→256→23) 로 학습
+  4. MusicGeneratorFC 아키텍처(K → 128 → 256 → N) 로 학습
+     - 현재 최적 설정: K=14, N=23 (reference matrix 로드 후 런타임 결정)
      - circular shift + noise injection 증강
      - BCEWithLogitsLoss, Adam
   5. torch.onnx.export 로 ONNX 저장 → `public/models/fc_model.onnx`
@@ -16,8 +17,8 @@ train_fc_and_export.py — FC 모델 학습 + ONNX export
 
 주의:
 - 기존 `tda_pipeline/` 코드는 import 만 한다. 수정 금지.
-- 실험 B 의 FC(JS=0.0004) 는 continuous 입력 + subset aug 포함이지만,
-  대시보드 사용자는 이진 edit matrix 를 생성 입력으로 쓰므로 이진 학습으로 구성.
+- 현재 연구 최저 FC 기록(JS≈0.00035, α=0.5 FC-cont)은 continuous 입력 + subset aug
+  기준. 대시보드 사용자는 이진 edit matrix 를 생성 입력으로 쓰므로 이진 학습으로 구성.
 - hidden_dim=128, dropout=0.3, 300 epochs. 학습시간 ~30 초 (CPU).
 """
 
@@ -247,8 +248,8 @@ def save_meta(num_cycles: int, num_notes: int,
         })
 
     meta = {
-        'version': '1.0',
-        'architecture': 'MusicGeneratorFC (40 → 128 → 256 → 23)',
+        'version': '2.0',
+        'architecture': f'MusicGeneratorFC ({num_cycles} → 128 → 256 → {num_notes})',
         'num_cycles': num_cycles,
         'num_notes': num_notes,
         'input': {

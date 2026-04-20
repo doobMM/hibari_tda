@@ -38,12 +38,38 @@
 (function (global) {
   'use strict';
 
-  const CELL_ON_RGB   = [74, 222, 128];     // #4ADE80
-  const CELL_OFF_RGB  = [26, 26, 47];       // #1A1A2F
-  const CELL_ADD_RGB  = [56, 189, 248];     // #38BDF8 — 편집에서 추가됨
-  const CELL_DEL_RGB  = [244, 114, 182];    // #F472B6 — 편집에서 제거됨
-  const HOVER_STROKE  = 'rgba(251, 191, 36, 0.9)';
-  const GRID_STROKE   = 'rgba(67, 56, 202, 0.08)';
+  // 캔버스 색은 CSS 토큰(--cell-on/off/diff-add/diff-remove 등)에서 읽어 테마 반응.
+  // 파싱 실패시 아래 fallback 사용 (dark 모드 값).
+  const FALLBACK = {
+    on:        [74, 222, 128],
+    off:       [26, 26, 47],
+    add:       [56, 189, 248],
+    del:       [244, 114, 182],
+    canvasBg:  '#0A0A1C',
+    hover:     'rgba(251, 191, 36, 0.9)',
+    grid:      'rgba(67, 56, 202, 0.08)',
+  };
+  function hexToRgb(hex) {
+    const m = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(String(hex).trim());
+    if (!m) return null;
+    return [parseInt(m[1], 16), parseInt(m[2], 16), parseInt(m[3], 16)];
+  }
+  function readCssVar(name) {
+    try {
+      return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+    } catch (e) { return ''; }
+  }
+  function readPalette() {
+    return {
+      on:       hexToRgb(readCssVar('--cell-on'))          || FALLBACK.on,
+      off:      hexToRgb(readCssVar('--cell-off'))         || FALLBACK.off,
+      add:      hexToRgb(readCssVar('--cell-diff-add'))    || FALLBACK.add,
+      del:      hexToRgb(readCssVar('--cell-diff-remove')) || FALLBACK.del,
+      canvasBg: readCssVar('--surface-canvas')             || FALLBACK.canvasBg,
+      hover:    FALLBACK.hover,
+      grid:     readCssVar('--grid-line')                  || FALLBACK.grid,
+    };
+  }
 
   class OverlapEditor {
     constructor(canvas, opts = {}) {
@@ -596,8 +622,9 @@
     render() {
       const { ctx, cssW, cssH } = this;
       if (!ctx) return;
+      const P = readPalette();
       ctx.save();
-      ctx.fillStyle = '#0A0A1C';
+      ctx.fillStyle = P.canvasBg;
       ctx.fillRect(0, 0, cssW, cssH);
 
       // 화면상의 셀 크기 (scale 포함)
@@ -620,14 +647,14 @@
           let rgb;
           if (this.showDiff && this.reference) {
             if (v === refV) {
-              rgb = v ? CELL_ON_RGB : CELL_OFF_RGB;
+              rgb = v ? P.on : P.off;
             } else if (v && !refV) {
-              rgb = CELL_ADD_RGB;
+              rgb = P.add;
             } else {
-              rgb = CELL_DEL_RGB;
+              rgb = P.del;
             }
           } else {
-            rgb = v ? CELL_ON_RGB : CELL_OFF_RGB;
+            rgb = v ? P.on : P.off;
           }
           ctx.fillStyle = `rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`;
           ctx.fillRect(ox + t * cellW, oy + c * cellH, Math.ceil(cellW), Math.ceil(cellH));
@@ -636,7 +663,7 @@
 
       // 셀 격자선 (scale이 충분히 큰 경우만)
       if (cellW >= 6 || cellH >= 6) {
-        ctx.strokeStyle = GRID_STROKE;
+        ctx.strokeStyle = P.grid;
         ctx.lineWidth = 1;
         ctx.beginPath();
         for (let t = tStart; t <= tEnd; t++) {
@@ -655,7 +682,7 @@
       // hover
       if (this._hover) {
         const { t, c } = this._hover;
-        ctx.strokeStyle = HOVER_STROKE;
+        ctx.strokeStyle = P.hover;
         ctx.lineWidth = 2;
         ctx.strokeRect(ox + t * cellW + 0.5, oy + c * cellH + 0.5,
                        Math.max(2, cellW - 1), Math.max(2, cellH - 1));

@@ -15,8 +15,8 @@
   'use strict';
 
   const $ = (id) => document.getElementById(id);
-  const STORAGE_KEY = 'hibari_dashboard_edit_v1';
-  const STORAGE_VERSION = 1;
+  const STORAGE_KEY = 'hibari_dashboard_edit_v2';
+  const STORAGE_VERSION = 2;
 
   // 외부에서 참조할 수 있도록 전역 핸들
   const UI = {
@@ -224,6 +224,19 @@
     $('btnDownloadMidi').addEventListener('click', onClickDownloadMidi);
     $('btnPlayOriginal').addEventListener('click', onClickPlayOriginal);
     $('btnStopOriginal').addEventListener('click', onClickStopOriginal);
+    // 후보 탭(A/B/C) 클릭 시 활성 후보 전환 + 재생
+    document.querySelectorAll('.candidate-tab').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const idx = parseInt(btn.dataset.cand, 10);
+        if (!isNaN(idx)) activateCandidate(idx);
+      });
+    });
+    // 길이 모드 전환 시 후보 탭 숨김
+    document.querySelectorAll('input[name="lenMode"]').forEach((r) => {
+      r.addEventListener('change', () => {
+        if (getLenMode() === 'full') hideCandidateTabs();
+      });
+    });
   }
 
   // ── 변형 컨트롤 힌트/적용 로직 ───────────────────────────────────────
@@ -310,13 +323,63 @@
   }
 
   // ── Phase 4: 생성·재생 로직 ─────────────────────────────────────────
+  const SLICE_STEPS = 64;       // 2 마디 = 64개 8분음표 ≈ 30초 (bpm=60 기준 32초)
+  const BAR_STEPS = 32;         // 한 마디 = 32개 8분음표
+
   const playState = {
-    lastGenerated: null,      // { notes: [[startEighth, pitch, endEighth]], meta: {...} }
+    lastGenerated: null,      // 현재 활성 후보 (재생·MIDI 저장 대상)
+    candidates: [],           // 슬라이스 모드에서 생성된 3개 후보 배열
+    activeCandidateIdx: -1,
     lastOriginalNotes: null,  // [[startSec, pitch, endSec, vel], ...]
     genPlayer: null,
     origPlayer: null,
     bpm: 60,                  // 생성 MIDI 기본 tempo
   };
+
+  // 슬라이스 모드 헬퍼 ─────────────────────────────────────────────────
+  function pickThreeBarOffsets(seed, T, W, bar) {
+    const maxStart = T - W;
+    const starts = [];
+    for (let s = 0; s <= maxStart; s += bar) starts.push(s);
+    if (!window.GenerationAlgo1) return starts.slice(0, 3);
+    const rng = window.GenerationAlgo1.makeRng((seed ^ 0xcafebabe) >>> 0);
+    for (let i = starts.length - 1; i > 0; i--) {
+      const j = Math.floor(rng() * (i + 1));
+      [starts[i], starts[j]] = [starts[j], starts[i]];
+    }
+    const chosen = [];
+    for (const s of starts) {
+      if (chosen.every(c => Math.abs(c - s) >= W)) {
+        chosen.push(s);
+        if (chosen.length === 3) break;
+      }
+    }
+    return chosen.sort((a, b) => a - b);
+  }
+
+  function sliceOverlap(overlap, start, length) {
+    const K = overlap.K;
+    const src = overlap.values;
+    const Ctor = src.constructor;
+    const out = new Ctor(length * K);
+    out.set(src.subarray(start * K, (start + length) * K));
+    return { T: length, K, values: out };
+  }
+
+  function sliceInstLen(instLen, start, length) {
+    return instLen.slice(start, start + length);
+  }
+
+  function getLenMode() {
+    return document.querySelector('input[name="lenMode"]:checked')?.value || 'slice';
+  }
+
+  function secLabel(startEighths) {
+    const bpm = playState.bpm;
+    const startSec = startEighths * (30 / bpm);
+    const endSec = (startEighths + SLICE_STEPS) * (30 / bpm);
+    return `${Math.round(startSec)}–${Math.round(endSec)}초`;
+  }
 
   function ensurePlayer(kind) {
     const k = kind === 'orig' ? 'origPlayer' : 'genPlayer';
@@ -337,142 +400,197 @@
     return eighths * (30 / bpm);
   }
 
-  // 생성 버튼
-  function onClickGenerate() {
+  // 알고리즘 1: overlap(이미 슬라이스된 형태 포함) 하나 생성
+  function runAlgo1Once({ overlap, instLen, temperature, seed }) {
+    const { NodePool, CycleSetManager, algorithm1, makeRng } = window.GenerationAlgo1;
+    const rng = makeRng(seed >>> 0);
+    const pool = new NodePool({
+      labels: UI.data.notesMeta.labels,
+      numModules: UI.data.notesMeta.num_modules_reference,
+      temperature,
+      rng,
+    });
+    const cycleMgr = new CycleSetManager({
+      cycles: UI.data.cyclesMeta.cycles,
+      K: overlap.K,
+    });
+    const t0 = performance.now();
+    const res = algorithm1({
+      nodePool: pool, cycleManager: cycleMgr,
+      instLen, overlap, maxResample: 50, rng,
+    });
+    res.elapsedMs = performance.now() - t0;
+    return res;
+  }
+
+  // 알고리즘 2 (FC): overlap 하나 추론
+  async function runAlgo2Once({ overlap, temperature }) {
+    const targetOnRatio = Math.max(0.05, Math.min(0.35, 0.05 * temperature));
+    const res = await playState.fcGen.generate({
+      overlap, adaptive: true, targetOnRatio, minOnsetGap: 0,
+    });
+    return res;
+  }
+
+  // FC 모델 지연 로드 (슬라이스 모드에서 매번 확인)
+  async function ensureFcLoaded() {
+    if (!window.FCGenerator) throw new Error('FCGenerator 모듈 미로드');
+    if (!playState.fcGen) playState.fcGen = new window.FCGenerator();
+    if (!playState.fcGen.session) log('FC 모델 로드 중… (ONNX runtime + 모델 다운로드)');
+    await playState.fcGen.load();
+    if (playState.fcLoaded !== true) {
+      log(`FC 모델 로드 완료 (${playState.fcGen.meta.architecture})`, 'OK');
+      playState.fcLoaded = true;
+    }
+  }
+
+  // 후보 notes를 wall-clock offset(8분음표)만큼 평행이동
+  function shiftNotes(notes, offsetEighths) {
+    return notes.map(([s, p, e]) => [s + offsetEighths, p, e + offsetEighths]);
+  }
+
+  // 후보 탭 렌더링
+  function renderCandidates() {
+    const container = $('candidateTabs');
+    if (!container) return;
+    const cands = playState.candidates;
+    if (!cands || cands.length === 0) {
+      container.hidden = true;
+      return;
+    }
+    container.hidden = false;
+    const btns = container.querySelectorAll('.candidate-tab');
+    const labels = ['A', 'B', 'C'];
+    btns.forEach((btn, i) => {
+      const c = cands[i];
+      if (c) {
+        btn.disabled = false;
+        btn.textContent = `${labels[i]} (${secLabel(c.offset)})`;
+        btn.classList.toggle('is-active', i === playState.activeCandidateIdx);
+      } else {
+        btn.disabled = true;
+        btn.textContent = labels[i];
+        btn.classList.remove('is-active');
+      }
+    });
+  }
+
+  function hideCandidateTabs() {
+    const container = $('candidateTabs');
+    if (container) container.hidden = true;
+    playState.candidates = [];
+    playState.activeCandidateIdx = -1;
+  }
+
+  // 활성 후보로 전환하고 재생
+  function activateCandidate(idx) {
+    const c = playState.candidates[idx];
+    if (!c) return;
+    playState.activeCandidateIdx = idx;
+    playState.lastGenerated = c;
+    $('btnStop').disabled = false;
+    $('btnDownloadMidi').disabled = false;
+    renderCandidates();
+    playCurrent(`후보 ${['A','B','C'][idx]} · ${secLabel(c.offset)}`);
+  }
+
+  function playCurrent(prefix) {
+    const res = playState.lastGenerated;
+    if (!res) return;
+    const bpm = playState.bpm;
+    const sec = res.notes.map(([s, p, e]) => [
+      eighthsToSec(s, bpm), p, eighthsToSec(e, bpm), 70,
+    ]);
+    const player = ensurePlayer('gen');
+    player.play(sec, {
+      onProgress: (t, total) => setProgress(total > 0 ? t / total : 0,
+        `${prefix} · ${t.toFixed(1)}s / ${total.toFixed(1)}s · ${res.notes.length} notes`),
+      onEnd: () => {
+        setProgress(1, `완료 · ${res.notes.length} notes`);
+        $('btnStop').disabled = true;
+        log('재생 종료');
+      },
+    });
+  }
+
+  // 생성 버튼 메인 핸들러
+  async function onClickGenerate() {
     if (!UI.editEditor || !UI.data) { log('데이터 미로드', 'ERR'); return; }
     if (!window.GenerationAlgo1) { log('GenerationAlgo1 모듈 미로드', 'ERR'); return; }
 
     const algo = document.querySelector('input[name="algo"]:checked')?.value || 'algo1';
+    const lenMode = getLenMode();
     const temperature = parseFloat($('sliderTemp').value) || 3.0;
     const seed = parseInt($('sliderSeed').value, 10) || 0;
 
-    if (algo === 'algo2') {
-      runAlgo2(temperature, seed);
-      return;
-    }
-
-    const t0 = performance.now();
-    log(`Algorithm 1 생성 시작 (T=${UI.editEditor.T}, temp=${temperature.toFixed(1)}, seed=${seed})`);
+    const { buildHibariInstLen } = window.GenerationAlgo1;
+    const fullInstLen = buildHibariInstLen(UI.editEditor.T);
+    const fullOverlap = {
+      T: UI.editEditor.T,
+      K: UI.editEditor.K,
+      values: UI.editEditor.getMatrix(),
+    };
 
     try {
-      const { NodePool, CycleSetManager, algorithm1, makeRng, buildHibariInstLen } =
-        window.GenerationAlgo1;
+      if (lenMode === 'full') {
+        hideCandidateTabs();
+        const label = algo === 'algo2' ? 'Algorithm 2 (FC)' : 'Algorithm 1';
+        log(`${label} 전곡 생성 시작 (T=${fullOverlap.T}, temp=${temperature.toFixed(1)}, seed=${seed})`);
+        let res;
+        if (algo === 'algo2') {
+          await ensureFcLoaded();
+          res = await runAlgo2Once({ overlap: fullOverlap, temperature });
+          log(`추론 완료: ${res.notes.length} notes, threshold=${res.threshold.toFixed(4)}, ${res.inferenceMs.toFixed(0)}ms`, 'OK');
+        } else {
+          res = runAlgo1Once({ overlap: fullOverlap, instLen: fullInstLen, temperature, seed });
+          log(`생성 완료: ${res.notes.length} notes, resample fail=${res.resampleFails}, ${res.elapsedMs.toFixed(0)}ms`, 'OK');
+        }
+        res.offset = 0;
+        playState.lastGenerated = res;
+        playState.candidates = [];
+        playState.activeCandidateIdx = -1;
+        $('btnStop').disabled = false;
+        $('btnDownloadMidi').disabled = false;
+        playCurrent(algo === 'algo2' ? 'FC 재생중' : '재생중');
+        return;
+      }
 
-      const rng = makeRng(seed);
-      const pool = new NodePool({
-        labels: UI.data.notesMeta.labels,
-        numModules: UI.data.notesMeta.num_modules_reference,
-        temperature,
-        rng,
-      });
-      const cycleMgr = new CycleSetManager({
-        cycles: UI.data.cyclesMeta.cycles,
-        K: UI.editEditor.K,
-      });
-      const instLen = buildHibariInstLen(UI.editEditor.T);
-      const overlap = {
-        T: UI.editEditor.T,
-        K: UI.editEditor.K,
-        values: UI.editEditor.getMatrix(),
-      };
+      // 슬라이스 모드 — 3개 후보
+      const offsets = pickThreeBarOffsets(seed, fullOverlap.T, SLICE_STEPS, BAR_STEPS);
+      if (offsets.length === 0) {
+        log('슬라이스 생성 실패: OM이 너무 짧습니다 (최소 64 step 필요)', 'ERR');
+        return;
+      }
+      const algoLabel = algo === 'algo2' ? 'Algorithm 2 (FC)' : 'Algorithm 1';
+      log(`${algoLabel} 슬라이스 생성 (3 후보 × ${SLICE_STEPS} steps, seed=${seed}, offsets=[${offsets.join(', ')}])`);
+      if (algo === 'algo2') await ensureFcLoaded();
 
-      const res = algorithm1({
-        nodePool: pool,
-        cycleManager: cycleMgr,
-        instLen,
-        overlap,
-        maxResample: 50,
-        rng,
-      });
-
+      const t0 = performance.now();
+      const results = [];
+      for (let i = 0; i < offsets.length; i++) {
+        const off = offsets[i];
+        const sliced = sliceOverlap(fullOverlap, off, SLICE_STEPS);
+        const sliceInst = sliceInstLen(fullInstLen, off, SLICE_STEPS);
+        let res;
+        if (algo === 'algo2') {
+          res = await runAlgo2Once({ overlap: sliced, temperature });
+        } else {
+          res = runAlgo1Once({
+            overlap: sliced, instLen: sliceInst, temperature,
+            seed: (seed + i * 7919) >>> 0,
+          });
+        }
+        res.offset = off;
+        res.notes = shiftNotes(res.notes, off);
+        results.push(res);
+      }
       const dt = performance.now() - t0;
-      log(`생성 완료: ${res.notes.length} notes, resample fail=${res.resampleFails}, ${dt.toFixed(0)}ms`, 'OK');
+      log(`3 후보 생성 완료 (${dt.toFixed(0)}ms) — ${results.map((r,i)=>`${['A','B','C'][i]}:${r.notes.length}`).join(', ')} notes`, 'OK');
 
-      playState.lastGenerated = res;
-      $('btnStop').disabled = false;
-      $('btnDownloadMidi').disabled = false;
-
-      // 재생용 초 단위 note 리스트로 변환
-      const bpm = playState.bpm;
-      const sec = res.notes.map(([s, p, e]) => [
-        eighthsToSec(s, bpm),
-        p,
-        eighthsToSec(e, bpm),
-        70,
-      ]);
-
-      const player = ensurePlayer('gen');
-      player.play(sec, {
-        onProgress: (t, total) => setProgress(total > 0 ? t / total : 0,
-          `재생중 · ${t.toFixed(1)}s / ${total.toFixed(1)}s · ${res.notes.length} notes`),
-        onEnd: () => {
-          setProgress(1, `완료 · ${res.notes.length} notes`);
-          $('btnStop').disabled = true;
-          log('재생 종료');
-        },
-      });
+      playState.candidates = results;
+      activateCandidate(0);
     } catch (e) {
       log(`생성 실패: ${e.message}`, 'ERR');
-      console.error(e);
-    }
-  }
-
-  // Algorithm 2 (FC model) 실행
-  async function runAlgo2(temperature, seed) {
-    if (!window.FCGenerator) {
-      log('FCGenerator 모듈 미로드', 'ERR');
-      return;
-    }
-    if (!playState.fcGen) playState.fcGen = new window.FCGenerator();
-    try {
-      if (!playState.fcGen.session) {
-        log('FC 모델 로드 중… (ONNX runtime + 모델 다운로드)');
-      }
-      await playState.fcGen.load();
-      if (playState.fcLoaded !== true) {
-        const m = playState.fcGen.meta;
-        log(`FC 모델 로드 완료 (${m.architecture})`, 'OK');
-        playState.fcLoaded = true;
-      }
-
-      const overlap = {
-        T: UI.editEditor.T,
-        K: UI.editEditor.K,
-        values: UI.editEditor.getMatrix(),
-      };
-      // temperature 는 FC 에서는 threshold 조절용으로 사용:
-      //   higher temp → lower threshold → 더 많은 activation
-      const targetOnRatio = Math.max(0.05, Math.min(0.35, 0.05 * temperature));
-      log(`Algorithm 2 (FC) 추론 시작 (targetOnRatio=${targetOnRatio.toFixed(2)}, seed=${seed})`);
-
-      const res = await playState.fcGen.generate({
-        overlap, adaptive: true, targetOnRatio, minOnsetGap: 0,
-      });
-
-      log(`추론 완료: ${res.notes.length} notes, threshold=${res.threshold.toFixed(4)}, ${res.inferenceMs.toFixed(0)}ms`, 'OK');
-
-      playState.lastGenerated = res;
-      $('btnStop').disabled = false;
-      $('btnDownloadMidi').disabled = false;
-
-      // 8 분음표 → 초 변환 후 재생
-      const bpm = playState.bpm;
-      const sec = res.notes.map(([s, p, e]) => [
-        eighthsToSec(s, bpm), p, eighthsToSec(e, bpm), 70,
-      ]);
-
-      const player = ensurePlayer('gen');
-      player.play(sec, {
-        onProgress: (t, total) => setProgress(total > 0 ? t / total : 0,
-          `FC 재생중 · ${t.toFixed(1)}s / ${total.toFixed(1)}s · ${res.notes.length} notes`),
-        onEnd: () => {
-          setProgress(1, `완료 · ${res.notes.length} notes`);
-          $('btnStop').disabled = true;
-          log('FC 재생 종료');
-        },
-      });
-    } catch (e) {
-      log(`FC 생성 실패: ${e.message}`, 'ERR');
       console.error(e);
     }
   }
@@ -489,14 +607,16 @@
       return;
     }
     try {
-      const { notes } = playState.lastGenerated;
-      const bytes = window.MidiIO.notesToMidiBytes(notes, {
+      const cur = playState.lastGenerated;
+      const bytes = window.MidiIO.notesToMidiBytes(cur.notes, {
         bpm: playState.bpm,
         ticksPerEighth: 240,
         velocity: 80,
       });
       const seed = parseInt($('sliderSeed').value, 10) || 0;
-      const fname = `hibari_dash_seed${seed}.mid`;
+      const idx = playState.activeCandidateIdx;
+      const tag = idx >= 0 ? `_${['A','B','C'][idx]}_off${cur.offset|0}` : '';
+      const fname = `hibari_dash_seed${seed}${tag}.mid`;
       window.MidiIO.downloadBytes(bytes, fname);
       log(`MIDI 다운로드: ${fname} (${(bytes.length / 1024).toFixed(1)} KB)`, 'OK');
     } catch (e) {
@@ -607,7 +727,7 @@
 
       // 최초 로드 상태 메시지
       setStatus(
-        `T=${T} · K=${K} · N=${data.notesMeta.num_notes} · exp B`,
+        `T=${T} · K=${K} · N=${data.notesMeta.num_notes} · DFT α=0.25 per-cycle τ`,
         'ok'
       );
       log(`데이터 로드 완료 (manifest version ${data.manifest.version})`, 'OK');

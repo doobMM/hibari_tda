@@ -1,0 +1,136 @@
+/* ==========================================================================
+   tokens.css — Hibari Dashboard Design Tokens
+   Palette direction: SKMT "async" album minimalism × Three.js math viz precision
+   4px base unit, flat/borderless, cool-teal + muted-amber on near-black
+   ========================================================================== */
+
+/* ── Dark mode (default) ─────────────────────────────────────────────────── */
+:root {
+  /* Surface */
+  --surface-base:       #0a0a0c;   /* near-black, slightly blue-tinted */
+  --surface-raised:     #111116;   /* card, panel */
+  --surface-overlay:    #18181f;   /* hover state, dropdown bg */
+  --surface-canvas:     #0d0d12;   /* canvas background */
+
+  /* Borders */
+  --border-hairline:    #1e1e28;   /* faint structural line */
+  --border-default:     #252530;   /* default control border */
+  --border-focus:       #4ecdc4;   /* focus ring — teal accent */
+
+  /* Text */
+  --text-primary:       #e8e8e0;   /* main body, labels */
+  --text-secondary:     #8a8a96;   /* muted meta, hints */
+  --text-tertiary:      #50505c;   /* disabled, placeholder */
+
+  /* Accent — cool teal (primary) */
+  --accent-teal:        #4ecdc4;   /* interactive, active states */
+  --accent-teal-dim:    rgba(78, 205, 196, 0.15);  /* subtle bg tint */
+  --accent-teal-border: rgba(78, 205, 196, 0.35);  /* border at accent */
+
+  /* Accent — muted amber (secondary) */
+  --accent-amber:       #c9a84c;   /* hover highlight, warning */
+  --accent-amber-dim:   rgba(201, 168, 76, 0.12);
+  --accent-amber-border:rgba(201, 168, 76, 0.35);
+
+  /* Semantic */
+  --color-ok:           #4ecdc4;   /* same as teal — success/ok */
+  --color-warn:         #c9a84c;   /* amber — warning */
+  --color-danger:       #c0565a;   /* muted red — danger */
+  --color-ok-dim:       rgba(78, 205, 196, 0.12);
+  --color-warn-dim:     rgba(201, 168, 76, 0.12);
+  --color-danger-dim:   rgba(192, 86, 90, 0.12);
+  --color-ok-border:    rgba(78, 205, 196, 0.30);
+  --color-warn-border:  rgba(201, 168, 76, 0.30);
+  --color-danger-border:rgba(192, 86, 90, 0.30);
+
+  /* Canvas cell states — passed to JS via CSS but also hardcoded in overlap-editor.js */
+  --cell-on:            #4ecdc4;   /* active cycle — teal, cool & precise */
+  --cell-off:           #111118;   /* inactive — near-black */
+  --cell-hover:         #c9a84c;   /* hover ring — amber */
+  --cell-diff-add:      #6fb3ff;   /* added cell — cool blue */
+  --cell-diff-remove:   #c0565a;   /* removed cell — muted red */
+
+  /* Grid lines (drawn on canvas) */
+  --grid-line:          rgba(255, 255, 255, 0.04);
+
+  /* Typography */
+  --font-ui:   system-ui, -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', 'Consolas', monospace;
+
+  /* Type scale */
+  --text-xs:    11px;
+  --text-sm:    12px;
+  --text-base:  13px;
+  --text-md:    14px;
+  --text-lg:    16px;
+  --text-xl:    18px;
+  --text-2xl:   22px;
+
+  /* Spacing scale (4px base unit) */
+  --space-1:    4px;
+  --space-2:    8px;
+  --space-3:    12px;
+  --space-4:    16px;
+  --space-6:    24px;
+  --space-8:    32px;
+  --space-12:   48px;
+  --space-16:   64px;
+
+  /* Border radius */
+  --radius-sm:  3px;
+  --radius-md:  6px;
+  --radius-lg:  10px;
+
+  /* Transition */
+  --transition: 200ms ease;
+
+  /* Layout */
+  --header-height:   52px;
+  --panel-width-sm:  220px;   /* left/right control panels (narrow) */
+  --panel-width:     260px;   /* left/right control panels (normal) */
+}
+
+/* ── Light mode (기본) — 복숭아 파스텔 × 히바리(종달새) 녹색 그라데이션 ─── */
+[data-theme="light"] {
+  /* Surface — 녹색 → 복숭아 그라데이션은 body background-image에서 */
+  --surface-base:       #f4f9ea;   /* 초원 끝자락 연녹색 */
+  --surface-raised:     rgba(255, 255, 255, 0.72);  /* 카드 — 반투명으로 그라데이션 비침 */
+  --surface-overlay:    #ffffff;                    /* hover / dropdown */
+  --surface-canvas:     #fbfaf2;   /* 크림 화이트 — matrix 캔버스 */
+
+  --border-hairline:    #e8d9c6;   /* 복숭아 톤 경계 */
+  --border-default:     #d9c5ae;
+  --border-focus:       #6fa66a;   /* 히바리 녹색 포커스 링 */
+
+  --text-primary:       #2f3a28;   /* 깊은 초원 녹색 — 가독성 */
+  --text-secondary:     #6b6255;   /* 따뜻한 회갈색 */
+  --text-tertiary:      #a89b89;
+
+  /* Accent — 히바리 녹색 (primary) */
+  --accent-teal:        #6fa66a;   /* 히바리의 등짓 연녹색 */
+  --accent-teal-dim:    rgba(111, 166, 106, 0.16);
+  --accent-teal-border: rgba(111, 166, 106, 0.38);
+
+  /* Accent — 복숭아 (secondary) */
+  --accent-amber:       #e88f6a;   /* 복숭아 파스텔 */
+  --accent-amber-dim:   rgba(232, 143, 106, 0.15);
+  --accent-amber-border:rgba(232, 143, 106, 0.35);
+
+  --color-ok:           #6fa66a;
+  --color-warn:         #e88f6a;
+  --color-danger:       #c44a52;
+  --color-ok-dim:       rgba(111, 166, 106, 0.14);
+  --color-warn-dim:     rgba(232, 143, 106, 0.14);
+  --color-danger-dim:   rgba(196, 74, 82, 0.12);
+  --color-ok-border:    rgba(111, 166, 106, 0.30);
+  --color-warn-border:  rgba(232, 143, 106, 0.30);
+  --color-danger-border:rgba(196, 74, 82, 0.30);
+
+  --cell-on:            #6fa66a;   /* 활성 — 히바리 녹색 */
+  --cell-off:           #f2e6d3;   /* 비활성 — 복숭아 크림 */
+  --cell-hover:         #e88f6a;   /* hover — 복숭아 */
+  --cell-diff-add:      #5b98b8;   /* 추가 — 연한 하늘 (초원 위 하늘) */
+  --cell-diff-remove:   #c44a52;
+
+  --grid-line:          rgba(111, 166, 106, 0.10);
+}
