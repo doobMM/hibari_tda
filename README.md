@@ -89,12 +89,19 @@
 - **Tonnetz 시각화**: <https://doobmm.github.io/hibari_tda/tda_pipeline/tonnetz_demo/>
 - **Overlap Matrix Dashboard**: <https://doobmm.github.io/hibari_tda/tda_pipeline/hibari_dashboard/public/>
 
+<p align="center">
+  <img src="./tda_pipeline/docs/qr_live_demo.png" alt="Live demo QR code" width="180">
+  <br>
+  <sub>📱 QR → <code>doobmm.github.io/hibari_tda</code> 허브</sub>
+</p>
+
 > 최초 배포 시 GitHub Pages 활성화가 필요합니다 (저장소 **Settings → Pages → Source: `main` / root** → Save, 1~2분 후 활성). 활성 후 push 할 때마다 자동 재배포됩니다.
 
 ### 데모 내용
 
 - **Tonnetz 시각화** — [`tda_pipeline/tonnetz_demo/`](./tda_pipeline/tonnetz_demo/)
   hibari 의 원곡 연주와 **Tonnetz 격자 위 H1 cycle overlay**를 동기 재생. Playback / Controls / Appearance / Sound / TDA 5탭으로 배색·오디오·사이클 강조 방식을 조정할 수 있습니다. Bootstrap + Tone.js 기반 정적 HTML.
+  **파이프라인 7단계 MIDI(v0 원곡 + v1~v6 생성본)가 페이지에 직접 인라인되어 있어 다운로드·추가 설정 없이 버튼 한 번으로 즉시 재생** 가능합니다 (embed 도구: [`tda_pipeline/tools/embed_hibari_midis.py`](./tda_pipeline/tools/embed_hibari_midis.py)).
 
 - **Overlap Matrix Dashboard** — [`tda_pipeline/hibari_dashboard/`](./tda_pipeline/hibari_dashboard/)
   중첩행렬을 **브라우저에서 직접 편집**하고 Algorithm 1 (확률 샘플링) · Algorithm 2 (FC ONNX 추론) 로 **그 자리에서 음악 생성·재생·MIDI 다운로드**. Canvas 에디터(좌클릭 토글, Shift+드래그 팬, 휠 줌), 참조 대비 diff 하이라이트, Hamming + persistence 기반 **OOD 경고 배너**, `localStorage` 자동 저장을 포함합니다. 자세한 사용법은 [`hibari_dashboard/README.md`](./tda_pipeline/hibari_dashboard/README.md).
