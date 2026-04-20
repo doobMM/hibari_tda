@@ -7,7 +7,16 @@ dist/
 build/
 *.log
 .env
-.claude/
+
+# ── Claude Code 설정 분할 ──
+# 공유(tracked): settings.json, commands/, rules/, agents/, skills/
+# 개인(ignored): settings.local.json, agent-memory/, launch.json, plans/, scheduled_tasks.lock
+.claude/*
+!.claude/settings.json
+!.claude/commands/
+!.claude/rules/
+!.claude/agents/
+!.claude/skills/
 
 # ── 대용량 바이너리 (재생성 가능) ──
 *.pkl

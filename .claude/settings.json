@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "_comment": "프로젝트 공유 설정 — settings.local.json은 개인 권한 전용",
+  "model": "claude-opus-4-7",
+  "thinking": {
+    "enabled": true,
+    "budgetTokens": 8000
+  },
+  "displayUX": {
+    "spinnerVerbs": true
+  },
+  "plansDirectory": "./.claude/plans",
+  "_notes": {
+    "voice": "세션 시 /voice 로 수동 활성 (한국어 dictation). settings에 강제 옵션 없음.",
+    "hooks": "PostToolUse Python ruff format은 별도 .claude/hooks/ 에 추가 예정 (B2 기본값 ②).",
+    "loop": "주 1회 /map pipeline.py 는 loop skill로 세션 시작 시 수동 등록."
+  }
+}
