@@ -1,6 +1,6 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-settings.json",
-  "_comment": "프로젝트 공유 설정 — settings.local.json은 개인 권한 전용",
+  "_comment": "프로젝트 공유 설정 — settings.local.json은 개인 권한/경로 전용",
   "model": "claude-opus-4-7",
   "thinking": {
     "enabled": true,
@@ -10,9 +10,32 @@
     "spinnerVerbs": true
   },
   "plansDirectory": "./.claude/plans",
+  "permissions": {
+    "allow": [
+      "Bash(python:*)",
+      "Bash(python3:*)",
+      "Bash(python -u:*)",
+      "Bash(python -c:*)",
+      "Bash(pip:*)",
+      "Bash(git:*)",
+      "Bash(gh:*)",
+      "Bash(ls:*)",
+      "Bash(mkdir:*)",
+      "Bash(rm -f cache/*.pkl)",
+      "Bash(where:*)",
+      "Bash(cd:*)",
+      "Bash(node:*)",
+      "Bash(npm:*)",
+      "Bash(npx:*)",
+      "Bash(xelatex:*)",
+      "Bash(pdflatex:*)",
+      "WebSearch"
+    ]
+  },
   "_notes": {
     "voice": "세션 시 /voice 로 수동 활성 (한국어 dictation). settings에 강제 옵션 없음.",
-    "hooks": "PostToolUse Python ruff format은 별도 .claude/hooks/ 에 추가 예정 (B2 기본값 ②).",
-    "loop": "주 1회 /map pipeline.py 는 loop skill로 세션 시작 시 수동 등록."
+    "hooks": "PostToolUse Python ruff format은 향후 .claude/hooks/ 에 추가 (B2 기본값 ②).",
+    "loop": "주 1회 /map pipeline.py 는 loop skill로 세션 시작 시 수동 등록.",
+    "local_paths": "Windows 폰트·사운드폰트·개인 경로는 settings.local.json."
   }
 }
