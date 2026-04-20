@@ -117,13 +117,25 @@
           <div class="panel panel-default">
             <div class="panel-heading"><span class="en">MIDI Playback</span><span class="ko">재생</span></div>
             <div class="panel-body">
-              <!-- ── Preloaded songs (public domain only) ────────── -->
+              <!-- ── Preloaded songs ───────────────────────────────── -->
               <div id="preloadedSongs" style="margin-bottom:12px">
                 <div style="font-size:10px;color:#aaa;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:5px">
-                  <span class="en">Preloaded — Public Domain</span><span class="ko">내장 곡 (퍼블릭 도메인)</span>
+                  <span class="en">hibari — TDA pipeline stages</span><span class="ko">hibari — TDA 파이프라인 단계별</span>
+                </div>
+                <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px">
+                  <button class="btn btn-sm preload-btn btn-primary" data-key="hibari_v0" title="원곡 / Sakamoto, out of noise (2009)"><i class="fa fa-play"></i> v0 <small style="opacity:0.7">원곡</small></button>
+                  <button class="btn btn-sm preload-btn btn-default" data-key="hibari_v1" title="Algorithm 1 · frequency distance + binary OM (JS 0.0335)">v1 <small style="opacity:0.7">Algo1·freq</small></button>
+                  <button class="btn btn-sm preload-btn btn-default" data-key="hibari_v2" title="Algorithm 1 · DFT distance + binary OM (JS 0.0144)">v2 <small style="opacity:0.7">Algo1·DFT</small></button>
+                  <button class="btn btn-sm preload-btn btn-default" data-key="hibari_v3" title="Algorithm 1 · DFT + per-cycle τ_c, α=0.5 (JS 0.0144)">v3 <small style="opacity:0.7">τ_c α=0.5</small></button>
+                  <button class="btn btn-sm preload-btn btn-default" data-key="hibari_v4" title="Algorithm 1 · DFT + per-cycle τ_c, α=0.25 — 본 연구 Algo1 최저 (JS 0.00902)">v4 <small style="opacity:0.7">τ_c α=0.25 ★</small></button>
+                  <button class="btn btn-sm preload-btn btn-default" data-key="hibari_v5" title="Algorithm 2 · FC-cont — 본 연구 절대 최저 (JS 0.00022)">v5 <small style="opacity:0.7">Algo2·FC ★</small></button>
+                  <button class="btn btn-sm preload-btn btn-default" data-key="hibari_v6" title="§6 블록 단위 생성 P3 (m=0)">v6 <small style="opacity:0.7">Block·P3</small></button>
+                </div>
+                <div style="font-size:10px;color:#aaa;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:5px">
+                  <span class="en">Public Domain references</span><span class="ko">공용 도메인 레퍼런스</span>
                 </div>
                 <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:4px">
-                  <button class="btn btn-sm preload-btn btn-success" data-key="bach"><i class="fa fa-play"></i> Toccata &amp; Fugue <small style="opacity:0.7">Bach</small></button>
+                  <button class="btn btn-sm preload-btn btn-default" data-key="bach"><i class="fa fa-play"></i> Toccata &amp; Fugue <small style="opacity:0.7">Bach</small></button>
                   <button class="btn btn-sm preload-btn btn-default" data-key="ravel">Pavane <small style="opacity:0.7">Ravel</small></button>
                   <button class="btn btn-sm preload-btn btn-default" data-key="clair">Clair de Lune <small style="opacity:0.7">Debussy</small></button>
                 </div>

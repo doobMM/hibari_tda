@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>hibari-TDA — 인터랙티브 데모</title>
+  <meta name="description" content="사카모토 류이치 hibari를 Topological Data Analysis로 분석한 연구의 브라우저 데모 허브. Tonnetz 시각화 + Overlap Matrix 대시보드.">
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Sans:wght@300;400;500;600&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0b0e14;
+      --panel: #151924;
+      --panel-hover: #1e2434;
+      --border: #2a3142;
+      --text: #e6e9ef;
+      --text-dim: #9da5b4;
+      --accent: #6496ff;
+      --accent-2: #64dc64;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text); font-family: 'Fira Sans', 'Noto Sans KR', system-ui, sans-serif; }
+    .container { max-width: 960px; margin: 0 auto; padding: 3rem 1.5rem 4rem; }
+    h1 { font-size: 2.25rem; font-weight: 600; letter-spacing: -0.01em; margin: 0 0 0.5rem; }
+    h1 .subtle { color: var(--text-dim); font-weight: 400; }
+    .tagline { color: var(--text-dim); margin: 0 0 2.5rem; font-size: 1.05rem; line-height: 1.55; }
+    .tagline a { color: var(--accent); text-decoration: none; border-bottom: 1px dotted var(--accent); }
+    .tagline a:hover { border-bottom-style: solid; }
+    .cards { display: grid; grid-template-columns: 1fr; gap: 1.25rem; margin-bottom: 2.5rem; }
+    @media (min-width: 720px) { .cards { grid-template-columns: 1fr 1fr; } }
+    .card { display: block; padding: 1.5rem 1.5rem 1.75rem; background: var(--panel); border: 1px solid var(--border); border-radius: 10px; color: inherit; text-decoration: none; transition: background 0.15s, transform 0.15s, border-color 0.15s; }
+    .card:hover { background: var(--panel-hover); border-color: var(--accent); transform: translateY(-2px); }
+    .card .tag { display: inline-block; font-size: 0.7rem; font-weight: 600; letter-spacing: 0.06em; padding: 0.2rem 0.55rem; border-radius: 4px; text-transform: uppercase; margin-bottom: 0.9rem; }
+    .card.viz .tag { background: rgba(100, 150, 255, 0.15); color: var(--accent); }
+    .card.dash .tag { background: rgba(100, 220, 100, 0.15); color: var(--accent-2); }
+    .card h2 { margin: 0 0 0.4rem; font-size: 1.25rem; font-weight: 600; }
+    .card p { margin: 0 0 0.6rem; color: var(--text-dim); font-size: 0.92rem; line-height: 1.5; }
+    .card .arrow { color: var(--text-dim); font-size: 0.85rem; }
+    .card:hover .arrow { color: var(--accent); }
+    .links { color: var(--text-dim); font-size: 0.9rem; border-top: 1px solid var(--border); padding-top: 1.5rem; line-height: 1.8; }
+    .links a { color: var(--text); text-decoration: none; border-bottom: 1px dotted var(--text-dim); }
+    .links a:hover { color: var(--accent); border-bottom-color: var(--accent); }
+    .links .row { display: flex; gap: 1.5rem; flex-wrap: wrap; }
+    code { font-family: 'Fira Code', 'Consolas', monospace; background: rgba(100, 150, 255, 0.08); padding: 0.1rem 0.35rem; border-radius: 3px; font-size: 0.9em; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>hibari-TDA <span class="subtle">인터랙티브 데모</span></h1>
+    <p class="tagline">
+      사카모토 류이치의 <em>hibari</em>를 <strong>Topological Data Analysis (Persistent Homology)</strong>로 분석하고,
+      발견된 cycle 구조를 시드 삼아 음악을 생성하는 연구 파이프라인의 브라우저 데모입니다.
+      연구 전체 내용은 <a href="https://github.com/doobMM/hibari_tda">GitHub 저장소</a>와
+      <a href="./tda_pipeline/docs/%ED%99%98%EB%8C%80_%ED%8F%AC%ED%8A%B8%ED%8F%B4%EB%A6%AC%EC%98%A4.pdf">환대_포트폴리오.pdf</a>를 참조하세요.
+    </p>
+
+    <div class="cards">
+      <a class="card viz" href="./tda_pipeline/tonnetz_demo/">
+        <span class="tag">Visualization</span>
+        <h2>Tonnetz 시각화</h2>
+        <p>hibari 원곡을 재생하면서 <strong>Tonnetz 격자 위에 H1 cycle overlay</strong>를 동기 표시합니다.
+        Playback · Controls · Appearance · Sound · TDA 5개 탭에서 색상·음향·사이클 강조 방식을 조정할 수 있습니다.</p>
+        <span class="arrow">열기 →</span>
+      </a>
+      <a class="card dash" href="./tda_pipeline/hibari_dashboard/public/">
+        <span class="tag">Dashboard</span>
+        <h2>Overlap Matrix Dashboard</h2>
+        <p>중첩행렬을 브라우저에서 <strong>직접 편집</strong>하고 <code>Algorithm 1</code> (확률 샘플링) 또는
+        <code>Algorithm 2</code> (FC ONNX 추론)로 그 자리에서 음악을 생성·재생·MIDI 다운로드할 수 있습니다.
+        Hamming + persistence 기반 OOD 경고 배너 포함.</p>
+        <span class="arrow">열기 →</span>
+      </a>
+    </div>
+
+    <div class="links">
+      <div class="row">
+        <span>📘 <a href="./tda_pipeline/docs/%ED%99%98%EB%8C%80_%ED%8F%AC%ED%8A%B8%ED%8F%B4%EB%A6%AC%EC%98%A4.md">환대_포트폴리오.md</a></span>
+        <span>📕 <a href="./tda_pipeline/docs/%ED%99%98%EB%8C%80_%ED%8F%AC%ED%8A%B8%ED%8F%B4%EB%A6%AC%EC%98%A4.pdf">환대_포트폴리오.pdf</a></span>
+        <span>🎧 <a href="./tda_pipeline/output/hibari+/">생성 음악 (OGG + MIDI)</a></span>
+        <span>⚙️ <a href="https://github.com/doobMM/hibari_tda">소스 코드 (GitHub)</a></span>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
