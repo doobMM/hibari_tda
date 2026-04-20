@@ -6,13 +6,11 @@
 
 ## 배경
 
-본 저장소는 2025년 1학기 **POSTECH 수학탐구 A** 수강 중 시작된 연구 과제를 담고 있습니다. 저장소 루트 디렉토리명 `WK14`는 수업 일정상 **WK14 (2025년 5월 19~25일)** 즈음 과제가 본격화된 시점을 의미하며, 이후 장기 연구로 확장되었습니다. 2026-04-13 ~ 04-19 기준 **WK61**에 해당하는 시점에서도 실험·논문 작업이 이어지고 있습니다.
+본 저장소는 2025년 1학기 **수학탐구 A** 수강 중 시작된 연구 과제를 담고 있습니다. 저장소 루트 디렉토리명 `WK14`는 수업 일정상 **WK14 (2025년 5월 19~25일)** 즈음 초기 수업 과제가 마무리된 시점을 의미합니다. 이후 약 10개월의 공백을 거쳐 **2026년 4월 2일부터 4월 20일까지** 연구를 재개·확장하여 현재의 실험·파이프라인으로 정리하였습니다.
 
-- **저자**: 김민주 (POSTECH)
-- **지도**: 수학탐구 A
+- **저자**: 김민주
 - **GitHub**: [doobMM/hibari_tda](https://github.com/doobMM/hibari_tda)
 - **주 연구 코드**: [`tda_pipeline/`](./tda_pipeline/) (자체 README 별도 존재)
-- **학술 논문 (한글·영문 IEEE)**: [`tda_pipeline/docs/`](./tda_pipeline/docs/)
 
 ---
 
@@ -23,7 +21,7 @@
 > 📘 **[`환대_포트폴리오.md`](./tda_pipeline/docs/%ED%99%98%EB%8C%80_%ED%8F%AC%ED%8A%B8%ED%8F%B4%EB%A6%AC%EC%98%A4.md)** — Markdown
 > 📕 **[`환대_포트폴리오.pdf`](./tda_pipeline/docs/%ED%99%98%EB%8C%80_%ED%8F%AC%ED%8A%B8%ED%8F%B4%EB%A6%AC%EC%98%A4.pdf)** — PDF 빌드본
 
-이 문서는 **전체 학술 논문(`academic_paper_full.md`)의 핵심 결과만 압축**한 버전으로, 방법론·핵심 결과·결론을 간략히 정리합니다. 깊이 있는 세부 설명이 필요하면 [`academic_paper_full.md`](./tda_pipeline/docs/academic_paper_full.md) 또는 LaTeX IEEE 원고(`tda_pipeline/docs/latex/hibari_tda.tex`)를 참조하세요.
+이 문서는 본 연구의 방법론·핵심 결과·결론을 간략히 정리합니다.
 
 ---
 
@@ -50,7 +48,32 @@
 | **Algorithm 2 최저 JS** | **0.00035 ± 0.00015** (N=10, FC-cont, DFT, α=0.5) |
 | **일반화 최적 거리** | 곡에 따라 다름 — aqua/solari: voice_leading 또는 Tonnetz / Bach: Tonnetz / Ravel: frequency |
 
-학술 논문 본문은 [`tda_pipeline/docs/academic_paper_full.md`](./tda_pipeline/docs/academic_paper_full.md), 포트폴리오용 축약본은 `환대_포트폴리오.md`, IEEE 영문/한글본 LaTeX는 `tda_pipeline/docs/latex/`에 있습니다.
+연구 전체 내용은 포트폴리오용 축약본 `환대_포트폴리오.md` / `환대_포트폴리오.pdf`에서 확인할 수 있습니다.
+
+---
+
+## 🎧 생성 음악 들어보기
+
+원곡(v0) 대비 파이프라인 단계별 개선 흐름을 9개 버전으로 수록했습니다. **OGG**는 브라우저에서 바로 재생·다운로드 가능하고, **MIDI**는 악보·편집용입니다. 렌더링: UprightPiano KW SF2 · 44.1 kHz · 스테레오 · 서스테인 페달 + Reverb.
+
+| ID | 설명 | 길이 | JS ↓ | OGG | MIDI |
+|:--:|:-----|:----:|:----:|:---:|:----:|
+| **v0** | 원곡 MIDI 직접 렌더링 (기준) | 8'16" | — | [🎵](./tda_pipeline/output/hibari%2B/v0_hibari_original.ogg) | — |
+| **v1** | Algo 1 · frequency 거리 (§4.1 baseline) | 13'08" | 0.0335 | [🎵](./tda_pipeline/output/hibari%2B/v1_algo1_frequency_binary.ogg) | [🎼](./tda_pipeline/output/hibari%2B/v1_algo1_frequency_binary.mid) |
+| **v2** | Algo 1 · DFT 거리 · Binary OM | 12'33" | 0.0144 | [🎵](./tda_pipeline/output/hibari%2B/v2_algo1_dft_binary.ogg) | [🎼](./tda_pipeline/output/hibari%2B/v2_algo1_dft_binary.mid) |
+| **v3** | Algo 1 · DFT · per-cycle τ · α=0.5 | 12'23" | 0.0144 | [🎵](./tda_pipeline/output/hibari%2B/v3_algo1_dft_percycle_tau_alpha05.ogg) | [🎼](./tda_pipeline/output/hibari%2B/v3_algo1_dft_percycle_tau_alpha05.mid) |
+| **v4** | Algo 1 · DFT · per-cycle τ · α=0.25 (**최저**) | 12'22" | **0.0107** | [🎵](./tda_pipeline/output/hibari%2B/v4_algo1_dft_percycle_alpha025.ogg) | [🎼](./tda_pipeline/output/hibari%2B/v4_algo1_dft_percycle_alpha025.mid) |
+| **v5** | Algo 2 FC-cont · DFT (**수치 절대 최저 ★**) | 8'17" | **0.00022** | [🎵](./tda_pipeline/output/hibari%2B/v5_algo2_fc_cont_dft_alpha05.ogg) | [🎼](./tda_pipeline/output/hibari%2B/v5_algo2_fc_cont_dft_alpha05.mid) |
+| **v6** | §6 블록 단위 P3 · DFT · α=0.25 | 8'17" | 0.0148 | [🎵](./tda_pipeline/output/hibari%2B/v6_block_p3_bestof10_m0.ogg) | [🎼](./tda_pipeline/output/hibari%2B/v6_block_p3_bestof10_m0.mid) |
+| **vD** | Tonnetz · Transformer · 위상 보존 변주 | 8'14" | 0.014* | [🎵](./tda_pipeline/output/hibari%2B/vD_tonnetz_transformer.ogg) | [🎼](./tda_pipeline/output/hibari%2B/vD_tonnetz_transformer.mid) |
+| **vH** | Tonnetz · Complex · per-cycle τ (legacy) | 14'09" | 0.0177 | [🎵](./tda_pipeline/output/hibari%2B/vH_tonnetz_complex_legacy.ogg) | [🎼](./tda_pipeline/output/hibari%2B/vH_tonnetz_complex_legacy.mid) |
+
+> **권장 청취 순서**: v0 → v1 → v2 → v3 → v4 (단계별 개선) → v5 (원곡 거의 모사) → vD (위상 보존 변주) → vH → v6
+>
+> **\*** vD 의 JS는 ref pitch 기준(vs 원곡은 0.334로 의도적 변주).
+> 상세 파라미터 표·MusicXML 악보는 [`tda_pipeline/output/hibari+/README.md`](./tda_pipeline/output/hibari+/README.md) 참조.
+
+> **저장 용량 주의**: 원본 WAV 파일(개당 87–150 MB, 총 ~1 GB)은 GitHub 용량 제한으로 저장소에 포함하지 않았습니다. 위 OGG Vorbis(개당 6–12 MB, 총 ~80 MB)는 원본 WAV 대비 약 8% 용량으로 사실상 동일한 청취 품질입니다.
 
 ---
 
@@ -255,24 +278,12 @@ print(result['js_mean'], '±', result['js_std'])
 
 ---
 
-## 논문 빌드
+## 포트폴리오 PDF 빌드
 
 ```bash
 cd tda_pipeline/docs
-
-# Markdown → PDF
-python build_academic_pdf.py academic_paper_full.md
 python build_academic_pdf.py 환대_포트폴리오.md
-
-# LaTeX IEEE (영문)
-cd latex && xelatex hibari_tda.tex
-
-# LaTeX 한글본 (XeLaTeX 전용)
-xelatex hibari_tda_ko.tex
-xelatex hibari_tda_report.tex
 ```
-
-`hibari_tda_ko.tex` / `hibari_tda_report.tex`는 fontspec 한글 폰트 때문에 **pdflatex 불가**, 반드시 XeLaTeX 사용.
 
 ---
 
@@ -287,7 +298,7 @@ xelatex hibari_tda_report.tex
 ## 인용
 
 선행·관련 연구:
-- 이동진, Mai Lan Tran, 정재훈, "국악의 기하학적 구조와 인공지능 작곡", 2024
+- 이동진, Mai Lan Tran, 정재훈, "국악의 기하학적 구조와 인공지능 작곡", 2022
 - Mai Lan Tran et al., "TDA of Korean Music in Jeongganbo: A Cycle Structure", arXiv:2103.06620, 2021
 - Cohen-Steiner, Edelsbrunner, Harer, "Stability of Persistence Diagrams", Discrete Comput. Geom. 37, 2007
 - Catanzaro, "Generalized Tonnetze", arXiv:1612.03519, 2016
@@ -296,7 +307,7 @@ xelatex hibari_tda_report.tex
 본 연구를 인용하려면:
 ```
 김민주, "TDA를 활용한 류이치 사카모토의 〈hibari〉 구조 분석 및 위상구조 기반 AI 작곡 파이프라인 제시",
-학술 원고 (진행 중), POSTECH, 2026.
+2026. https://github.com/doobMM/hibari_tda
 ```
 
 ---

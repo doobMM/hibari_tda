@@ -1,8 +1,8 @@
 Open Use License (Attribution + Share-Alike)
 ==============================================
 
-Copyright (c) 2025-2026 Minju Kim (POSTECH)
-                        김민주 (포항공과대학교)
+Copyright (c) 2025-2026 Minju Kim
+                        김민주
 
 본 저장소 (https://github.com/doobMM/hibari_tda) 에 포함된 모든 소스 코드 ·
 Jupyter 노트북 · 학술 문서 · 실험 결과 JSON ("본 저작물")의 저작권은 저자에게
@@ -25,7 +25,7 @@ A. **저작자 표시 (Attribution)**
    권장 인용 형식:
 
    > 김민주, "TDA를 활용한 류이치 사카모토의 〈hibari〉 구조 분석 및
-   >  위상구조 기반 AI 작곡 파이프라인 제시", POSTECH, 2026.
+   >  위상구조 기반 AI 작곡 파이프라인 제시", 2026.
    >  https://github.com/doobMM/hibari_tda
 
 B. **동일 조건 변경 허용 (Share-Alike)**

@@ -1,0 +1,101 @@
+{
+  "generated_at": "2026-04-20T11:20:55",
+  "elapsed_s": 112.6,
+  "out_dir": "C:\\WK14\\tda_pipeline\\output\\pipeline_progression",
+  "rendering": "UprightPianoKW SF2 44.1kHz stereo, sustain+reverb+chorus",
+  "entries": [
+    {
+      "stage": "v0",
+      "file": "v0_hibari_original.wav",
+      "purpose": "원곡 비교 기준",
+      "config": "original midi render",
+      "js_run": null,
+      "reused_from": "C:\\WK14\\tda_pipeline\\output\\final\\hibari_original.wav"
+    },
+    {
+      "stage": "v1",
+      "file": "v1_algo1_frequency_binary.wav",
+      "purpose": "Baseline: frequency distance + binary OM",
+      "config": "metric=frequency, alpha=0.5, overlap=binary, gap=0",
+      "js_ref_paper": "0.0345 (§4.1)",
+      "js_run": 0.033518,
+      "seed": 1002,
+      "K": 1,
+      "xml": null,
+      "mid": "C:\\WK14\\tda_pipeline\\output\\pipeline_progression\\v1_algo1_frequency_binary.mid",
+      "wav": "C:\\WK14\\tda_pipeline\\output\\pipeline_progression\\v1_algo1_frequency_binary.wav",
+      "duration_s": 788.24,
+      "render_mode": "musicxml_to_wav_stereo",
+      "fallback_reason": null
+    },
+    {
+      "stage": "v2",
+      "file": "v2_algo1_dft_binary.wav",
+      "purpose": "+DFT distance (§4.1)",
+      "config": "metric=dft, alpha=0.5, ow=0.3, dw=1.0, overlap=binary",
+      "js_ref_paper": "0.0213 (§4.1)",
+      "js_run": 0.014446,
+      "seed": 2002,
+      "K": 19,
+      "xml": null,
+      "mid": "C:\\WK14\\tda_pipeline\\output\\pipeline_progression\\v2_algo1_dft_binary.mid",
+      "wav": "C:\\WK14\\tda_pipeline\\output\\pipeline_progression\\v2_algo1_dft_binary.wav",
+      "duration_s": 752.79,
+      "render_mode": "musicxml_to_wav_stereo",
+      "fallback_reason": null
+    },
+    {
+      "stage": "v3",
+      "file": "v3_algo1_dft_percycle_tau_alpha05.wav",
+      "purpose": "+per-cycle τ continuous OM (§5.7)",
+      "config": "metric=dft, alpha=0.5, overlap=continuous->per-cycle tau",
+      "js_ref_paper": "0.01489 (§5.7)",
+      "js_run": 0.01437,
+      "seed": 9004,
+      "reused_from": "C:\\WK14\\tda_pipeline\\output\\final\\hibari_dft_gap0_algo1_final.wav"
+    },
+    {
+      "stage": "v4",
+      "file": "v4_algo1_dft_percycle_alpha025.wav",
+      "purpose": "+α=0.25 Phase 2 최저 Algo1 (§5.8.1)",
+      "config": "metric=dft, alpha=0.25, K=14, overlap=continuous->per-cycle tau",
+      "js_ref_paper": "0.00902 ± 0.00170 (N=20)",
+      "js_run": 0.010646,
+      "seed": 7204,
+      "K": 14,
+      "xml": null,
+      "mid": "C:\\WK14\\tda_pipeline\\output\\pipeline_progression\\v4_algo1_dft_percycle_alpha025.mid",
+      "wav": "C:\\WK14\\tda_pipeline\\output\\pipeline_progression\\v4_algo1_dft_percycle_alpha025.wav",
+      "duration_s": 741.88,
+      "render_mode": "musicxml_to_wav_stereo",
+      "fallback_reason": null
+    },
+    {
+      "stage": "v5",
+      "file": "v5_algo2_fc_cont_dft_alpha05.wav",
+      "purpose": "Algo2 FC-cont 본 연구 최저 (§5.8.2)",
+      "config": "FC, metric=dft, alpha=0.5, overlap=continuous",
+      "js_ref_paper": "0.00035 ± 0.00015 (N=10)",
+      "js_run": 0.00022,
+      "seed": 6111,
+      "reused_from": "C:\\WK14\\tda_pipeline\\output\\final\\hibari_dft_gap0_algo2_fc_cont_final.wav"
+    },
+    {
+      "stage": "v6",
+      "file": "v6_block_p3_bestof10_m0.wav",
+      "purpose": "§6 블록 단위 best global trial (§6.6)",
+      "config": "metric=dft, alpha=0.25, block_len=32, m=0, P3 + best-of-10",
+      "js_ref_paper": "0.01479 (best global trial)",
+      "js_run": 0.01479,
+      "seed": 9309,
+      "best_j": 1,
+      "module_coverage": "21/23",
+      "xml": null,
+      "mid": "C:\\WK14\\tda_pipeline\\output\\pipeline_progression\\v6_block_p3_bestof10_m0.mid",
+      "wav": "C:\\WK14\\tda_pipeline\\output\\pipeline_progression\\v6_block_p3_bestof10_m0.wav",
+      "duration_s": 496.479,
+      "render_mode": "fallback_pretty_midi_to_wav_stereo",
+      "fallback_reason": "ValueError: MIDI file has a largest tick of 11214001, it is likely corrupt"
+    }
+  ]
+}

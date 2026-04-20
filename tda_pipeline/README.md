@@ -3,8 +3,6 @@
 사카모토 류이치의 **hibari** (out of noise, 2009)를 **Topological Data Analysis (Persistent Homology)** 로 분석하여, 원곡과 위상수학적으로 유사한 구조를 가진 음악을 생성하는 연구 파이프라인.
 
 > **📘 먼저 읽을 문서**: [`docs/환대_포트폴리오.md`](./docs/%ED%99%98%EB%8C%80_%ED%8F%AC%ED%8A%B8%ED%8F%B4%EB%A6%AC%EC%98%A4.md) — 연구 전체를 빠르게 파악할 수 있는 포트폴리오용 축약본
->
-> 전체 학술 원고는 [`docs/academic_paper_full.md`](./docs/academic_paper_full.md), IEEE LaTeX는 [`docs/latex/`](./docs/latex/) 참조
 
 저장소 전체 개요는 [상위 README](../README.md) 참조. 본 README는 `tda_pipeline/` 내부 코드 · 스크립트 · 실험 흐름에 집중합니다.
 
@@ -88,12 +86,10 @@ tda_pipeline/
 │   ├── archive/                  # 아카이브된 모듈 3개 (adaptive_search 등)
 │   └── utils/                    # result_meta.py 등
 │
-├── docs/                         # 학술 논문 + Figure + 실험 결과 JSON
-│   ├── academic_paper_full.md                 # 전체 학술 원고
+├── docs/                         # 포트폴리오 + Figure + 실험 결과 JSON
 │   ├── 환대_포트폴리오.md                     # 포트폴리오 축약본 ★먼저 읽기
 │   ├── 환대_포트폴리오.pdf
 │   ├── build_academic_pdf.py                  # md → PDF 변환
-│   ├── latex/                                 # IEEE 영문·한글본·report
 │   ├── figures/                               # Figure PNG + 생성 스크립트
 │   └── step3_data/                            # 실험 결과 JSON
 │
@@ -225,26 +221,14 @@ N=10, N=20 반복으로 JS mean ± std + Welch t-test 기반 통계적 유의성
 
 ---
 
-## 논문 빌드
+## 포트폴리오 PDF 빌드
 
 ```bash
 cd docs
 
 # Markdown → PDF (한글 폰트 자동 탐색, ~/AppData/... Nanum 폴백 포함)
-python build_academic_pdf.py academic_paper_full.md
 python build_academic_pdf.py 환대_포트폴리오.md
-
-# LaTeX IEEE (영문) — xelatex/pdflatex 모두 가능
-cd latex && xelatex hibari_tda.tex
-
-# LaTeX 한글본 / report — XeLaTeX 전용 (fontspec 한글 폰트)
-xelatex hibari_tda_ko.tex
-xelatex hibari_tda_report.tex
 ```
-
-`hibari_tda_ko.tex`, `hibari_tda_report.tex`는 **pdflatex 불가** — 반드시 XeLaTeX.
-
-컴파일 성공 검증 3항: 에러 0 / undefined ref 0 / citation 0.
 
 ---
 
@@ -272,20 +256,20 @@ python docs/figures/gen_fig_vr_complex.py
 
 ## 연구 맥락 및 인용
 
-본 연구는 2025년 POSTECH 수학탐구 A 수강 중 시작되어 2026년 현재 확장 중.
+본 연구는 2025년 1학기 수학탐구 A 수강 중 시작된 초기 과제(`WK14/`)에 기반하며, 약 10개월의 공백 이후 2026년 4월 2일부터 4월 20일까지 재개·확장되었다.
 
 선행·관련 연구:
-- 이동진, Mai Lan Tran, 정재훈, "국악의 기하학적 구조와 인공지능 작곡", 2024
+- 이동진, Mai Lan Tran, 정재훈, "국악의 기하학적 구조와 인공지능 작곡", 2022
 - Mai Lan Tran et al., "TDA of Korean Music in Jeongganbo: A Cycle Structure", arXiv:2103.06620, 2021
 - Cohen-Steiner, Edelsbrunner, Harer, "Stability of Persistence Diagrams", Discrete Comput. Geom. 37, 2007
-- Heo, Choi, Jung, 2025 (path-representable pseudo-metrics) — §2.4 methodological note
+- Heo, Choi, Jung, 2025 (path-representable pseudo-metrics)
 - Catanzaro, "Generalized Tonnetze", arXiv:1612.03519, 2016
 - Tymoczko, "The Generalized Tonnetz", J. Music Theory 56:1, 2012
 
 인용 형식:
 ```
-김민주, "Persistent Homology를 활용한 hibari 음악 구조 분석 및 위상 보존 생성",
-POSTECH, 2026. https://github.com/doobMM/hibari_tda
+김민주, "TDA를 활용한 류이치 사카모토의 〈hibari〉 구조 분석 및 위상구조 기반 AI 작곡 파이프라인 제시",
+2026. https://github.com/doobMM/hibari_tda
 ```
 
 ---

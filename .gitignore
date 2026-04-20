@@ -21,6 +21,8 @@ build/
 *.npy
 output/
 generated_output/
+# 예외: tda_pipeline/output/hibari+/ 는 공개 감상용으로 git add -f 개별 커밋
+# (*.ogg, *.mid, README.md, metadata.json 만 포함 — WAV/MusicXML은 용량상 제외)
 
 # ── 빌드 캐시 ──
 tda_pipeline/docs/_eq_cache/
