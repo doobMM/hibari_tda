@@ -1,9 +1,4 @@
-# c:\Users\82104\Developments\.venv\Scripts\python.exe -m pip install mido
-# c:\Users\82104\Developments\.venv\Scripts\python.exe -m pip install pretty_midi
-# c:\Users\82104\Developments\.venv\Scripts\python.exe -m pip install librosa
-# c:\Users\82104\Developments\.venv\Scripts\python.exe -m pip install tqdm
-# c:\Users\82104\Developments\.venv\Scripts\python.exe -m pip install tabulate
-# c:\Users\82104\Developments\.venv\Scripts\python.exe -m pip install entropy
+# pip install mido pretty_midi librosa tqdm tabulate entropy
 
 
 import librosa

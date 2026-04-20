@@ -23,14 +23,14 @@ FONT_CANDIDATES = [
     {
         'name': 'NanumGothic',
         'label': '나눔고딕 (Nanum Gothic)',
-        'regular': 'C:/Users/82104/AppData/Local/Microsoft/Windows/Fonts/NanumGothic.ttf',
-        'bold': 'C:/Users/82104/AppData/Local/Microsoft/Windows/Fonts/NanumGothic.ttf',
+        'regular': '~/AppData/Local/Microsoft/Windows/Fonts/NanumGothic.ttf',
+        'bold': '~/AppData/Local/Microsoft/Windows/Fonts/NanumGothic.ttf',
     },
     {
         'name': 'NanumSquare',
         'label': '나눔스퀘어 (Nanum Square)',
-        'regular': 'C:/Users/82104/AppData/Local/Microsoft/Windows/Fonts/NanumSquare.ttf',
-        'bold': 'C:/Users/82104/AppData/Local/Microsoft/Windows/Fonts/NanumSquare.ttf',
+        'regular': '~/AppData/Local/Microsoft/Windows/Fonts/NanumSquare.ttf',
+        'bold': '~/AppData/Local/Microsoft/Windows/Fonts/NanumSquare.ttf',
     },
     {
         'name': 'HANBatang',
@@ -45,6 +45,11 @@ FONT_CANDIDATES = [
         'bold': 'C:/Windows/Fonts/HANDotumB.ttf',
     },
 ]
+
+# ~ (홈 디렉토리) 토큰을 실제 경로로 확장
+for _cfg in FONT_CANDIDATES:
+    for _key in ('regular', 'bold'):
+        _cfg[_key] = os.path.expanduser(_cfg[_key])
 
 # 2.1만 추출한 임시 md
 SECTION_MD = """# 한글 폰트 비교: {label}

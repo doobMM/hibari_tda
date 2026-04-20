@@ -25,7 +25,7 @@ from reportlab.pdfbase.ttfonts import TTFont
 # 폰트 — NanumSquare_ac (Regular+Bold 쌍이 시스템에 존재)
 from reportlab.pdfbase.pdfmetrics import registerFontFamily
 
-_FONTS_DIR = 'C:/Users/82104/AppData/Local/Microsoft/Windows/Fonts'
+_FONTS_DIR = os.path.expanduser('~/AppData/Local/Microsoft/Windows/Fonts')
 NANUM_REGULAR = f'{_FONTS_DIR}/NanumSquare_acR.ttf'   # NanumSquare_ac Regular
 NANUM_BOLD    = f'{_FONTS_DIR}/NanumSquare.ttf'        # NanumSquare_ac Bold
 # 파일이 없으면 GothicRegular로 fallback (볼드 불가지만 크래시 방지)

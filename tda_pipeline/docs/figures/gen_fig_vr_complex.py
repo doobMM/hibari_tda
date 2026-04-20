@@ -7,7 +7,7 @@ W, H = 800, 520
 img = Image.new('RGBA', (W, H), (255, 255, 255, 255))
 draw = ImageDraw.Draw(img)
 
-FD = r'C:\Users\82104\AppData\Roaming\Claude\local-agent-mode-sessions\skills-plugin\c7bf07f7-1002-4049-9e02-01ea99ddb5fe\246d5b4c-791e-4fbf-b7e9-43d2e2418f22\skills\canvas-design\canvas-fonts'
+FD = os.environ.get('CANVAS_FONTS_DIR', '')  # 재생성 시 Claude canvas-design 폰트 경로를 환경변수로 주입
 ft_title = ImageFont.truetype(os.path.join(FD, 'InstrumentSans-Bold.ttf'), 18)
 ft_sec   = ImageFont.truetype(os.path.join(FD, 'InstrumentSans-Bold.ttf'), 13)
 ft_label = ImageFont.truetype(os.path.join(FD, 'InstrumentSans-Regular.ttf'), 11)

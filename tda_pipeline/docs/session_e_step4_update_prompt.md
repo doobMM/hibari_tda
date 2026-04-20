@@ -2,7 +2,7 @@
 
 ## 작업 1 — 신규 memory 파일 생성
 
-`C:\Users\82104\.claude\projects\C--WK14\memory\project_phase1_gap0_findings_0417.md`
+`~/.claude/projects/C--WK14/memory/project_phase1_gap0_findings_0417.md`
 
 내용:
 

@@ -6,7 +6,7 @@ W, H = 1100, 620
 img = Image.new('RGB', (W, H), '#FFFFFF')
 draw = ImageDraw.Draw(img)
 
-FD = r'C:\Users\82104\AppData\Roaming\Claude\local-agent-mode-sessions\skills-plugin\c7bf07f7-1002-4049-9e02-01ea99ddb5fe\246d5b4c-791e-4fbf-b7e9-43d2e2418f22\skills\canvas-design\canvas-fonts'
+FD = os.environ.get('CANVAS_FONTS_DIR', '')  # Claude canvas-design 스킬 폰트. 없으면 SYSF로 폴백
 SYSF = os.path.join(os.environ.get('WINDIR', r'C:\Windows'), 'Fonts')
 
 def _safe_font(font_name, size, *, mono=False, bold=False):

@@ -3,7 +3,7 @@ import os
 import matplotlib as mpl
 from matplotlib import font_manager
 
-NANUM = 'C:/Users/82104/AppData/Local/Microsoft/Windows/Fonts/NanumGothic.ttf'
+NANUM = os.path.expanduser('~/AppData/Local/Microsoft/Windows/Fonts/NanumGothic.ttf')
 if os.path.exists(NANUM):
     font_manager.fontManager.addfont(NANUM)
     # 폰트 이름 확인
