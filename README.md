@@ -295,7 +295,7 @@ xelatex hibari_tda_report.tex
 
 본 연구를 인용하려면:
 ```
-김민주, "Persistent Homology를 활용한 hibari 음악 구조 분석 및 위상 보존 생성",
+김민주, "TDA를 활용한 류이치 사카모토의 〈hibari〉 구조 분석 및 위상구조 기반 AI 작곡 파이프라인 제시",
 학술 원고 (진행 중), POSTECH, 2026.
 ```
 

@@ -22,8 +22,8 @@ A. **저작자 표시 (Attribution)**
    본 저작물을 인용·참조할 때 저자 및 본 저장소를 명시해야 합니다.
    권장 인용 형식:
 
-   > 김민주, "Persistent Homology를 활용한 hibari 음악 구조 분석 및
-   >  위상 보존 생성", POSTECH, 2026.
+   > 김민주, "TDA를 활용한 류이치 사카모토의 〈hibari〉 구조 분석 및
+   >  위상구조 기반 AI 작곡 파이프라인 제시", POSTECH, 2026.
    >  https://github.com/doobMM/hibari_tda
 
 B. **비영리 (Non-Commercial)**
