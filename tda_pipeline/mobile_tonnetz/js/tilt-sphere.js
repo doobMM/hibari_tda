@@ -128,8 +128,9 @@ function triggerNearestNode() {
     if (d2 < bd2) { bd2 = d2; best = i; }
   }
   if (best < 0) return;
-  // avoid spamming the same node — require slight movement or different node
-  if (best === lastTriggeredNode && bd2 > 6400) return;
+  // avoid spamming the same node — skip while sphere stays within 80px of the
+  // last-triggered node (hysteresis: must drift away and return).
+  if (best === lastTriggeredNode && bd2 < 6400) return;
   lastTriggeredNode = best;
   const n = nodes[best];
   n.hot = 1.0;
