@@ -33,6 +33,10 @@ tda_pipeline/docs/font_preview_*.pdf
 tda_pipeline/docs/academic_paper_portfolio (short2).pdf
 tda_pipeline/docs/academic_paper_portfolio (short3).pdf
 
+# ── 피드백 txt 원본 (세션 간 작업 메모, 공개 저장소 제외) ──
+tda_pipeline/docs/260*피드백*.txt
+tda_pipeline/docs/260*논문*.txt
+
 # ── LaTeX 중간 산출물 ──
 *.aux
 *.out
