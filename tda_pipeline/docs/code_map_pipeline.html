@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Code Map — pipeline.py</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.0/dist/mermaid.min.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0d1117; color: #e6edf3; font-family: system-ui, -apple-system, sans-serif; }
+  header { background: #161b22; border-bottom: 1px solid #30363d;
+            padding: 14px 24px; display: flex; align-items: baseline; gap: 16px; }
+  h1 { font-size: 18px; font-weight: 600; }
+  .meta { color: #8b949e; font-size: 13px; }
+  .legend {
+    display: flex; flex-wrap: wrap; gap: 10px;
+    padding: 10px 24px; background: #161b22;
+    border-bottom: 1px solid #30363d; font-size: 12px;
+  }
+  .leg { display: flex; align-items: center; gap: 6px; }
+  .dot { width: 11px; height: 11px; border-radius: 50%; flex-shrink: 0; }
+  .container { padding: 24px; overflow: auto; }
+  .mermaid-wrap {
+    background: #ffffff; border-radius: 10px; padding: 24px;
+    overflow: auto; max-width: 100%;
+    box-shadow: 0 2px 12px rgba(0,0,0,.4);
+  }
+  #tooltip {
+    position: fixed; display: none; z-index: 9999;
+    background: rgba(0,0,0,.85); color: #fff;
+    padding: 7px 12px; border-radius: 6px;
+    font-size: 13px; max-width: 340px;
+    pointer-events: none; white-space: pre-wrap;
+    box-shadow: 0 2px 8px rgba(0,0,0,.5);
+  }
+  footer { color: #6e7681; font-size: 11px; padding: 12px 24px; text-align: center; }
+</style>
+</head>
+<body>
+<header>
+  <h1>📊 Code Map — pipeline.py</h1>
+  <span class="meta">생성: 2026-04-20 20:57 · depth ≤ 3 · 🔴 = 최근 30일 수정</span>
+</header>
+<div class="legend">
+  <span class="leg"><span class="dot" style="background:#e63946"></span> 최근 수정 (🔴)</span>
+  <span class="leg"><span class="dot" style="background:#3a86ff"></span> preprocessing.py</span>
+  <span class="leg"><span class="dot" style="background:#06d6a0"></span> weights.py</span>
+  <span class="leg"><span class="dot" style="background:#8338ec"></span> overlap.py</span>
+  <span class="leg"><span class="dot" style="background:#f4511e"></span> generation.py</span>
+  <span class="leg"><span class="dot" style="background:#f7b731"></span> topology.py</span>
+  <span class="leg"><span class="dot" style="background:#e76f51"></span> musical_metrics.py</span>
+  <span class="leg"><span class="dot" style="background:#9b5de5"></span> cycle_selector.py</span>
+  <span class="leg"><span class="dot" style="background:#b5838d"></span> temporal_reorder.py</span>
+  <span class="leg"><span class="dot" style="background:#adb5bd"></span> config.py</span>
+  <span class="leg"><span class="dot" style="background:#6c757d"></span> External Lib</span>
+</div>
+<div class="container">
+  <div class="mermaid-wrap">
+    <pre class="mermaid">
+flowchart TD
+    subgraph PIPE["🔵 pipeline.py — TDAMusicPipeline"]
+    direction TB
+        subgraph SG_초기화["초기화"]
+            __init__["__init__ 🔴"]
+        end
+        subgraph SG_Stage_1["Stage 1 — 전처리"]
+            run_preprocessing["run_preprocessing 🔴"]
+        end
+        subgraph SG_Stage_2["Stage 2 — Homology 탐색"]
+            run_homology_search["run_homology_search 🔴"]
+        end
+        subgraph SG_Stage_2sub["Stage 2 — 내부 탐색기"]
+            _apply_metric["_apply_metric 🔴"]
+            _search_timeflow["_search_timeflow 🔴"]
+            _search_simul["_search_simul 🔴"]
+            _search_complex["_search_complex 🔴"]
+        end
+        subgraph SG_Stage_3["Stage 3 — 중첩행렬"]
+            run_overlap_construction["run_overlap_construction 🔴"]
+        end
+        subgraph SG_Stage_3sub["Stage 3 — 내부 헬퍼"]
+            _build_note_time_df["_build_note_time_df 🔴"]
+            _load_persistence_from_pickle["_load_persistence_from_pickle 🔴"]
+        end
+        subgraph SG_Stage_3_5["Stage 3.5 — 선택적"]
+            run_cycle_selection["run_cycle_selection 🔴"]
+            run_temporal_reorder["run_temporal_reorder 🔴"]
+        end
+        subgraph SG_Stage_4["Stage 4 — 음악 생성"]
+            run_generation_algo1["run_generation_algo1 🔴"]
+            run_generation_algo2["run_generation_algo2 🔴"]
+        end
+        subgraph SG_캐시["캐시 관리"]
+            save_cache["save_cache"]
+            load_cache["load_cache"]
+        end
+        subgraph SG_기타["기타"]
+            cache_keys["cache_keys"]
+        end
+    end
+
+    subgraph SG_PREPROCESSING["preprocessing.py"]
+        preprocessing_load_and_quantize["load_and_quantize"]:::mod_preprocessing
+        preprocessing_analyze_midi["analyze_midi"]:::mod_preprocessing
+        preprocessing_split_instruments["split_instruments"]:::mod_preprocessing
+        preprocessing_group_notes_with_duration["group_notes_with_duration"]:::mod_preprocessing
+        preprocessing_build_chord_labels["build_chord_labels"]:::mod_preprocessing
+        preprocessing_build_note_labels["build_note_labels"]:::mod_preprocessing
+        preprocessing_chord_to_note_labels["chord_to_note_labels"]:::mod_preprocessing
+        preprocessing_prepare_lag_sequences["prepare_lag_sequences"]:::mod_preprocessing
+        preprocessing_find_flexible_pitches["find_flexible_pitches"]:::mod_preprocessing
+        preprocessing_simul_chord_lists["simul_chord_lists"]:::mod_preprocessing
+        preprocessing_simul_union_by_dict["simul_union_by_dict"]:::mod_preprocessing
+    end
+
+    subgraph SG_TOPOLOGY["topology.py"]
+        topology_generateBarcode["generateBarcode"]:::mod_topology
+    end
+
+    subgraph SG_MUSICAL_METRICS["musical_metrics.py"]
+        musical_metrics_compute_note_distance_matrix["compute_note_distance_matrix"]:::mod_musical_metrics
+        musical_metrics_compute_multi_hybrid_distance["compute_multi_hybrid_distance"]:::mod_musical_metrics
+        musical_metrics_compute_hybrid_distance["compute_hybrid_distance"]:::mod_musical_metrics
+    end
+
+    subgraph SG_WEIGHTS["weights.py"]
+        weights_compute_intra_weights["compute_intra_weights"]:::mod_weights
+        weights_compute_inter_weights_decayed["compute_inter_weights_decayed"]:::mod_weights
+        weights_compute_distance_matrix["compute_distance_matrix"]:::mod_weights
+        weights_compute_out_of_reach["compute_out_of_reach"]:::mod_weights
+        weights_compute_simul_weights["compute_simul_weights"]:::mod_weights
+        weights_to_upper_triangular["to_upper_triangular"]:::mod_weights
+        weights_refine_connectedness_fast["refine_connectedness_fast"]:::mod_weights
+        weights_symmetrize_upper_to_full["symmetrize_upper_to_full"]:::mod_weights
+        weights_weight_to_distance["weight_to_distance"]:::mod_weights
+    end
+
+    subgraph SG_OVERLAP["overlap.py"]
+        overlap_label_cycles_from_persistence["label_cycles_from_persistence"]:::mod_overlap
+        overlap_get_cycle_stats["get_cycle_stats"]:::mod_overlap
+        overlap_build_activation_matrix["build_activation_matrix"]:::mod_overlap
+        overlap_build_overlap_matrix["build_overlap_matrix"]:::mod_overlap
+        overlap_build_overlap_matrix_percycle["build_overlap_matrix_percycle"]:::mod_overlap
+    end
+
+    subgraph SG_CYCLE_SELECTOR["cycle_selector.py"]
+        cycle_selector_CycleSubsetSelector["CycleSubsetSelector"]:::mod_cycle_selector
+    end
+
+    subgraph SG_TEMPORAL_REORDER["temporal_reorder.py"]
+        temporal_reorder_reorder_overlap_matrix["reorder_overlap_matrix"]:::mod_temporal_reorder
+    end
+
+    subgraph SG_GENERATION["generation.py"]
+        generation_NodePool["NodePool"]:::mod_generation
+        generation_CycleSetManager["CycleSetManager"]:::mod_generation
+        generation_algorithm1_optimized["algorithm1_optimized"]:::mod_generation
+        generation_notes_to_xml["notes_to_xml"]:::mod_generation
+        generation_prepare_training_data["prepare_training_data"]:::mod_generation
+        generation_MusicGenerator["MusicGenerator"]:::mod_generation
+        generation_train_model["train_model"]:::mod_generation
+    end
+
+    subgraph SG_EXTERNAL["📦 External Libraries"]
+        external_sklearn["sklearn"]:::mod_external
+    end
+
+    %% ── 파이프라인 흐름 ──
+    run_preprocessing --> run_homology_search
+    run_homology_search --> run_overlap_construction
+    run_overlap_construction --> run_generation_algo1
+    run_homology_search --> _search_timeflow
+    run_homology_search --> _search_simul
+    run_homology_search --> _search_complex
+    _search_timeflow --> _apply_metric
+    _search_simul --> _apply_metric
+    _search_complex --> _apply_metric
+    run_overlap_construction --> _build_note_time_df
+    run_overlap_construction --> _load_persistence_from_pickle
+
+    %% ── 외부 모듈 호출 ──
+    run_preprocessing --> preprocessing_load_and_quantize
+    run_preprocessing --> preprocessing_analyze_midi
+    run_preprocessing --> preprocessing_split_instruments
+    run_preprocessing --> preprocessing_group_notes_with_duration
+    run_preprocessing --> preprocessing_build_chord_labels
+    run_preprocessing --> preprocessing_build_note_labels
+    run_preprocessing --> preprocessing_chord_to_note_labels
+    run_preprocessing --> preprocessing_prepare_lag_sequences
+    run_preprocessing --> preprocessing_find_flexible_pitches
+    run_homology_search --> topology_generateBarcode
+    run_homology_search --> musical_metrics_compute_note_distance_matrix
+    run_homology_search --> musical_metrics_compute_multi_hybrid_distance
+    _search_timeflow --> weights_compute_intra_weights
+    _search_timeflow --> weights_compute_inter_weights_decayed
+    _search_timeflow --> weights_compute_distance_matrix
+    _search_timeflow --> weights_compute_out_of_reach
+    _search_timeflow --> topology_generateBarcode
+    _search_simul --> weights_compute_simul_weights
+    _search_simul --> weights_compute_distance_matrix
+    _search_simul --> topology_generateBarcode
+    _search_complex --> weights_compute_intra_weights
+    _search_complex --> weights_compute_inter_weights_decayed
+    _search_complex --> weights_compute_simul_weights
+    _search_complex --> weights_to_upper_triangular
+    _search_complex --> weights_refine_connectedness_fast
+    _search_complex --> weights_symmetrize_upper_to_full
+    _search_complex --> weights_weight_to_distance
+    _search_complex --> topology_generateBarcode
+    _apply_metric --> musical_metrics_compute_note_distance_matrix
+    _apply_metric --> musical_metrics_compute_hybrid_distance
+    _apply_metric --> musical_metrics_compute_multi_hybrid_distance
+    run_overlap_construction --> overlap_label_cycles_from_persistence
+    run_overlap_construction --> overlap_get_cycle_stats
+    run_overlap_construction --> overlap_build_activation_matrix
+    run_overlap_construction --> overlap_build_overlap_matrix
+    run_overlap_construction --> overlap_build_overlap_matrix_percycle
+    run_overlap_construction --> preprocessing_simul_chord_lists
+    run_overlap_construction --> preprocessing_simul_union_by_dict
+    run_cycle_selection --> cycle_selector_CycleSubsetSelector
+    run_temporal_reorder --> temporal_reorder_reorder_overlap_matrix
+    run_generation_algo1 --> generation_NodePool
+    run_generation_algo1 --> generation_CycleSetManager
+    run_generation_algo1 --> generation_algorithm1_optimized
+    run_generation_algo1 --> generation_notes_to_xml
+    run_generation_algo2 --> generation_prepare_training_data
+    run_generation_algo2 --> generation_MusicGenerator
+    run_generation_algo2 --> generation_train_model
+    run_generation_algo2 --> external_sklearn
+
+    %% ── 스타일 ──
+    style __init__ fill:#e63946,stroke:#c1121f,color:#fff
+    style run_preprocessing fill:#e63946,stroke:#c1121f,color:#fff
+    style run_homology_search fill:#e63946,stroke:#c1121f,color:#fff
+    style _apply_metric fill:#e63946,stroke:#c1121f,color:#fff
+    style _search_timeflow fill:#e63946,stroke:#c1121f,color:#fff
+    style _search_simul fill:#e63946,stroke:#c1121f,color:#fff
+    style _search_complex fill:#e63946,stroke:#c1121f,color:#fff
+    style run_overlap_construction fill:#e63946,stroke:#c1121f,color:#fff
+    style _build_note_time_df fill:#e63946,stroke:#c1121f,color:#fff
+    style _load_persistence_from_pickle fill:#e63946,stroke:#c1121f,color:#fff
+    style run_cycle_selection fill:#e63946,stroke:#c1121f,color:#fff
+    style run_temporal_reorder fill:#e63946,stroke:#c1121f,color:#fff
+    style run_generation_algo1 fill:#e63946,stroke:#c1121f,color:#fff
+    style run_generation_algo2 fill:#e63946,stroke:#c1121f,color:#fff
+    style save_cache fill:#f7b731,stroke:#555,color:#111
+    style load_cache fill:#f7b731,stroke:#555,color:#111
+    style cache_keys fill:#868e96,stroke:#555,color:#111
+    classDef mod_preprocessing fill:#3a86ff,stroke:#3a86ff,color:#fff,font-size:11px
+    classDef mod_weights fill:#06d6a0,stroke:#06d6a0,color:#fff,font-size:11px
+    classDef mod_overlap fill:#8338ec,stroke:#8338ec,color:#fff,font-size:11px
+    classDef mod_generation fill:#f4511e,stroke:#f4511e,color:#fff,font-size:11px
+    classDef mod_topology fill:#f7b731,stroke:#f7b731,color:#fff,font-size:11px
+    classDef mod_musical_metrics fill:#e76f51,stroke:#e76f51,color:#fff,font-size:11px
+    classDef mod_cycle_selector fill:#9b5de5,stroke:#9b5de5,color:#fff,font-size:11px
+    classDef mod_temporal_reorder fill:#b5838d,stroke:#b5838d,color:#fff,font-size:11px
+    classDef mod_config fill:#adb5bd,stroke:#adb5bd,color:#fff,font-size:11px
+    classDef mod_external fill:#6c757d,stroke:#6c757d,color:#fff,font-size:11px
+    classDef mod_pipeline fill:#4361ee,stroke:#4361ee,color:#fff,font-size:11px
+    </pre>
+  </div>
+</div>
+<div id="tooltip"></div>
+<footer>TDA Music Pipeline · gen_code_map.py · pipeline.py</footer>
+
+<script>
+const TOOLTIPS = {"__init__": "__init__()", "run_preprocessing": "MIDI → 화음 시퀀스 → note 레이블링", "run_homology_search": "Persistent homology를 탐색합니다.", "_apply_metric": "빈도 거리 행렬에 musical metric을 적용합니다.", "_search_timeflow": "Timeflow homology 탐색", "_search_simul": "Simul homology 탐색", "_search_complex": "Complex homology 탐색", "run_overlap_construction": "사이클 persistence 데이터로부터 중첩행렬을 구축합니다.", "_build_note_time_df": "note-time DataFrame 구축", "_load_persistence_from_pickle": "pickle에서 persistence 로드", "run_cycle_selection": "위상 구조 보존도 기반으로 최적 cycle subset을 선택합니다.", "run_temporal_reorder": "중첩행렬의 시간축을 재배치한다 (cycle 보존, 선율 변화).", "run_generation_algo1": "Algorithm 1로 음악을 생성합니다.", "run_generation_algo2": "Algorithm 2 (신경망)로 음악을 생성합니다.", "save_cache": "중간 결과를 pickle로 저장합니다.", "load_cache": "저장된 중간 결과를 로드합니다.", "cache_keys": "cache_keys()", "load_and_quantize": "load_and_quantize", "analyze_midi": "analyze_midi", "split_instruments": "split_instruments", "group_notes_with_duration": "group_notes_with_duration", "build_chord_labels": "build_chord_labels", "build_note_labels": "build_note_labels", "chord_to_note_labels": "chord_to_note_labels", "prepare_lag_sequences": "prepare_lag_sequences", "find_flexible_pitches": "find_flexible_pitches", "simul_chord_lists": "simul_chord_lists", "simul_union_by_dict": "simul_union_by_dict", "generateBarcode": "generateBarcode", "compute_note_distance_matrix": "compute_note_distance_matrix", "compute_multi_hybrid_distance": "compute_multi_hybrid_distance", "compute_hybrid_distance": "compute_hybrid_distance", "compute_intra_weights": "compute_intra_weights", "compute_inter_weights_decayed": "compute_inter_weights_decayed", "compute_distance_matrix": "compute_distance_matrix", "compute_out_of_reach": "compute_out_of_reach", "compute_simul_weights": "compute_simul_weights", "to_upper_triangular": "to_upper_triangular", "refine_connectedness_fast": "refine_connectedness_fast", "symmetrize_upper_to_full": "symmetrize_upper_to_full", "weight_to_distance": "weight_to_distance", "label_cycles_from_persistence": "label_cycles_from_persistence", "get_cycle_stats": "get_cycle_stats", "build_activation_matrix": "build_activation_matrix", "build_overlap_matrix": "build_overlap_matrix", "build_overlap_matrix_percycle": "build_overlap_matrix_percycle", "CycleSubsetSelector": "CycleSubsetSelector", "reorder_overlap_matrix": "reorder_overlap_matrix", "NodePool": "NodePool", "CycleSetManager": "CycleSetManager", "algorithm1_optimized": "algorithm1_optimized", "notes_to_xml": "notes_to_xml", "prepare_training_data": "prepare_training_data", "MusicGenerator": "MusicGenerator", "train_model": "train_model", "sklearn": "sklearn"};
+
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'default',
+  flowchart: { htmlLabels: true, curve: 'basis', padding: 20 },
+});
+
+const tipEl = document.getElementById('tooltip');
+
+function addTooltips(svg) {
+  svg.querySelectorAll('.node').forEach(node => {
+    // text content of the node label
+    const rawText = (node.querySelector('foreignObject div, text') ||
+                     node.querySelector('[class*="label"]') || node)
+                    .textContent || '';
+    const name = rawText.replace(/🔴/g, '').replace(/\s+/g,' ').trim();
+    const tip = TOOLTIPS[name];
+    if (!tip) return;
+    node.style.cursor = 'help';
+    node.addEventListener('mouseenter', e => {
+      tipEl.textContent = name + '\n' + tip;
+      tipEl.style.display = 'block';
+    });
+    node.addEventListener('mousemove', e => {
+      tipEl.style.left = (e.clientX + 16) + 'px';
+      tipEl.style.top  = (e.clientY + 12) + 'px';
+    });
+    node.addEventListener('mouseleave', () => { tipEl.style.display = 'none'; });
+  });
+}
+
+(function waitForMermaid(tries) {
+  const svg = document.querySelector('.mermaid svg');
+  if (svg) { addTooltips(svg); return; }
+  if (tries > 0) setTimeout(() => waitForMermaid(tries - 1), 400);
+})(15);
+</script>
+</body>
+</html>
