@@ -77,6 +77,28 @@
 
 ---
 
+## 🕹️ 인터랙티브 데모
+
+두 개의 브라우저 기반 데모를 함께 공개합니다. 모두 로컬 정적 서버(`python -m http.server`)로 바로 실행할 수 있습니다.
+
+- **Tonnetz 시각화** — [`tda_pipeline/tonnetz_demo/`](./tda_pipeline/tonnetz_demo/)
+  hibari 의 원곡 연주와 **Tonnetz 격자 위 H1 cycle overlay**를 동기 재생. Playback / Controls / Appearance / Sound / TDA 5탭으로 배색·오디오·사이클 강조 방식을 조정할 수 있습니다. Bootstrap + Tone.js 기반 정적 HTML.
+
+- **Overlap Matrix Dashboard** — [`tda_pipeline/hibari_dashboard/`](./tda_pipeline/hibari_dashboard/)
+  중첩행렬을 **브라우저에서 직접 편집**하고 Algorithm 1 (확률 샘플링) · Algorithm 2 (FC ONNX 추론) 로 **그 자리에서 음악 생성·재생·MIDI 다운로드**. Canvas 에디터(좌클릭 토글, Shift+드래그 팬, 휠 줌), 참조 대비 diff 하이라이트, Hamming + persistence 기반 **OOD 경고 배너**, `localStorage` 자동 저장을 포함합니다. 자세한 사용법은 [`hibari_dashboard/README.md`](./tda_pipeline/hibari_dashboard/README.md).
+
+```bash
+# Tonnetz 데모
+cd tda_pipeline && python -m http.server 8000
+# → http://localhost:8000/tonnetz_demo/
+
+# Overlap Matrix Dashboard
+cd tda_pipeline/hibari_dashboard && python -m http.server 8000
+# → http://localhost:8000/public/index.html
+```
+
+---
+
 ## 디렉토리 구조 (루트)
 
 ```
@@ -106,8 +128,9 @@ WK14/
 │   ├── debug/                  ← 진단 스크립트
 │   ├── docs/                   ← 논문·Figure·실험 결과 JSON
 │   ├── listening_test/         ← 청취 실험 웹 플레이어 + stimuli
-│   └── hibari_dashboard/       ← 분석 대시보드
-└── tonnetz_demo/               ← Tonnetz 시각화 데모 (HTML)
+│   ├── hibari_dashboard/       ← Overlap Matrix 편집 + 브라우저 생성·재생
+│   └── tonnetz_demo/           ← Tonnetz 격자 + H1 cycle overlay 재생
+└── tonnetz_demo_redirect.html  ← 루트 진입용 리다이렉트 (→ tda_pipeline/tonnetz_demo/)
 ```
 
 ---
