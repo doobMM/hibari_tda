@@ -292,8 +292,8 @@ POSTECH, 2026. https://github.com/doobMM/hibari_tda
 
 ## 라이선스
 
-저장소 루트의 [`LICENSE`](../LICENSE) 참조 — **Research / Academic Use Only**.
+저장소 루트의 [`LICENSE`](../LICENSE) 참조 — **Open Use License (Attribution + Share-Alike)**.
 
-- ✅ 학술·교육 목적 사용·수정·재배포 (저작자 표시 필수)
-- ❌ 상업적 이용 금지 (별도 문의)
-- MIDI 음원 저작권은 원저작자에게 귀속 — `.mid` 파일은 `.gitignore`로 제외
+- ✅ 학술·연구·상업적 목적 사용·수정·재배포·판매 (저작자 표시 필수)
+- ✅ 파생 저작물은 동일 조건(또는 CC BY-SA 4.0 등 동등 개방형) 라이선스로 공개
+- MIDI 음원 저작권은 원저작자에게 귀속 — `.mid` 파일은 `.gitignore`로 제외, 상업 활용 시 이용자가 별도 확보
