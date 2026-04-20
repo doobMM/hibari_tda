@@ -16,6 +16,17 @@
 
 ---
 
+## 📄 먼저 읽을 문서 — 포트폴리오용 축약 논문
+
+연구 내용을 가장 빠르게 파악하려면 **포트폴리오용 축약본 논문**을 먼저 읽어주세요.
+
+> 📘 **[`academic_paper_portfolio (short).md`](./tda_pipeline/docs/academic_paper_portfolio%20(short).md)** — Markdown
+> 📕 **[`academic_paper_portfolio (short).pdf`](./tda_pipeline/docs/academic_paper_portfolio%20(short).pdf)** — PDF 빌드본
+
+이 문서는 **전체 학술 논문(`academic_paper_full.md`)의 핵심 결과만 압축**한 버전으로, 방법론·핵심 결과·결론을 간략히 정리합니다. 깊이 있는 세부 설명이 필요하면 [`academic_paper_full.md`](./tda_pipeline/docs/academic_paper_full.md) 또는 LaTeX IEEE 원고(`tda_pipeline/docs/latex/hibari_tda.tex`)를 참조하세요.
+
+---
+
 ## 연구 요약
 
 - **대상곡**: hibari (주력), solari, aqua, Bach Fugue, Ravel Pavane (일반화 실험)
@@ -292,6 +303,12 @@ xelatex hibari_tda_report.tex
 
 ## 라이선스
 
-연구용 코드입니다. 음악 저작권은 원저작자(사카모토 류이치·레코드사)에게 있으며, 본 저장소의 `*.mid` 파일은 `.gitignore`로 제외됩니다.
+본 저장소는 **연구·학술 목적 전용 라이선스**로 공개됩니다. 자세한 조건은 루트의 [`LICENSE`](./LICENSE) 파일을 참고하세요.
 
-코드 자체는 별도 라이선스 명시 전까지 **연구 목적 사용만 허가**합니다. 재사용·인용을 원하면 저자(위 GitHub 프로필)에게 연락 부탁드립니다.
+요약:
+- ✅ 학술·교육 목적의 열람·복제·수정·재배포 허용
+- ✅ 저작자 표시(Attribution) 필수
+- ❌ 상업적 사용 금지 (별도 문의 필요)
+- ❌ 수정본도 동일한 연구 전용 조건 유지
+
+음악 저작권: hibari 등 원곡 MIDI 파일은 원저작자(사카모토 류이치·레코드사)에게 권리가 있으며 `.gitignore`로 제외됩니다.
