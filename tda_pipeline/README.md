@@ -2,7 +2,7 @@
 
 사카모토 류이치의 **hibari** (out of noise, 2009)를 **Topological Data Analysis (Persistent Homology)** 로 분석하여, 원곡과 위상수학적으로 유사한 구조를 가진 음악을 생성하는 연구 파이프라인.
 
-> **📘 먼저 읽을 문서**: [`docs/academic_paper_portfolio (short).md`](./docs/academic_paper_portfolio%20(short).md) — 연구 전체를 빠르게 파악할 수 있는 포트폴리오용 축약본
+> **📘 먼저 읽을 문서**: [`docs/환대_포트폴리오.md`](./docs/%ED%99%98%EB%8C%80_%ED%8F%AC%ED%8A%B8%ED%8F%B4%EB%A6%AC%EC%98%A4.md) — 연구 전체를 빠르게 파악할 수 있는 포트폴리오용 축약본
 >
 > 전체 학술 원고는 [`docs/academic_paper_full.md`](./docs/academic_paper_full.md), IEEE LaTeX는 [`docs/latex/`](./docs/latex/) 참조
 
@@ -90,8 +90,8 @@ tda_pipeline/
 │
 ├── docs/                         # 학술 논문 + Figure + 실험 결과 JSON
 │   ├── academic_paper_full.md                 # 전체 학술 원고
-│   ├── academic_paper_portfolio (short).md    # 포트폴리오 축약본 ★먼저 읽기
-│   ├── academic_paper_portfolio (short).pdf
+│   ├── 환대_포트폴리오.md                     # 포트폴리오 축약본 ★먼저 읽기
+│   ├── 환대_포트폴리오.pdf
 │   ├── build_academic_pdf.py                  # md → PDF 변환
 │   ├── latex/                                 # IEEE 영문·한글본·report
 │   ├── figures/                               # Figure PNG + 생성 스크립트
@@ -232,7 +232,7 @@ cd docs
 
 # Markdown → PDF (한글 폰트 자동 탐색, ~/AppData/... Nanum 폴백 포함)
 python build_academic_pdf.py academic_paper_full.md
-python build_academic_pdf.py "academic_paper_portfolio (short).md"
+python build_academic_pdf.py 환대_포트폴리오.md
 
 # LaTeX IEEE (영문) — xelatex/pdflatex 모두 가능
 cd latex && xelatex hibari_tda.tex

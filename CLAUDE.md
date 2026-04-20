@@ -128,7 +128,7 @@ C:\WK14\
     │
     ├── docs/
     │   ├── academic_paper_full.md         ← 학술 원고 통합본
-    │   ├── academic_paper_portfolio (short).md ← 포트폴리오용 축약
+    │   ├── 환대_포트폴리오.md             ← 포트폴리오용 축약 (공개 1순위)
     │   ├── academic_paper_general.md      ← 비전공자용 요약
     │   ├── build_academic_pdf.py          ← md→PDF 변환
     │   ├── latex/                         ← IEEE 영문/한글본/report
@@ -190,7 +190,7 @@ python run_test.py
 
 # 논문 PDF 빌드 (Markdown)
 cd docs && python build_academic_pdf.py academic_paper_full.md
-cd docs && python build_academic_pdf.py "academic_paper_portfolio (short).md"
+cd docs && python build_academic_pdf.py 환대_포트폴리오.md
 ```
 
 ### LaTeX 빌드 레시피

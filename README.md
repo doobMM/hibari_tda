@@ -20,8 +20,8 @@
 
 연구 내용을 가장 빠르게 파악하려면 **포트폴리오용 축약본 논문**을 먼저 읽어주세요.
 
-> 📘 **[`academic_paper_portfolio (short).md`](./tda_pipeline/docs/academic_paper_portfolio%20(short).md)** — Markdown
-> 📕 **[`academic_paper_portfolio (short).pdf`](./tda_pipeline/docs/academic_paper_portfolio%20(short).pdf)** — PDF 빌드본
+> 📘 **[`환대_포트폴리오.md`](./tda_pipeline/docs/%ED%99%98%EB%8C%80_%ED%8F%AC%ED%8A%B8%ED%8F%B4%EB%A6%AC%EC%98%A4.md)** — Markdown
+> 📕 **[`환대_포트폴리오.pdf`](./tda_pipeline/docs/%ED%99%98%EB%8C%80_%ED%8F%AC%ED%8A%B8%ED%8F%B4%EB%A6%AC%EC%98%A4.pdf)** — PDF 빌드본
 
 이 문서는 **전체 학술 논문(`academic_paper_full.md`)의 핵심 결과만 압축**한 버전으로, 방법론·핵심 결과·결론을 간략히 정리합니다. 깊이 있는 세부 설명이 필요하면 [`academic_paper_full.md`](./tda_pipeline/docs/academic_paper_full.md) 또는 LaTeX IEEE 원고(`tda_pipeline/docs/latex/hibari_tda.tex`)를 참조하세요.
 
@@ -50,7 +50,7 @@
 | **Algorithm 2 최저 JS** | **0.00035 ± 0.00015** (N=10, FC-cont, DFT, α=0.5) |
 | **일반화 최적 거리** | 곡에 따라 다름 — aqua/solari: voice_leading 또는 Tonnetz / Bach: Tonnetz / Ravel: frequency |
 
-학술 논문 본문은 [`tda_pipeline/docs/academic_paper_full.md`](./tda_pipeline/docs/academic_paper_full.md), 포트폴리오용 축약본은 `academic_paper_portfolio (short).md`, IEEE 영문/한글본 LaTeX는 `tda_pipeline/docs/latex/`에 있습니다.
+학술 논문 본문은 [`tda_pipeline/docs/academic_paper_full.md`](./tda_pipeline/docs/academic_paper_full.md), 포트폴리오용 축약본은 `환대_포트폴리오.md`, IEEE 영문/한글본 LaTeX는 `tda_pipeline/docs/latex/`에 있습니다.
 
 ---
 
@@ -262,7 +262,7 @@ cd tda_pipeline/docs
 
 # Markdown → PDF
 python build_academic_pdf.py academic_paper_full.md
-python build_academic_pdf.py "academic_paper_portfolio (short).md"
+python build_academic_pdf.py 환대_포트폴리오.md
 
 # LaTeX IEEE (영문)
 cd latex && xelatex hibari_tda.tex

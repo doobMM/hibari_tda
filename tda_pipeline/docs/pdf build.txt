@@ -1,2 +1,2 @@
-cd c:\WK14\tda_pipeline\docs
-python build_academic_pdf.py "academic_paper_portfolio (short).md"
+cd ~/WK14/tda_pipeline/docs
+python build_academic_pdf.py 환대_포트폴리오.md

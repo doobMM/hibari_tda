@@ -29,13 +29,19 @@ tda_pipeline/cache/models/
 # ── 폰트 미리보기 (선택 완료) ──
 tda_pipeline/docs/font_preview_*.pdf
 
-# ── short.md 파생본 (업로드 금지, short.pdf는 추적 유지) ──
+# ── 포트폴리오 파생본 (업로드 금지, 본 파일 환대_포트폴리오.md/pdf만 추적) ──
 tda_pipeline/docs/academic_paper_portfolio (short2).pdf
 tda_pipeline/docs/academic_paper_portfolio (short3).pdf
+tda_pipeline/docs/academic_paper (short).pdf
 
 # ── 피드백 txt 원본 (세션 간 작업 메모, 공개 저장소 제외) ──
 tda_pipeline/docs/260*피드백*.txt
 tda_pipeline/docs/260*논문*.txt
+
+# ── 세션 간 프롬프트 md (내부 작업 문서, 공개 저장소 제외) ──
+tda_pipeline/prompts/
+tda_pipeline/docs/*prompt*.md
+tda_pipeline/docs/*prompt*.txt
 
 # ── LaTeX 중간 산출물 ──
 *.aux
