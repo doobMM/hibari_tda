@@ -52,3 +52,12 @@ allowed-tools: Read Glob
 - 학술 원고 전체: `tda_pipeline/docs/academic_paper_full.md`
 - 청취용 WAV: `tda_pipeline/output/*_piano.wav`
 - Piano Phase 참조 음원: `tda_pipeline/output/steve_reich_piano_phase_style.wav`
+
+## Gotchas (누적 실패점)
+
+- **수치 갱신 주의**: JS=0.0004는 Algo2 기록. **현재 Algo1 최저는 JS=0.00902** (DFT α=0.25 per-cycle τ). JS=0.0398은 pre-bugfix Tonnetz. 설명 전 CLAUDE.md §현재 최적 설정 확인.
+- "구멍" 비유는 PH의 H₁ (1-cycle)에만 적합. H₀(연결성)·H₂(void) 설명 시 비유 재조정.
+- **일반 청중 vs 음악 전공자 vs 수학 전공자** 톤 구분. 요청자 배경 먼저 확인.
+- Piano Phase는 Steve Reich 1967작. 스펠링 실수(Rich / Riech) 주의.
+- **저작권 언급 필요**: 사카모토 류이치 곡의 분석은 공정이용 범위, 생성물은 **재해석 작품**으로 positioning.
+- "AI가 작곡했다" 표현 지양 — "TDA 기반 구조 보존 생성 파이프라인"이 정확.

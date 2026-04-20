@@ -39,3 +39,12 @@ allowed-tools: WebSearch WebFetch Read Grep
    - 선행연구에서 시도했지만 본 연구에 적용하지 않은 방법
    - 논문 심사에서 요구될 가능성이 높은 실험
 3. **구체적 실행 계획** (코드 수정 / 실험 설계 / 소요 시간 추정)
+
+## Gotchas (누적 실패점)
+
+- **WebSearch 키워드는 영문 우선**. 국문 "지속호몰로지 음악" 은 결과 희박.
+- Tran/Park/Jung (2021) · Heo/Choi/Jung (2025) 외에도 **한국어 이름의 영문 표기 변형** 주의 (Tran=Trần, Park=Pak, Heo=Her 등).
+- 선행연구 인용 시 **저자·연도·저널** 3요소 확인. 미지 논문 인용 금지.
+- **본 연구의 주요 발견 목록**은 CLAUDE.md "핵심 발견"에서 가져올 것 — 중복 제안 방지.
+- AI 음악 생성 쪽 논문은 **TDA 무관한 것이 다수** — "structure-preserving" 이 음악학 의미인지 topology 의미인지 확인.
+- 다음 스텝 제안 시 **세션 배정**(A/B/C/D)까지 명시 — Control Tower가 받아쓰기 쉬움.

@@ -48,3 +48,12 @@ argument-hint: <midi_file.mid>
 2. 각 metric 별 cycle 수 + JS (mean ± std)
 3. 최적 metric 및 hibari/solari 대비 패턴 해석
 4. (선택) 최우수 trial 의 piano WAV 생성 여부 확인
+
+## Gotchas (누적 실패점)
+
+- 표의 hibari baseline 0.0398은 **구버전(gap=3, Tonnetz)**. **현재 최적은 gap=0, DFT, α=0.25 per-cycle τ → JS=0.00902**. 해석 시 반드시 CLAUDE.md §현재 최적 설정 대조.
+- `run_any_track.py`는 2026-04-19 이후 `experiments/` 로 이동됨. 루트에서 호출 시 `path_bootstrap` 덕분에 동작하지만, 직접 import는 실패.
+- `K` 값이 곡별로 다름 (hibari=14, solari=15, aqua 미실행, Bach=30, Ravel=37). 하드코딩 금지.
+- cache/*.pkl 은 **bugfix 이전 데이터** 가능 — metric 실험 시 `rm -f cache/*.pkl` 후 재실행 권장.
+- N=10이 기본이지만 통계 유의성은 N≥20 권장 (Welch t-test).
+- Windows bash에서 `cd tda_pipeline && python`은 동작하지만 `python tda_pipeline/run_any_track.py`는 path_bootstrap 실패 가능. **반드시 cd 후 실행**.
