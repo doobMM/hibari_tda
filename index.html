@@ -26,7 +26,6 @@
     .tagline a { color: var(--accent); text-decoration: none; border-bottom: 1px dotted var(--accent); }
     .tagline a:hover { border-bottom-style: solid; }
     .cards { display: grid; grid-template-columns: 1fr; gap: 1.25rem; margin-bottom: 2.5rem; }
-    @media (min-width: 720px) { .cards { grid-template-columns: 1fr 1fr; } }
     .card { display: block; padding: 1.5rem 1.5rem 1.75rem; background: var(--panel); border: 1px solid var(--border); border-radius: 10px; color: inherit; text-decoration: none; transition: background 0.15s, transform 0.15s, border-color 0.15s; }
     .card:hover { background: var(--panel-hover); border-color: var(--accent); transform: translateY(-2px); }
     .card .tag { display: inline-block; font-size: 0.7rem; font-weight: 600; letter-spacing: 0.06em; padding: 0.2rem 0.55rem; border-radius: 4px; text-transform: uppercase; margin-bottom: 0.9rem; }
@@ -58,15 +57,8 @@
         <span class="tag">Visualization</span>
         <h2>Tonnetz 시각화</h2>
         <p>hibari 원곡을 재생하면서 <strong>Tonnetz 격자 위에 H1 cycle overlay</strong>를 동기 표시합니다.
+        파이프라인 7단계 MIDI(v0 원곡 + v1~v6 생성본)가 페이지에 인라인되어 있어 <strong>다운로드 없이 버튼 한 번으로 재생</strong>됩니다.
         Playback · Controls · Appearance · Sound · TDA 5개 탭에서 색상·음향·사이클 강조 방식을 조정할 수 있습니다.</p>
-        <span class="arrow">열기 →</span>
-      </a>
-      <a class="card dash" href="./tda_pipeline/hibari_dashboard/public/">
-        <span class="tag">Dashboard</span>
-        <h2>Overlap Matrix Dashboard</h2>
-        <p>중첩행렬을 브라우저에서 <strong>직접 편집</strong>하고 <code>Algorithm 1</code> (확률 샘플링) 또는
-        <code>Algorithm 2</code> (FC ONNX 추론)로 그 자리에서 음악을 생성·재생·MIDI 다운로드할 수 있습니다.
-        Hamming + persistence 기반 OOD 경고 배너 포함.</p>
         <span class="arrow">열기 →</span>
       </a>
     </div>

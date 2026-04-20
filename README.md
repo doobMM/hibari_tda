@@ -79,15 +79,12 @@
 
 ## 🕹️ 인터랙티브 데모
 
-두 개의 브라우저 기반 데모를 함께 공개합니다.
-
 ### 🌐 라이브 (GitHub Pages)
 
 설치 없이 브라우저에서 바로 접속할 수 있습니다.
 
 - **허브**: <https://doobmm.github.io/hibari_tda/>
 - **Tonnetz 시각화**: <https://doobmm.github.io/hibari_tda/tda_pipeline/tonnetz_demo/>
-- **Overlap Matrix Dashboard**: <https://doobmm.github.io/hibari_tda/tda_pipeline/hibari_dashboard/public/>
 
 <p align="center">
   <img src="./tda_pipeline/docs/qr_live_demo.png" alt="Live demo QR code" width="180">
@@ -103,17 +100,13 @@
   hibari 의 원곡 연주와 **Tonnetz 격자 위 H1 cycle overlay**를 동기 재생. Playback / Controls / Appearance / Sound / TDA 5탭으로 배색·오디오·사이클 강조 방식을 조정할 수 있습니다. Bootstrap + Tone.js 기반 정적 HTML.
   **파이프라인 7단계 MIDI(v0 원곡 + v1~v6 생성본)가 페이지에 직접 인라인되어 있어 다운로드·추가 설정 없이 버튼 한 번으로 즉시 재생** 가능합니다 (embed 도구: [`tda_pipeline/tools/embed_hibari_midis.py`](./tda_pipeline/tools/embed_hibari_midis.py)).
 
-- **Overlap Matrix Dashboard** — [`tda_pipeline/hibari_dashboard/`](./tda_pipeline/hibari_dashboard/)
-  중첩행렬을 **브라우저에서 직접 편집**하고 Algorithm 1 (확률 샘플링) · Algorithm 2 (FC ONNX 추론) 로 **그 자리에서 음악 생성·재생·MIDI 다운로드**. Canvas 에디터(좌클릭 토글, Shift+드래그 팬, 휠 줌), 참조 대비 diff 하이라이트, Hamming + persistence 기반 **OOD 경고 배너**, `localStorage` 자동 저장을 포함합니다. 자세한 사용법은 [`hibari_dashboard/README.md`](./tda_pipeline/hibari_dashboard/README.md).
-
 ### 로컬 실행 (오프라인 또는 수정 중일 때)
 
 ```bash
-# 저장소 루트에서 한 번만 서버 띄우면 허브·두 데모 모두 접근 가능
+# 저장소 루트에서 한 번만 서버 띄우면 허브·Tonnetz 데모 모두 접근 가능
 python -m http.server 8000
 # → http://localhost:8000/                                              (허브)
 # → http://localhost:8000/tda_pipeline/tonnetz_demo/                    (시각화)
-# → http://localhost:8000/tda_pipeline/hibari_dashboard/public/         (대시보드)
 ```
 
 ---
@@ -147,9 +140,9 @@ WK14/
 │   ├── debug/                  ← 진단 스크립트
 │   ├── docs/                   ← 논문·Figure·실험 결과 JSON
 │   ├── listening_test/         ← 청취 실험 웹 플레이어 + stimuli
-│   ├── hibari_dashboard/       ← Overlap Matrix 편집 + 브라우저 생성·재생
-│   └── tonnetz_demo/           ← Tonnetz 격자 + H1 cycle overlay 재생
-└── tonnetz_demo_redirect.html  ← 루트 진입용 리다이렉트 (→ tda_pipeline/tonnetz_demo/)
+│   ├── hibari_dashboard/       ← (archived: 2026-04-16 pre-Phase2 snapshot)
+│   └── tonnetz_demo/           ← Tonnetz 격자 + H1 cycle overlay 재생 (7단계 MIDI 인라인)
+└── index.html                  ← 루트 랜딩 허브 (GitHub Pages 대문)
 ```
 
 ---

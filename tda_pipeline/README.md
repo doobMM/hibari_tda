@@ -48,14 +48,14 @@ python run_any_track.py --all      # 지원 곡 일괄
 python run_aqua.py
 python run_solari.py
 
-# 브라우저 인터랙티브 데모 (둘 다 정적 웹)
+# 브라우저 인터랙티브 데모 (정적 웹)
 python -m http.server 8000
 #   → http://localhost:8000/tonnetz_demo/
-#   → http://localhost:8000/hibari_dashboard/public/index.html
 ```
 
-- **`tonnetz_demo/`** — hibari 원곡 재생 + Tonnetz 격자 위 H1 cycle overlay 동기 시각화 (Playback / Controls / Appearance / Sound / TDA 5탭)
-- **`hibari_dashboard/`** — 중첩행렬을 브라우저에서 직접 편집 → Algorithm 1 (확률 샘플링) · Algorithm 2 (FC ONNX 추론) 로 즉시 생성·재생·MIDI 다운로드. Canvas 에디터, 참조 대비 diff, Hamming+persistence 기반 OOD 경고 배너, `localStorage` 자동 저장 포함. 자세한 사용법은 [`hibari_dashboard/README.md`](./hibari_dashboard/README.md).
+- **`tonnetz_demo/`** — hibari 원곡 재생 + Tonnetz 격자 위 H1 cycle overlay 동기 시각화 (Playback / Controls / Appearance / Sound / TDA 5탭). 파이프라인 7단계 MIDI(v0~v6)가 페이지에 인라인되어 즉시 재생 가능.
+
+> `hibari_dashboard/`는 2026-04-16 snapshot(gap_min=3, complex 가중치, K=40) 기반이라 현재 논문 canonical (gap_min=0, DFT+timeflow+per-cycle τ, K=14, JS=0.00902)과 불일치하므로 공개 대문에서 제외되었습니다. 재생성 전까지는 아카이브 취급.
 
 ---
 
