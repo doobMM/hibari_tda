@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#0a0a12">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>hibari · mobile tonnetz</title>
+<link rel="stylesheet" href="css/mobile.css">
+</head>
+<body class="menu">
+<main>
+  <header>
+    <h1>hibari<span class="accent">/</span>mobile</h1>
+    <p class="tagline">TDA 기반 30초 즉흥 · Tonnetz 위의 몸짓</p>
+  </header>
+  <nav class="modes">
+    <a class="mode" href="tilt.html">
+      <span class="mode-glyph" aria-hidden="true">◐</span>
+      <span class="mode-title">Tilt Sphere</span>
+      <span class="mode-desc">기울기로 구를 굴려 Tonnetz 격자 위 음을 깨움</span>
+    </a>
+    <a class="mode" href="shake.html">
+      <span class="mode-glyph" aria-hidden="true">≋</span>
+      <span class="mode-title">Shake Reseed</span>
+      <span class="mode-desc">흔들면 Algorithm 1 시드가 새로 뿌려짐</span>
+    </a>
+    <a class="mode" href="camera.html">
+      <span class="mode-glyph" aria-hidden="true">◎</span>
+      <span class="mode-title">Camera Color</span>
+      <span class="mode-desc">카메라 색조가 스케일을 바꿈 (장조/단조/프리지안)</span>
+    </a>
+  </nav>
+  <footer>
+    <p>한 세션 = <strong>30초</strong>. 모든 모드는 T=60 step 고정.</p>
+    <p class="tiny">iOS는 첫 시작 시 센서 권한을 요청합니다.</p>
+  </footer>
+</main>
+<script>
+  // preload audio context kick on any tap so iOS unlocks early
+  document.addEventListener('touchstart', () => {
+    if (!window.__ac) window.__ac = new (window.AudioContext || window.webkitAudioContext)();
+  }, {once: true, passive: true});
+</script>
+</body>
+</html>

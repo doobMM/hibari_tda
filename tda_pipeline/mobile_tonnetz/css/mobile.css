@@ -1,0 +1,140 @@
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #0a0a12;
+  --fg: #e8e8f0;
+  --accent: #ff6f61;
+  --muted: #8888a0;
+  --grid: #1a1a2a;
+  --node: #2a2a4a;
+  --node-hot: #ff9a7a;
+  --sphere: #ffe28a;
+  --safe-top: env(safe-area-inset-top, 0);
+  --safe-bot: env(safe-area-inset-bottom, 0);
+}
+html, body {
+  height: 100%;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  overscroll-behavior: none;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  -webkit-user-select: none;
+}
+body.menu { padding: calc(20px + var(--safe-top)) 20px calc(20px + var(--safe-bot)); }
+body.stage { padding: 0; overflow: hidden; }
+
+header h1 { font-size: 28px; font-weight: 700; letter-spacing: -0.02em; }
+header .accent { color: var(--accent); }
+header .tagline { color: var(--muted); font-size: 13px; margin-top: 6px; }
+
+.modes { margin-top: 32px; display: flex; flex-direction: column; gap: 12px; }
+.mode {
+  display: grid;
+  grid-template-columns: 56px 1fr;
+  grid-template-rows: auto auto;
+  gap: 4px 16px;
+  padding: 18px 20px;
+  background: var(--grid);
+  border: 1px solid #22223a;
+  border-radius: 14px;
+  color: var(--fg);
+  text-decoration: none;
+  min-height: 76px;
+  transition: transform 120ms, background 120ms;
+}
+.mode:active { transform: scale(0.98); background: #22223a; }
+.mode-glyph {
+  grid-row: 1 / 3;
+  font-size: 36px;
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.mode-title { font-size: 16px; font-weight: 600; }
+.mode-desc { font-size: 12px; color: var(--muted); line-height: 1.4; }
+
+footer { margin-top: 32px; color: var(--muted); font-size: 13px; }
+footer strong { color: var(--fg); }
+footer .tiny { margin-top: 8px; font-size: 11px; opacity: 0.7; }
+
+/* stage (tilt / shake / camera) */
+.stage-root {
+  position: fixed; inset: 0;
+  display: flex; flex-direction: column;
+  background: var(--bg);
+}
+.stage-canvas { flex: 1; display: block; background: var(--bg); touch-action: none; }
+.stage-hud {
+  position: absolute; top: calc(12px + var(--safe-top)); left: 12px; right: 12px;
+  display: flex; justify-content: space-between; align-items: center;
+  pointer-events: none;
+  font-size: 13px; color: var(--fg);
+  text-shadow: 0 1px 2px rgba(0,0,0,0.6);
+}
+.stage-hud .badge {
+  background: rgba(10,10,18,0.5);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  padding: 6px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.08);
+  pointer-events: auto;
+}
+.stage-hud .back { color: var(--accent); text-decoration: none; }
+
+.stage-footer {
+  position: absolute; bottom: calc(16px + var(--safe-bot)); left: 16px; right: 16px;
+  display: flex; gap: 10px;
+}
+.btn {
+  flex: 1;
+  min-height: 52px;
+  border: none;
+  border-radius: 14px;
+  background: var(--accent);
+  color: #1a1000;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  -webkit-appearance: none;
+  touch-action: manipulation;
+}
+.btn:active { transform: scale(0.98); }
+.btn.secondary { background: var(--grid); color: var(--fg); border: 1px solid #33334a; }
+.btn:disabled { opacity: 0.4; }
+
+.overlay {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  background: rgba(10,10,18,0.85);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  padding: 24px;
+  text-align: center;
+}
+.overlay h2 { font-size: 22px; margin-bottom: 8px; }
+.overlay p { color: var(--muted); font-size: 14px; line-height: 1.5; margin-bottom: 24px; max-width: 320px; }
+.overlay .btn { min-width: 200px; flex: 0 0 auto; }
+.overlay.hidden { display: none; }
+
+.progress {
+  width: 100%; height: 4px;
+  background: #22223a;
+  border-radius: 2px;
+  overflow: hidden;
+  margin-top: 6px;
+}
+.progress > span {
+  display: block; height: 100%;
+  background: var(--accent);
+  width: 0%;
+  transition: width 100ms linear;
+}
+
+@media (min-width: 600px) {
+  body.menu { max-width: 560px; margin: 0 auto; }
+  .modes { gap: 14px; }
+}

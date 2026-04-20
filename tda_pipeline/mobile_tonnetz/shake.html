@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#0a0a12">
+<title>Shake Reseed · hibari</title>
+<link rel="stylesheet" href="css/mobile.css">
+</head>
+<body class="stage">
+<div class="stage-root">
+  <canvas class="stage-canvas" id="canvas"></canvas>
+  <div class="stage-hud">
+    <a class="badge back" href="index.html">← back</a>
+    <span class="badge" id="hudTime">30.0s</span>
+  </div>
+  <div class="stage-footer">
+    <button class="btn secondary" id="btnShake">shake now</button>
+    <button class="btn" id="btnStart">start (30s)</button>
+  </div>
+  <div class="overlay" id="perm">
+    <h2>Shake Reseed</h2>
+    <p>30초 동안 Algorithm 1이 자동 진행됩니다. <strong>흔들면 새 seed</strong>가 뽑혀 즉시 음악이 바뀝니다. 피크 감지는 약 1초 debounce.</p>
+    <button class="btn" id="btnPerm">허용하고 시작</button>
+  </div>
+</div>
+<script type="module" src="js/shake-detector.js"></script>
+</body>
+</html>

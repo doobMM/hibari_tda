@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#0a0a12">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Tilt Sphere · hibari</title>
+<link rel="stylesheet" href="css/mobile.css">
+</head>
+<body class="stage">
+<div class="stage-root">
+  <canvas class="stage-canvas" id="canvas"></canvas>
+
+  <div class="stage-hud">
+    <a class="badge back" href="index.html">← back</a>
+    <span class="badge" id="hudTime">30.0s</span>
+  </div>
+
+  <div class="stage-footer" id="footer">
+    <button class="btn secondary" id="btnReseed">seed</button>
+    <button class="btn" id="btnStart">start (30s)</button>
+  </div>
+
+  <div class="overlay" id="perm">
+    <h2>Tilt Sphere</h2>
+    <p>핸드폰을 기울여 Tonnetz 격자 위의 구를 굴립니다. 구가 격자 교점에 닿을 때마다 음이 울립니다. 한 세션은 <strong>30초</strong>입니다.</p>
+    <button class="btn" id="btnPerm">허용하고 시작</button>
+  </div>
+</div>
+
+<script type="module" src="js/tilt-sphere.js"></script>
+</body>
+</html>
