@@ -258,112 +258,44 @@ A~D 세션의 상위 조율자. 어떤 세션에도 속하지 않으며, 세션 
 - `/update-paper` — JSON 최신 수치 → 논문 표 자동 반영 (세션 D)
 - `/research-next` — 선행연구 + 다음 방향 제안 (세션 A/D)
 
-## 다음 우선 작업 (2026-04-17 기준)
+## 다음 우선 작업 (2026-04-20 기준)
 
-### 높은 우선순위 (연구 결과에 직접 영향)
+**완료 Task 아카이브**: #1~#56 전체는 `memory/project_task_archive_0420.md` 로 이관 (Phase 1/1b/2/3/3-후속/4 전부 포함). 이 섹션은 현재 진행·대기 중인 작업만 유지.
 
-| # | 세션 | 작업 | 의존성 | 비고 |
-|---|------|------|--------|------|
-| 1 | **A+D** | 방향 A vwide 재검증 + §7.3 논문 반영 ✓ | 완료 | vwide 열세 확정. wide+tonnetz_nearest+no_cycle (pitch_js=0.2930). §7.3 2×2 ablation 표 반영. DTW+61.4% 제거. |
-| 2 | **A** | `ow=0.3 + α=0.0 + 감쇄lag` 통합 조합 실험 ✓ | 완료 | α=0.0 시 K 감소로 시너지 없음 확정 (2026-04-14) |
-| 3 | **A** | Per-cycle τ_c N=20 재검증 ✓ | 없음 | +47.5% p<0.001 확정 (2026-04-14 완료) |
-| 4 | **A** | Soft activation → Transformer/LSTM 확장 ✓ | 없음 | FC=0.0004★, Transformer=0.0007 확인 (2026-04-14 완료) |
-| 5 | **D** | 피드백 19항 전체 반영 (md) ✓ | 완료 | §1~§7 정의·수식·표기 일괄 수정 (2026-04-15). 13/19 반영, 6개는 기완료 또는 미해당 |
-| 6 | **B+A** | `note_perm` Hungarian 진단 + 수정 + 재검증 ✓ | 완료 | 원인: tonnetz_nearest의 positional semantics를 후속 perm이 덮어씀. 수정: tonnetz_nearest 분기 perm skip. 재실험 결과: tonnetz_nearest 0.3843→**0.2930** 복원 성공. ascending 0.3815 유지. |
-
-### 중간 우선순위 (결과 보강)
+### 논문 · 실험 펜딩 (세션 A/B/C/D)
 
 | # | 세션 | 작업 | 의존성 | 비고 |
 |---|------|------|--------|------|
-| 7 | **D** | §4.1c 감쇄 lag 표 post-bugfix 재작성 ✓ | 완료 | DFT 중심으로 교체. Tonnetz −69.6%→+4.8%, DFT −7.1% ★. 초록·§2.9도 수정 (2026-04-17) |
-| 8 | **D** | §7.2 일반화 표 aqua/Bach 추가 ✓ | 완료 | 피드백 #18로 반영 (2026-04-15) |
-| 9 | **D** | §7.1.9 Barcode Wasserstein 주의사항 ✓ | 완료 | 피드백 #19로 반영 (2026-04-15) |
-| 10 | **D** | §7.7/§7.8 실험 결과 논문 반영 ✓ | 완료 | 이전 세션에 이미 완료됨을 JSON 전수 대조로 확인 (2026-04-15). per-cycle τ/soft/온도/α 모두 일치 |
-| 11 | **B** | density 수치 통일 ✓ | 완료 | 0.1684(전체 overlap) / 0.160(P1 prototype, 첫 모듈) 정상 구분. 0.201은 이미 정정됨. 수정 불필요 (2026-04-15) |
-| 12 | **B+D** | §7.3 ascending Hungarian 근사 경로 주석 ✓ | 완료 | §2.11과 무관, §7.3 line 1221에 N=17 / N!=3.56×10¹⁴ 1문장 삽입 (2026-04-15) |
-| 13 | **B+D** | P3 수식 구현 확인 + 파일명 수정 ✓ | 완료 | P3는 unified.py에 구현·결과 기재 정상. run_module_generation_v2/v3 언급 4곳 → unified로 교체 (2026-04-15) |
-| 14 | **D** | §7.3 두 전략 비교 서술로 재구성 ✓ | 완료 | 2×2 → 1×2 교체. 전략 A(tonnetz_nearest)/B(ascending) 수식 추가. 피드백 #16 박스 재작성. 잔류 참조 스캔 clean. (2026-04-15) |
-| 20 | **B+D** | line 1787 `run_module_generation_v4.py` 참조 교체 ✓ | 완료 | v4 기능은 unified.py `--mode startmodule_study`로 완전 통합됨 확인 후 교체 (2026-04-15) |
+| 46 | **C** | 청취 실험 파일럿 실행 | 인간 주도 | N=10 비공식 가능. stimuli 길이 결정 (45초 vs 전체) — R1 30초 정책과 정합 필요 |
+| 47 | **A** | 응답 데이터 분석 | Task 46 완료 후 | analysis_template.py — Spearman / Mann-Whitney / Wilcoxon |
+| 48 | **D** | §8 또는 §9 청취 실험 결과 반영 | Task 47 완료 후 | 수치-청각 정합성, 위상 보존 변주 평가 |
+| 52 | **A** | §6 블록 단위 생성 α=0.25 per-cycle τ 재탐색 | Task 56 완료 (착수 가능) | 블록 best 0.01479를 α=0.25로 초과 가능? 긴 작업. Task 51 결과상 negative 가능성 있음. Option B 창 baseline 재산정 완료 |
+| 57 | **D** | LaTeX 3파일 260419 sweep + Task 61 블록 rename 동기화 | 2aac918 + Task 61 완료 | md 반영분 (Algo1 0.00902, α-grid, tie 정규화, Bach/Ravel 등) + §6 "마디→블록" → hibari_tda.tex / ko.tex / report.tex. 컴파일 에러 0 검증 |
+| 60 | **D** | 논문 QR 코드 첨부 | 없음 | 코드 저장소 링크 QR 이미지 삽입 |
 
-### 새 실험 우선 작업 (2026-04-15 추가)
+### 공개 · 상호작용 트랙 (2026-04-20 신설, R1~R7)
 
-| # | 세션 | 작업 | 의존성 | 비고 |
-|---|------|------|--------|------|
-| 21 | **A** | Complex PH + per-cycle τ + Algo2(FC) 통합 파이프라인 실험 ✓ | 완료 | **Algo1: 0.0182★ (−24.5%)**, **Algo2: 0.0003★ (−25.0%)** (complex α=0.25 ow=0.0 rc=0.1 + greedy τ). 실험C(α=0.5,ow=0.3) N=5: 0.0172 (추가 검증 필요). complex_percycle_results.json (2026-04-15) |
-| 22 | **D** | §6.8 α=0.0 표기 보완 ✓ | 완료 | α grid=생성 단계만 적용, PH 캐시=α=0.5 고정, K=3 붕괴 사실 명기. short.md 삽입 (2026-04-17) |
-| 23 | **B** | pipeline.py ow/dw 버그 수정 커밋 | 완료(코드 수정됨) | config.py duration_weight 추가 + _apply_metric ow/dw 전달 수정 — 미커밋 상태 |
-| 24 | **A** | 실험 C/D/E N=20 재검증 + 절대 최저 확정 ✓ | 완료 | **B(α=0.25,ow=0.0,rc=0.1) JS=0.0183±0.0009 N=20 ★확정**. D(α=0.5)=0.0218, E(rc=0.3)=0.0214. B vs D/E 모두 p<0.001 유의. Algo2 D=0.0005(B=0.0003 유지). complex_percycle_n20_results.json (2026-04-15) |
-| 25 | **D** | §6.9 신설 — complex+per-cycle τ 통합 실험 결과 논문 반영 ✓ | 완료 | §6.9 in full.md. Algo1: 0.0183±0.0009 N=20 (−24.1% vs timeflow). Algo2: 0.0003. B vs D p<0.001 (2026-04-15) |
-
-### DFT baseline 재실험 과제 (2026-04-17 추가)
-
-§4.1b Duration Weight 튜닝이 Tonnetz 조건으로 수행됨. §4.1에서 DFT가 hibari 최적이므로 이후 실험들의 baseline을 DFT로 통일해야 함. 영향 범위:
+best-practice 도입 커밋 시리즈(316e125 / 9c781ff / 1ca08d4) 이후 병렬 진행.
 
 | # | 세션 | 작업 | 의존성 | 비고 |
 |---|------|------|--------|------|
-| 26 | **A** | §4.1b w_d grid search — DFT 조건으로 재실험 (N=10) ✓ | 완료 | **w_d=1.0 최적** (JS=0.0199). Tonnetz 최적(0.3)과 다름. dw_gridsearch_dft_results.json (2026-04-17) |
-| 27 | **A** | §4.1a w_o grid search — DFT 조건으로 재실험 (N=10) ✓ | 완료 | **w_o=0.3 유지** (JS=0.0184). ow_gridsearch_dft_results.json (2026-04-17) |
-| 28 | **A** | §4.2 Continuous OM 실험 — DFT 조건으로 재실험 (N=20) ✓ | 완료 | **Binary 최적** (JS=0.0185). Continuous는 열세. step3_continuous_dft_gap3_results.json (2026-04-17) |
-| 29 | **A** | §4.3 DL 모델 비교 — DFT 기반 OM으로 재실험 ✓ | 완료 | **Transformer=0.00276★**, FC=0.00354, LSTM=0.240(열화). dl_comparison_dft_gap3_results.json (2026-04-17) |
-| 30 | **A** | §4.3a FC-cont — DFT 기반으로 재실험 ✓ | 완료 | **FC-cont 이점 없음** (0.00383 vs 0.00363). fc_cont_dft_gap3_results.json (2026-04-17) |
-| 31 | **D** | 재실험 결과 논문 §4.1a~§4.3a 표 갱신 ✓ | 완료 | Task 25 포함 전체 재서술. short.md 전면 업데이트 (2026-04-17). ⚠ gap_min=0 롤백 결정으로 Task 35에서 gap0+DFT 수치로 재서술 예정 |
+| R1 | 별도 | OM 대시보드 post-bugfix 업데이트 (30초 세그먼트 한정) | 진행 중 | **30초 제약** — `memory/feedback_dashboard_30sec_constraint.md` 참조. T=60 step, m=0..17 블록 선택 UI. `hibari_dashboard/` 건드리지 말 것 (타 세션 작업) |
+| R2 | 별도 | 코드 위계 시각화 (사용자 병목 완화) | 진행 중 | `/map` + code-map skill 활용. depth 3, 최근 30일 수정 배지 |
+| R3 | 별도 | UI 폴리싱 (데스크톱) | 진행 중 | claude design 미숙 — best-practice 컴포넌트 참조. `hibari_dashboard/` 건드리지 말 것 |
+| R4 | — | 모바일 responsive 포팅 | R1 완료 후 | 320~768px 뷰포트, 터치 44×44px, WebWorker ONNX. 30초 기준 |
+| **R5-a** | **E** | **Tilt Sphere (기울기 → 구 굴림 → 음악)** | **내일 기한** | DeviceOrientation(iOS 권한 플로우), 30초 세그먼트, tonnetz 격자 위 구. 신규 폴더 `tda_pipeline/mobile_tonnetz/` 권장 |
+| **R5-c** | **E** | **Shake (흔들림 피크 → Algo1 re-seed)** | **내일 기한** | DeviceMotion 피크 감지, 30초 생성 |
+| **R5-f** | **E** | **Camera Color (비디오 색조 → 스케일 매핑)** | **내일 기한** | video + canvas hue 추출 → scale_major / minor 매핑 |
+| R5-g | stretch | Multi-phone jam (WebRTC signaling) | R5-a/c/f 중 2개 | 시간 부족 시 차기 |
+| R6 | Codex 병렬 | OBS 녹화 → YouTube 업로드 스크립트·메타데이터 | 없음 | Codex에 위임: `docs/youtube_script.md` + `docs/youtube_description.md` + 썸네일 브리프 |
+| R7 | Codex 병렬 | SKMT 재단 연락 — 3-language portfolio 1p + 이메일 | 없음 | Codex에 위임: `docs/outreach/skmt_portfolio_1p.md` + ko/ja/en 이메일 3개 |
 
-### gap_min=0 롤백 + §6~§7 DFT-hybrid 통합 과제 (2026-04-17 추가)
+### Codex 병렬 위임 후보 (사용자가 발송)
 
-gap_min=3 청취 평가 폐기 결정에 따른 §4 gap=0 롤백 + bugfix 이후 DFT baseline을 §6~§7까지 통합하는 과제. 배경 · Phase 1 결과는 `memory/project_gap0_dft_integration_0417.md` · `memory/project_phase1_gap0_findings_0417.md` 참조.
-
-| # | 세션 | 작업 | 의존성 | 비고 |
-|---|------|------|--------|------|
-| 32 | **A** | gap_min=0 롤백 Phase 1 (§4 DFT 재실험 Task A1~A7) ✓ | 완료 | 커밋 bb4ab4d. DFT 0.0213★, w_d=1.0 / w_o=0.3 확정. **A6: FC≈Transformer (가설 수정)**, **A7: FC_cont 0.00032 잠정 최저** |
-| 33 | **B** | min_onset_gap 필드화 + run_dft_suite 파라미터화 + 메타표준 ✓ | 완료 | 커밋 71d2f2b. config.min_onset_gap, rename(R061), utils/result_meta, scripts 2개 |
-| 34 | **A** | Phase 2 (Task A8~A10) — DFT-hybrid 재탐색 ✓ | 완료 | 커밋 459eb24. **A8: DFT+per-cycle τ 0.0149★ Algo1 신기록** (p=2.48e-26), A9: FC-cont 유의 우위 p=1.66e-4, A10-a α=0.25 최적, A10-b pilot(α=0.5) 열세 → Task 34b로 α=0.25 재실험 |
-| 34b | **A** | A10-b α=0.25 재실험 (Phase 2 후속) ✓ | 완료 | 커밋 d83efc5. α=0.25, r_c ∈ {0.1, 0.3} 모두 A8 대비 p<1e-39로 유의 악화. **complex_tonnetz_only_effective 판정 확정** — DFT에서는 timeflow + per-cycle τ (A8 0.0149★) 선호. Algo2도 A9 0.00035 최저 유지 |
-| 35 | **D** | §4 gap0+DFT 재서술 ✓ | 완료 | 커밋 9873cdd (+ 8c4e3ae 연쇄 일관성). §4.1 38.2%/56.8%/62.4%, §4.2 Binary 0.0157, §4.3a FC-cont 0.00035 +83.9% p=1.50e-6. §3.2 gap_min=3 선언 제거. §4.1a/b "Tonnetz 조건 최적값" 언급 삭제. §3.x→§4.x 교차참조 일치 |
-| 36 | **D** | §6.7~§6.9 재서술 ✓ | 완료 | 커밋 8c4e3ae. §6.7.1 DFT per-cycle τ +58.7% (p=2.48e-26, JS=0.01489★), §6.7.2 FC-cont 0.000348★ (Transformer 대비 p=1.66e-4), §6.8 DFT hybrid α=0.25, §6.9 "Tonnetz 한정 유효" 서사 반전 + Task 34b 검증절 신설 |
-| 37 | **D** | §7 baseline 재설정 + §8 결론·초록 통일 ✓ | 완료 | §7 baseline Tonnetz 0.0488 → DFT 0.0213±0.0021 교체. §8 결론 수치 통일 (38.2%/56.8%/62.4%, per-cycle τ +58.7%, FC-cont +83.9%). 초록 Algo1 0.01489±0.00143★, Algo2 0.00035±0.00015★ (log2 대비 2.15% / 0.05%). CLAUDE.md 현재 최적 설정 블록 갱신 완료. **gap0+DFT 통합 재서술 프로젝트 종결** |
-
-### Phase 3 — §7 DFT 재수행 + Wave 2 보강 (2026-04-17 추가)
-
-| # | 세션 | 작업 | 의존성 | 비고 |
-|---|------|------|--------|------|
-| 38a | **A** | §7 DFT α=0.25 전면 재수행 ✓ | 완료 | 커밋 dafdff3. **K=42→14**, P3 best 유지, P3+C best 0.0250. **§7.7 first-module 우위 미재현 (rank=5)**, **§7.8 Pearson 0.503→-0.054 — 반전**. best global JS=0.01479 (§6.7.1 0.01489와 동등 ★). `memory/project_task38a_phase3_findings_0417.md` |
-| 38b | **D** | §7 전면 재서술 ✓ | 완료 | 커밋 c548371. 수식 32×42→32×14, §7.2 P0~P3 DFT 전략 교체, §7.5 P3+C best 0.0250, §7.6 **best global JS=0.01479 ≈ full-song**, §7.7 first-module rank=5 (Tonnetz-specific), §7.8 Pearson 0.503→-0.054. `memory/project_task38b_section7_rewrite_0417.md` |
-| 39 | **A** | Wave 2 누락 실험 (T39-2/3/4/5) ✓ | 완료 (N=5 반복 재검증 과제) | 커밋 5fb01b2. hibari만 DFT 최적, 타곡(solari/Bach/Ravel) 기존 거리 유지 확정 |
-| 40 | **A** | §6.3~§6.6 DFT 전환 재실험 (Transformer + FC) ✓ | 완료 | 커밋 a67977d. §6.4 딜레마 재현 ✓, §6.5 scale_major 최적 유지 ✓. **§6.6 Tonnetz가 DFT 대비 ref pJS 27배 우수** — 메타 통찰 "거리 함수는 목적에 따라 최적 다름". 세션 D Task 41에서 (A/B/C) 선택. `memory/project_task40_section66_findings_0417.md` |
-| 41 | **D** | §6.1~§6.6 재서술 + §8 메타 통찰 ✓ | 완료 | 커밋 b2f9b51. (C) 채택 — §6.1/§6.2 DFT 열 추가, §6.3 "Tonnetz 기반" 선언, §6.4 세 모델 실증, §6.5 FC/LSTM 확장, §6.6 3분할 (Tonnetz 성공 / DFT 실패 / 메타 통찰), §8 6항 "거리 함수 × 음악적 목적". **Phase 3 종결** |
-| 42 | **A** | T39-4/5 N=5 std 재검증 ✓ | 완료 | 커밋 901eab0. 사전검사 전원 n=1 → N=5 전체 재실행. LSTM dtwverify 1.09% 재현 (Task 39-4 결과 일관). **FC 재배치에서 DTW +30~48% 발견** → §6.4 FC 서술 "구조적 불가능" 과장 수정 필요 (Task 44 신설). scale_major 최적 유지 |
-| 43-A | **D** | LaTeX 영문 IEEE + report 동기화 ✓ | 완료 | 커밋 fe85f53. hibari_tda.tex + hibari_tda_report.tex + hibari_tda.pdf — Phase 3 최신 반영. Task 44 중 선행 처리됨 |
-| 43-B | **D** | LaTeX 한글본 동기화 + 3파일 컴파일 검증 ✓ | 완료 | 커밋 d8f3f00. hibari_tda_ko.tex Phase 3 반영. 3파일 모두 컴파일 에러 0, undefined ref 0, citation 0. **전체 프로젝트 종결** |
-| 45 | **C** | 체계적 청취 실험 설계 + 인프라 ✓ (부분) | 완료 (D/E/F WAV 누락) | 커밋 36a879b. 8 stimuli 중 5개(A/B/C/G/H) 생성, 3개(D/E/F, §6.6 major_block32 변주) 누락. 웹 플레이어·프로토콜·분석 스크립트 완성 |
-| 45-B | **C** | D/E/F WAV 재생성 ✓ | 완료 | 커밋 fb095e7. D seed 7401 (pJS 0.013816), E seed 7501 (pJS 0.030679), F seed 7601 (pJS 0.013049). **8/8 stimuli 완비**. `memory/project_task45_listening_test_design_0417.md` |
-| 46 | **C** | 청취 실험 파일럿 실행 | Task 45-B 완료 (인간 주도) | 피험자 모집 + 응답 수집. 파일럿 N=10 비공식 가능. stimuli 길이 (45초 vs 전체) 결정 필요 |
-| 47 | **A** | 응답 데이터 분석 | Task 46 완료 후 | analysis_template.py 실행 — Spearman / Mann-Whitney / Wilcoxon |
-| 48 | **D** | §8 또는 §9 청취 실험 결과 반영 | Task 47 완료 후 | 수치-청각 정합성, gap=0 근거, 위상 보존 변주 청각 평가 |
-| 49 | **D** | §2.4/§2.5 methodological note (metric 공리 + Heo et al. 2025) ✓ | 완료 | full.md §2.4 #### 주석(표+3단락), short.md 1단락, LaTeX 3파일 \paragraph{Remark} 삽입. Cohen-Steiner et al. (2007) 참고문헌 전 파일 추가. 컴파일 에러 0/undefined 0/citation 0. short.md PDF 재빌드 성공 |
-| 50 | **D** | §6.7.1 / §6.8 / §8 / 초록 수치 전면 갱신 — α=0.25 per-cycle τ, JS=0.01156 ✓ | 완료 | 커밋 2125055 → 06c852d → **8a14d80** (2026-04-19). full.md 구조 재편(§5↔§7 스왑) + short.md + LaTeX 3파일 + PDF 2종. 초록/§5.7/§5.8.1/§6.7/§8 전부 갱신. LaTeX xelatex/pdflatex 에러 0/undef 0/cit 0 검증. `memory/project_a3_new_record_0418.md` |
-| 51 | **A** | Algo2 FC-cont α=0.25 재실험 ✓ | 완료 | **α=0.25 FC-cont JS=0.00057±0.00046 (N=10) vs α=0.5 0.00035±0.00015, Welch p=0.168 비유의** — **Algo2 최저 α=0.5 유지**. K=14로 감소 영향. `run_fc_cont_dft_alpha025.py` + `fc_cont_dft_alpha025_results.json` (커밋 8a14d80). `memory/project_task51_fc_cont_alpha025_0418.md` |
-| 51-b | **D** | Task 51 결과 논문 반영 (짧은 각주) ✓ | 완료 | 커밋 bcd35ed. full.md §5.8.2 Remark 2단락 + short.md 1문장 + LaTeX 3파일 \\paragraph{비고} + PDF 3종 재빌드. 컴파일 에러 0/undef 0/cit 0 |
-| 52 | **A** | §6 블록 단위 생성 α=0.25 per-cycle τ 재탐색 | Task 56 완료 (착수 가능) | 블록 best global 0.01479 기록을 α=0.25로 초과 가능? 긴 작업. **주의**: Task 51에서 Algo2는 α=0.25 비유의였으므로, 블록 Algo1도 negative 가능성 있음. Option B 창 baseline 재산정 완료 (best 0.01479 @ m=0,seed=9309) |
-| 53 | **E** | CLAUDE.md "현재 최적 설정" 블록 Algo1 수치 갱신 ✓ | 완료 | 8a14d80에서 D가 직접 갱신 (규칙 예외). `Algorithm 1: DFT + per-cycle τ (α=0.25, K=14) → JS=0.01156±0.00147`. Algo2는 α=0.5 유지 명시 (Task 51 정합) |
-| 56 | **B+D** | §6 P3_local window 재설계 (Option B) — `[32(m+1), 32(m+2))` both instruments ✓ | 완료 | 커밋 148b16d (B 코드) + 101ffa7 (B JSON) + **6c83ddc (D 재서술)**. §6.2 P3 mean `0.0474±0.0187`, §6.5 P3+C best **`0.0167`** (seed 7300, baseline 하회), §6.7 32개 시작 블록 (best global JS=0.01479 유지, Phase1 동등 / Phase2 0.01156 미달 +28%), **§6.8 Pearson −0.054 → +0.2457 반전 ★** (설계 의도 부합 검증). 용어 "모듈→마디" rename + 비대칭 창 한계 서술 제거 + history footnote. PDF 4종 재빌드 + 3항 검증 통과. `memory/project_task56_b_execution_0419.md` + `project_task56_d_revision_checklist_0419.md` |
-| 44 | **D** | §6.4 FC 서술 교체 + §6.5 ±std + §6.6.3 메타 보강 ✓ | 완료 | 커밋 19df059. §6.4 "구조적 불가능" → "pitch 분포 유지 + DTW +30~48% 실측". §6.5 ±std (FC/LSTM). §6.6.3 FC 특성 단락 추가 (DFT-FC 우수성 해석 + note 선택 논지 강화) | T39-2 solari DFT 0.0824 K=15 / T39-3 Bach 0.0951 K=30, Ravel 0.0494 K=37 (타곡 모두 기존 최적 거리 유지 — hibari만 DFT 최적). T39-4 FC 시점 독립성 실증, LSTM pitch_js 0.26~0.28. T39-5 FC/LSTM 화성 제약. ⚠ T39-4/5는 N=5 반복 재실행 검토 여지 있음 |
-
-### 260419 피드백 후속 과제 (2026-04-19 신설)
-
-| # | 세션 | 작업 | 의존성 | 비고 |
-|---|------|------|--------|------|
-| 57 | **D** | LaTeX 3파일 260419 sweep + Task 61 블록 rename 동기화 | 260419 sweep 완료 (커밋 2aac918) + Task 61 완료 | md에 반영된 사항(Algo1 0.00902, α-grid 표, tie 정규화, §6.3~§6.4 DFT 관련, Bach/Ravel 수치 등) + §6 "마디→블록" rename → hibari_tda.tex / ko.tex / report.tex 적용. 컴파일 에러 0 검증 필수 |
-| 60 | **D** | QR 코드 첨부 | 없음 | 논문 내 관련 링크(코드 저장소 등) QR 이미지 삽입. 별도 Task |
-
-### 낮은 우선순위 (향후 과제)
-
-| # | 세션 | 작업 | 비고 |
-|---|------|------|------|
-| 15 | **C** | 방향 A wide(48-84) WAV 청각 평가 | vwide 폐기, wide 기준으로 재설정 |
-| 16 | **C** | 최적 설정 WAV 생성 + 감상 | complex(α=0.25,ow=0.0,rc=0.1)+per-cycle τ 확정됨 → 실행 가능 |
-| 17 | **A** | 나머지 곡 실험 (`run_any_track.py --all`) | 파라미터 확정 이후 |
-| 18 | **B** | Wasserstein 제약 재설계 (topk 이전 적용) | 현재 구현 효과 없음 |
-| 19 | **D** | LaTeX 원고 최종 업데이트 ✓ | 완료 | hibari_tda.tex(영문 IEEE) §7.3 1×2 표 + 전략 A/B 수식 + N!=3.56e14 주석 동기화. §4.1b/§7.2/§7.1.9는 이미 반영. 컴파일 성공, undefined ref 0. ko/report 버전은 제출 계획 따라 차후 (2026-04-15) |
+1. **R6 YouTube 스크립트** 8~12분 한국어 내레이션 → `docs/youtube_script.md`
+2. **R6 YouTube 메타데이터** 제목·설명·태그·챕터 → `docs/youtube_description.md` + `docs/youtube_thumbnail_brief.md`
+3. **R7 SKMT 3-language 세트** — portfolio 1p (ko/ja/en) + 이메일 (ko/ja/en) → `docs/outreach/` 하위
+4. **R5-a Tilt Sphere 기술 스펙** — DeviceOrientation 권한 플로우, tonnetz 격자 좌표, 물리 시뮬 파라미터 → `docs/mobile_r5a_spec.md`
 
 ## 기술 환경
 
