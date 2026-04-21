@@ -60,23 +60,26 @@ function layoutNodes() {
   const padBot = 130;
   const usableW = W - padX * 2;
   const usableH = H - padTop - padBot;
-  // 정삼각형 lattice: 한 변 = side, 가로 간격 = side, 세로 간격 = side·(√3/2).
-  // 짝수/홀수 행은 side/2만큼 오프셋.
-  const sideFromW = usableW / (COLS - 0.5);
+  // Slant (parallelogram) Tonnetz lattice:
+  //   x = originX + c * xStep + r * (xStep / 2)   ← each row shifts right by xStep/2
+  //   y = originY + r * yStep,  yStep = xStep * (√3/2)
+  // With row-step=+7 and col-step=+4, EVERY triangle has edge intervals {+3, +4, +7}
+  // (the three Tonnetz intervals) → every triangle is major or minor → fully connected.
+  // Grid extents: gridW = (COLS-1)*xStep + (ROWS-1)*(xStep/2)
+  //               gridH = (ROWS-1)*yStep
+  const sideFromW = usableW / ((COLS - 1) + (ROWS - 1) * 0.5);
   const sideFromH = usableH / ((ROWS - 1) * (SQRT_3 / 2));
-  // 모바일에서 삼각형이 육안으로 '치밀한 격자'로 보이도록 최대 110px 캡.
   const side = Math.min(sideFromW, sideFromH, 110);
   hexSide = side;
   const xStep = side;
   const yStep = side * (SQRT_3 / 2);
-  const gridW = (COLS - 1 + 0.5) * xStep;   // 오프셋 행 포함 실제 너비
+  const gridW = (COLS - 1) * xStep + (ROWS - 1) * xStep * 0.5;
   const gridH = (ROWS - 1) * yStep;
   const originX = padX + (usableW - gridW) / 2;
-  const originY = padTop + (usableH - gridH) / 2;   // 세로 중앙 정렬
+  const originY = padTop + (usableH - gridH) / 2;
   for (let r = 0; r < ROWS; r++) {
     for (let c = 0; c < COLS; c++) {
-      const rowOffset = (r & 1) ? xStep * 0.5 : 0;
-      const x = originX + c * xStep + rowOffset;
+      const x = originX + c * xStep + r * xStep * 0.5;   // slant: each row shifted right
       const y = originY + r * yStep;
       const pc = nodePC(r, c);
       const midi = 48 + pc + (ROWS - 1 - r) * 3;

@@ -9,6 +9,9 @@ export const ROW0_PC = 0; // C anchor at top-left
 export const ROWS = 4;     // 4 rows × row-step(+7) → 12 PCs (gcd(7,12)=1, rotates all)
 export const COLS = 3;     // 3 cols × col-step(+4) → 3 distinct PCs per row (gcd(4,12)=4)
 // ROWS=4 × COLS=3 = 12 nodes covering all 12 pitch classes exactly once.
+// Visual layout: SLANT (parallelogram) — x = c*xStep + r*(xStep/2), y = r*yStep.
+// This ensures ALL triangles have edge intervals {+3, +4, +7} → every triangle is a
+// major or minor triad → fully connected Tonnetz lattice.
 
 export function nodePC(r, c) {
   return ((ROW0_PC + r * 7 + c * 4) % 12 + 12) % 12;
