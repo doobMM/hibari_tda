@@ -465,6 +465,32 @@ var tonnetz = (function() {
         setTranslate(ctx, toneGrid[tone][i].x, toneGrid[tone][i].y);
 
         var minorOn = false, majorOn = false;
+
+        // ── Ambient fill: every triangle is always tinted so the left/right
+        //    parallelogram halves stay visually distinct for any interval
+        //    selection (Standard, Diatonic, Augmented, …).
+        // Left face (minor-triad position)
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(c.topPos.x, c.topPos.y);
+        ctx.lineTo(c.leftPos.x, c.leftPos.y);
+        ctx.closePath();
+        ctx.globalAlpha = 0.55;
+        ctx.fillStyle = colorscheme.minorFill;
+        ctx.fill();
+
+        // Right face (major-triad position)
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(c.topPos.x, c.topPos.y);
+        ctx.lineTo(c.rightPos.x, c.rightPos.y);
+        ctx.closePath();
+        ctx.fillStyle = colorscheme.majorFill;
+        ctx.fill();
+        ctx.globalAlpha = 1.0;
+
+        // ── Active overlay: full opacity when all 3 vertices of a triangle
+        //    are playing — this preserves the original "lit triad" feedback.
         if (thisOn && topOn) {
           if (leftOn) { // left face (minor triad)
             minorOn = true;

@@ -128,7 +128,7 @@
                   <button class="btn btn-sm preload-btn btn-default" data-key="hibari_v2" title="Algorithm 1 · DFT distance + binary OM (JS 0.0144)">v2 <small style="opacity:0.7">Algo1·DFT</small></button>
                   <button class="btn btn-sm preload-btn btn-default" data-key="hibari_v3" title="Algorithm 1 · DFT + per-cycle τ_c, α=0.5 (JS 0.0144)">v3 <small style="opacity:0.7">τ_c α=0.5</small></button>
                   <button class="btn btn-sm preload-btn btn-default" data-key="hibari_v4" title="Algorithm 1 · DFT + per-cycle τ_c, α=0.25 — 본 연구 Algo1 최저 (JS 0.00902)">v4 <small style="opacity:0.7">τ_c α=0.25 ★</small></button>
-                  <button class="btn btn-sm preload-btn btn-default" data-key="hibari_v5" title="Algorithm 2 · FC-cont — 본 연구 절대 최저 (JS 0.00022)">v5 <small style="opacity:0.7">Algo2·FC ★</small></button>
+                  <button class="btn btn-sm preload-btn btn-default" data-key="hibari_v5" title="Algorithm 2 · FC-cont — 본 연구 절대 최저 (JS 0.00035)">v5 <small style="opacity:0.7">Algo2·FC ★</small></button>
                   <button class="btn btn-sm preload-btn btn-default" data-key="hibari_v6" title="§6 블록 단위 생성 P3 (m=0)">v6 <small style="opacity:0.7">Block·P3</small></button>
                 </div>
                 <div style="font-size:10px;color:#aaa;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:5px">
@@ -408,6 +408,7 @@
                   <label for="synth-type" class="control-label col-xs-5 col-sm-4 col-md-3">Synth type</label>
                   <div class="col-xs-6 col-sm-4 col-md-3">
                     <select class="form-control" name="synth-type" id="synth-type">
+                      <option value="piano" selected>Piano (SoundFont)</option>
                       <option value="sine">Sine</option>
                       <option value="square">Square</option>
                       <option value="sawtooth">Sawtooth</option>
@@ -900,6 +901,7 @@
     <!-- Tone.js & @tonejs/midi for MIDI file playback -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@tonejs/midi@2.0.28/build/Midi.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/soundfont-player@0.12.0/dist/soundfont-player.min.js"></script>
 
     <!-- TonnetzViz modules -->
     <script src="js/storage.js"></script>

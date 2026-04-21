@@ -46,6 +46,31 @@ var audio = (function() {
   var ATTACK = 0.05;
   var RELEASE = 0.1;
 
+  // ── Piano SoundFont (lazy-loaded on first 'piano' selection) ──────
+  // Uses gleitz/midi-js-soundfonts samples via soundfont-player CDN.
+  // While loading, notes silently fall back to oscillator so the user
+  // gets immediate feedback.
+  var pianoInstrument = null;
+  var pianoLoading = false;
+  var pianoActiveNotes = $.map(Array(CHANNELS), function() { return {}; });
+
+  var loadPiano = function() {
+    if (pianoInstrument || pianoLoading || !window.Soundfont || !audioCtx) return;
+    pianoLoading = true;
+    // FluidR3_GM is ~1 MB vs MusyngKite's ~4 MB — faster first load,
+    // slightly drier tone. Acceptable trade for snappy playback.
+    Soundfont.instrument(audioCtx, 'acoustic_grand_piano', {
+      soundfont: 'FluidR3_GM',
+      destination: gain
+    }).then(function(inst) {
+      pianoInstrument = inst;
+      pianoLoading = false;
+    }).catch(function(err) {
+      console.warn('[audio] piano SoundFont load failed', err);
+      pianoLoading = false;
+    });
+  };
+
 
   module.init = function() {
     var AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -67,6 +92,7 @@ var audio = (function() {
 
     $('#synth-type').change(function() {
       synthType = $(this).val();
+      if (synthType === 'piano') loadPiano();
     }).change();
     
     $('#tuning').change(function() {
@@ -85,9 +111,23 @@ var audio = (function() {
   module.noteOn = function(channel, pitch) {
     if (!audioCtx || !enabled) return;
 
+    // Piano path: use SoundFont sample if ready.
+    if (synthType === 'piano' && pianoInstrument) {
+      if (!(pitch in pianoActiveNotes[channel])) {
+        // MIDI pitch accepted directly by soundfont-player.
+        pianoActiveNotes[channel][pitch] =
+          pianoInstrument.play(pitch, audioCtx.currentTime, { gain: 2.5 });
+      }
+      return;
+    }
+
+    // Oscillator path — used for explicit oscillator choice *and* as an
+    // audible fallback while the piano SoundFont is still streaming in.
+    // 'piano' isn't a valid OscillatorNode.type, so map it to 'triangle'.
+    var oscType = (synthType === 'piano') ? 'triangle' : synthType;
     if (!(pitch in notes[channel])) {
       notes[channel][pitch] =
-        new Note(audioCtx, synthType, pitchToFrequency(pitch),
+        new Note(audioCtx, oscType, pitchToFrequency(pitch),
                  ATTACK, RELEASE, gain);
       notes[channel][pitch].start();
     }
@@ -95,6 +135,12 @@ var audio = (function() {
 
   module.noteOff = function(channel, pitch) {
     if (!audioCtx) return;
+
+    if (pitch in pianoActiveNotes[channel]) {
+      try { pianoActiveNotes[channel][pitch].stop(audioCtx.currentTime + 0.05); }
+      catch (e) { /* already stopped */ }
+      delete pianoActiveNotes[channel][pitch];
+    }
 
     if (pitch in notes[channel]) {
       notes[channel][pitch].stop();
