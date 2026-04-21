@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Filtration Viz — hibari simplex 진행</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="hdr">
+    <h1>hibari — 활성 note가 이루는 simplex 진행</h1>
+    <p class="sub">
+      MIDI가 재생되는 동안 활성 note들이 꼭짓점으로 떠오르고
+      그들이 이루는 edge/triangle이 나타났다 사라진다.
+      K=14 PH cycle은 ▣ 색상으로 중첩 표시.
+    </p>
+  </header>
+
+  <main>
+    <section class="viz">
+      <canvas id="canvas" width="900" height="650" aria-label="simplex filtration"></canvas>
+      <div id="legend" class="legend"></div>
+    </section>
+
+    <section class="controls">
+      <div class="row">
+        <button id="btn-play" type="button">▶ 재생</button>
+        <button id="btn-stop" type="button" disabled>■ 정지</button>
+        <span class="sep"></span>
+        <label>
+          시각 t
+          <input id="scrub" type="range" min="0" max="1087" value="0" step="1">
+          <output id="out-t">0</output> / <span id="out-T">1088</span>
+        </label>
+      </div>
+
+      <div class="row">
+        <label>
+          ε (연결 반경)
+          <input id="eps" type="range" min="0" max="1" step="0.01" value="0.5">
+          <output id="out-eps">0.50</output>
+        </label>
+        <span class="hint">· 활성 note 쌍 중 d ≤ ε만 edge. 1로 두면 "완전 결합".</span>
+      </div>
+
+      <div class="row">
+        <label>배치 (드래그로 회전)
+          <select id="layout-sel">
+            <option value="pc_helix" selected>Pitch-class helix 3D (circle of 5ths × pitch 높이)</option>
+            <option value="mds_3d">MDS 3D (hybrid α=0.25 거리 보존)</option>
+          </select>
+        </label>
+        <span class="hint">· 마우스/터치로 드래그 → yaw/pitch 회전</span>
+      </div>
+
+      <div class="row">
+        <label><input id="toggle-cycle" type="checkbox" checked> cycle 강조</label>
+        <label><input id="toggle-triangles" type="checkbox" checked> 2-simplex(삼각) 채움</label>
+        <label><input id="toggle-labels" type="checkbox" checked> note 레이블</label>
+        <label><input id="toggle-filtration" type="checkbox"> 전체 filtration (ε 스위프, MIDI 무관)</label>
+      </div>
+
+      <div class="row meta" id="meta">
+        <span id="meta-active">활성 note: 0</span>
+        <span id="meta-edges">edges: 0</span>
+        <span id="meta-triangles">triangles: 0</span>
+        <span id="meta-cycles">active cycles: 0</span>
+      </div>
+    </section>
+  </main>
+
+  <script src="js/midi-io.js"></script>
+  <script src="js/audio-playback.js"></script>
+  <script src="js/data-loader.js"></script>
+  <script src="js/simplex-renderer.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>

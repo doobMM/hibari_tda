@@ -1,0 +1,23 @@
+{
+  "version": "1.0",
+  "optimal_config": {
+    "metric": "dft",
+    "alpha": 0.25,
+    "w_o": 0.3,
+    "w_d": 1.0,
+    "use_decayed": true,
+    "rate": 1.0
+  },
+  "T": 1088,
+  "N": 23,
+  "files": [
+    "distance_hybrid_a025.json",
+    "points_2d.json",
+    "notes_active.json",
+    "cycles_simplicial.json",
+    "notes_metadata.json",
+    "original_hibari.mid"
+  ],
+  "midi_total_eighth_notes": 1088,
+  "notes": "MIDI 재생 시간을 T개의 8분음표 구간으로 매핑. `t = floor(currentSec / (durationSec / T))` 로 현재 tick 계산. distance_hybrid_a025는 rate=1.0 스냅샷(representative)."
+}

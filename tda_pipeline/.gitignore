@@ -19,6 +19,8 @@ pipeline_cache.pkl
 # MIDI 파일 (용량이 크므로 각자 보유)
 *.mid
 *.midi
+# 예외: GitHub Pages 배포용 복사본 (25KB)
+!filtration_viz/data/original_hibari.mid
 
 # IDE
 .vscode/
