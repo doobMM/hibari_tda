@@ -311,7 +311,7 @@ function stop() {
   audio.stopAll(200);
 }
 
-// ── Permission + desktop fallback ──────────────────────────────────────────
+// ── Permission ─────────────────────────────────────────────────────────────
 async function onPermClick() {
   const r = await requestSensorPermission();
   if (r.orientation === 'granted' || r.orientation === 'unknown') {
@@ -319,13 +319,9 @@ async function onPermClick() {
   }
   await audio.unlock();
   overlay.classList.add('hidden');
-  // Desktop: mouse position → fake tilt
-  if (r.orientation !== 'granted') {
-    window.addEventListener('mousemove', (ev) => {
-      tiltX = (ev.clientX / W - 0.5) * 2;
-      tiltY = (ev.clientY / H - 0.5) * 2;
-    });
-  }
+  // Desktop: arrow keys are the sole control — no mouse-position tilt.
+  // (Mouse-position tilt caused unwanted drift whenever the cursor
+  //  was not exactly at screen centre.)
 }
 
 btnPerm.addEventListener('click', onPermClick);
