@@ -31,6 +31,8 @@ const gain = 0.6; // tilt → accel gain
 
 // Nodes laid out in grid. Hot-activation fades over time.
 let nodes = []; // {x, y, pc, midi, hot}
+let triangles = []; // {i, j, k, major} — Tonnetz major/minor triad faces
+let hexSide = 80;   // set by layoutNodes; used for draw() edge threshold
 let running = false;
 let startT = 0;
 let stepCount = 0;
@@ -47,30 +49,78 @@ function resize() {
 }
 window.addEventListener('resize', resize);
 
+// Tonnetz 육각 격자: row 축 = 완전5도(+7), col 축 = 장3도(+4).
+// 정삼각형 격자 좌표: x_step = u·√3, y_step = u·(3/2), 행마다 x_step/2 오프셋.
+const SQRT_3 = Math.sqrt(3);
+
 function layoutNodes() {
   nodes = [];
-  const padX = 24;
-  const padTop = 80;
-  const padBot = 140;
+  const padX = 20;
+  const padTop = 70;
+  const padBot = 130;
   const usableW = W - padX * 2;
   const usableH = H - padTop - padBot;
-  const stepX = usableW / (COLS - 1);
-  const stepY = usableH / (ROWS - 1);
+  // 정삼각형 lattice: 한 변 = side, 가로 간격 = side, 세로 간격 = side·(√3/2).
+  // 짝수/홀수 행은 side/2만큼 오프셋.
+  const sideFromW = usableW / (COLS - 0.5);
+  const sideFromH = usableH / ((ROWS - 1) * (SQRT_3 / 2));
+  // 모바일에서 삼각형이 육안으로 '치밀한 격자'로 보이도록 최대 110px 캡.
+  const side = Math.min(sideFromW, sideFromH, 110);
+  hexSide = side;
+  const xStep = side;
+  const yStep = side * (SQRT_3 / 2);
+  const gridW = (COLS - 1 + 0.5) * xStep;   // 오프셋 행 포함 실제 너비
+  const gridH = (ROWS - 1) * yStep;
+  const originX = padX + (usableW - gridW) / 2;
+  const originY = padTop + (usableH - gridH) / 2;   // 세로 중앙 정렬
   for (let r = 0; r < ROWS; r++) {
     for (let c = 0; c < COLS; c++) {
-      const offsetX = (r % 2) * stepX * 0.5; // diamond offset → Tonnetz-like triangles
-      const x = padX + c * stepX + offsetX * (c < COLS - 1 ? 1 : 0);
-      const y = padTop + r * stepY;
+      const rowOffset = (r & 1) ? xStep * 0.5 : 0;
+      const x = originX + c * xStep + rowOffset;
+      const y = originY + r * yStep;
       const pc = nodePC(r, c);
-      const midi = 48 + pc + (ROWS - 1 - r) * 12 * 0 + (r < 2 ? 12 : 0);
+      const midi = 48 + pc + (ROWS - 1 - r) * 3;
       nodes.push({ x, y, pc, midi, hot: 0, r, c });
     }
   }
+  // Pre-compute triangle faces (major/minor triads) — 삼각형 색칠용
+  triangles = computeTriangles(xStep, yStep);
   sphere.x = W / 2;
   sphere.y = H / 2;
   sphere.vx = 0; sphere.vy = 0;
   sphere.targetX = sphere.x;
   sphere.targetY = sphere.y;
+}
+
+// 세 pc가 major({root, +4, +7}) 또는 minor({root, +3, +7}) triad 인지 판정.
+// sort 기반이 아니라 "root 후보 3개" 모두 시도해 cyclic rotation까지 포착.
+function triadType(pc1, pc2, pc3) {
+  const set = new Set([pc1, pc2, pc3]);
+  for (const r of [pc1, pc2, pc3]) {
+    if (set.has((r + 4) % 12) && set.has((r + 7) % 12)) return 'major';
+    if (set.has((r + 3) % 12) && set.has((r + 7) % 12)) return 'minor';
+  }
+  return null;
+}
+
+// 인접 3개 노드로 이루어진 삼각형 리스트(fillStyle용). xStep,yStep은 인접 판정 기준.
+function computeTriangles(xStep, yStep) {
+  const tri = [];
+  const maxD = Math.hypot(xStep, yStep) * 1.05;  // 인접 반경
+  for (let i = 0; i < nodes.length; i++) {
+    for (let j = i + 1; j < nodes.length; j++) {
+      const dij = Math.hypot(nodes[i].x - nodes[j].x, nodes[i].y - nodes[j].y);
+      if (dij > maxD) continue;
+      for (let k = j + 1; k < nodes.length; k++) {
+        const djk = Math.hypot(nodes[j].x - nodes[k].x, nodes[j].y - nodes[k].y);
+        const dik = Math.hypot(nodes[i].x - nodes[k].x, nodes[i].y - nodes[k].y);
+        if (djk > maxD || dik > maxD) continue;
+        const type = triadType(nodes[i].pc, nodes[j].pc, nodes[k].pc);
+        if (type) tri.push({ i, j, k, major: type === 'major' });
+      }
+    }
+  }
+  return tri;
 }
 
 // Device orientation → target accel
@@ -141,20 +191,36 @@ function triggerNearestNode() {
 function draw() {
   ctx.fillStyle = '#0a0a12';
   ctx.fillRect(0, 0, W, H);
-  // edges — connect neighbors
-  ctx.strokeStyle = '#1e1e34';
+
+  // ① 삼각형 면(major/minor triad) — 은은한 배경 fill
+  for (const t of triangles) {
+    const a = nodes[t.i], b = nodes[t.j], c = nodes[t.k];
+    // hot 평균으로 면 밝기 결정
+    const hot = (a.hot + b.hot + c.hot) / 3;
+    ctx.beginPath();
+    ctx.moveTo(a.x, a.y);
+    ctx.lineTo(b.x, b.y);
+    ctx.lineTo(c.x, c.y);
+    ctx.closePath();
+    // major = 따뜻한 복숭아, minor = 차가운 청록
+    const base = t.major ? [232, 143, 106] : [92, 166, 180];
+    const alpha = 0.06 + hot * 0.35;
+    ctx.fillStyle = `rgba(${base[0]}, ${base[1]}, ${base[2]}, ${alpha.toFixed(3)})`;
+    ctx.fill();
+  }
+
+  // ② 격자 선 — 모든 인접 노드 쌍(side 거리 이내). triad 미형성 엣지도 포함.
+  ctx.strokeStyle = 'rgba(200, 200, 220, 0.18)';
   ctx.lineWidth = 1;
+  const maxEdge = hexSide * 1.12;
   for (let i = 0; i < nodes.length; i++) {
-    const a = nodes[i];
     for (let j = i + 1; j < nodes.length; j++) {
-      const b = nodes[j];
-      const d = Math.hypot(a.x - b.x, a.y - b.y);
-      if (d < 120) {
-        ctx.beginPath();
-        ctx.moveTo(a.x, a.y);
-        ctx.lineTo(b.x, b.y);
-        ctx.stroke();
-      }
+      const d = Math.hypot(nodes[i].x - nodes[j].x, nodes[i].y - nodes[j].y);
+      if (d > maxEdge) continue;
+      ctx.beginPath();
+      ctx.moveTo(nodes[i].x, nodes[i].y);
+      ctx.lineTo(nodes[j].x, nodes[j].y);
+      ctx.stroke();
     }
   }
   // nodes

@@ -6,8 +6,9 @@
 // Node (row r, col c) → pc = (row0 + r*7 + c*4) mod 12.
 
 export const ROW0_PC = 0; // C anchor at top-left
-export const ROWS = 4;
-export const COLS = 6;
+export const ROWS = 4;     // 4 rows × row-step(+7) → 12 PCs (gcd(7,12)=1, rotates all)
+export const COLS = 3;     // 3 cols × col-step(+4) → 3 distinct PCs per row (gcd(4,12)=4)
+// ROWS=4 × COLS=3 = 12 nodes covering all 12 pitch classes exactly once.
 
 export function nodePC(r, c) {
   return ((ROW0_PC + r * 7 + c * 4) % 12 + 12) % 12;
