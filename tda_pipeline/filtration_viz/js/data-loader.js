@@ -35,7 +35,8 @@
 
   async function load(base) {
     base = base || 'data';
-    const [manifest, distJ, pointsJ, activeJ, notesJ, cyclesJ, midiBytes] =
+    const [manifest, distJ, pointsJ, activeJ, notesJ, cyclesJ, midiBytes,
+           overlapRefJ, overlapContJ] =
       await Promise.all([
         fetchJson(`${base}/manifest.json`),
         fetchJson(`${base}/distance_hybrid_a025.json`),
@@ -44,10 +45,22 @@
         fetchJson(`${base}/notes_metadata.json`),
         fetchJson(`${base}/cycles_simplicial.json`),
         fetchBytes(`${base}/original_hibari.mid`),
+        fetchJson(`${base}/overlap_matrix_reference.json`).catch(() => null),
+        fetchJson(`${base}/overlap_matrix_continuous.json`).catch(() => null),
       ]);
 
     const N = distJ.N;
     const T = activeJ.T;
+
+    // overlap matrix (T × K) — 있으면 렌더러가 per-cycle 활성 판정에 사용
+    let overlapBin = null, overlapCont = null, K = 0;
+    if (overlapRefJ && overlapRefJ.values) {
+      K = overlapRefJ.K;
+      overlapBin = Uint8Array.from(overlapRefJ.values);
+    }
+    if (overlapContJ && overlapContJ.values) {
+      overlapCont = Float32Array.from(overlapContJ.values);
+    }
 
     // distance
     const dist = new Float32Array(distJ.values);
@@ -86,13 +99,15 @@
     }
 
     return {
-      T, N,
+      T, N, K,
       points,
       points3,
       dist,
       distMin: distJ.min,
       distMax: distJ.max,
       active,
+      overlapBin,     // Uint8Array(T*K) — values[t*K + c]
+      overlapCont,    // Float32Array(T*K) — [0, 1]
       notes: notesJ.labels,
       cycles: cyclesJ.cycles,
       midiBytes,

@@ -248,21 +248,37 @@
       }
 
       // ── 3. Cycle overlay
+      //   판정: 연속 중첩행렬 overlapCont[t*K + c] ∈ [0, 1] 을 alpha 강도로 직접 사용.
+      //   (Algo2 FC-cont JS=0.00035 절대 최저 기록의 입력 OM과 동일.)
+      //   MIN_VIS 미만은 렌더 생략 (잡음 방지).
+      //   폴백: overlapCont 미제공 → "모든 vertex 동시 활성" 판정 (이전 방식).
+      //   filtrationMode 시 모든 cycle overlay 표시 (ε sweep 맥락).
       const activeCycles = [];
+      const { overlapCont, K: Kfull } = this.data;
+      const useOverlap = !options.filtrationMode && overlapCont && Kfull > 0;
+      const MIN_VIS = 0.05;
       if (options.showCycles) {
         for (const c of cycles) {
           const verts = c.vertices_0idx;
-          let allActive = true;
-          for (const v of verts) {
-            if (!activeSet[v]) { allActive = false; break; }
+          let intensity = 1.0;
+          if (useOverlap) {
+            const v = overlapCont[tick * Kfull + c.cycle_idx];
+            if (!(v > MIN_VIS)) continue;
+            intensity = Math.max(0, Math.min(1, v));
+          } else {
+            let allActive = true;
+            for (const v of verts) {
+              if (!activeSet[v]) { allActive = false; break; }
+            }
+            if (!allActive) continue;
           }
-          if (!allActive) continue;
           activeCycles.push(c.cycle_idx);
           const color = CYCLE_COLORS[c.cycle_idx % CYCLE_COLORS.length];
           ctx.strokeStyle = color;
-          ctx.lineWidth = 2.3 * this.dpr;
+          ctx.globalAlpha = 0.25 + 0.75 * intensity;
+          ctx.lineWidth = (1.2 + 1.6 * intensity) * this.dpr;
           ctx.shadowColor = color;
-          ctx.shadowBlur = 6 * this.dpr;
+          ctx.shadowBlur = (2 + 6 * intensity) * this.dpr;
           const pts = verts.map(v => xy(v));
           const cx = pts.reduce((s, p) => s + p[0], 0) / pts.length;
           const cyc = pts.reduce((s, p) => s + p[1], 0) / pts.length;
@@ -277,6 +293,7 @@
           ctx.closePath();
           ctx.stroke();
           ctx.shadowBlur = 0;
+          ctx.globalAlpha = 1;
         }
       }
 

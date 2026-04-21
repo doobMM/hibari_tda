@@ -197,8 +197,14 @@ def export_cycles_simplicial():
 
 
 def copy_auxiliary():
-    """notes_metadata / MIDI 를 filtration_viz/data/ 로 복사."""
-    for name in ['notes_metadata.json', 'original_hibari.mid']:
+    """notes_metadata / MIDI / overlap 행렬 을 filtration_viz/data/ 로 복사."""
+    names = [
+        'notes_metadata.json',
+        'original_hibari.mid',
+        'overlap_matrix_reference.json',    # T×K binary (per-cycle τ 이진화 결과)
+        'overlap_matrix_continuous.json',   # T×K 연속값 (rarity-weighted)
+    ]
+    for name in names:
         src = DASHBOARD_DATA / name
         dst = DATA_DIR / name
         if src.exists():
@@ -219,6 +225,8 @@ def export_manifest(T, N):
             'points_2d.json',
             'notes_active.json',
             'cycles_simplicial.json',
+            'overlap_matrix_reference.json',
+            'overlap_matrix_continuous.json',
             'notes_metadata.json',
             'original_hibari.mid',
         ],
