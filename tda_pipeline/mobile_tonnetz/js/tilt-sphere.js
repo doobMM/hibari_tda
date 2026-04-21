@@ -123,11 +123,22 @@ function onOrient(e) {
   tiltY = b / 45;
 }
 
+// Keyboard: arrow keys pan the grid (same physics as tilt)
+const keysDown = new Set();
+window.addEventListener('keydown', (e) => {
+  if (e.key.startsWith('Arrow')) { e.preventDefault(); keysDown.add(e.key); }
+});
+window.addEventListener('keyup', (e) => { keysDown.delete(e.key); });
+
 // ── Main loop ──────────────────────────────────────────────────────────────
 function step(now) {
-  // Pan physics — tilt accelerates the grid
-  pvx += tiltX * gain;
-  pvy += tiltY * gain;
+  // Keyboard input → combine with tilt
+  const kx = (keysDown.has('ArrowRight') ? 1 : 0) - (keysDown.has('ArrowLeft') ? 1 : 0);
+  const ky = (keysDown.has('ArrowDown')  ? 1 : 0) - (keysDown.has('ArrowUp')   ? 1 : 0);
+
+  // Pan physics — tilt + keyboard accelerates the grid
+  pvx += (tiltX + kx) * gain;
+  pvy += (tiltY + ky) * gain;
   pvx *= friction;
   pvy *= friction;
   panX += pvx;
