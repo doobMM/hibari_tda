@@ -4,7 +4,7 @@ on:
   push:
     branches: [main]
     paths:
-      - 'hibari_dashboard/**'
+      - 'tda_pipeline/hibari_dashboard/**'
       - '.github/workflows/pages.yml'
   workflow_dispatch:
 
@@ -33,7 +33,7 @@ jobs:
       - name: Upload hibari_dashboard/ as Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: hibari_dashboard
+          path: tda_pipeline/hibari_dashboard
 
       - name: Deploy to GitHub Pages
         id: deployment
