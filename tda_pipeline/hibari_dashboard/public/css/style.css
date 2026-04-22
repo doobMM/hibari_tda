@@ -268,7 +268,7 @@ button { font-family: var(--font-ui); }
 
 .hint {
   font-size: var(--text-xs);
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
   line-height: 1.5;
   font-family: var(--font-mono);
 }
@@ -720,4 +720,176 @@ button { font-family: var(--font-ui); }
   background: color-mix(in srgb, var(--color-accent, #4ADE80) 12%, transparent);
   color: var(--color-accent, #4ADE80);
   font-weight: 600;
+}
+
+/* ==========================================================================
+   Cycle preview list — 우측 패널 "사이클 미리듣기" 섹션
+   ========================================================================== */
+.cycle-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+/* 건반 클릭 안내 배너 — 눈에 띄게 강조 */
+.click-hint {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  margin: var(--space-2) 0;
+  background: var(--accent-teal-dim);
+  border: 1px solid var(--accent-teal-border);
+  border-left: 3px solid var(--accent-teal);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-xs);
+  color: var(--text-primary);
+  line-height: 1.45;
+}
+.click-hint__badge {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  padding: 3px 6px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: var(--surface-base);
+  background: var(--accent-teal);
+  border-radius: var(--radius-sm);
+}
+.click-hint__text {
+  flex: 1;
+}
+.click-hint__text strong {
+  color: var(--accent-teal);
+  font-weight: 600;
+}
+.click-hint__list {
+  flex: 1;
+  margin: 0;
+  padding-left: var(--space-3);
+  list-style: disc;
+}
+.click-hint__list li {
+  margin: 0;
+  padding: 1px 0;
+}
+.click-hint__list strong {
+  color: var(--accent-teal);
+  font-weight: 600;
+}
+.cycle-item {
+  display: grid;
+  grid-template-columns: 28px 30px 1fr;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-sm);
+  background: var(--surface-raised);
+  cursor: pointer;                 /* row 전체가 선택 가능 */
+  transition: border-color var(--transition), background var(--transition);
+}
+.cycle-item:hover {
+  border-color: var(--accent-teal-border);
+  background: var(--surface-overlay);
+}
+.cycle-item.is-selected {
+  border-color: var(--accent-teal-border);
+  background: var(--accent-teal-dim);
+}
+.cycle-item.is-playing {
+  border-color: var(--accent-teal);
+  background: var(--accent-teal-dim);
+  box-shadow: inset 0 0 0 1px var(--accent-teal);
+}
+.cycle-item__play {
+  height: 24px;
+  width: 24px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid var(--accent-teal-border);
+  color: var(--accent-teal);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 10px;
+  line-height: 1;
+  transition: background var(--transition), border-color var(--transition);
+}
+.cycle-item__play:hover {
+  background: var(--accent-teal-dim);
+  border-color: var(--accent-teal);
+}
+.cycle-item__play:focus-visible {
+  outline: 1px solid var(--border-focus);
+  outline-offset: 2px;
+}
+.cycle-item__id {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  letter-spacing: 0.02em;
+}
+.cycle-item__notes {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ==========================================================================
+   Cycle visualization — 우측 패널 하단, 피아노 건반 + 선택된 사이클 표시
+   ========================================================================== */
+.cycle-viz__label {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  min-height: 18px;
+}
+.cycle-viz__id {
+  color: var(--accent-teal);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+.cycle-viz__notes {
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+}
+.cycle-viz__count {
+  color: var(--text-tertiary);
+  font-size: 10px;
+}
+.cycle-viz__hint {
+  color: var(--text-tertiary);
+  font-style: italic;
+}
+.cycle-viz__canvas-wrap {
+  width: 100%;
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-sm);
+  background: var(--surface-canvas);
+  padding: 2px;
+  box-sizing: border-box;
+}
+.cycle-viz__canvas-wrap canvas {
+  display: block;
+  width: 100%;
+  height: 64px;
 }

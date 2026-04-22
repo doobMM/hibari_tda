@@ -7,8 +7,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/tokens.css?v=2.2">
-  <link rel="stylesheet" href="css/style.css?v=2.2">
+  <link rel="stylesheet" href="css/tokens.css?v=3.3">
+  <link rel="stylesheet" href="css/style.css?v=3.3">
 </head>
 <body>
 
@@ -130,8 +130,8 @@
 
     </section>
 
-    <!-- ── RIGHT PANEL — generation + playback ─────────────────────────── -->
-    <aside class="panel--right" aria-label="생성 및 재생 컨트롤">
+    <!-- ── RIGHT PANEL — generation + playback + cycle preview ────────── -->
+    <aside class="panel--right" aria-label="생성 · 재생 · 사이클 미리듣기 컨트롤">
 
       <!-- Section: 생성 -->
       <div class="control-group">
@@ -144,16 +144,6 @@
           <label>
             <input type="radio" name="algo" value="algo2">
             Algorithm 2 (FC)
-          </label>
-        </div>
-        <div class="radio-row" aria-label="생성 길이">
-          <label>
-            <input type="radio" name="lenMode" value="slice" checked>
-            30초 × 3 (2 마디)
-          </label>
-          <label>
-            <input type="radio" name="lenMode" value="full">
-            전곡 (~9분)
           </label>
         </div>
         <div class="slider-row" aria-label="Temperature">
@@ -173,13 +163,7 @@
       <!-- Section: 재생 -->
       <div class="control-group">
         <h2 class="control-group__heading">재생</h2>
-        <button class="btn btn--primary" id="btnGenerate">▶ 생성 + 재생</button>
-        <div class="candidate-tabs" id="candidateTabs" hidden aria-label="생성 후보 선택">
-          <button class="btn btn--small candidate-tab" data-cand="0" disabled>A</button>
-          <button class="btn btn--small candidate-tab" data-cand="1" disabled>B</button>
-          <button class="btn btn--small candidate-tab" data-cand="2" disabled>C</button>
-        </div>
-        <button class="btn" id="btnStop" disabled>&#x25A0; 정지</button>
+        <button class="btn btn--primary" id="btnGenerate">▶ 생성</button>
         <button class="btn" id="btnDownloadMidi" disabled>&#x1F4BE; MIDI 저장</button>
         <div class="progress-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100">
           <div class="progress-bar__fill" id="progressFill"></div>
@@ -187,11 +171,28 @@
         <div class="meta-row" id="playbackMeta">대기 중</div>
       </div>
 
-      <!-- Section: 원곡 참고 -->
-      <div class="control-group">
-        <h2 class="control-group__heading">원곡 참고</h2>
-        <button class="btn" id="btnPlayOriginal">▶ 원곡 재생</button>
-        <button class="btn" id="btnStopOriginal" disabled>&#x25A0; 원곡 정지</button>
+      <!-- Section: 사이클 미리듣기 & 시각화 -->
+      <div class="control-group cycle-preview">
+        <h2 class="control-group__heading">사이클 미리듣기</h2>
+        <p class="hint">각 cycle 은 Persistent Homology 로 찾은 음 연결 고리입니다. 행 번호(c0..c13)는 중첩행렬 Y축과 동일합니다.</p>
+
+        <div class="cycle-list" id="cycleList" role="list" aria-label="사이클 미리듣기 목록"></div>
+
+        <!-- 인터랙션 안내 배너 — 3단계 -->
+        <div class="click-hint" role="note" aria-label="사이클 인터랙션 안내">
+          <ul class="click-hint__list">
+            <li><strong>사이클 행 클릭</strong> → 선택 (건반에 구성음 표시)</li>
+            <li><strong>▶ 버튼</strong> → 기본 시작점부터 재생</li>
+            <li><strong>건반의 초록 활성음 클릭</strong> → 그 음부터 재생</li>
+          </ul>
+        </div>
+
+        <div class="cycle-viz__label" id="cycleVizLabel">
+          <span class="cycle-viz__hint">위 목록의 ▶ 또는 건반을 눌러 사이클을 선택하세요</span>
+        </div>
+        <div class="cycle-viz__canvas-wrap">
+          <canvas id="cycleVizKeys" aria-label="선택된 사이클의 피아노 건반 시각화 · 활성 건반 클릭으로 재생"></canvas>
+        </div>
       </div>
 
     </aside>
@@ -229,6 +230,7 @@
           if (window.HibariUI) {
             window.HibariUI.refEditor && window.HibariUI.refEditor.render();
             window.HibariUI.editEditor && window.HibariUI.editEditor.render();
+            window.HibariUI.renderCycleViz && window.HibariUI.renderCycleViz();
           }
         } catch (e) {}
       });
@@ -236,14 +238,14 @@
   </script>
 
   <!-- ── App scripts ────────────────────────────────────────────────────── -->
-  <script src="js/data-loader.js?v=2.2"></script>
-  <script src="js/overlap-editor.js?v=2.2"></script>
-  <script src="js/generation-algo1.js?v=2.2"></script>
-  <script src="js/generation-algo2.js?v=2.2"></script>
-  <script src="js/midi-io.js?v=2.2"></script>
-  <script src="js/audio-playback.js?v=2.2"></script>
-  <script src="js/ood-detector.js?v=2.2"></script>
-  <script src="js/ui-bootstrap.js?v=2.2"></script>
+  <script src="js/data-loader.js?v=3.3"></script>
+  <script src="js/overlap-editor.js?v=3.3"></script>
+  <script src="js/generation-algo1.js?v=3.3"></script>
+  <script src="js/generation-algo2.js?v=3.3"></script>
+  <script src="js/midi-io.js?v=3.3"></script>
+  <script src="js/audio-playback.js?v=3.3"></script>
+  <script src="js/ood-detector.js?v=3.3"></script>
+  <script src="js/ui-bootstrap.js?v=3.3"></script>
 
 </body>
 </html>

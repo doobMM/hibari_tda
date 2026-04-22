@@ -218,25 +218,9 @@
       });
     }
 
-    // Phase 4 생성·재생 버튼
+    // Phase 4 생성 버튼
     $('btnGenerate').addEventListener('click', onClickGenerate);
-    $('btnStop').addEventListener('click', onClickStop);
     $('btnDownloadMidi').addEventListener('click', onClickDownloadMidi);
-    $('btnPlayOriginal').addEventListener('click', onClickPlayOriginal);
-    $('btnStopOriginal').addEventListener('click', onClickStopOriginal);
-    // 후보 탭(A/B/C) 클릭 시 활성 후보 전환 + 재생
-    document.querySelectorAll('.candidate-tab').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        const idx = parseInt(btn.dataset.cand, 10);
-        if (!isNaN(idx)) activateCandidate(idx);
-      });
-    });
-    // 길이 모드 전환 시 후보 탭 숨김
-    document.querySelectorAll('input[name="lenMode"]').forEach((r) => {
-      r.addEventListener('change', () => {
-        if (getLenMode() === 'full') hideCandidateTabs();
-      });
-    });
   }
 
   // ── 변형 컨트롤 힌트/적용 로직 ───────────────────────────────────────
@@ -323,68 +307,370 @@
   }
 
   // ── Phase 4: 생성·재생 로직 ─────────────────────────────────────────
-  const SLICE_STEPS = 64;       // 2 마디 = 64개 8분음표 ≈ 30초 (bpm=60 기준 32초)
   const BAR_STEPS = 32;         // 한 마디 = 32개 8분음표
 
   const playState = {
-    lastGenerated: null,      // 현재 활성 후보 (재생·MIDI 저장 대상)
-    candidates: [],           // 슬라이스 모드에서 생성된 3개 후보 배열
-    activeCandidateIdx: -1,
-    lastOriginalNotes: null,  // [[startSec, pitch, endSec, vel], ...]
+    lastGenerated: null,
     genPlayer: null,
-    origPlayer: null,
-    bpm: 60,                  // 생성 MIDI 기본 tempo
+    previewPlayer: null,    // cycle 미리듣기 전용 PianoPlayer (생성과 분리)
+    previewTimer: null,
+    bpm: 60,
   };
 
-  // 슬라이스 모드 헬퍼 ─────────────────────────────────────────────────
-  function pickThreeBarOffsets(seed, T, W, bar) {
-    const maxStart = T - W;
-    const starts = [];
-    for (let s = 0; s <= maxStart; s += bar) starts.push(s);
-    if (!window.GenerationAlgo1) return starts.slice(0, 3);
-    const rng = window.GenerationAlgo1.makeRng((seed ^ 0xcafebabe) >>> 0);
-    for (let i = starts.length - 1; i > 0; i--) {
-      const j = Math.floor(rng() * (i + 1));
-      [starts[i], starts[j]] = [starts[j], starts[i]];
+  // ── Cycle 미리듣기 ─────────────────────────────────────────────────
+  const PITCH_CLASS_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+  function pitchName(midi) {
+    if (midi == null || !isFinite(midi)) return '?';
+    const pc = ((midi % 12) + 12) % 12;
+    const oct = Math.floor(midi / 12) - 1;   // MIDI 60 = C4
+    return PITCH_CLASS_NAMES[pc] + oct;
+  }
+
+  function getCyclePitches(cycleIdx) {
+    if (!UI.data) return [];
+    const cy = UI.data.cyclesMeta?.cycles?.[cycleIdx];
+    if (!cy) return [];
+    const labels = UI.data.notesMeta?.labels || [];
+    // cycle edge 연결 순서 (traversal_1idx) 우선, 없으면 sorted fallback
+    const useTraversal = Array.isArray(cy.traversal_1idx) && cy.traversal_1idx.length > 0;
+    const ids = useTraversal ? cy.traversal_1idx : (cy.note_labels_1idx || []);
+    const pitches = [];
+    for (const l of ids) {
+      const lab = labels[l - 1];          // 1-indexed → array index
+      if (lab && typeof lab.pitch === 'number') pitches.push(lab.pitch);
     }
-    const chosen = [];
-    for (const s of starts) {
-      if (chosen.every(c => Math.abs(c - s) >= W)) {
-        chosen.push(s);
-        if (chosen.length === 3) break;
+    if (useTraversal) {
+      // traversal 순서 보존. 연속 중복 pitch 만 skip (같은 pc 다른 dur 라벨이 인접한 경우).
+      const out = [];
+      for (const p of pitches) {
+        if (out.length === 0 || out[out.length - 1] !== p) out.push(p);
+      }
+      return out;
+    }
+    // fallback: 중복 pitch 제거 + 오름차순
+    return Array.from(new Set(pitches)).sort((a, b) => a - b);
+  }
+
+  // 전용 AudioContext (피아노풍 합성) — PianoPlayer 보다 풍부한 harmonic
+  function ensureCyclePreviewCtx() {
+    if (!playState.previewCtx) {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      playState.previewCtx = new AC();
+    }
+    if (playState.previewCtx.state === 'suspended') {
+      playState.previewCtx.resume().catch(() => {});
+    }
+    return playState.previewCtx;
+  }
+
+  // 피아노풍 1음 스케줄링 — 다중 partial + brightness 감쇄 lowpass + 피아노식 envelope
+  function schedulePianoNote(ctx, dest, freq, startT, dur, vel) {
+    vel = Math.max(0.1, Math.min(1, vel));
+    // Mild inharmonicity (실제 피아노는 stretched tuning — 배음이 정수배보다 살짝 높음)
+    const B = 0.00035;
+
+    // Brightness 감쇄: 타격 직후 밝고, 빠르게 어두워짐
+    const filter = ctx.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.Q.value = 0.6;
+    filter.frequency.setValueAtTime(3400 + 2000 * vel, startT);
+    filter.frequency.exponentialRampToValueAtTime(780, startT + Math.min(dur, 2.2));
+
+    // Envelope: 매우 빠른 attack → 초기 급감 → 긴 꼬리 (피아노는 sustain 수준이 없음)
+    const amp = ctx.createGain();
+    const peak = 0.19 * vel;
+    amp.gain.setValueAtTime(0.0001, startT);
+    amp.gain.exponentialRampToValueAtTime(peak,          startT + 0.004);
+    amp.gain.exponentialRampToValueAtTime(peak * 0.55,   startT + 0.10);
+    amp.gain.exponentialRampToValueAtTime(peak * 0.18,   startT + Math.min(dur * 0.6, 0.9));
+    amp.gain.exponentialRampToValueAtTime(0.001,         startT + dur);
+    amp.gain.linearRampToValueAtTime(0,                  startT + dur + 0.06);
+
+    filter.connect(amp).connect(dest);
+
+    // 4 partial: fund(triangle) + 2f + 3f + 4f (모두 sine, 감쇠 gain)
+    const partials = [
+      { n: 1, gain: 0.85, type: 'triangle' },
+      { n: 2, gain: 0.28, type: 'sine' },
+      { n: 3, gain: 0.10, type: 'sine' },
+      { n: 4, gain: 0.045, type: 'sine' },
+    ];
+    for (const p of partials) {
+      const inhar = Math.sqrt(1 + B * p.n * p.n);
+      const osc = ctx.createOscillator();
+      osc.type = p.type;
+      osc.frequency.value = freq * p.n * inhar;
+      const g = ctx.createGain();
+      g.gain.value = p.gain;
+      osc.connect(g).connect(filter);
+      osc.start(startT);
+      osc.stop(startT + dur + 0.10);
+    }
+  }
+
+  // 사이클은 닫힌 루프이므로 startPitch 를 첫번째로 오도록 순환 회전
+  function rotateToStart(arr, startPitch) {
+    if (startPitch == null) return arr;
+    const i = arr.indexOf(startPitch);
+    if (i <= 0) return arr;            // 없거나 이미 선두면 그대로
+    return arr.slice(i).concat(arr.slice(0, i));
+  }
+
+  // 사이클 선택 (재생 없이 건반 시각화만)
+  function selectCycle(cycleIdx) {
+    playState.selectedCycleIdx = cycleIdx;
+    const listEl = $('cycleList');
+    if (listEl) {
+      listEl.querySelectorAll('.cycle-item.is-selected').forEach(el => el.classList.remove('is-selected'));
+      const row = listEl.querySelector(`.cycle-item[data-cycle="${cycleIdx}"]`);
+      row && row.classList.add('is-selected');
+    }
+    renderCycleViz(cycleIdx, null);
+  }
+
+  function playCyclePreview(cycleIdx, startPitch) {
+    let pitches = getCyclePitches(cycleIdx);
+    if (pitches.length === 0) {
+      log(`cycle ${cycleIdx}: 재생할 음이 없음`, 'ERR');
+      return;
+    }
+    pitches = rotateToStart(pitches, startPitch);
+
+    // 선택 상태 보장 (재생 = 선택 + 순차 하이라이트)
+    selectCycle(cycleIdx);
+
+    const ctx = ensureCyclePreviewCtx();
+    const master = ctx.createGain();
+    master.gain.value = 0.85;
+    master.connect(ctx.destination);
+
+    const spacing = 0.30;    // 음 간 간격 (사용자 요청: 약간 느리게)
+    const hold = 0.95;       // 각 음 지속 (피아노 envelope 이 스스로 감쇄)
+    const preRollSec = 0.08;
+    const t0 = ctx.currentTime + preRollSec;
+
+    pitches.forEach((midi, i) => {
+      const freq = 440 * Math.pow(2, (midi - 69) / 12);
+      schedulePianoNote(ctx, master, freq, t0 + i * spacing, hold, 0.85);
+    });
+
+    // 시각화: 순차 highlight (row + 건반)
+    if (playState._animTimers) playState._animTimers.forEach(id => clearTimeout(id));
+    playState._animTimers = [];
+
+    const listEl = $('cycleList');
+    listEl && listEl.querySelectorAll('.cycle-item.is-playing').forEach(el => el.classList.remove('is-playing'));
+    const row = listEl && listEl.querySelector(`.cycle-item[data-cycle="${cycleIdx}"]`);
+    row && row.classList.add('is-playing');
+
+    const preRollMs = preRollSec * 1000;
+    pitches.forEach((midi, i) => {
+      const tid = setTimeout(() => {
+        renderCycleViz(cycleIdx, midi);
+      }, preRollMs + i * spacing * 1000);
+      playState._animTimers.push(tid);
+    });
+    const endMs = preRollMs + ((pitches.length - 1) * spacing + hold) * 1000;
+    const endTid = setTimeout(() => {
+      row && row.classList.remove('is-playing');
+      renderCycleViz(cycleIdx, null);
+    }, endMs);
+    playState._animTimers.push(endTid);
+  }
+
+  // ── 피아노 건반 시각화 ─────────────────────────────────────────────
+  const VIZ_MIN_MIDI = 48;                       // C3
+  const VIZ_NUM_OCT  = 3;                        // C3..B5
+  const WHITE_SEMITONES = [0, 2, 4, 5, 7, 9, 11];
+  const BLACK_SEMITONES = [1, 3, 6, 8, 10];
+  // Octave 내 각 black key 의 white-key 단위 중심 위치 (C=0 기준)
+  const BLACK_WK_OFFSET = { 1: 0.70, 3: 1.70, 6: 3.70, 8: 4.70, 10: 5.70 };
+
+  function drawPitchKeyboard(cv, activePitches, playingPitch) {
+    const wrap = cv.parentElement;
+    const cssW = Math.max(200, wrap.clientWidth - 4);
+    const cssH = 64;
+    const dpr = window.devicePixelRatio || 1;
+    if (cv.width !== Math.floor(cssW * dpr) || cv.height !== Math.floor(cssH * dpr)) {
+      cv.width = Math.floor(cssW * dpr);
+      cv.height = Math.floor(cssH * dpr);
+      cv.style.width = cssW + 'px';
+      cv.style.height = cssH + 'px';
+    }
+    const ctx = cv.getContext('2d');
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, cssW, cssH);
+
+    const cs = getComputedStyle(document.documentElement);
+    const read = (v, f) => (cs.getPropertyValue(v).trim() || f);
+    const whiteFill  = read('--surface-overlay', '#ffffff');
+    const blackFill  = read('--text-primary',    '#2f3a28');
+    const borderCol  = read('--border-hairline', '#d9c5ae');
+    const activeCol  = read('--accent-teal',     '#6fa66a');
+    const playingCol = read('--accent-amber',    '#e88f6a');
+    const textCol    = read('--text-tertiary',   '#a89b89');
+
+    const actSet = new Set(activePitches);
+    const whiteCount = 7 * VIZ_NUM_OCT;
+    const wkW = cssW / whiteCount;
+    const bkW = wkW * 0.62;
+    const bkH = cssH * 0.62;
+
+    // 1) White keys
+    for (let oct = 0; oct < VIZ_NUM_OCT; oct++) {
+      for (let i = 0; i < 7; i++) {
+        const sem = WHITE_SEMITONES[i];
+        const midi = VIZ_MIN_MIDI + oct * 12 + sem;
+        const x = (oct * 7 + i) * wkW;
+        const isPlaying = midi === playingPitch;
+        const isActive  = actSet.has(midi);
+        ctx.fillStyle = isPlaying ? playingCol : (isActive ? activeCol : whiteFill);
+        ctx.fillRect(x, 0, wkW - 0.5, cssH);
+        ctx.strokeStyle = borderCol;
+        ctx.lineWidth = 1;
+        ctx.strokeRect(x + 0.5, 0.5, wkW - 1, cssH - 1);
       }
     }
-    return chosen.sort((a, b) => a - b);
+
+    // 2) Octave 라벨 (C3/C4/C5)
+    ctx.fillStyle = textCol;
+    ctx.font = '9px "JetBrains Mono", monospace';
+    ctx.textBaseline = 'bottom';
+    for (let oct = 0; oct < VIZ_NUM_OCT; oct++) {
+      const x = oct * 7 * wkW + 3;
+      ctx.fillText(`C${oct + 3}`, x, cssH - 2);
+    }
+
+    // 3) Black keys (overlay)
+    for (let oct = 0; oct < VIZ_NUM_OCT; oct++) {
+      for (const sem of BLACK_SEMITONES) {
+        const midi = VIZ_MIN_MIDI + oct * 12 + sem;
+        const centerX = (oct * 7 + BLACK_WK_OFFSET[sem]) * wkW;
+        const x = centerX - bkW / 2;
+        const isPlaying = midi === playingPitch;
+        const isActive  = actSet.has(midi);
+        ctx.fillStyle = isPlaying ? playingCol : (isActive ? activeCol : blackFill);
+        ctx.fillRect(x, 0, bkW, bkH);
+        ctx.strokeStyle = borderCol;
+        ctx.lineWidth = 0.8;
+        ctx.strokeRect(x + 0.4, 0.4, bkW - 0.8, bkH - 0.8);
+      }
+    }
+
+    // 4) hit-test 메타 저장 — 클릭 시 (cssX, cssY) → midi pitch
+    cv._layout = { cssW, cssH, wkW, bkW, bkH, activeSet: actSet };
+    cv._hitTest = function (cssX, cssY) {
+      // black keys 먼저 (상단 overlay)
+      if (cssY <= bkH) {
+        for (let oct = 0; oct < VIZ_NUM_OCT; oct++) {
+          for (const sem of BLACK_SEMITONES) {
+            const midi = VIZ_MIN_MIDI + oct * 12 + sem;
+            const centerX = (oct * 7 + BLACK_WK_OFFSET[sem]) * wkW;
+            const x = centerX - bkW / 2;
+            if (cssX >= x && cssX <= x + bkW) return midi;
+          }
+        }
+      }
+      // white keys
+      for (let oct = 0; oct < VIZ_NUM_OCT; oct++) {
+        for (let i = 0; i < 7; i++) {
+          const midi = VIZ_MIN_MIDI + oct * 12 + WHITE_SEMITONES[i];
+          const x = (oct * 7 + i) * wkW;
+          if (cssX >= x && cssX <= x + wkW) return midi;
+        }
+      }
+      return null;
+    };
   }
 
-  function sliceOverlap(overlap, start, length) {
-    const K = overlap.K;
-    const src = overlap.values;
-    const Ctor = src.constructor;
-    const out = new Ctor(length * K);
-    out.set(src.subarray(start * K, (start + length) * K));
-    return { T: length, K, values: out };
+  function renderCycleViz(cycleIdx, playingPitch) {
+    const cv = $('cycleVizKeys');
+    const labelEl = $('cycleVizLabel');
+    if (!cv || !labelEl) return;
+    // 선택 없음
+    if (cycleIdx == null || cycleIdx === undefined) {
+      labelEl.innerHTML = '<span class="cycle-viz__hint">위 목록의 ▶ 또는 건반을 눌러 사이클을 선택하세요</span>';
+      drawPitchKeyboard(cv, [], null);
+      cv.style.cursor = 'default';
+      return;
+    }
+    const pitches = getCyclePitches(cycleIdx);
+    const names = pitches.map(pitchName).join(' ');
+    labelEl.innerHTML =
+      `<span class="cycle-viz__id">c${cycleIdx}</span>` +
+      `<span class="cycle-viz__notes" title="${names}">${names || '(empty)'}</span>` +
+      `<span class="cycle-viz__count" style="margin-left:auto">${pitches.length}음</span>`;
+    drawPitchKeyboard(cv, pitches, playingPitch == null ? null : playingPitch);
+
+    // 클릭 → 해당 pitch 부터 재생 (최초 1회만 wiring)
+    if (!cv._wiredClick) {
+      cv.addEventListener('click', (e) => {
+        const idx = playState.selectedCycleIdx;
+        if (idx == null) return;
+        if (!cv._hitTest) return;
+        const rect = cv.getBoundingClientRect();
+        const cssX = e.clientX - rect.left;
+        const cssY = e.clientY - rect.top;
+        const midi = cv._hitTest(cssX, cssY);
+        if (midi == null) return;
+        const layout = cv._layout;
+        if (!layout || !layout.activeSet.has(midi)) return;   // 비활성 건반은 무시
+        playCyclePreview(idx, midi);
+      });
+      cv.addEventListener('mousemove', (e) => {
+        if (!cv._hitTest || !cv._layout) { cv.style.cursor = 'default'; return; }
+        const rect = cv.getBoundingClientRect();
+        const midi = cv._hitTest(e.clientX - rect.left, e.clientY - rect.top);
+        cv.style.cursor = (midi != null && cv._layout.activeSet.has(midi)) ? 'pointer' : 'default';
+      });
+      cv._wiredClick = true;
+    }
   }
 
-  function sliceInstLen(instLen, start, length) {
-    return instLen.slice(start, start + length);
+  function populateCycleList() {
+    const container = $('cycleList');
+    if (!container || !UI.data) return;
+    const cycles = UI.data.cyclesMeta?.cycles || [];
+    container.innerHTML = '';
+    cycles.forEach((cy, idx) => {
+      const pitches = getCyclePitches(idx);
+      const names = pitches.map(pitchName).join(' ');
+      const row = document.createElement('div');
+      row.className = 'cycle-item';
+      row.setAttribute('role', 'listitem');
+      row.dataset.cycle = String(idx);
+      row.innerHTML =
+        `<button class="cycle-item__play" type="button" data-cycle="${idx}" ` +
+        `title="cycle ${idx} 미리듣기 (${pitches.length}음)" ` +
+        `aria-label="cycle ${idx} 미리듣기">▶</button>` +
+        `<span class="cycle-item__id">c${idx}</span>` +
+        `<span class="cycle-item__notes" title="${names}">${names || '(empty)'}</span>`;
+      container.appendChild(row);
+    });
+    // 이벤트는 한 번만 (delegation)
+    if (!container._wired) {
+      container.addEventListener('click', (e) => {
+        // ▶ 버튼: 선택 + 재생
+        const btn = e.target.closest('.cycle-item__play');
+        if (btn) {
+          const idx = parseInt(btn.dataset.cycle, 10);
+          if (!isNaN(idx)) playCyclePreview(idx);
+          return;
+        }
+        // row 본체: 선택만 (건반 시각화)
+        const row = e.target.closest('.cycle-item');
+        if (row) {
+          const idx = parseInt(row.dataset.cycle, 10);
+          if (!isNaN(idx)) selectCycle(idx);
+        }
+      });
+      container._wired = true;
+    }
   }
 
-  function getLenMode() {
-    return document.querySelector('input[name="lenMode"]:checked')?.value || 'slice';
-  }
-
-  function secLabel(startEighths) {
-    const bpm = playState.bpm;
-    const startSec = startEighths * (30 / bpm);
-    const endSec = (startEighths + SLICE_STEPS) * (30 / bpm);
-    return `${Math.round(startSec)}–${Math.round(endSec)}초`;
-  }
-
-  function ensurePlayer(kind) {
-    const k = kind === 'orig' ? 'origPlayer' : 'genPlayer';
-    if (!playState[k]) playState[k] = new window.PianoPlayer();
-    return playState[k];
+  function ensurePlayer() {
+    if (!playState.genPlayer) playState.genPlayer = new window.PianoPlayer();
+    return playState.genPlayer;
   }
 
   function setProgress(frac, meta) {
@@ -444,82 +730,12 @@
     }
   }
 
-  // 후보 notes를 wall-clock offset(8분음표)만큼 평행이동
-  function shiftNotes(notes, offsetEighths) {
-    return notes.map(([s, p, e]) => [s + offsetEighths, p, e + offsetEighths]);
-  }
-
-  // 후보 탭 렌더링
-  function renderCandidates() {
-    const container = $('candidateTabs');
-    if (!container) return;
-    const cands = playState.candidates;
-    if (!cands || cands.length === 0) {
-      container.hidden = true;
-      return;
-    }
-    container.hidden = false;
-    const btns = container.querySelectorAll('.candidate-tab');
-    const labels = ['A', 'B', 'C'];
-    btns.forEach((btn, i) => {
-      const c = cands[i];
-      if (c) {
-        btn.disabled = false;
-        btn.textContent = `${labels[i]} (${secLabel(c.offset)})`;
-        btn.classList.toggle('is-active', i === playState.activeCandidateIdx);
-      } else {
-        btn.disabled = true;
-        btn.textContent = labels[i];
-        btn.classList.remove('is-active');
-      }
-    });
-  }
-
-  function hideCandidateTabs() {
-    const container = $('candidateTabs');
-    if (container) container.hidden = true;
-    playState.candidates = [];
-    playState.activeCandidateIdx = -1;
-  }
-
-  // 활성 후보로 전환하고 재생
-  function activateCandidate(idx) {
-    const c = playState.candidates[idx];
-    if (!c) return;
-    playState.activeCandidateIdx = idx;
-    playState.lastGenerated = c;
-    $('btnStop').disabled = false;
-    $('btnDownloadMidi').disabled = false;
-    renderCandidates();
-    playCurrent(`후보 ${['A','B','C'][idx]} · ${secLabel(c.offset)}`);
-  }
-
-  function playCurrent(prefix) {
-    const res = playState.lastGenerated;
-    if (!res) return;
-    const bpm = playState.bpm;
-    const sec = res.notes.map(([s, p, e]) => [
-      eighthsToSec(s, bpm), p, eighthsToSec(e, bpm), 70,
-    ]);
-    const player = ensurePlayer('gen');
-    player.play(sec, {
-      onProgress: (t, total) => setProgress(total > 0 ? t / total : 0,
-        `${prefix} · ${t.toFixed(1)}s / ${total.toFixed(1)}s · ${res.notes.length} notes`),
-      onEnd: () => {
-        setProgress(1, `완료 · ${res.notes.length} notes`);
-        $('btnStop').disabled = true;
-        log('재생 종료');
-      },
-    });
-  }
-
-  // 생성 버튼 메인 핸들러
+  // 생성 버튼 메인 핸들러 — 34마디 전곡 1개
   async function onClickGenerate() {
     if (!UI.editEditor || !UI.data) { log('데이터 미로드', 'ERR'); return; }
     if (!window.GenerationAlgo1) { log('GenerationAlgo1 모듈 미로드', 'ERR'); return; }
 
     const algo = document.querySelector('input[name="algo"]:checked')?.value || 'algo1';
-    const lenMode = getLenMode();
     const temperature = parseFloat($('sliderTemp').value) || 3.0;
     const seed = parseInt($('sliderSeed').value, 10) || 0;
 
@@ -532,73 +748,29 @@
     };
 
     try {
-      if (lenMode === 'full') {
-        hideCandidateTabs();
-        const label = algo === 'algo2' ? 'Algorithm 2 (FC)' : 'Algorithm 1';
-        log(`${label} 전곡 생성 시작 (T=${fullOverlap.T}, temp=${temperature.toFixed(1)}, seed=${seed})`);
-        let res;
-        if (algo === 'algo2') {
-          await ensureFcLoaded();
-          res = await runAlgo2Once({ overlap: fullOverlap, temperature });
-          log(`추론 완료: ${res.notes.length} notes, threshold=${res.threshold.toFixed(4)}, ${res.inferenceMs.toFixed(0)}ms`, 'OK');
-        } else {
-          res = runAlgo1Once({ overlap: fullOverlap, instLen: fullInstLen, temperature, seed });
-          log(`생성 완료: ${res.notes.length} notes, resample fail=${res.resampleFails}, ${res.elapsedMs.toFixed(0)}ms`, 'OK');
-        }
-        res.offset = 0;
-        playState.lastGenerated = res;
-        playState.candidates = [];
-        playState.activeCandidateIdx = -1;
-        $('btnStop').disabled = false;
-        $('btnDownloadMidi').disabled = false;
-        playCurrent(algo === 'algo2' ? 'FC 재생중' : '재생중');
-        return;
-      }
-
-      // 슬라이스 모드 — 3개 후보
-      const offsets = pickThreeBarOffsets(seed, fullOverlap.T, SLICE_STEPS, BAR_STEPS);
-      if (offsets.length === 0) {
-        log('슬라이스 생성 실패: OM이 너무 짧습니다 (최소 64 step 필요)', 'ERR');
-        return;
-      }
       const algoLabel = algo === 'algo2' ? 'Algorithm 2 (FC)' : 'Algorithm 1';
-      log(`${algoLabel} 슬라이스 생성 (3 후보 × ${SLICE_STEPS} steps, seed=${seed}, offsets=[${offsets.join(', ')}])`);
+      const bars = Math.round(fullOverlap.T / BAR_STEPS);
+      log(`${algoLabel} 전곡 생성 (T=${fullOverlap.T}, ${bars}마디, seed=${seed}, temp=${temperature.toFixed(1)})`);
       if (algo === 'algo2') await ensureFcLoaded();
 
       const t0 = performance.now();
-      const results = [];
-      for (let i = 0; i < offsets.length; i++) {
-        const off = offsets[i];
-        const sliced = sliceOverlap(fullOverlap, off, SLICE_STEPS);
-        const sliceInst = sliceInstLen(fullInstLen, off, SLICE_STEPS);
-        let res;
-        if (algo === 'algo2') {
-          res = await runAlgo2Once({ overlap: sliced, temperature });
-        } else {
-          res = runAlgo1Once({
-            overlap: sliced, instLen: sliceInst, temperature,
-            seed: (seed + i * 7919) >>> 0,
-          });
-        }
-        res.offset = off;
-        res.notes = shiftNotes(res.notes, off);
-        results.push(res);
+      let res;
+      if (algo === 'algo2') {
+        res = await runAlgo2Once({ overlap: fullOverlap, temperature });
+      } else {
+        res = runAlgo1Once({ overlap: fullOverlap, instLen: fullInstLen, temperature, seed });
       }
+      res.offset = 0;
       const dt = performance.now() - t0;
-      log(`3 후보 생성 완료 (${dt.toFixed(0)}ms) — ${results.map((r,i)=>`${['A','B','C'][i]}:${r.notes.length}`).join(', ')} notes`, 'OK');
+      log(`생성 완료 (${dt.toFixed(0)}ms, ${res.notes.length} notes)`, 'OK');
 
-      playState.candidates = results;
-      activateCandidate(0);
+      playState.lastGenerated = res;
+      $('btnDownloadMidi').disabled = false;
+      setProgress(1, `생성 완료 · ${res.notes.length} notes · MIDI 저장 버튼으로 다운로드`);
     } catch (e) {
       log(`생성 실패: ${e.message}`, 'ERR');
       console.error(e);
     }
-  }
-
-  function onClickStop() {
-    if (playState.genPlayer) playState.genPlayer.stop();
-    setProgress(0, '중지');
-    $('btnStop').disabled = true;
   }
 
   function onClickDownloadMidi() {
@@ -614,56 +786,12 @@
         velocity: 80,
       });
       const seed = parseInt($('sliderSeed').value, 10) || 0;
-      const idx = playState.activeCandidateIdx;
-      const tag = idx >= 0 ? `_${['A','B','C'][idx]}_off${cur.offset|0}` : '';
-      const fname = `hibari_dash_seed${seed}${tag}.mid`;
+      const fname = `hibari_dash_seed${seed}_off${cur.offset|0}.mid`;
       window.MidiIO.downloadBytes(bytes, fname);
       log(`MIDI 다운로드: ${fname} (${(bytes.length / 1024).toFixed(1)} KB)`, 'OK');
     } catch (e) {
       log(`MIDI 저장 실패: ${e.message}`, 'ERR');
     }
-  }
-
-  // 원곡 재생
-  async function onClickPlayOriginal() {
-    if (!window.MidiIO || !window.PianoPlayer) {
-      log('MIDI/오디오 모듈 미로드', 'ERR'); return;
-    }
-    try {
-      if (!playState.lastOriginalNotes) {
-        const base = (new URLSearchParams(window.location.search).get('data') || '../data') + '/';
-        const url = base + 'original_hibari.mid';
-        log(`원곡 MIDI 로드 중: ${url}`);
-        const res = await fetch(url, { cache: 'no-cache' });
-        if (!res.ok) throw new Error(`원곡 MIDI 로드 실패: ${res.status}`);
-        const buf = await res.arrayBuffer();
-        const parsed = window.MidiIO.readMidiNotes(new Uint8Array(buf));
-        playState.lastOriginalNotes = parsed.notes;
-        log(`원곡 파싱 완료: ${parsed.notes.length} notes, ${parsed.bpm.toFixed(1)} BPM`, 'OK');
-      }
-      const player = ensurePlayer('orig');
-      $('btnStopOriginal').disabled = false;
-      player.play(playState.lastOriginalNotes, {
-        gain: 0.6,
-        velocityScale: 0.14,
-        onProgress: (t, total) => setProgress(total > 0 ? t / total : 0,
-          `원곡 재생중 · ${t.toFixed(1)}s / ${total.toFixed(1)}s`),
-        onEnd: () => {
-          setProgress(1, '원곡 재생 완료');
-          $('btnStopOriginal').disabled = true;
-          log('원곡 재생 종료');
-        },
-      });
-    } catch (e) {
-      log(`원곡 재생 실패: ${e.message}`, 'ERR');
-      console.error(e);
-    }
-  }
-
-  function onClickStopOriginal() {
-    if (playState.origPlayer) playState.origPlayer.stop();
-    $('btnStopOriginal').disabled = true;
-    setProgress(0, '원곡 정지');
   }
 
   // ── 부트스트랩 본체 ─────────────────────────────────────────────────
@@ -725,6 +853,11 @@
       const wrap = $('editCanvas').parentElement;
       attachHoverTooltip(UI.editEditor, tt, wrap, data);
 
+      // 사이클 미리듣기 목록 + 시각화 초기 렌더 (c0 기본 표시)
+      populateCycleList();
+      playState.selectedCycleIdx = 0;
+      renderCycleViz(0, null);
+
       // 최초 로드 상태 메시지
       setStatus(
         `T=${T} · K=${K} · N=${data.notesMeta.num_notes} · DFT α=0.25 per-cycle τ`,
@@ -746,7 +879,17 @@
         '\nUI.refEditor / UI.editEditor',
         '\nwindow.HibariData.overlapRef / overlapCont / notesMeta / cyclesMeta'
       );
+      // 테마 토글 / 리사이즈 시 재렌더를 위한 외부 핸들
+      UI.renderCycleViz = () => renderCycleViz(
+        playState.selectedCycleIdx != null ? playState.selectedCycleIdx : null,
+        null,
+      );
       window.HibariUI = UI;
+
+      // 창 크기 변경 시 건반 캔버스 재계산
+      window.addEventListener('resize', () => {
+        UI.renderCycleViz && UI.renderCycleViz();
+      });
     });
 
     // 1.5 초 후에도 로드 안 됐으면 오류 상태 갱신

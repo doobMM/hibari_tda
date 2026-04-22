@@ -31,7 +31,23 @@
       "size": 6,
       "tau": 0.7,
       "persistence_entries": [],
-      "max_persistence": 0.0
+      "max_persistence": 0.0,
+      "traversal_0idx": [
+        0,
+        8,
+        6,
+        9,
+        2,
+        1
+      ],
+      "traversal_1idx": [
+        1,
+        9,
+        7,
+        10,
+        3,
+        2
+      ]
     },
     {
       "cycle_idx": 1,
@@ -56,7 +72,19 @@
       "size": 4,
       "tau": 0.7,
       "persistence_entries": [],
-      "max_persistence": 0.0
+      "max_persistence": 0.0,
+      "traversal_0idx": [
+        0,
+        8,
+        6,
+        1
+      ],
+      "traversal_1idx": [
+        1,
+        9,
+        7,
+        2
+      ]
     },
     {
       "cycle_idx": 2,
@@ -90,7 +118,25 @@
       "size": 7,
       "tau": 0.3,
       "persistence_entries": [],
-      "max_persistence": 0.0
+      "max_persistence": 0.0,
+      "traversal_0idx": [
+        0,
+        8,
+        16,
+        7,
+        10,
+        4,
+        5
+      ],
+      "traversal_1idx": [
+        1,
+        9,
+        17,
+        8,
+        11,
+        5,
+        6
+      ]
     },
     {
       "cycle_idx": 3,
@@ -115,7 +161,19 @@
       "size": 4,
       "tau": 0.7,
       "persistence_entries": [],
-      "max_persistence": 0.0
+      "max_persistence": 0.0,
+      "traversal_0idx": [
+        1,
+        2,
+        3,
+        5
+      ],
+      "traversal_1idx": [
+        2,
+        3,
+        4,
+        6
+      ]
     },
     {
       "cycle_idx": 4,
@@ -140,7 +198,19 @@
       "size": 4,
       "tau": 0.7,
       "persistence_entries": [],
-      "max_persistence": 0.0
+      "max_persistence": 0.0,
+      "traversal_0idx": [
+        1,
+        5,
+        8,
+        6
+      ],
+      "traversal_1idx": [
+        2,
+        6,
+        9,
+        7
+      ]
     },
     {
       "cycle_idx": 5,
@@ -165,7 +235,19 @@
       "size": 4,
       "tau": 0.4,
       "persistence_entries": [],
-      "max_persistence": 0.0
+      "max_persistence": 0.0,
+      "traversal_0idx": [
+        1,
+        8,
+        14,
+        9
+      ],
+      "traversal_1idx": [
+        2,
+        9,
+        15,
+        10
+      ]
     },
     {
       "cycle_idx": 6,
@@ -196,7 +278,23 @@
       "size": 6,
       "tau": 0.1,
       "persistence_entries": [],
-      "max_persistence": 0.0
+      "max_persistence": 0.0,
+      "traversal_0idx": [
+        14,
+        17,
+        15,
+        22,
+        19,
+        18
+      ],
+      "traversal_1idx": [
+        15,
+        18,
+        16,
+        23,
+        20,
+        19
+      ]
     },
     {
       "cycle_idx": 7,
@@ -224,7 +322,21 @@
       "size": 5,
       "tau": 0.3,
       "persistence_entries": [],
-      "max_persistence": 0.0
+      "max_persistence": 0.0,
+      "traversal_0idx": [
+        14,
+        17,
+        15,
+        18,
+        20
+      ],
+      "traversal_1idx": [
+        15,
+        18,
+        16,
+        19,
+        21
+      ]
     },
     {
       "cycle_idx": 8,
@@ -249,7 +361,19 @@
       "size": 4,
       "tau": 0.4,
       "persistence_entries": [],
-      "max_persistence": 0.0
+      "max_persistence": 0.0,
+      "traversal_0idx": [
+        14,
+        20,
+        18,
+        15
+      ],
+      "traversal_1idx": [
+        15,
+        21,
+        19,
+        16
+      ]
     },
     {
       "cycle_idx": 9,
@@ -277,7 +401,21 @@
       "size": 5,
       "tau": 0.1,
       "persistence_entries": [],
-      "max_persistence": 0.0
+      "max_persistence": 0.0,
+      "traversal_0idx": [
+        18,
+        19,
+        22,
+        21,
+        20
+      ],
+      "traversal_1idx": [
+        19,
+        20,
+        23,
+        22,
+        21
+      ]
     },
     {
       "cycle_idx": 10,
@@ -305,7 +443,21 @@
       "size": 5,
       "tau": 0.5,
       "persistence_entries": [],
-      "max_persistence": 0.0
+      "max_persistence": 0.0,
+      "traversal_0idx": [
+        2,
+        9,
+        8,
+        11,
+        5
+      ],
+      "traversal_1idx": [
+        3,
+        10,
+        9,
+        12,
+        6
+      ]
     },
     {
       "cycle_idx": 11,
@@ -330,7 +482,19 @@
       "size": 4,
       "tau": 0.35,
       "persistence_entries": [],
-      "max_persistence": 0.0
+      "max_persistence": 0.0,
+      "traversal_0idx": [
+        2,
+        9,
+        11,
+        5
+      ],
+      "traversal_1idx": [
+        3,
+        10,
+        12,
+        6
+      ]
     },
     {
       "cycle_idx": 12,
@@ -355,7 +519,19 @@
       "size": 4,
       "tau": 0.4,
       "persistence_entries": [],
-      "max_persistence": 0.0
+      "max_persistence": 0.0,
+      "traversal_0idx": [
+        3,
+        9,
+        11,
+        5
+      ],
+      "traversal_1idx": [
+        4,
+        10,
+        12,
+        6
+      ]
     },
     {
       "cycle_idx": 13,
@@ -380,8 +556,20 @@
       "size": 4,
       "tau": 0.3,
       "persistence_entries": [],
-      "max_persistence": 0.0
+      "max_persistence": 0.0,
+      "traversal_0idx": [
+        4,
+        16,
+        6,
+        5
+      ],
+      "traversal_1idx": [
+        5,
+        17,
+        7,
+        6
+      ]
     }
   ],
-  "description": "각 cycle 은 note 정점들의 순환 구조. vertices_0idx 는 내부 행렬 접근용, note_labels_1idx 는 notes_metadata 의 label 과 매칭. tau 는 per-cycle 이진화 임계값 (greedy search, α=0.25 기준)."
+  "description": "각 cycle 은 note 정점들의 순환 구조. vertices_0idx 는 내부 행렬 접근용, note_labels_1idx 는 notes_metadata 의 label 과 매칭. tau 는 per-cycle 이진화 임계값 (greedy search, α=0.25 기준). traversal_1idx 는 cycle edge 를 따라 연결된 순서 (단순 cycle 가정). UI 미리듣기 재생 순서로 사용."
 }
