@@ -1,0 +1,2 @@
+﻿classical_contrast_bach_postbugfix_results.json | freq=0.0902, tonnetz=0.0417, voice=0.1242, dft(post_bugfix_ref)=0.0951, best=tonnetz
+classical_contrast_ravel_postbugfix_results.json | freq=0.0337, tonnetz=0.0415, voice=0.0798, dft(post_bugfix_ref)=0.0494, best=frequency
