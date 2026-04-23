@@ -335,6 +335,34 @@ button { font-family: var(--font-ui); }
   min-height: 260px;
 }
 
+/* 두 OM 카드 위 사진 배너 — matrix-area 직접 자식. 카드 밖이라 canvas 높이 경쟁 없음.
+   horizontal padding 은 canvas-wrap 의 padding(var(--space-3)) 과 정확히 일치시켜
+   img 가 canvas 렌더 폭과 완벽히 겹치도록 함. */
+.matrix-area__photo-banner {
+  flex: 0 0 auto;
+  background: var(--surface-canvas);
+  padding: var(--space-2) var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  align-items: stretch;
+}
+.matrix-area__photo-banner[hidden] { display: none; }
+.matrix-area__photo-banner img {
+  width: 100%;
+  height: var(--photo-banner-h, 120px);
+  object-fit: fill;
+  display: block;
+  border-radius: 2px;
+  border: 1px solid var(--border-hairline);
+}
+.matrix-area__photo-banner-label {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+  text-align: center;
+}
+
 .matrix-card__canvas-wrap canvas {
   display: block;
   max-width: 100%;
@@ -1435,4 +1463,59 @@ button { font-family: var(--font-ui); }
   font-size: var(--text-xs);
   color: var(--text-tertiary);
   font-style: italic;
+}
+
+/* ── 사진 → 연속 OM (아이디어 B) ───────────────────────────────── */
+.photo-group { }
+.photo-panel {
+  margin-top: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--border-subtle);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.photo-panel__preview {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+.photo-panel__preview img {
+  width: 100%;
+  max-height: 200px;
+  object-fit: contain;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-default);
+  background: var(--surface-base);
+  display: block;
+}
+.photo-panel__meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.photo-panel__name {
+  font-size: var(--text-xs);
+  color: var(--text-primary);
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.photo-panel__stats {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-tertiary);
+  line-height: 1.4;
+}
+.photo-panel__gamma-hint {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.4;
+}
+.photo-panel__btnrow {
+  display: flex;
+  gap: var(--space-1);
+  flex-wrap: wrap;
 }

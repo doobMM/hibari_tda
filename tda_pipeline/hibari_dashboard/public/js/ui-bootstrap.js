@@ -175,6 +175,349 @@
     };
   }
 
+  // ── 사진 → 연속 OM (아이디어 B) ───────────────────────────────────────
+  // photoState 는 세션 간 유지되지 않음 (localStorage 미사용 의도).
+  // 사용자가 새로고침하면 hibari 원본으로 복귀.
+  const photoState = {
+    name: null,           // 파일명
+    thumbDataUrl: null,   // 재적용 시 썸네일 재표시용
+    baseOM: null,         // Float32Array(K*T) — γ=1.0 기준 (정규화+반전 끝난 상태)
+    hibariBackup: null,   // {T, K, values, mean, ...} — 첫 활성화 시 원본 백업
+    T: 0, K: 0,
+    lastGamma: 1.0,
+    targetMean: 0,        // hibari 연속 OM 평균 (자동 γ 탐색 목표)
+    active: false,        // 현재 사진 OM 적용 중인지 (false=hibari 원본)
+  };
+
+  function updatePhotoButtonStates() {
+    const btn = $('btnPhotoToggle');
+    if (!btn) return;
+    const hasPhoto = !!photoState.baseOM;
+    btn.hidden = !hasPhoto;
+    if (photoState.active) {
+      btn.textContent = 'hibari 로 되돌리기';
+      btn.dataset.state = 'active';
+    } else {
+      btn.textContent = '사진 다시 적용';
+      btn.dataset.state = 'reverted';
+    }
+  }
+
+  // 이미지 → grayscale luminance Float32Array(h*w), 값 [0,1]
+  // bilinear resize 는 canvas drawImage 로 수행 (고해상도 원본 → (T, K))
+  async function imageToLuminance(file, T, K) {
+    const url = URL.createObjectURL(file);
+    try {
+      const img = new Image();
+      img.decoding = 'async';
+      await new Promise((resolve, reject) => {
+        img.onload = () => resolve();
+        img.onerror = () => {
+          const isHeic = /\.(heic|heif)$/i.test(file.name || '') ||
+                         /heic|heif/i.test(file.type || '');
+          reject(new Error(
+            isHeic
+              ? 'HEIC/HEIF 포맷은 현재 브라우저(Chrome/Firefox)에서 디코딩 불가. JPG/PNG/WEBP 로 변환해 주세요. (Safari 는 지원)'
+              : '이미지 디코딩 실패 — 손상되었거나 지원되지 않는 포맷입니다.'
+          ));
+        };
+        img.src = url;
+      });
+      // (T, K) 해상도로 캔버스 리샘플 — 브라우저 기본 bilinear
+      const c = document.createElement('canvas');
+      c.width = T; c.height = K;
+      const ctx = c.getContext('2d', { willReadFrequently: true });
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
+      ctx.drawImage(img, 0, 0, T, K);
+      const imgData = ctx.getImageData(0, 0, T, K);
+      const px = imgData.data;
+      const lum = new Float32Array(T * K);
+      // row-major (y, x) → flat
+      for (let i = 0; i < T * K; i++) {
+        const r = px[4*i], g = px[4*i+1], b = px[4*i+2];
+        // Rec. 601 luminance
+        lum[i] = (0.299*r + 0.587*g + 0.114*b) / 255.0;
+      }
+      // 원본 비율 유지 썸네일 — 가로 480 기준으로 축소 (OM 과 시각 비교용)
+      const thumbW = Math.min(480, img.naturalWidth || img.width || 480);
+      const thumbH = Math.round(
+        thumbW * (img.naturalHeight || img.height || 1) /
+                 (img.naturalWidth  || img.width  || 1)
+      );
+      const tc = document.createElement('canvas');
+      tc.width = thumbW; tc.height = thumbH;
+      const tctx = tc.getContext('2d');
+      tctx.imageSmoothingEnabled = true;
+      tctx.imageSmoothingQuality = 'high';
+      tctx.drawImage(img, 0, 0, thumbW, thumbH);
+      return { lum, thumbDataUrl: tc.toDataURL('image/jpeg', 0.85) };
+    } finally {
+      URL.revokeObjectURL(url);
+    }
+  }
+
+  // percentile 기반 stretch → 반전 → [0,1] continuous OM (γ=1.0 기준)
+  // input lum 레이아웃: (K rows, T cols) flat row-major
+  // 출력은 원 데이터 레이아웃(T*K, t-major)과 일치시킴: values[t*K + c]
+  function buildBaseOM(lum, T, K) {
+    // percentile 5, 95 — 약간의 대비 확장
+    const sorted = Float32Array.from(lum).sort();
+    const lo = sorted[Math.floor(0.05 * sorted.length)];
+    const hi = sorted[Math.floor(0.95 * sorted.length)];
+    const denom = Math.max(1e-6, hi - lo);
+    // (K, T) row-major → (T, K) — canvas 는 (row=K, col=T) 라 루프 재배열
+    const out = new Float32Array(T * K);
+    for (let k = 0; k < K; k++) {
+      for (let t = 0; t < T; t++) {
+        const v = (lum[k * T + t] - lo) / denom;
+        const clamped = v < 0 ? 0 : (v > 1 ? 1 : v);
+        // 반전: 어두운 픽셀 → 높은 활성도
+        out[t * K + k] = 1.0 - clamped;
+      }
+    }
+    return out;
+  }
+
+  function meanOf(arr) {
+    let s = 0;
+    for (let i = 0; i < arr.length; i++) s += arr[i];
+    return s / arr.length;
+  }
+
+  // γ 적용: out[i] = base[i]^γ (0<γ<∞). γ=1 이면 identity.
+  function applyGammaArray(base, gamma) {
+    const out = new Float32Array(base.length);
+    const g = Math.max(0.05, gamma);
+    for (let i = 0; i < base.length; i++) {
+      out[i] = Math.pow(base[i], g);
+    }
+    return out;
+  }
+
+  // baseOM 에 대해 mean(baseOM^γ) ≈ target 이 되는 γ 를 이분탐색
+  function findGammaForMean(base, target) {
+    if (!base || !base.length) return 1.0;
+    const curMean = meanOf(base);
+    // target 보다 이미 낮으면 γ<1 로 밝게. 둘이 거의 같으면 1.
+    if (Math.abs(curMean - target) < 1e-4) return 1.0;
+    let lo = 0.1, hi = 10.0;
+    for (let i = 0; i < 40; i++) {
+      const mid = 0.5 * (lo + hi);
+      const m = meanOf(applyGammaArray(base, mid));
+      if (m > target) lo = mid; else hi = mid;
+    }
+    return +(0.5 * (lo + hi)).toFixed(3);
+  }
+
+  function updatePhotoStatsUi() {
+    const st = $('photoStats');
+    if (!st) return;
+    const baseMean = photoState.baseOM ? meanOf(photoState.baseOM) : 0;
+    const finalArr = photoState.baseOM ? applyGammaArray(photoState.baseOM, photoState.lastGamma) : null;
+    const finalMean = finalArr ? meanOf(finalArr) : 0;
+    const hibariMean = photoState.targetMean || 0;
+    st.textContent =
+      `원 사진 평균 ${baseMean.toFixed(3)} · γ 적용 후 ${finalMean.toFixed(3)}` +
+      (hibariMean ? ` · hibari ${hibariMean.toFixed(3)}` : '');
+  }
+
+  // UI.data.overlapCont 를 교체하고 스택을 재적용
+  function injectPhotoAsContinuousOM() {
+    if (!photoState.baseOM || !UI.data) return;
+    const gamma = photoState.lastGamma;
+    const values = applyGammaArray(photoState.baseOM, gamma);
+    UI.data.overlapCont = {
+      T: photoState.T,
+      K: photoState.K,
+      values,
+      description: 'photo-derived continuous OM',
+      mean: meanOf(values),
+      density: null, min: 0, max: 1,
+      best_taus: null, exp_config: null,
+    };
+    // 연속 모드 강제 + Algo2 전환
+    if (UI.stackMode !== 'continuous') {
+      setStackMode && setStackMode('continuous');
+    } else {
+      // 동일 모드여도 값이 바뀌었으므로 재계산
+      if (typeof recomputeStackToEditor === 'function') recomputeStackToEditor();
+    }
+    // 참조 표시도 연속으로
+    if (UI.refViewMode !== 'continuous' && typeof setRefViewMode === 'function') {
+      setRefViewMode('continuous');
+    } else {
+      rerenderReferenceContinuous();
+    }
+    // 알고리즘 자동 전환
+    const algo2Radio = document.querySelector('input[name="algo"][value="algo2"]');
+    if (algo2Radio && !algo2Radio.checked) {
+      algo2Radio.checked = true;
+      algo2Radio.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+    photoState.active = true;
+    // 참조 OM 위 사진 배너 — viewport 와 상관없이 OM 과 동일 폭으로 stretch
+    const bannerImg = $('refPhotoBannerImg');
+    const banner = $('refPhotoBanner');
+    if (bannerImg && banner && photoState.thumbDataUrl) {
+      bannerImg.src = photoState.thumbDataUrl;
+      banner.hidden = false;
+    }
+    updatePhotoStatsUi();
+    updatePhotoButtonStates();
+  }
+
+  // 참조 캔버스의 연속 뷰 재렌더 (overlapCont 값 교체 후 반영)
+  function rerenderReferenceContinuous() {
+    if (!UI.refEditor || !UI.data || !UI.data.overlapCont) return;
+    try {
+      UI.refEditor.setDisplayMode && UI.refEditor.setDisplayMode('continuous', {
+        reference: UI.data.overlapCont.values,
+        values: UI.data.overlapCont.values,
+      });
+    } catch (e) { /* no-op */ }
+    if (typeof recomputeStackToEditor === 'function') recomputeStackToEditor();
+  }
+
+  async function onPhotoPicked(file) {
+    if (!file || !UI.data) return;
+    try {
+      if (!photoState.hibariBackup) {
+        // 첫 업로드 시 원본 백업 (얕은 복사로 충분 — values 는 공유 읽기 전용)
+        photoState.hibariBackup = Object.assign({}, UI.data.overlapCont);
+        photoState.targetMean = (UI.data.overlapCont && UI.data.overlapCont.mean)
+          ? UI.data.overlapCont.mean
+          : meanOf(UI.data.overlapCont.values);
+      }
+      const T = UI.data.overlapCont.T;
+      const K = UI.data.overlapCont.K;
+      photoState.T = T; photoState.K = K;
+      photoState.name = file.name || '사진';
+
+      log(`사진 디코딩 중 (${file.name}, ${(file.size/1024).toFixed(1)} KB)…`);
+      const { lum, thumbDataUrl } = await imageToLuminance(file, T, K);
+      photoState.baseOM = buildBaseOM(lum, T, K);
+      photoState.thumbDataUrl = thumbDataUrl;
+
+      // 자동 γ 추천
+      const autoGamma = findGammaForMean(photoState.baseOM, photoState.targetMean);
+      photoState.lastGamma = autoGamma;
+
+      // UI 반영
+      $('photoPanel').hidden = false;
+      $('photoThumb').src = thumbDataUrl;
+      $('photoName').textContent = file.name;
+      const gs = $('sliderGamma');
+      const gv = $('sliderGammaVal');
+      gs.value = String(autoGamma);
+      gv.textContent = autoGamma.toFixed(2);
+
+      injectPhotoAsContinuousOM();
+      log(`사진 → 연속 OM 변환 완료 (${T}×${K}, 자동 γ=${autoGamma.toFixed(2)})`, 'OK');
+    } catch (e) {
+      log(`사진 변환 실패: ${e.message}`, 'ERR');
+      console.error(e);
+    }
+  }
+
+  function revertPhoto() {
+    if (!photoState.hibariBackup || !UI.data) return;
+    UI.data.overlapCont = photoState.hibariBackup;
+    photoState.active = false;
+    // 패널은 유지 — baseOM 메모리에 있으므로 "사진 다시 적용" 로 복귀 가능
+    const banner = $('refPhotoBanner');
+    if (banner) banner.hidden = true;
+    rerenderReferenceContinuous();
+    if (typeof recomputeStackToEditor === 'function') recomputeStackToEditor();
+    updatePhotoStatsUi();
+    updatePhotoButtonStates();
+    log('hibari 원본 연속 OM 으로 복귀했습니다. (사진은 메모리에 남아 있음 — "사진 다시 적용" 가능)');
+  }
+
+  function reapplyPhoto() {
+    if (!photoState.baseOM) {
+      log('재적용할 사진이 없습니다. 먼저 사진을 선택하세요.', 'WARN');
+      return;
+    }
+    injectPhotoAsContinuousOM();
+    log(`사진 OM 재적용 (γ=${photoState.lastGamma.toFixed(2)})`, 'OK');
+  }
+
+  function wirePhotoControls() {
+    const btnPick = $('btnPhotoPick');
+    const fileInput = $('photoInput');
+    if (!btnPick || !fileInput) return;
+    btnPick.addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', (e) => {
+      const f = e.target.files && e.target.files[0];
+      if (f) onPhotoPicked(f);
+      fileInput.value = ''; // 같은 파일 재선택 허용
+    });
+
+    const gs = $('sliderGamma');
+    const gv = $('sliderGammaVal');
+    if (gs && gv) {
+      gs.addEventListener('input', () => {
+        const g = parseFloat(gs.value);
+        gv.textContent = g.toFixed(2);
+        photoState.lastGamma = g;
+        if (photoState.baseOM) injectPhotoAsContinuousOM();
+      });
+    }
+
+    const btnAuto = $('btnPhotoAutoGamma');
+    if (btnAuto) {
+      btnAuto.addEventListener('click', () => {
+        if (!photoState.baseOM) return;
+        const g = findGammaForMean(photoState.baseOM, photoState.targetMean);
+        photoState.lastGamma = g;
+        gs.value = String(g);
+        gv.textContent = g.toFixed(2);
+        injectPhotoAsContinuousOM();
+        log(`자동 γ=${g.toFixed(2)} 재적용 (hibari 평균 ${photoState.targetMean.toFixed(3)} 기준)`);
+      });
+    }
+
+    const btnToggle = $('btnPhotoToggle');
+    if (btnToggle) {
+      btnToggle.addEventListener('click', () => {
+        if (photoState.active) revertPhoto();
+        else reapplyPhoto();
+      });
+    }
+
+    // 참조 canvas 의 rendered 높이를 배너에 동기화 — OM 과 동일 폭·높이로 stretch 되어 육안 비교 가능
+    wirePhotoBannerHeightSync();
+  }
+
+  function wirePhotoBannerHeightSync() {
+    const banner = $('refPhotoBanner');
+    const wrap = $('refCanvasWrap');
+    if (!banner || !wrap) return;
+    const getActiveCanvas = () => {
+      const cont = document.getElementById('refCanvasCont');
+      const bin  = document.getElementById('refCanvas');
+      if (cont && !cont.hidden) return cont;
+      return bin;
+    };
+    const sync = () => {
+      const c = getActiveCanvas();
+      if (!c) return;
+      const h = c.clientHeight;
+      if (h > 0) banner.style.setProperty('--photo-banner-h', h + 'px');
+    };
+    sync();
+    // canvas 크기 변화 추적
+    if (typeof ResizeObserver !== 'undefined') {
+      const ro = new ResizeObserver(sync);
+      const cont = document.getElementById('refCanvasCont');
+      const bin  = document.getElementById('refCanvas');
+      if (cont) ro.observe(cont);
+      if (bin)  ro.observe(bin);
+    }
+    window.addEventListener('resize', sync);
+  }
+
   // ── 컨트롤 버튼 배선 ─────────────────────────────────────────────────
   function wireControls() {
     $('btnReset').addEventListener('click', () => {
@@ -194,6 +537,7 @@
     wireRefViewModeControls();
     wireAlgoRouting();
     wireHelpModal();
+    wirePhotoControls();
 
     const diffToggle = $('toggleDiff');
     diffToggle.addEventListener('change', () => {

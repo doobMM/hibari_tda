@@ -7,8 +7,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/tokens.css?v=4.4">
-  <link rel="stylesheet" href="css/style.css?v=4.4">
+  <link rel="stylesheet" href="css/tokens.css?v=4.11">
+  <link rel="stylesheet" href="css/style.css?v=4.11">
   <link rel="stylesheet" href="../../shared/nav.css">
 </head>
 <body>
@@ -58,6 +58,37 @@
         </label>
       </div>
 
+      <!-- Section: 사진 → 연속 OM (아이디어 B) -->
+      <div class="control-group photo-group">
+        <h2 class="control-group__heading">사진 → 연속 OM</h2>
+        <p class="hint">풍경·한옥 처마·물결 등 사진을 업로드하면 이미지의 명암이 연속 OM 으로 변환됩니다. 변환 후 자동으로 Algorithm 2 (연속 입력) 로 전환됩니다.</p>
+        <input type="file" id="photoInput" accept="image/*" hidden>
+        <button class="btn btn--primary" id="btnPhotoPick" type="button">📷 사진 선택</button>
+
+        <div class="photo-panel" id="photoPanel" hidden>
+          <div class="photo-panel__preview">
+            <img id="photoThumb" alt="업로드한 사진 미리보기">
+            <div class="photo-panel__meta">
+              <span id="photoName" class="photo-panel__name"></span>
+              <span id="photoStats" class="photo-panel__stats"></span>
+            </div>
+          </div>
+          <div class="slider-row" aria-label="감마 보정">
+            <span class="slider-row__label">γ 감마</span>
+            <input class="slider-row__track" type="range" id="sliderGamma"
+                   min="0.3" max="4.0" step="0.05" value="1.0" aria-label="감마">
+            <span class="slider-row__value" id="sliderGammaVal">1.00</span>
+          </div>
+          <p class="hint photo-panel__gamma-hint" id="photoGammaHint">
+            γ = 1.0 사진 그대로 · γ 높이면 어두워져 밀도↓ · 추천값은 hibari 평균과 일치하도록 자동 계산
+          </p>
+          <div class="photo-panel__btnrow">
+            <button class="btn btn--small" id="btnPhotoAutoGamma" type="button">자동 γ 추천</button>
+            <button class="btn btn--small" id="btnPhotoToggle" type="button" data-state="active">hibari 로 되돌리기</button>
+          </div>
+        </div>
+      </div>
+
       <!-- Section: 변형 스택 (Q1) -->
       <div class="control-group">
         <div class="stack-heading-row">
@@ -91,6 +122,13 @@
 
     <!-- ── CENTER — matrix canvases ────────────────────────────────────── -->
     <section class="matrix-area" aria-label="overlap matrix">
+
+      <!-- 사진 배너 — 두 OM 카드 밖 별도 슬롯. 두 canvas 와 동일 폭, 양 canvas 평균 높이만큼 stretch.
+           카드 외부라서 카드 높이 경쟁을 일으키지 않음 → 참조/편집 canvas 가 같은 높이 유지. -->
+      <div class="matrix-area__photo-banner" id="refPhotoBanner" hidden>
+        <img id="refPhotoBannerImg" alt="업로드한 사진 — 참조/편집 OM 과 동일 폭 stretch 표시">
+        <span class="matrix-area__photo-banner-label">사진 (참조 OM 과 동일 폭·동일 stretch 비율)</span>
+      </div>
 
       <!-- 참조 matrix — read-only -->
       <article class="matrix-card matrix-card--ref">
@@ -295,14 +333,14 @@
   </script>
 
   <!-- ── App scripts ────────────────────────────────────────────────────── -->
-  <script src="js/data-loader.js?v=4.4"></script>
-  <script src="js/overlap-editor.js?v=4.4"></script>
-  <script src="js/generation-algo1.js?v=4.4"></script>
-  <script src="js/generation-algo2.js?v=4.4"></script>
-  <script src="js/midi-io.js?v=4.4"></script>
-  <script src="js/audio-playback.js?v=4.4"></script>
-  <script src="js/ood-detector.js?v=4.4"></script>
-  <script src="js/ui-bootstrap.js?v=4.4"></script>
+  <script src="js/data-loader.js?v=4.11"></script>
+  <script src="js/overlap-editor.js?v=4.11"></script>
+  <script src="js/generation-algo1.js?v=4.11"></script>
+  <script src="js/generation-algo2.js?v=4.11"></script>
+  <script src="js/midi-io.js?v=4.11"></script>
+  <script src="js/audio-playback.js?v=4.11"></script>
+  <script src="js/ood-detector.js?v=4.11"></script>
+  <script src="js/ui-bootstrap.js?v=4.11"></script>
 
 </body>
 </html>
