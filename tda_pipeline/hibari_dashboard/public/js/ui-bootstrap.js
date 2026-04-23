@@ -89,8 +89,13 @@
     const diff = editor.diffCount();
     const total = editor.T * editor.K;
     const diffPct = (diff / total * 100).toFixed(2);
-    $('editMeta').textContent =
-      `density ${pct}% · diff ${diff} (${diffPct}%)`;
+    if (editor.displayMode === 'continuous') {
+      $('editMeta').textContent =
+        `평균 활성도 ${pct}% · 변경 ${diff}셀 (>5%p, ${diffPct}%)`;
+    } else {
+      $('editMeta').textContent =
+        `density ${pct}% · diff ${diff} (${diffPct}%)`;
+    }
   }
 
   function updateRefMeta(editor) {
@@ -116,16 +121,17 @@
     const s = UI.ood.score(editor.getMatrix());
 
     banner.classList.remove('ood-hidden', 'level-warn', 'level-danger');
-    // 편집이 전혀 없으면 배너 숨김 (stable + diff=0)
-    if (s.diffCount === 0) {
+    // 편집이 전혀 없으면 배너 숨김 (참조와 같음)
+    if (editor.diffCount() === 0 && s.score < 1e-4) {
       banner.classList.add('ood-hidden');
       return;
     }
     if (s.level === 'warn') banner.classList.add('level-warn');
     if (s.level === 'danger') banner.classList.add('level-danger');
 
-    // 숫자는 0~1 을 %로
-    scoreEl.textContent = (s.score * 100).toFixed(1) + '%';
+    // JSD ∈ [0,1] (log2 base 정의상 최댓값 1) → score × 100 = OOD %.
+    // 직관성 우선 — 사람들이 "분포 차이 12%" 같은 표현을 더 쉽게 받아들임.
+    scoreEl.textContent = `OOD ${(s.score * 100).toFixed(1)}%`;
     levelEl.textContent = LEVEL_LABEL[s.level] || s.level;
     detailEl.textContent = s.detail;
   }
@@ -183,17 +189,11 @@
       log('편집 matrix 를 모두 0 으로 비웠습니다.');
     });
 
-    // ── 변형 컨트롤 배선 ─────────────────────────────────────────────
-    const sV = $('sliderVariant');
-    const sVVal = $('sliderVariantVal');
-    if (sV && sVVal) {
-      sV.addEventListener('input', () => {
-        sVVal.textContent = parseFloat(sV.value).toFixed(2);
-      });
-    }
-    $('variantMode').addEventListener('change', updateVariantHint);
-    $('btnVariant').addEventListener('click', applyVariant);
-    updateVariantHint();
+    // ── 변형 스택 컨트롤 배선 (Q1) ────────────────────────────────────
+    wireStackControls();
+    wireRefViewModeControls();
+    wireAlgoRouting();
+    wireHelpModal();
 
     const diffToggle = $('toggleDiff');
     diffToggle.addEventListener('change', () => {
@@ -223,87 +223,458 @@
     $('btnDownloadMidi').addEventListener('click', onClickDownloadMidi);
   }
 
-  // ── 변형 컨트롤 힌트/적용 로직 ───────────────────────────────────────
-  const VARIANT_HINTS = {
-    block:       '강도 t 를 올릴수록 블록 크기 증가 (bs = round(8·(1+3t))). 작을수록 국소 섞임, 클수록 구간 이동.',
-    jitter:      '참조 각 ON 셀을 시간 축 ±round(24t), cycle 축 ±round(4t) 이내로 흔들기. 가까운 셀끼리 겹치면 병합되어 density 가 5~15% 감소할 수 있음.',
-    shift:       '시간 축으로 round(T·t) 스텝만큼 원형 이동. density/분포 완전 동일, 시작점만 이동.',
-    permuteTime: '시점(row) 순서를 완전 랜덤 permutation. cycle 별 column 분포는 완전 유지.',
-    permuteCycle:'cycle(K) 번호를 permutation. 각 시점의 활성 cycle 개수는 완전 유지.',
-    shuffle:     'ON 셀 개수(N_on)를 유지하면서 위치를 완전 랜덤 재배치. 공간 구조 완전 파괴, density 만 유지.',
-    flood:       '2~5 개 씨앗에서 시작해 4방향으로 번지는 물자국. 강도 = 번짐 확률 (0.3~0.9).',
-    bernoulli:   '각 셀을 참조 density 와 같은 확률로 독립 추출. 완전 노이즈 — 생성 음악도 거의 무작위.',
-  };
-  const VARIANT_LABEL = {
-    block: '블록 셔플', jitter: '참조 왜곡', shift: '원형 이동',
-    permuteTime: '시간축 셔플', permuteCycle: 'cycle 셔플',
-    shuffle: '무작위 재분배', flood: '흐름 무늬', bernoulli: '독립 Bernoulli',
-  };
+  // ── 변형 스택 (Q1) ────────────────────────────────────────────
+  // 스택 상태: [{id, kind, params, enabled}, ...]
+  // 첫 변형은 reference 입력 → 출력. 다음 변형은 이전 출력 → 다시 출력.
+  // localStorage 에 stack 자체를 저장 (참조와 함께 deterministic 재생성 가능).
 
-  function updateVariantHint() {
-    const mode = $('variantMode').value;
-    $('variantHint').textContent = VARIANT_HINTS[mode] || '';
+  const STACK_STORAGE_KEY = 'hibari_dashboard_stack_v1';
+
+  UI.stack = [];
+  UI.stackNextId = 1;
+  UI.refViewMode = 'binary';   // binary | continuous
+  UI.stackMode  = 'binary';    // binary | continuous — 알고리즘 라디오와 동기화 (algo1=binary, algo2=continuous)
+
+  function saveStackState() {
+    try {
+      const blob = { v: 1, stack: UI.stack, savedAt: new Date().toISOString() };
+      localStorage.setItem(STACK_STORAGE_KEY, JSON.stringify(blob));
+    } catch (e) { console.warn('[saveStackState] 실패', e); }
+  }
+  function loadStackState() {
+    try {
+      const raw = localStorage.getItem(STACK_STORAGE_KEY);
+      if (!raw) return null;
+      const blob = JSON.parse(raw);
+      if (!Array.isArray(blob.stack)) return null;
+      return blob.stack;
+    } catch (e) { return null; }
+  }
+  function clearStackState() {
+    try { localStorage.removeItem(STACK_STORAGE_KEY); } catch (e) {}
   }
 
-  function applyVariant() {
-    if (!UI.editEditor || !UI.data) { log('데이터 미로드', 'ERR'); return; }
-    const ed = UI.editEditor;
-    const mode = $('variantMode').value;
-    const seed = parseInt($('sliderSeed').value, 10) || 0;
-    const t = parseFloat($('sliderVariant').value);
-    const refDens = UI.data.overlapRef.density ?? 0.3;
-    const fromCurrent = $('toggleFromCurrent').checked;
-    const fromRef = !fromCurrent;
-    const T = ed.T;
+  function nextStepId() {
+    const id = `s${UI.stackNextId++}`;
+    return id;
+  }
 
-    switch (mode) {
-      case 'shuffle':
-        ed.shuffleDensity(seed, fromRef);
-        break;
-      case 'permuteTime':
-        ed.permuteTime(seed, fromRef);
-        break;
-      case 'permuteCycle':
-        ed.permuteCycles(seed, fromRef);
-        break;
-      case 'block': {
-        const bs = Math.max(2, Math.round(8 * (1 + t * 3)));
-        ed.blockShuffle(bs, seed, fromRef);
-        log(`${VARIANT_LABEL[mode]}: blockSize=${bs} (${fromRef ? '참조' : '편집본'} 기반, seed=${seed})`);
-        return;
-      }
-      case 'shift': {
-        const dt = Math.round(T * t);
-        ed.circularShift(dt, 0, fromRef);
-        log(`${VARIANT_LABEL[mode]}: Δt=${dt} (${fromRef ? '참조' : '편집본'} 기반, seed=${seed})`);
-        return;
-      }
-      case 'flood': {
-        const spread = 0.3 + 0.6 * t;
-        ed.floodPattern(seed, refDens, spread);
-        log(`${VARIANT_LABEL[mode]}: spread=${spread.toFixed(2)}, target density≈${(refDens*100).toFixed(1)}%, seed=${seed}`);
-        return;
-      }
-      case 'jitter': {
-        if (fromRef) {
-          ed.jitterFromReference(Math.max(0.02, t), seed);
-        } else {
-          // 편집본 기반 jitter: 현재 values 를 임시 reference 로 swap
-          const origRef = ed.reference;
-          ed.reference = ed.values;
-          ed.jitterFromReference(Math.max(0.02, t), seed);
-          ed.reference = origRef;
-        }
-        log(`${VARIANT_LABEL[mode]}: strength=${t.toFixed(2)} (${fromRef ? '참조' : '편집본'} 기반, seed=${seed})`);
-        return;
-      }
-      case 'bernoulli':
-        ed.randomFill(refDens, seed);
-        log(`${VARIANT_LABEL[mode]}: density≈${(refDens*100).toFixed(1)}%, seed=${seed}`);
-        return;
+  function addStackStep(kind) {
+    const T = window.OverlapTransforms;
+    if (!T || !T.SCHEMA[kind]) return;
+    const params = T.defaultParams(kind);
+    // boost: 현재 선택된 cycle 을 default 로 사용 (사용자 의도 추정)
+    if (kind === 'boost' && playState.selectedCycleIdx != null) {
+      params.cycleIdx = playState.selectedCycleIdx;
     }
-    // 공통 로그 (shuffle/permuteTime/permuteCycle)
-    log(`${VARIANT_LABEL[mode]}: (${fromRef ? '참조' : '편집본'} 기반, seed=${seed})`);
+    const step = {
+      id: nextStepId(),
+      kind,
+      params,
+      enabled: true,
+    };
+    UI.stack.push(step);
+    onStackChanged(`+ ${T.KINDS[kind]} 추가`);
+  }
+  function removeStackStep(id) {
+    const i = UI.stack.findIndex(s => s.id === id);
+    if (i < 0) return;
+    const removed = UI.stack.splice(i, 1)[0];
+    onStackChanged(`− ${window.OverlapTransforms.KINDS[removed.kind]} 제거`);
+  }
+  function moveStackStep(id, dir) {
+    const i = UI.stack.findIndex(s => s.id === id);
+    if (i < 0) return;
+    const j = i + dir;
+    if (j < 0 || j >= UI.stack.length) return;
+    const [s] = UI.stack.splice(i, 1);
+    UI.stack.splice(j, 0, s);
+    onStackChanged(`${dir > 0 ? '↓' : '↑'} 순서 변경`);
+  }
+  function toggleStackStep(id) {
+    const s = UI.stack.find(s => s.id === id);
+    if (!s) return;
+    s.enabled = !s.enabled;
+    onStackChanged(`${s.enabled ? '◉' : '◯'} ${window.OverlapTransforms.KINDS[s.kind]}`);
+  }
+  // 설명 토글: UI 상태 (recompute 불필요, 변형 결과 불변).
+  function toggleStackInfo(id) {
+    const s = UI.stack.find(s => s.id === id);
+    if (!s) return;
+    s.uiOpen = !s.uiOpen;
+    renderStackList();
+  }
+  function updateStackParam(id, key, value) {
+    const s = UI.stack.find(s => s.id === id);
+    if (!s) return;
+    s.params[key] = value;
+    onStackChanged(null, /*silent=*/true);
+  }
+  function clearStack() {
+    if (UI.stack.length === 0) return;
+    UI.stack = [];
+    onStackChanged('스택 비움 (참조로 복귀)');
+  }
+
+  function onStackChanged(logMsg, silent) {
+    saveStackState();
+    renderStackList();
+    recomputeStackToEditor();
+    if (logMsg && !silent) log(logMsg);
+  }
+
+  function recomputeStackToEditor() {
+    if (!UI.editEditor || !UI.data) return;
+    const mode = UI.stackMode;
+    const refSrc = mode === 'continuous' ? UI.data.overlapCont : UI.data.overlapRef;
+    if (!refSrc || !refSrc.values) {
+      log(`연속 OM 데이터 없음 — 이진으로 폴백`, 'WARN');
+      UI.stackMode = 'binary';
+      const ref = UI.data.overlapRef.values;
+      const T = UI.editEditor.T, K = UI.editEditor.K;
+      UI.editEditor.setDisplayMode('binary', {
+        reference: ref,
+        values: window.OverlapTransforms.apply(UI.stack, ref, T, K, 'binary'),
+      });
+      return;
+    }
+    const ref = refSrc.values;
+    const T = UI.editEditor.T, K = UI.editEditor.K;
+    const out = window.OverlapTransforms.apply(UI.stack, ref, T, K, mode);
+    // displayMode 가 다르면 reference + values 교체, 같으면 setMatrix 만
+    if (UI.editEditor.displayMode !== mode) {
+      UI.editEditor.setDisplayMode(mode, { reference: ref, values: out });
+    } else {
+      UI.editEditor.setReference(ref);
+      UI.editEditor.setMatrix(out);
+    }
+  }
+
+  // ── 스택 카드 DOM 렌더 ───────────────────────────────────────
+  function renderStackList() {
+    const list = $('stackList');
+    if (!list) return;
+    const T = window.OverlapTransforms;
+    list.innerHTML = '';
+    if (UI.stack.length === 0) {
+      const empty = document.createElement('p');
+      empty.className = 'stack-empty hint';
+      empty.textContent = '스택이 비어 있습니다 — 편집 OM = 참조 OM. 아래에서 변형을 추가하세요.';
+      list.appendChild(empty);
+      return;
+    }
+    UI.stack.forEach((step, idx) => {
+      const card = document.createElement('div');
+      card.className = `stack-card${step.enabled ? '' : ' is-disabled'}`;
+      card.dataset.id = step.id;
+
+      // header
+      const head = document.createElement('div');
+      head.className = 'stack-card__head';
+      const isOpen = !!step.uiOpen;
+      head.innerHTML = `
+        <span class="stack-card__order">${idx + 1}</span>
+        <span class="stack-card__name">${T.KINDS[step.kind] || step.kind}</span>
+        <button class="stack-card__btn stack-card__btn--info${isOpen ? ' is-active' : ''}" data-act="info" title="${isOpen ? '설명 접기' : '설명 펼치기'}" aria-expanded="${isOpen ? 'true' : 'false'}" aria-label="설명 토글">?</button>
+        <button class="stack-card__btn" data-act="up"     title="위로 이동" aria-label="위로 이동">▲</button>
+        <button class="stack-card__btn" data-act="down"   title="아래로 이동" aria-label="아래로 이동">▼</button>
+        <button class="stack-card__btn" data-act="toggle" title="${step.enabled ? '끄기' : '켜기'}" aria-label="활성/비활성">${step.enabled ? '◉' : '◯'}</button>
+        <button class="stack-card__btn stack-card__btn--del" data-act="del" title="제거" aria-label="제거">×</button>
+      `;
+      card.appendChild(head);
+
+      // description (접힘 가능 — 기본 접힘)
+      if (isOpen) {
+        const desc = document.createElement('p');
+        desc.className = 'stack-card__desc hint';
+        desc.textContent = T.DESCRIPTIONS[step.kind] || '';
+        card.appendChild(desc);
+      }
+
+      // params
+      const schema = T.SCHEMA[step.kind] || [];
+      schema.forEach(p => {
+        const row = document.createElement('div');
+        row.className = 'stack-card__param';
+        const label = document.createElement('label');
+        label.className = 'stack-card__param-label';
+        label.textContent = p.label;
+        row.appendChild(label);
+
+        if (p.kind === 'slider' || p.kind === 'sliderAuto') {
+          const isAuto = p.kind === 'sliderAuto' && step.params[p.key] === 'auto';
+          const wrap = document.createElement('div');
+          wrap.className = 'stack-card__param-input';
+          // 직접 입력 number 필드 (슬라이더 제거 — 정밀 입력 우선)
+          const num = document.createElement('input');
+          num.type = 'number';
+          num.className = 'stack-card__param-num';
+          num.min = p.min; num.max = p.max; num.step = p.step;
+          const fallback = (p.default === 'auto')
+            ? (UI.data?.overlapRef.density ?? 0.3)
+            : p.default;
+          const initVal = isAuto ? fallback : (step.params[p.key] ?? fallback);
+          num.value = isAuto ? '' : Number(initVal).toFixed(2);
+          num.placeholder = isAuto ? 'auto' : '';
+          num.disabled = isAuto;
+          // number 직접 입력 → clamp + 저장
+          const commitNum = () => {
+            let v = parseFloat(num.value);
+            if (Number.isNaN(v)) return;
+            if (v < +p.min) v = +p.min;
+            else if (v > +p.max) v = +p.max;
+            num.value = v.toFixed(2);
+            updateStackParam(step.id, p.key, v);
+          };
+          num.addEventListener('change', commitNum);
+          num.addEventListener('blur', commitNum);
+          wrap.appendChild(num);
+          if (p.kind === 'sliderAuto') {
+            const autoBtn = document.createElement('button');
+            autoBtn.type = 'button';
+            autoBtn.className = `stack-card__auto-btn${isAuto ? ' is-active' : ''}`;
+            autoBtn.textContent = 'auto';
+            autoBtn.addEventListener('click', () => {
+              const cur = step.params[p.key];
+              const goAuto = cur !== 'auto';
+              const numVal = parseFloat(num.value);
+              const restoreVal = Number.isFinite(numVal) ? numVal : (p.default === 'auto' ? 0.3 : p.default);
+              updateStackParam(step.id, p.key, goAuto ? 'auto' : restoreVal);
+              renderStackList();
+            });
+            wrap.appendChild(autoBtn);
+          }
+          row.appendChild(wrap);
+        } else if (p.kind === 'int') {
+          const num = document.createElement('input');
+          num.type = 'number';
+          num.min = p.min; num.max = p.max; num.step = p.step;
+          num.value = step.params[p.key];
+          num.className = 'stack-card__num';
+          num.addEventListener('input', () => {
+            const v = parseInt(num.value, 10) || 0;
+            updateStackParam(step.id, p.key, v);
+          });
+          row.appendChild(num);
+        } else if (p.kind === 'seed') {
+          const wrap = document.createElement('div');
+          wrap.className = 'stack-card__param-input';
+          const num = document.createElement('input');
+          num.type = 'number';
+          num.min = 0; num.max = 99999; num.step = 1;
+          num.value = step.params[p.key];
+          num.className = 'stack-card__num';
+          num.addEventListener('input', () => {
+            const v = parseInt(num.value, 10) || 0;
+            updateStackParam(step.id, p.key, v);
+          });
+          const dice = document.createElement('button');
+          dice.type = 'button';
+          dice.className = 'stack-card__btn';
+          dice.title = '무작위 seed';
+          dice.textContent = '🎲';
+          dice.addEventListener('click', () => {
+            const v = Math.floor(Math.random() * 99999);
+            num.value = v;
+            updateStackParam(step.id, p.key, v);
+          });
+          wrap.appendChild(num);
+          wrap.appendChild(dice);
+          row.appendChild(wrap);
+        }
+        card.appendChild(row);
+      });
+
+      // 위임 핸들러: head 의 버튼들
+      head.addEventListener('click', (e) => {
+        const btn = e.target.closest('button');
+        if (!btn) return;
+        const act = btn.dataset.act;
+        if (act === 'up') moveStackStep(step.id, -1);
+        else if (act === 'down') moveStackStep(step.id, +1);
+        else if (act === 'toggle') toggleStackStep(step.id);
+        else if (act === 'del') removeStackStep(step.id);
+        else if (act === 'info') toggleStackInfo(step.id);
+      });
+
+      list.appendChild(card);
+    });
+  }
+
+  function wireStackControls() {
+    $('btnStackAdd').addEventListener('click', () => {
+      const kind = $('stackAddKind').value;
+      addStackStep(kind);
+    });
+    $('btnStackClear').addEventListener('click', () => {
+      clearStack();
+    });
+  }
+
+  // ── 참조 표시 모드 (binary / continuous) ──────────────────────
+  // 알고리즘과 불일치하는 모드 버튼은 비활성화.
+  //   algo1 → binary 입력 → continuous 버튼 disabled
+  //   algo2 → binary/continuous 양쪽 허용
+  function wireRefViewModeControls() {
+    const btns = document.querySelectorAll('.matrix-card__viewmode-btn');
+    btns.forEach(b => {
+      b.addEventListener('click', () => {
+        if (b.disabled) return;
+        const mode = b.dataset.refmode;
+        if (mode) setRefViewMode(mode);
+      });
+    });
+  }
+  function setRefViewMode(mode) {
+    if (mode !== 'binary' && mode !== 'continuous') return;
+    UI.refViewMode = mode;
+    document.querySelectorAll('.matrix-card__viewmode-btn').forEach(b => {
+      const active = b.dataset.refmode === mode;
+      b.classList.toggle('is-active', active);
+      b.setAttribute('aria-selected', active ? 'true' : 'false');
+    });
+    const wrap = $('refCanvasWrap');
+    if (wrap) wrap.dataset.mode = mode;
+    const refC = $('refCanvas');
+    const contC = $('refCanvasCont');
+    const contLegend = $('contLegend');
+    if (refC && contC) {
+      refC.hidden = (mode === 'continuous');
+      contC.hidden = (mode === 'binary');
+      if (mode === 'continuous') renderContinuousReference();
+    }
+    if (contLegend) contLegend.hidden = (mode === 'binary');
+    if (UI.refEditor) UI.refEditor.render();
+    // stackMode 동기화 (same-mode early return)
+    setStackMode(mode);
+  }
+
+  function _currentAlgo() {
+    return document.querySelector('input[name="algo"]:checked')?.value || 'algo1';
+  }
+  function applyViewModeButtonDisabled() {
+    // Algo1 은 이진 입력만 받으므로 'continuous' 버튼 disable.
+    // Algo2 는 binary/continuous 모두 허용 (재현성 위해 — 기존 mid 파일 재생성 가능).
+    const algo = _currentAlgo();
+    document.querySelectorAll('.matrix-card__viewmode-btn').forEach(b => {
+      const m = b.dataset.refmode;
+      const disabled = (algo === 'algo1' && m === 'continuous');
+      b.disabled = disabled;
+      b.classList.toggle('is-disabled', disabled);
+      if (disabled) {
+        b.title = 'Algorithm 1 은 이진 OM 만 입력으로 받습니다';
+      } else {
+        b.removeAttribute('title');
+      }
+    });
+  }
+
+  // ── 알고리즘 ↔ 모드 자동 라우팅 ────────────────────────────────
+  // Algorithm 1 → 이진 입력 (편집 OM = binary, ref 표시 = binary)
+  // Algorithm 2 → 연속 입력 (편집 OM = continuous, ref 표시 = continuous)
+  function wireAlgoRouting() {
+    document.querySelectorAll('input[name="algo"]').forEach(r => {
+      r.addEventListener('change', () => {
+        const algo = document.querySelector('input[name="algo"]:checked')?.value || 'algo1';
+        const newMode = algo === 'algo2' ? 'continuous' : 'binary';
+        setStackMode(newMode);
+      });
+    });
+  }
+  function setStackMode(mode) {
+    if (mode !== 'binary' && mode !== 'continuous') return;
+    if (UI.stackMode === mode) return;
+    UI.stackMode = mode;
+    applyViewModeButtonDisabled();
+    if (UI.refViewMode !== mode) setRefViewMode(mode);
+    updateModeBadge();
+    // OOD detector 를 새 모드 참조로 재초기화 (JSD 는 reference 분포가 바뀌면 재계산 필요)
+    if (window.OODDetector && UI.data) {
+      const refSrc = mode === 'continuous' ? UI.data.overlapCont : UI.data.overlapRef;
+      if (refSrc && refSrc.values) {
+        UI.ood = new window.OODDetector({
+          reference: refSrc.values,
+          T: refSrc.T, K: refSrc.K,
+          cycles: UI.data.cyclesMeta.cycles,
+        });
+      }
+    }
+    recomputeStackToEditor();
+    log(`입력 모드: ${mode === 'binary' ? '이진 OM' : '연속 OM'}`);
+  }
+
+  function updateModeBadge() {
+    const badge = $('stackModeBadge');
+    if (!badge) return;
+    badge.textContent = UI.stackMode === 'continuous' ? '연속 OM 입력' : '이진 OM 입력';
+    badge.dataset.mode = UI.stackMode;
+    const algoHint = $('algoInputHint');
+    if (algoHint) {
+      algoHint.textContent = UI.stackMode === 'continuous'
+        ? '입력: 연속 OM (학습 분포)'
+        : '입력: 이진 OM (τ=0.7)';
+    }
+  }
+
+  function renderContinuousReference() {
+    if (!UI.data) return;
+    const cont = UI.data.overlapCont;
+    if (!cont || !cont.values) return;
+    const canvas = $('refCanvasCont');
+    if (!canvas) return;
+    const T = cont.T, K = cont.K;
+    // 캔버스 사이즈 = 형제 binary canvas 와 동일하게 맞춤
+    const sibling = $('refCanvas');
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const cssW = sibling ? parseFloat(sibling.style.width) || sibling.clientWidth || 700 : 700;
+    const cssH = sibling ? parseFloat(sibling.style.height) || sibling.clientHeight || 360 : 360;
+    canvas.style.width = cssW + 'px';
+    canvas.style.height = cssH + 'px';
+    canvas.width = Math.floor(cssW * dpr);
+    canvas.height = Math.floor(cssH * dpr);
+    const ctx = canvas.getContext('2d');
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    // 배경
+    const bgVar = getComputedStyle(document.documentElement).getPropertyValue('--surface-canvas').trim() || '#0A0A1C';
+    ctx.fillStyle = bgVar;
+    ctx.fillRect(0, 0, cssW, cssH);
+    // 셀 크기 — Editor 와 동일 패딩 10
+    const inner_w = cssW - 20;
+    const inner_h = cssH - 20;
+    const cellW = inner_w / T;
+    const cellH = inner_h / K;
+    const ox = 10, oy = 10;
+    // 색조: 다크 테마면 지속도 → 초록 가까움, 라이트는 청록. 단순화: HSL hue=160 채도 80%, lightness=20→70% 로 매핑
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    const baseL = isDark ? 12 : 95;
+    const peakL = isDark ? 60 : 35;
+    for (let t = 0; t < T; t++) {
+      for (let c = 0; c < K; c++) {
+        const v = cont.values[t * K + c];
+        const clamped = Math.max(0, Math.min(1, v));
+        const L = baseL + (peakL - baseL) * clamped;
+        // hue 약간 이동: 작은 값 → 푸르스름, 큰 값 → 초록
+        const H = 200 - 40 * clamped;
+        ctx.fillStyle = `hsl(${H}, 70%, ${L}%)`;
+        ctx.fillRect(ox + t * cellW, oy + c * cellH, Math.ceil(cellW), Math.ceil(cellH));
+      }
+    }
+  }
+
+  // ── 도움말 모달 (Q2-b) ────────────────────────────────────────
+  function wireHelpModal() {
+    const open = $('btnStackHelp');
+    const close = $('btnHelpClose');
+    const modal = $('helpModal');
+    if (!open || !modal) return;
+    open.addEventListener('click', () => { modal.hidden = false; });
+    if (close) close.addEventListener('click', () => { modal.hidden = true; });
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) modal.hidden = true;
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && !modal.hidden) modal.hidden = true;
+    });
   }
 
   // ── Phase 4: 생성·재생 로직 ─────────────────────────────────────────
@@ -668,6 +1039,63 @@
     }
   }
 
+  // note → cycle 역방향 조회 패널
+  function populateNoteLookup() {
+    const sel = $('noteLookupInput');
+    const result = $('noteLookupResult');
+    const pitchEl = $('noteLookupPitch');
+    if (!sel || !result || !UI.data) return;
+    const labels = UI.data.notesMeta?.labels || [];
+    sel.innerHTML = '';
+    labels.forEach(l => {
+      const opt = document.createElement('option');
+      opt.value = String(l.label);
+      opt.textContent = `#${l.label} · ${pitchName(l.pitch)} (dur ${l.dur})`;
+      sel.appendChild(opt);
+    });
+    const render = () => {
+      const lab = parseInt(sel.value, 10);
+      const meta = labels.find(l => l.label === lab);
+      pitchEl.textContent = meta ? `pitch ${pitchName(meta.pitch)} · ${meta.count}회` : '';
+      const cycles = UI.data.cyclesMeta?.cycles || [];
+      const hits = [];
+      cycles.forEach((cy, idx) => {
+        const arr = cy.note_labels_1idx || [];
+        if (arr.includes(lab)) hits.push(idx);
+      });
+      result.innerHTML = '';
+      if (hits.length === 0) {
+        const empty = document.createElement('span');
+        empty.className = 'note-lookup__empty';
+        empty.textContent = '(이 note 를 포함한 cycle 없음)';
+        result.appendChild(empty);
+        return;
+      }
+      const head = document.createElement('span');
+      head.className = 'note-lookup__count';
+      head.textContent = `${hits.length}개 cycle:`;
+      result.appendChild(head);
+      hits.forEach(i => {
+        const chip = document.createElement('button');
+        chip.type = 'button';
+        chip.className = 'note-lookup__chip';
+        chip.dataset.cycle = String(i);
+        chip.textContent = `c${i}`;
+        chip.title = `cycle ${i} 선택 (건반 시각화)`;
+        chip.addEventListener('click', () => selectCycle(i));
+        result.appendChild(chip);
+      });
+    };
+    if (!sel._wired) {
+      sel.addEventListener('change', render);
+      sel._wired = true;
+    }
+    if (labels.length > 0) {
+      sel.value = String(labels[0].label);
+      render();
+    }
+  }
+
   function ensurePlayer() {
     if (!playState.genPlayer) playState.genPlayer = new window.PianoPlayer();
     return playState.genPlayer;
@@ -710,10 +1138,9 @@
   }
 
   // 알고리즘 2 (FC): overlap 하나 추론
-  async function runAlgo2Once({ overlap, temperature }) {
-    const targetOnRatio = Math.max(0.05, Math.min(0.35, 0.05 * temperature));
+  async function runAlgo2Once({ overlap, temperature, seed }) {
     const res = await playState.fcGen.generate({
-      overlap, adaptive: true, targetOnRatio, minOnsetGap: 0,
+      overlap, seed, temperature, minOnsetGap: 0,
     });
     return res;
   }
@@ -756,7 +1183,7 @@
       const t0 = performance.now();
       let res;
       if (algo === 'algo2') {
-        res = await runAlgo2Once({ overlap: fullOverlap, temperature });
+        res = await runAlgo2Once({ overlap: fullOverlap, temperature, seed });
       } else {
         res = runAlgo1Once({ overlap: fullOverlap, instLen: fullInstLen, temperature, seed });
       }
@@ -853,8 +1280,38 @@
       const wrap = $('editCanvas').parentElement;
       attachHoverTooltip(UI.editEditor, tt, wrap, data);
 
+      // 변형 스택 복원: localStorage 에 stack 이 있으면 적용 → 편집 OM 자동 재계산
+      const savedStack = loadStackState();
+      if (savedStack && savedStack.length > 0) {
+        UI.stack = savedStack;
+        // id 충돌 방지: 다음 id 를 가장 큰 기존 id 보다 크게 설정
+        let maxNum = 0;
+        savedStack.forEach(s => {
+          if (typeof s.id === 'string' && s.id.startsWith('s')) {
+            const n = parseInt(s.id.slice(1), 10);
+            if (Number.isFinite(n) && n > maxNum) maxNum = n;
+          }
+        });
+        UI.stackNextId = maxNum + 1;
+        log(`변형 스택 복원: ${savedStack.length}개 단계`);
+      }
+      renderStackList();
+
+      // 알고리즘 라디오 ↔ 입력 모드 초기 동기화 (algo1=binary 기본)
+      const initAlgo = document.querySelector('input[name="algo"]:checked')?.value || 'algo1';
+      UI.stackMode = initAlgo === 'algo2' ? 'continuous' : 'binary';
+      applyViewModeButtonDisabled();
+      updateModeBadge();
+      // algo 변경 시에도 disable 갱신 (Algo1↔Algo2 전환 시 continuous 버튼 차단/해제)
+      document.querySelectorAll('input[name="algo"]').forEach(r => {
+        r.addEventListener('change', applyViewModeButtonDisabled);
+      });
+
+      if (UI.stack.length > 0) recomputeStackToEditor();
+
       // 사이클 미리듣기 목록 + 시각화 초기 렌더 (c0 기본 표시)
       populateCycleList();
+      populateNoteLookup();
       playState.selectedCycleIdx = 0;
       renderCycleViz(0, null);
 

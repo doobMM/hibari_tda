@@ -35,6 +35,17 @@
   const ORT_CDN_URL =
     'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.17.0/dist/ort.min.js';
 
+  // 결정적 PRNG (mulberry32) — Algo1 과 동일 구현
+  function makeRng(seed) {
+    let a = (seed >>> 0) || 1;
+    return function () {
+      a = (a + 0x6D2B79F5) | 0;
+      let t = Math.imul(a ^ (a >>> 15), 1 | a);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+
   // meta + model 상대경로 — URL 파라미터 ?data 와 동일 규칙 적용
   function resolveBase() {
     const p = new URLSearchParams(location.search).get('data');
@@ -67,23 +78,18 @@
     });
   }
 
-  // ── Sigmoid 벡터화 ──────────────────────────────────────────────────
-  function sigmoidInPlace(arr) {
-    for (let i = 0; i < arr.length; i++) {
-      const v = arr[i];
-      arr[i] = 1.0 / (1.0 + Math.exp(-v));
+  // ── Sigmoid + temperature scaling (stochastic sampling 용) ─────────
+  //   probs[i] = sigmoid(logits[i] / T)
+  //   T→0  ⇒ 확률이 0/1 로 극단화 (거의 deterministic)
+  //   T=1  ⇒ 모델 native 확률
+  //   T>1  ⇒ 확률이 0.5 쪽으로 완화 (다양한 변주)
+  function sigmoidTempered(logits, temperature) {
+    const invT = 1.0 / Math.max(0.1, temperature);
+    const out = new Float32Array(logits.length);
+    for (let i = 0; i < logits.length; i++) {
+      out[i] = 1.0 / (1.0 + Math.exp(-logits[i] * invT));
     }
-    return arr;
-  }
-
-  // ── Top-k 기반 threshold 계산 (partial sort) ────────────────────────
-  function topKThreshold(flat, ratio) {
-    const k = Math.max(1, Math.floor(flat.length * ratio));
-    // quickselect 으로 k 번째 최대값 탐색. n ≈ 25000, 1회 호출이므로 정렬도 감당 가능.
-    // 메모리 copy 최소화 위해 Float64Array 복사본 정렬.
-    const copy = Array.from(flat);
-    copy.sort((a, b) => b - a);     // 내림차순
-    return copy[k - 1];
+    return out;
   }
 
   class FCGenerator {
@@ -126,21 +132,26 @@
     }
 
     /**
-     * 생성.
+     * 생성 — stochastic Bernoulli sampling.
+     *   1. ONNX logits 에 temperature scaling 적용 → sigmoid → 확률 p.
+     *   2. 각 (t, note) 셀마다 Bernoulli(p) 샘플링: rng() < p → 활성.
+     *   같은 OM + 같은 seed + 같은 temperature ⇒ 항상 같은 결과 (재현성).
+     *   seed 변경 ⇒ 확률이 애매한 셀들이 출현/누락 → 변주.
+     *   temperature 변경 ⇒ 분포 sharpness (낮을수록 원곡 충실, 높을수록 다양).
+     *
      * @param {object} args
      * @param {{T:number,K:number,values:(Int8Array|Float32Array)}} args.overlap
-     * @param {number} [args.threshold] — null 이면 adaptive
-     * @param {boolean} [args.adaptive=true]
+     * @param {number} [args.seed=1]
+     * @param {number} [args.temperature=1.0]
      * @param {number} [args.minOnsetGap=0]
-     * @param {number} [args.targetOnRatio=0.15]
-     * @returns {Promise<{notes:Array, numActivations:number, threshold:number, inferenceMs:number}>}
+     * @returns {Promise<{notes:Array, numActivations:number, meanProb:number, inferenceMs:number}>}
      */
     async generate(args) {
       if (!this.session) throw new Error('FCGenerator 미로드 — load() 먼저 호출');
       const { overlap } = args;
-      const adaptive = args.adaptive !== false;
+      const seed = (args.seed | 0) >>> 0 || 1;
+      const temperature = args.temperature > 0 ? args.temperature : 1.0;
       const minOnsetGap = args.minOnsetGap | 0;
-      const targetOnRatio = args.targetOnRatio || 0.15;
 
       const T = overlap.T, K = overlap.K;
       const numCycles = this.meta.num_cycles;
@@ -149,10 +160,13 @@
         throw new Error(`overlap K(${K}) != model num_cycles(${numCycles})`);
       }
 
-      // Int8Array → Float32Array cast
+      // Int8Array/Float32Array → Float32Array cast ([0,1] 연속값 유지 지원)
       const input = new Float32Array(T * K);
       const src = overlap.values;
-      for (let i = 0; i < T * K; i++) input[i] = src[i] ? 1.0 : 0.0;
+      for (let i = 0; i < T * K; i++) {
+        const v = +src[i];
+        input[i] = v > 0 ? v : 0;
+      }
 
       // ONNX 추론 (T, C) 배치
       const t0 = performance.now();
@@ -161,17 +175,13 @@
       };
       const out = await this.session.run(feeds);
       const logits = out.logits.data;   // Float32Array (T * N)
-      const probs = sigmoidInPlace(logits.slice());
+      const probs = sigmoidTempered(logits, temperature);
       const inferenceMs = performance.now() - t0;
 
-      // threshold 결정
-      let thr;
-      if (adaptive || args.threshold == null) {
-        thr = topKThreshold(probs, targetOnRatio);
-        thr = Math.max(thr, this.meta.threshold?.min_threshold ?? 0.1);
-      } else {
-        thr = args.threshold;
-      }
+      // 확률 평균 (UI 표시용 — density hint)
+      let probSum = 0;
+      for (let i = 0; i < probs.length; i++) probSum += probs[i];
+      const meanProb = probSum / probs.length;
 
       // label_idx → {pitch, dur} 매핑
       const L2PD = new Map();
@@ -179,7 +189,8 @@
         L2PD.set(row.label_idx, { pitch: row.pitch, dur: row.dur });
       }
 
-      // 시점별 sampling
+      // Bernoulli 샘플링 — seed 로 결정적 PRNG 구동
+      const rng = makeRng(seed);
       const notes = [];
       let lastOnset = -minOnsetGap;
       let numActivations = 0;
@@ -188,7 +199,7 @@
         let onsetAtT = false;
         for (let n = 0; n < numNotes; n++) {
           const p = probs[t * numNotes + n];
-          if (p >= thr) {
+          if (rng() < p) {
             const pd = L2PD.get(n);
             if (!pd) continue;
             const end = Math.min(T, t + pd.dur);
@@ -200,7 +211,7 @@
         if (onsetAtT) lastOnset = t;
       }
 
-      return { notes, numActivations, threshold: thr, inferenceMs };
+      return { notes, numActivations, meanProb, inferenceMs };
     }
   }
 

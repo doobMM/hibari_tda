@@ -7,10 +7,15 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/tokens.css?v=3.3">
-  <link rel="stylesheet" href="css/style.css?v=3.3">
+  <link rel="stylesheet" href="css/tokens.css?v=4.4">
+  <link rel="stylesheet" href="css/style.css?v=4.4">
+  <link rel="stylesheet" href="../../shared/nav.css">
 </head>
 <body>
+
+  <!-- ── Shared top nav (3 viz tabs) ────────────────────────────────────── -->
+  <div id="tda-nav" data-active="om"></div>
+  <script src="../../shared/nav.js" defer></script>
 
   <!-- ── Header ─────────────────────────────────────────────────────────── -->
   <header class="app-header">
@@ -53,31 +58,33 @@
         </label>
       </div>
 
-      <!-- Section: 변형 -->
+      <!-- Section: 변형 스택 (Q1) -->
       <div class="control-group">
-        <h2 class="control-group__heading">변형 (density 유지)</h2>
-        <p class="hint" id="variantHint">참조 overlap 을 재배치해서 비슷한 분포의 다른 곡을 탐색합니다.</p>
-        <select class="select" id="variantMode" aria-label="변형 모드 선택">
-          <option value="block">블록 셔플 (국소 구조 유지)</option>
-          <option value="jitter">참조 왜곡 (local jitter)</option>
-          <option value="shift">원형 이동 (phase shift)</option>
-          <option value="permuteTime">시간축 셔플</option>
-          <option value="permuteCycle">cycle 축 셔플</option>
-          <option value="shuffle">무작위 재분배 (density 보존)</option>
-          <option value="flood">흐름 무늬 (물 번짐)</option>
-          <option value="bernoulli">독립 Bernoulli (공간 구조 無)</option>
-        </select>
-        <div class="slider-row" aria-label="변형 강도">
-          <span class="slider-row__label">강도</span>
-          <input class="slider-row__track" type="range" id="sliderVariant"
-                 min="0" max="1" step="0.05" value="0.3" aria-label="강도">
-          <span class="slider-row__value" id="sliderVariantVal">0.30</span>
+        <div class="stack-heading-row">
+          <h2 class="control-group__heading">변형 스택</h2>
+          <span class="stack-mode-badge" id="stackModeBadge" data-mode="binary"
+                title="현재 변형 입력 OM 종류 — 우측 알고리즘 선택과 동기">이진 OM 입력</span>
+          <button class="btn btn--icon" id="btnStackHelp" type="button"
+                  title="각 변형 설명 보기" aria-label="변형 설명 도움말">?</button>
         </div>
-        <button class="btn btn--primary" id="btnVariant">▷ 참조에 변형 적용</button>
-        <label class="toggle">
-          <input type="checkbox" id="toggleFromCurrent">
-          <span>참조 대신 현재 편집본에 적용</span>
-        </label>
+        <p class="hint">참조 OM 위에 여러 변형을 순차로 쌓아 적용합니다. 각 카드는 끄고/켜고/순서 바꾸고/지울 수 있습니다.</p>
+
+        <div class="stack-add-row">
+          <select class="select" id="stackAddKind" aria-label="추가할 변형 종류">
+            <option value="block">블록 셔플 (국소 구조 유지)</option>
+            <option value="jitter">참조 왜곡 (local jitter)</option>
+            <option value="shift">원형 이동 (phase shift)</option>
+            <option value="permuteTime">시간축 셔플</option>
+            <option value="permuteCycle">cycle 셔플</option>
+            <option value="shuffle">무작위 재분배 (density 보존)</option>
+            <option value="flood">흐름 무늬 (물 번짐)</option>
+            <option value="boost">cycle 강화 (선택 cycle 활성도↑)</option>
+          </select>
+          <button class="btn btn--primary" id="btnStackAdd" type="button">＋ 추가</button>
+        </div>
+        <button class="btn" id="btnStackClear" type="button">스택 비우기 (참조로 복귀)</button>
+
+        <div class="stack-list" id="stackList" role="list" aria-label="현재 적용된 변형 스택"></div>
       </div>
 
     </aside>
@@ -90,9 +97,14 @@
         <header class="matrix-card__header">
           <h2 class="matrix-card__title">참조 overlap (hibari)</h2>
           <span class="matrix-card__meta" id="refMeta">T=? × K=?</span>
+          <div class="matrix-card__viewmode" role="tablist" aria-label="참조 표시 모드">
+            <button class="matrix-card__viewmode-btn is-active" data-refmode="binary" role="tab" aria-selected="true" type="button">이진</button>
+            <button class="matrix-card__viewmode-btn"           data-refmode="continuous" role="tab" aria-selected="false" type="button">연속</button>
+          </div>
         </header>
-        <div class="matrix-card__canvas-wrap">
+        <div class="matrix-card__canvas-wrap" id="refCanvasWrap">
           <canvas id="refCanvas" width="700" height="360"></canvas>
+          <canvas id="refCanvasCont" width="700" height="360" hidden></canvas>
         </div>
         <footer class="matrix-card__footer">
           <span class="legend">
@@ -100,6 +112,9 @@
           </span>
           <span class="legend">
             <span class="legend__dot legend__dot--off" aria-hidden="true"></span>비활성
+          </span>
+          <span class="legend" id="contLegend" hidden>
+            <span class="legend__bar legend__bar--cont" aria-hidden="true"></span>연속 활성도 0→1
           </span>
           <span class="matrix-card__meta" style="margin-left:auto">읽기 전용</span>
         </footer>
@@ -146,6 +161,7 @@
             Algorithm 2 (FC)
           </label>
         </div>
+        <p class="hint hint--algo" id="algoInputHint">입력: 이진 OM (τ=0.7)</p>
         <div class="slider-row" aria-label="Temperature">
           <span class="slider-row__label">Temperature</span>
           <input class="slider-row__track" type="range" id="sliderTemp"
@@ -193,6 +209,18 @@
         <div class="cycle-viz__canvas-wrap">
           <canvas id="cycleVizKeys" aria-label="선택된 사이클의 피아노 건반 시각화 · 활성 건반 클릭으로 재생"></canvas>
         </div>
+
+        <!-- note → cycle 역방향 조회 -->
+        <div class="note-lookup" aria-label="note 포함 cycle 조회">
+          <h3 class="note-lookup__heading">note → cycle 조회</h3>
+          <p class="hint">특정 note 가 포함된 cycle 들을 찾습니다. (note label 1~23)</p>
+          <div class="note-lookup__row">
+            <label for="noteLookupInput" class="note-lookup__label">note label</label>
+            <select id="noteLookupInput" class="note-lookup__select" aria-label="조회할 note label"></select>
+            <span class="note-lookup__pitch" id="noteLookupPitch" aria-live="polite"></span>
+          </div>
+          <div class="note-lookup__result" id="noteLookupResult" role="list" aria-live="polite"></div>
+        </div>
       </div>
 
     </aside>
@@ -209,6 +237,35 @@
     <span>hibari TDA research dashboard</span>
     <span>Phase 6 — OOD · ready</span>
   </footer>
+
+  <!-- ── 변형 도움말 모달 (Q2-b) ──────────────────────────────────────── -->
+  <div class="modal-backdrop" id="helpModal" hidden role="dialog" aria-modal="true" aria-labelledby="helpModalTitle">
+    <div class="modal">
+      <header class="modal__header">
+        <h3 class="modal__title" id="helpModalTitle">변형 종류 안내</h3>
+        <button class="btn btn--icon" id="btnHelpClose" aria-label="닫기" type="button">×</button>
+      </header>
+      <div class="modal__body">
+        <table class="help-table">
+          <thead>
+            <tr><th>변형</th><th>한 줄 비유</th><th>보존되는 것</th><th>깨지는 것</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>무작위 재분배</td><td>모자이크 조각을 통째로 섞기</td><td>ON 셀 <b>개수</b></td><td>시간·cycle 위치</td></tr>
+            <tr><td>시간축 셔플</td><td>한 행씩 통째로 섞기</td><td>cycle별 column 분포 <b>100%</b></td><td>시간 순서</td></tr>
+            <tr><td>cycle 셔플</td><td>한 열씩 통째로 섞기</td><td>시점별 활성 cycle 개수 <b>100%</b></td><td>cycle 번호</td></tr>
+            <tr><td>블록 셔플</td><td>8마디 단위로 카드 섞기</td><td>블록 내부 무늬 + density</td><td>블록 간 시간 순서</td></tr>
+            <tr><td>원형 이동</td><td>둘둘 만 원통을 돌리기</td><td>density·row·col 분포 <b>완전 동일</b></td><td>시작 위상만</td></tr>
+            <tr><td>흐름 무늬</td><td>2~5개 빗방울에서 4방향 전파</td><td>target density 근사</td><td>참조 OM 자체</td></tr>
+            <tr><td>참조 왜곡</td><td>각 ON 셀을 약간 떨림으로 옮기기</td><td>대략적 분포</td><td>정확한 위치 (5~15% 사라짐 가능)</td></tr>
+          </tbody>
+        </table>
+        <p class="hint" style="margin-top:1em">
+          스택은 <b>위에서 아래</b> 순서로 적용됩니다. 같은 변형도 서로 다른 seed 로 여러 번 쌓을 수 있습니다.
+        </p>
+      </div>
+    </div>
+  </div>
 
   <!-- ── Theme toggle script (inline, no framework) ───────────────────── -->
   <script>
@@ -238,14 +295,14 @@
   </script>
 
   <!-- ── App scripts ────────────────────────────────────────────────────── -->
-  <script src="js/data-loader.js?v=3.3"></script>
-  <script src="js/overlap-editor.js?v=3.3"></script>
-  <script src="js/generation-algo1.js?v=3.3"></script>
-  <script src="js/generation-algo2.js?v=3.3"></script>
-  <script src="js/midi-io.js?v=3.3"></script>
-  <script src="js/audio-playback.js?v=3.3"></script>
-  <script src="js/ood-detector.js?v=3.3"></script>
-  <script src="js/ui-bootstrap.js?v=3.3"></script>
+  <script src="js/data-loader.js?v=4.4"></script>
+  <script src="js/overlap-editor.js?v=4.4"></script>
+  <script src="js/generation-algo1.js?v=4.4"></script>
+  <script src="js/generation-algo2.js?v=4.4"></script>
+  <script src="js/midi-io.js?v=4.4"></script>
+  <script src="js/audio-playback.js?v=4.4"></script>
+  <script src="js/ood-detector.js?v=4.4"></script>
+  <script src="js/ui-bootstrap.js?v=4.4"></script>
 
 </body>
 </html>

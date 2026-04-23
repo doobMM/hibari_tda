@@ -77,8 +77,12 @@
       this.ctx = canvas.getContext('2d');
       this.T = opts.T | 0;
       this.K = opts.K | 0;
-      this.values = opts.values ? new Int8Array(opts.values) : new Int8Array(this.T * this.K);
-      this.reference = opts.reference ? new Int8Array(opts.reference) : null;
+      // displayMode: 'binary' (셀 ∈ {0,1}, Int8) | 'continuous' (셀 ∈ [0,1], Float32, HSL 그라데이션)
+      this.displayMode = opts.displayMode === 'continuous' ? 'continuous' : 'binary';
+      const N = this.T * this.K;
+      const Alloc = this.displayMode === 'continuous' ? Float32Array : Int8Array;
+      this.values = opts.values ? new Alloc(opts.values) : new Alloc(N);
+      this.reference = opts.reference ? new Alloc(opts.reference) : null;
       this.readonly = !!opts.readonly;
       this.showDiff = false;
       this.onChange = opts.onChange || (() => {});
@@ -111,7 +115,8 @@
       if (values.length !== this.T * this.K) {
         throw new Error(`setMatrix 크기 불일치: ${values.length} != ${this.T * this.K}`);
       }
-      this.values = new Int8Array(values);
+      const Alloc = this.displayMode === 'continuous' ? Float32Array : Int8Array;
+      this.values = new Alloc(values);
       this.render();
       this._emitChange();
     }
@@ -121,7 +126,48 @@
       if (ref && ref.length !== this.T * this.K) {
         throw new Error(`setReference 크기 불일치`);
       }
-      this.reference = ref ? new Int8Array(ref) : null;
+      const Alloc = this.displayMode === 'continuous' ? Float32Array : Int8Array;
+      this.reference = ref ? new Alloc(ref) : null;
+    }
+
+    // displayMode 변경 — 새 reference/values 를 받아 타입을 재할당.
+    // values 는 선택; 미지정 시 기존 values 를 새 타입으로 변환.
+    setDisplayMode(mode, opts = {}) {
+      const next = mode === 'continuous' ? 'continuous' : 'binary';
+      if (next === this.displayMode && !opts.values && !opts.reference) {
+        this.render();
+        return;
+      }
+      this.displayMode = next;
+      const Alloc = next === 'continuous' ? Float32Array : Int8Array;
+      const N = this.T * this.K;
+      if (opts.values) {
+        if (opts.values.length !== N) throw new Error('setDisplayMode values 크기 불일치');
+        this.values = new Alloc(opts.values);
+      } else {
+        // 기존 값 변환: continuous→binary 시 0.5 임계 ON/OFF, binary→continuous 시 그대로 (0/1).
+        const out = new Alloc(N);
+        if (next === 'binary') {
+          for (let i = 0; i < N; i++) out[i] = this.values[i] >= 0.5 ? 1 : 0;
+        } else {
+          for (let i = 0; i < N; i++) out[i] = this.values[i];
+        }
+        this.values = out;
+      }
+      if (opts.reference) {
+        if (opts.reference.length !== N) throw new Error('setDisplayMode reference 크기 불일치');
+        this.reference = new Alloc(opts.reference);
+      } else if (this.reference) {
+        const out = new Alloc(N);
+        if (next === 'binary') {
+          for (let i = 0; i < N; i++) out[i] = this.reference[i] >= 0.5 ? 1 : 0;
+        } else {
+          for (let i = 0; i < N; i++) out[i] = this.reference[i];
+        }
+        this.reference = out;
+      }
+      this.render();
+      this._emitChange();
     }
 
     setDiffMode(b) {
@@ -386,8 +432,15 @@
     diffCount() {
       if (!this.reference) return 0;
       let d = 0;
-      for (let i = 0; i < this.values.length; i++) {
-        if (this.values[i] !== this.reference[i]) d++;
+      if (this.displayMode === 'continuous') {
+        const eps = 0.05;   // 활성도 5%p 초과 변화만 diff 로 카운트
+        for (let i = 0; i < this.values.length; i++) {
+          if (Math.abs(this.values[i] - this.reference[i]) > eps) d++;
+        }
+      } else {
+        for (let i = 0; i < this.values.length; i++) {
+          if (this.values[i] !== this.reference[i]) d++;
+        }
       }
       return d;
     }
@@ -437,6 +490,11 @@
 
     _onPointerDown(e) {
       if (this.readonly) return;
+      // 연속 모드에서는 셀 토글 불가 (관측만). Shift+드래그 팬은 허용.
+      if (this.displayMode === 'continuous' && !e.shiftKey && e.button !== 1) {
+        // pinch-zoom 은 허용 — 두 손가락 이상은 아래 멀티터치 분기로 진입
+        if (this._activePointers.size === 0) return;
+      }
       // 터치 캡처: pointermove 가 canvas 밖으로 나가도 추적되게
       try { this.canvas.setPointerCapture(e.pointerId); } catch (_) {}
       this._activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
@@ -639,25 +697,42 @@
       const cStart = Math.max(0, Math.floor((0 - oy) / cellH));
       const cEnd   = Math.min(this.K, Math.ceil((cssH - oy) / cellH));
 
-      // ImageData 속도가 낫지만 diff 색상 적용 편의상 fillRect 사용
-      for (let t = tStart; t < tEnd; t++) {
-        for (let c = cStart; c < cEnd; c++) {
-          const v = this.values[this.idx(t, c)];
-          const refV = this.reference ? this.reference[this.idx(t, c)] : v;
-          let rgb;
-          if (this.showDiff && this.reference) {
-            if (v === refV) {
-              rgb = v ? P.on : P.off;
-            } else if (v && !refV) {
-              rgb = P.add;
-            } else {
-              rgb = P.del;
-            }
-          } else {
-            rgb = v ? P.on : P.off;
+      // 모드별 셀 렌더 — 이진은 on/off/diff, 연속은 HSL 그라데이션 (200→160 hue)
+      if (this.displayMode === 'continuous') {
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        const baseL = isDark ? 12 : 95;
+        const peakL = isDark ? 60 : 35;
+        for (let t = tStart; t < tEnd; t++) {
+          for (let c = cStart; c < cEnd; c++) {
+            let v = this.values[this.idx(t, c)];
+            if (v < 0) v = 0; else if (v > 1) v = 1;
+            const L = baseL + (peakL - baseL) * v;
+            const H = 200 - 40 * v;
+            ctx.fillStyle = `hsl(${H}, 70%, ${L}%)`;
+            ctx.fillRect(ox + t * cellW, oy + c * cellH, Math.ceil(cellW), Math.ceil(cellH));
           }
-          ctx.fillStyle = `rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`;
-          ctx.fillRect(ox + t * cellW, oy + c * cellH, Math.ceil(cellW), Math.ceil(cellH));
+        }
+      } else {
+        // 이진 모드 (기존 로직)
+        for (let t = tStart; t < tEnd; t++) {
+          for (let c = cStart; c < cEnd; c++) {
+            const v = this.values[this.idx(t, c)];
+            const refV = this.reference ? this.reference[this.idx(t, c)] : v;
+            let rgb;
+            if (this.showDiff && this.reference) {
+              if (v === refV) {
+                rgb = v ? P.on : P.off;
+              } else if (v && !refV) {
+                rgb = P.add;
+              } else {
+                rgb = P.del;
+              }
+            } else {
+              rgb = v ? P.on : P.off;
+            }
+            ctx.fillStyle = `rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`;
+            ctx.fillRect(ox + t * cellW, oy + c * cellH, Math.ceil(cellW), Math.ceil(cellH));
+          }
         }
       }
 
@@ -706,5 +781,410 @@
     };
   }
 
+  // ── 변형 스택 엔진 (Q1 + 연속 모드 확장) ─────────────────────────
+  // 각 변형은 pure 함수: (input TypedArray, params, T, K, mode) → TypedArray
+  //   - mode='binary'      → 입출력 Int8Array (셀 ∈ {0,1})
+  //   - mode='continuous'  → 입출력 Float32Array (셀 ∈ [0,1])
+  // permutation 계열 (shuffle/permuteTime/permuteCycle/block/shift) 은 모드 무관 동일 로직 — 값을 그대로 옮김.
+  // flood / jitter 만 모드별 시맨틱 분기 (가우시안 봉우리·노이즈).
+
+  const TRANSFORM_KINDS = {
+    shuffle:      '무작위 재분배',
+    permuteTime:  '시간축 셔플',
+    permuteCycle: 'cycle 셔플',
+    block:        '블록 셔플',
+    shift:        '원형 이동',
+    flood:        '흐름 무늬 (물 번짐)',
+    jitter:       '참조 왜곡',
+    boost:        'cycle 강화',
+  };
+
+  const TRANSFORM_DESCRIPTIONS = {
+    shuffle:      'ON 셀 개수(N_on)를 유지하면서 위치를 완전 랜덤 재배치. 공간 구조 완전 파괴, density 만 유지. (연속: 활성도 값을 그대로 다른 셀로 이동)',
+    permuteTime:  '시점(row) 순서를 완전 랜덤 permutation. cycle 별 column 분포는 100% 유지. (연속/이진 동일 동작)',
+    permuteCycle: 'cycle(K) 번호를 permutation. 각 시점의 활성 cycle 개수는 100% 유지. (연속/이진 동일 동작)',
+    block:        '강도 t 를 올릴수록 블록 크기 증가 (bs = round(8·(1+3t))). 작을수록 국소 섞임, 클수록 구간 이동. (연속/이진 동일 동작)',
+    shift:        '시간 축으로 round(T·t) 스텝 + cycle 축 dc 만큼 원형 이동. density/분포 완전 동일. (연속/이진 동일 동작)',
+    flood:        '이진: 2~5 개 씨앗에서 4방향 0/1 번짐 (참조 무관). 연속: 참조 가우시안 blur (σ_t=5t step, σ_c=1.5t cycle) — 활성 영역을 부드럽게 번지게, 구조 보존.',
+    jitter:       '이진: 참조 각 ON 셀을 시간 ±round(24t)·cycle ±round(4t) 흔들기. 연속: 활성 셀(ref>0.05)만 평균 0·표준편차 t·0.3 가우시안 노이즈 가산, 비활성 영역 보존.',
+    boost:        '선택한 cycle 의 활성도를 시점 전반에 강화. 이진: OFF 시점을 강도 확률로 ON 토글 (ON 보존). 연속: 모든 시점에 강도 가산 후 [0,1] clip. → 해당 cycle 의 note 들이 더 자주 등장.',
+  };
+
+  // 각 변형의 기본 파라미터 + UI 메타 (slider/number/toggle 종류, 범위)
+  const TRANSFORM_PARAM_SCHEMA = {
+    shuffle:      [{ key: 'seed', label: 'seed', kind: 'seed', default: 42 }],
+    permuteTime:  [{ key: 'seed', label: 'seed', kind: 'seed', default: 42 }],
+    permuteCycle: [{ key: 'seed', label: 'seed', kind: 'seed', default: 42 }],
+    block: [
+      { key: 'strength', label: '강도 (블록 크기)', kind: 'slider', min: 0, max: 1, step: 0.05, default: 0.3 },
+      { key: 'seed', label: 'seed', kind: 'seed', default: 42 },
+    ],
+    shift: [
+      { key: 'strength', label: '시간 이동 비율', kind: 'slider', min: 0, max: 1, step: 0.05, default: 0.3 },
+      { key: 'dc', label: 'cycle 이동', kind: 'int', min: -7, max: 7, step: 1, default: 0 },
+    ],
+    flood: [
+      { key: 'strength', label: '번짐 확률', kind: 'slider', min: 0, max: 1, step: 0.05, default: 0.5 },
+      { key: 'density', label: '목표 density (auto = 참조)', kind: 'sliderAuto', min: 0.05, max: 0.8, step: 0.01, default: 'auto' },
+      { key: 'seed', label: 'seed', kind: 'seed', default: 42 },
+    ],
+    jitter: [
+      { key: 'strength', label: '흔들림 강도', kind: 'slider', min: 0.02, max: 1, step: 0.02, default: 0.2 },
+      { key: 'seed', label: 'seed', kind: 'seed', default: 42 },
+    ],
+    boost: [
+      { key: 'cycleIdx', label: '대상 cycle', kind: 'int', min: 0, max: 13, step: 1, default: 0 },
+      { key: 'strength', label: '강화 강도', kind: 'slider', min: 0, max: 1, step: 0.05, default: 0.3 },
+      { key: 'seed', label: 'seed (이진 토글용)', kind: 'seed', default: 42 },
+    ],
+  };
+
+  // ── 헬퍼 ───────────────────────────────────────────────────────
+  function _allocLike(mode, N) {
+    return mode === 'continuous' ? new Float32Array(N) : new Int8Array(N);
+  }
+  function _copyLike(mode, src) {
+    return mode === 'continuous' ? new Float32Array(src) : new Int8Array(src);
+  }
+  // Box-Muller 표준정규 (rng → N(0,1))
+  function _gauss(rng) {
+    let u = 0, v = 0;
+    while (u === 0) u = rng();
+    while (v === 0) v = rng();
+    return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+  }
+
+  // ── pure 변형 함수들 ───────────────────────────────────────────
+  // 모든 함수 시그니처: (src TypedArray, params, T, K, mode='binary') → TypedArray
+
+  // shuffle: 셀 값들의 multiset 을 그대로 보존하면서 위치만 완전 랜덤 재배치.
+  // 이진: ON 셀 개수 보존. 연속: 모든 활성도 값 보존 (sum 보존).
+  function tShuffle(src, params, T, K, mode = 'binary') {
+    const rng = mulberry32(params.seed | 0);
+    const N = src.length;
+    const idx = new Int32Array(N);
+    for (let i = 0; i < N; i++) idx[i] = i;
+    for (let i = N - 1; i > 0; i--) {
+      const j = Math.floor(rng() * (i + 1));
+      const tmp = idx[i]; idx[i] = idx[j]; idx[j] = tmp;
+    }
+    const out = _allocLike(mode, N);
+    for (let i = 0; i < N; i++) out[i] = src[idx[i]];
+    return out;
+  }
+
+  function tPermuteTime(src, params, T, K, mode = 'binary') {
+    const rng = mulberry32(params.seed | 0);
+    const perm = new Int32Array(T);
+    for (let t = 0; t < T; t++) perm[t] = t;
+    for (let i = T - 1; i > 0; i--) {
+      const j = Math.floor(rng() * (i + 1));
+      const tmp = perm[i]; perm[i] = perm[j]; perm[j] = tmp;
+    }
+    const out = _allocLike(mode, T * K);
+    for (let t = 0; t < T; t++) {
+      const s = perm[t];
+      for (let c = 0; c < K; c++) out[t * K + c] = src[s * K + c];
+    }
+    return out;
+  }
+
+  function tPermuteCycle(src, params, T, K, mode = 'binary') {
+    const rng = mulberry32(params.seed | 0);
+    const perm = new Int32Array(K);
+    for (let c = 0; c < K; c++) perm[c] = c;
+    for (let i = K - 1; i > 0; i--) {
+      const j = Math.floor(rng() * (i + 1));
+      const tmp = perm[i]; perm[i] = perm[j]; perm[j] = tmp;
+    }
+    const out = _allocLike(mode, T * K);
+    for (let t = 0; t < T; t++) {
+      for (let c = 0; c < K; c++) out[t * K + c] = src[t * K + perm[c]];
+    }
+    return out;
+  }
+
+  function tBlockShuffle(src, params, T, K, mode = 'binary') {
+    const t = Math.max(0, Math.min(1, +params.strength || 0));
+    const bs = Math.max(1, Math.round(8 * (1 + t * 3)));
+    const rng = mulberry32(params.seed | 0);
+    const nb = Math.floor(T / bs);
+    const perm = new Int32Array(nb);
+    for (let b = 0; b < nb; b++) perm[b] = b;
+    for (let i = nb - 1; i > 0; i--) {
+      const j = Math.floor(rng() * (i + 1));
+      const tmp = perm[i]; perm[i] = perm[j]; perm[j] = tmp;
+    }
+    const out = _allocLike(mode, T * K);
+    for (let b = 0; b < nb; b++) {
+      const s = perm[b];
+      for (let dt = 0; dt < bs; dt++) {
+        for (let c = 0; c < K; c++) {
+          out[(b * bs + dt) * K + c] = src[(s * bs + dt) * K + c];
+        }
+      }
+    }
+    for (let tt = nb * bs; tt < T; tt++) {
+      for (let c = 0; c < K; c++) out[tt * K + c] = src[tt * K + c];
+    }
+    return out;
+  }
+
+  function tCircularShift(src, params, T, K, mode = 'binary') {
+    const t = Math.max(0, Math.min(1, +params.strength || 0));
+    let dt = Math.round(T * t);
+    let dc = (params.dc | 0);
+    dt = ((dt % T) + T) % T;
+    dc = ((dc % K) + K) % K;
+    const out = _allocLike(mode, T * K);
+    for (let tt = 0; tt < T; tt++) {
+      const st = (tt - dt + T) % T;
+      for (let c = 0; c < K; c++) {
+        const sc = (c - dc + K) % K;
+        out[tt * K + c] = src[st * K + sc];
+      }
+    }
+    return out;
+  }
+
+  // flood: 참조 무관한 새 패턴 생성.
+  // 이진: 4방향 0/1 번짐 (target density 까지).
+  // 연속: 가우시안 봉우리 합산 후 [0,1] clip.
+  function tFlood(src, params, T, K, mode = 'binary') {
+    if (mode === 'continuous') return _tFloodCont(src, params, T, K);
+    return _tFloodBin(src, params, T, K);
+  }
+
+  function _tFloodBin(src, params, T, K) {
+    let target;
+    if (params.density === 'auto' || params.density == null) {
+      let cnt = 0;
+      for (let i = 0; i < src.length; i++) if (src[i]) cnt++;
+      target = cnt;
+    } else {
+      target = Math.max(1, Math.round(T * K * (+params.density)));
+    }
+    const spread = Math.max(0.05, Math.min(0.99, +params.strength || 0.5));
+    const rng = mulberry32(params.seed | 0);
+    const N = T * K;
+    const out = new Int8Array(N);
+    const frontier = [];
+    const numSources = 2 + Math.floor(rng() * 4);
+    for (let s = 0; s < numSources; s++) {
+      const tt = Math.floor(rng() * T);
+      const c = Math.floor(rng() * K);
+      const i = tt * K + c;
+      if (!out[i]) { out[i] = 1; frontier.push(i); }
+    }
+    let count = frontier.length;
+    let safety = N * 4;
+    while (count < target && frontier.length > 0 && safety-- > 0) {
+      const pickIdx = Math.floor(rng() * frontier.length);
+      const si = frontier[pickIdx];
+      const st = (si / K) | 0;
+      const sc = si - st * K;
+      const neigh = [
+        [st - 1, sc], [st + 1, sc],
+        [st, sc - 1], [st, sc + 1],
+      ];
+      let grew = false;
+      for (let n = 0; n < 4; n++) {
+        const nt = neigh[n][0], nc = neigh[n][1];
+        if (nt < 0 || nt >= T || nc < 0 || nc >= K) continue;
+        const ni = nt * K + nc;
+        if (out[ni]) continue;
+        if (rng() < spread) {
+          out[ni] = 1;
+          frontier.push(ni);
+          count++;
+          grew = true;
+          if (count >= target) break;
+        }
+      }
+      if (!grew) {
+        frontier[pickIdx] = frontier[frontier.length - 1];
+        frontier.pop();
+      }
+    }
+    return out;
+  }
+
+  function _tFloodCont(src, params, T, K) {
+    // 연속 모드 (옵션 B — 참조 가우시안 blur):
+    //   분리형 컨볼루션 (시간축 σ_t = 5·t step, cycle축 σ_c = 1.5·t cycle).
+    //   원곡 활성도 구조를 보존하면서 봉우리를 완만하게 번지게 한다.
+    //   strength≈0 → 거의 항등, strength=1 → 강한 blur. seed 무관 (deterministic).
+    const strength = Math.max(0.0, Math.min(1, +params.strength || 0.5));
+    const N = T * K;
+    if (strength < 1e-3) return new Float32Array(src);
+    const sigT = 5 * strength;
+    const sigC = 1.5 * strength;
+    const radT = Math.max(1, Math.ceil(sigT * 3));
+    const radC = Math.max(1, Math.ceil(sigC * 3));
+    // 1D 가우시안 커널 (정규화)
+    function makeKernel(sigma, rad) {
+      const k = new Float32Array(2 * rad + 1);
+      const s2 = 2 * sigma * sigma;
+      let sum = 0;
+      for (let i = -rad; i <= rad; i++) {
+        const v = Math.exp(-(i * i) / s2);
+        k[i + rad] = v;
+        sum += v;
+      }
+      for (let i = 0; i < k.length; i++) k[i] /= sum;
+      return k;
+    }
+    const kT = makeKernel(sigT, radT);
+    const kC = makeKernel(sigC, radC);
+    // pass 1: 시간축 blur (zero-pad 경계)
+    const tmp = new Float32Array(N);
+    for (let t = 0; t < T; t++) {
+      for (let c = 0; c < K; c++) {
+        let acc = 0;
+        for (let i = -radT; i <= radT; i++) {
+          const tt = t + i;
+          if (tt >= 0 && tt < T) acc += src[tt * K + c] * kT[i + radT];
+        }
+        tmp[t * K + c] = acc;
+      }
+    }
+    // pass 2: cycle축 blur
+    const out = new Float32Array(N);
+    for (let t = 0; t < T; t++) {
+      const base = t * K;
+      for (let c = 0; c < K; c++) {
+        let acc = 0;
+        for (let i = -radC; i <= radC; i++) {
+          const cc = c + i;
+          if (cc >= 0 && cc < K) acc += tmp[base + cc] * kC[i + radC];
+        }
+        let v = acc;
+        if (v > 1) v = 1; else if (v < 0) v = 0;
+        out[base + c] = v;
+      }
+    }
+    return out;
+  }
+
+  // jitter: 참조 기반 왜곡.
+  // 이진: ON 셀 좌표 흔들기 (시간 ±round(24t), cycle ±round(4t)).
+  // 연속: 모든 셀에 평균 0·표준편차 t·0.3 가우시안 노이즈 가산 후 [0,1] clip.
+  function tJitter(src, params, T, K, mode = 'binary') {
+    if (mode === 'continuous') return _tJitterCont(src, params, T, K);
+    return _tJitterBin(src, params, T, K);
+  }
+
+  function _tJitterBin(src, params, T, K) {
+    const strength = Math.max(0.02, Math.min(1, +params.strength || 0.2));
+    const rng = mulberry32(params.seed | 0);
+    const out = new Int8Array(T * K);
+    const maxT = Math.max(1, Math.round(strength * 24));
+    const maxC = Math.max(1, Math.round(strength * 4));
+    for (let t = 0; t < T; t++) {
+      for (let c = 0; c < K; c++) {
+        if (!src[t * K + c]) continue;
+        const ot = Math.floor(rng() * (2 * maxT + 1)) - maxT;
+        const oc = Math.floor(rng() * (2 * maxC + 1)) - maxC;
+        let nt = t + ot, nc = c + oc;
+        if (nt < 0) nt = 0; else if (nt >= T) nt = T - 1;
+        if (nc < 0) nc = 0; else if (nc >= K) nc = K - 1;
+        out[nt * K + nc] = 1;
+      }
+    }
+    return out;
+  }
+
+  function _tJitterCont(src, params, T, K) {
+    // 옵션 C — 활성 영역 한정 가우시안 노이즈.
+    //   src[i] > τ_active 인 셀에만 N(0, 0.3·t) 가산. 비활성 셀(원래 0 영역)은 보존.
+    //   binary 의 "ON 셀 좌표 흔들기" 와 의미적으로 정렬 (활성도 값을 흔들 뿐, 구조 보존).
+    const strength = Math.max(0.02, Math.min(1, +params.strength || 0.2));
+    const rng = mulberry32(params.seed | 0);
+    const N = T * K;
+    const out = new Float32Array(N);
+    const sigma = strength * 0.3;
+    const tauActive = 0.05;
+    for (let i = 0; i < N; i++) {
+      const s = src[i];
+      if (s > tauActive) {
+        let v = s + sigma * _gauss(rng);
+        if (v > 1) v = 1; else if (v < 0) v = 0;
+        out[i] = v;
+      } else {
+        out[i] = s;  // 비활성 영역 그대로 (소음 도입 금지)
+      }
+    }
+    return out;
+  }
+
+  // boost: 선택한 cycle column 의 활성도를 시점 전반에 강화.
+  //   이진: 해당 cycle 의 OFF 시점 중 strength 확률로 ON 토글 (ON 보존, density↑).
+  //   연속: 해당 cycle column 모든 시점에 strength 가산 후 [0,1] clip.
+  function tBoost(src, params, T, K, mode = 'binary') {
+    let cIdx = params.cycleIdx | 0;
+    if (cIdx < 0) cIdx = 0;
+    else if (cIdx >= K) cIdx = K - 1;
+    const strength = Math.max(0, Math.min(1, +params.strength || 0.3));
+    const out = _copyLike(mode, src);
+    if (mode === 'continuous') {
+      for (let t = 0; t < T; t++) {
+        let v = src[t * K + cIdx] + strength;
+        if (v > 1) v = 1; else if (v < 0) v = 0;
+        out[t * K + cIdx] = v;
+      }
+    } else {
+      const rng = mulberry32(params.seed | 0);
+      for (let t = 0; t < T; t++) {
+        const idx = t * K + cIdx;
+        if (!src[idx] && rng() < strength) out[idx] = 1;
+      }
+    }
+    return out;
+  }
+
+  const TRANSFORM_FNS = {
+    shuffle: tShuffle,
+    permuteTime: tPermuteTime,
+    permuteCycle: tPermuteCycle,
+    block: tBlockShuffle,
+    shift: tCircularShift,
+    flood: tFlood,
+    jitter: tJitter,
+    boost: tBoost,
+  };
+
+  // ── 스택 적용기 ────────────────────────────────────────────────
+  // stack:     [{ id, kind, params, enabled }, ...]
+  // reference: Int8Array 또는 Float32Array (mode 와 일치)
+  // mode:      'binary' (기본) | 'continuous'
+  // 반환:       reference 와 같은 타입
+  function applyStack(stack, reference, T, K, mode = 'binary') {
+    let cur = _copyLike(mode, reference);
+    for (const step of stack) {
+      if (!step || !step.enabled) continue;
+      const fn = TRANSFORM_FNS[step.kind];
+      if (!fn) {
+        console.warn('[applyStack] 알 수 없는 변형 종류:', step.kind);
+        continue;
+      }
+      cur = fn(cur, step.params || {}, T, K, mode);
+    }
+    return cur;
+  }
+
+  function defaultParamsFor(kind) {
+    const schema = TRANSFORM_PARAM_SCHEMA[kind] || [];
+    const out = {};
+    for (const p of schema) out[p.key] = p.default;
+    return out;
+  }
+
   global.OverlapEditor = OverlapEditor;
+  global.OverlapTransforms = {
+    KINDS: TRANSFORM_KINDS,
+    DESCRIPTIONS: TRANSFORM_DESCRIPTIONS,
+    SCHEMA: TRANSFORM_PARAM_SCHEMA,
+    apply: applyStack,
+    defaultParams: defaultParamsFor,
+  };
 })(window);
