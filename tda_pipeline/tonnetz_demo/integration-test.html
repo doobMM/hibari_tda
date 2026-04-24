@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>hibari ↔ tonnetz integration tests</title>
+<style>
+  body { font-family: -apple-system, system-ui, sans-serif; max-width: 980px; margin: 24px auto; padding: 0 16px; color: #222; }
+  h1 { font-size: 18px; margin: 0 0 4px; }
+  p.lead { color: #555; margin: 0 0 20px; font-size: 13px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { border-bottom: 1px solid #ddd; padding: 8px; text-align: left; vertical-align: top; }
+  th { background: #f6f6f6; }
+  tr.pass td { background: #f0fff4; }
+  tr.fail td { background: #fff5f5; }
+  td.status { font-weight: 600; white-space: nowrap; }
+  td.status.pass { color: #2e7d32; }
+  td.status.fail { color: #c62828; }
+  pre { margin: 0; font-family: ui-monospace, SFMono-Regular, monospace; font-size: 12px; white-space: pre-wrap; }
+  #summary { font-size: 16px; margin: 16px 0; padding: 12px; border-radius: 6px; background: #f6f6f6; }
+  #summary.allpass { background: #e8f5e9; color: #2e7d32; }
+  #summary.somefail { background: #ffebee; color: #c62828; }
+  button { padding: 8px 14px; font-size: 13px; cursor: pointer; }
+</style>
+</head>
+<body>
+<h1>hibari ↔ tonnetz integration test runner</h1>
+<p class="lead">
+  <code>docs/tonnetz_hibari_integration_spec.md</code> §5 시나리오 2 / 5 / 6 / 7 자동 검증.
+  hibari-bridge.js 를 로드하므로 시나리오 7 (same-page publish → bridge auto-consume) 도 함께 확인됨.
+</p>
+<button id="runBtn">▶ Run tests</button>
+<div id="summary">아직 실행 안 함</div>
+<table id="resultTable" hidden>
+  <thead>
+    <tr><th>시나리오</th><th>setup</th><th>expected</th><th>observed</th><th>status</th></tr>
+  </thead>
+  <tbody></tbody>
+</table>
+
+<!-- shared modules + bridge -->
+<script src="../shared/midi-io.js"></script>
+<script src="../shared/state.js"></script>
+<script src="js/hibari-bridge.js"></script>
+
+<script>
+(function () {
+  'use strict';
+  const KEY = 'tda:pendingSequence';
+
+  function runAll() {
+    const results = [];
+    const origWarn = console.warn;
+    let warnLog = [];
+    console.warn = function (...args) {
+      warnLog.push(args.map(String).join(' '));
+      origWarn.apply(console, args);
+    };
+    const resetWarn = () => { warnLog = []; };
+
+    // ---- Scenario 2: stale 10분 초과 ----
+    sessionStorage.removeItem(KEY);
+    sessionStorage.setItem(KEY, JSON.stringify({
+      notes: [[0, 60, 1], [1, 62, 2]],
+      bpm: 120, ticksPerEighth: 240, source: 'scenario2',
+      version: '1.0', ts: Date.now() - 11 * 60 * 1000
+    }));
+    {
+      const peeked = window.TDAState.peekSequence();
+      const cleared = sessionStorage.getItem(KEY) === null;
+      results.push({
+        name: '2 — 10분 stale 자동 소거',
+        setup: 'ts = now − 11 min, version = "1.0"',
+        expected: 'peek=null, storage=cleared',
+        observed: `peek=${peeked === null ? 'null' : 'object'}, storage=${cleared ? 'cleared' : 'present'}`,
+        pass: peeked === null && cleared
+      });
+    }
+
+    // ---- Scenario 5: version mismatch ----
+    resetWarn();
+    sessionStorage.removeItem(KEY);
+    sessionStorage.setItem(KEY, JSON.stringify({
+      notes: [[0, 60, 1]], bpm: 120, ticksPerEighth: 240,
+      source: 'scenario5', version: '0.9', ts: Date.now()
+    }));
+    {
+      const consumed = window.TDAState.consumeSequence();
+      const cleared = sessionStorage.getItem(KEY) === null;
+      results.push({
+        name: '5 — version mismatch',
+        setup: 'version = "0.9" (expected "1.0")',
+        expected: 'consume=null, storage=cleared',
+        observed: `consume=${consumed === null ? 'null' : 'object'}, storage=${cleared ? 'cleared' : 'present'}`,
+        pass: consumed === null && cleared
+      });
+    }
+
+    // ---- Scenario 5b: version field missing ----
+    sessionStorage.removeItem(KEY);
+    sessionStorage.setItem(KEY, JSON.stringify({
+      notes: [[0, 60, 1]], bpm: 120, ticksPerEighth: 240,
+      source: 'scenario5b', ts: Date.now()
+    }));
+    {
+      const consumed = window.TDAState.consumeSequence();
+      const cleared = sessionStorage.getItem(KEY) === null;
+      results.push({
+        name: '5b — version 필드 누락',
+        setup: 'version 필드 omitted',
+        expected: 'consume=null, storage=cleared',
+        observed: `consume=${consumed === null ? 'null' : 'object'}, storage=${cleared ? 'cleared' : 'present'}`,
+        pass: consumed === null && cleared
+      });
+    }
+
+    // ---- Scenario 6: 빈 notes publish 방지 ----
+    resetWarn();
+    sessionStorage.removeItem(KEY);
+    window.TDAState.publishSequence({
+      notes: [], bpm: 120, ticksPerEighth: 240, source: 'scenario6'
+    });
+    {
+      const stored = sessionStorage.getItem(KEY) !== null;
+      const warned = warnLog.some(w => w.includes('publishSequence'));
+      results.push({
+        name: '6 — 빈 notes publish 방지',
+        setup: 'notes: []',
+        expected: 'storage=empty, warning fired',
+        observed: `storage=${stored ? 'present' : 'empty'}, warning=${warned ? 'fired' : 'silent'}`,
+        pass: !stored && warned
+      });
+    }
+
+    // ---- Scenario 6b: notes 필드 누락 ----
+    resetWarn();
+    sessionStorage.removeItem(KEY);
+    window.TDAState.publishSequence({
+      bpm: 120, ticksPerEighth: 240, source: 'scenario6b'
+    });
+    {
+      const stored = sessionStorage.getItem(KEY) !== null;
+      const warned = warnLog.some(w => w.includes('publishSequence'));
+      results.push({
+        name: '6b — notes 필드 누락',
+        setup: 'notes 필드 omitted',
+        expected: 'storage=empty, warning fired',
+        observed: `storage=${stored ? 'present' : 'empty'}, warning=${warned ? 'fired' : 'silent'}`,
+        pass: !stored && warned
+      });
+    }
+
+    // ---- Scenario 6c: payload null ----
+    resetWarn();
+    sessionStorage.removeItem(KEY);
+    window.TDAState.publishSequence(null);
+    {
+      const stored = sessionStorage.getItem(KEY) !== null;
+      const warned = warnLog.some(w => w.includes('publishSequence'));
+      results.push({
+        name: '6c — payload null',
+        setup: 'payload = null',
+        expected: 'storage=empty, warning fired',
+        observed: `storage=${stored ? 'present' : 'empty'}, warning=${warned ? 'fired' : 'silent'}`,
+        pass: !stored && warned
+      });
+    }
+
+    // ---- Positive control: peek (bridge 우회) ----
+    sessionStorage.removeItem(KEY);
+    sessionStorage.setItem(KEY, JSON.stringify({
+      notes: [[0, 60, 1], [1, 62, 2]], bpm: 120, ticksPerEighth: 240,
+      source: 'positive_peek', version: '1.0', ts: Date.now()
+    }));
+    {
+      const peeked = window.TDAState.peekSequence();
+      const stillThere = sessionStorage.getItem(KEY) !== null;
+      results.push({
+        name: '+ positive (정상 payload peek)',
+        setup: 'version=1.0, fresh ts, notes=2',
+        expected: 'peek=object, storage=present',
+        observed: `peek=${peeked ? `source=${peeked.source}, notes=${peeked.notes.length}` : 'null'}, storage=${stillThere ? 'present' : 'cleared'}`,
+        pass: peeked && peeked.source === 'positive_peek' && peeked.notes.length === 2 && stillThere
+      });
+    }
+
+    // ---- Scenario 7: same-page publish → bridge auto-consume ----
+    sessionStorage.removeItem(KEY);
+    let eventFired = false;
+    const handler = () => { eventFired = true; };
+    window.addEventListener('tda:sequence', handler, { once: true });
+    window.TDAState.publishSequence({
+      notes: [[0, 60, 1]], bpm: 120, ticksPerEighth: 240, source: 'scenario7'
+    });
+    {
+      const storageCleared = sessionStorage.getItem(KEY) === null;
+      results.push({
+        name: '7 — same-page event → bridge consume',
+        setup: 'publishSequence in same page',
+        expected: 'event dispatched + bridge clears storage',
+        observed: `event=${eventFired ? 'fired' : 'silent'}, storage=${storageCleared ? 'cleared' : 'present'}`,
+        pass: eventFired && storageCleared
+      });
+    }
+
+    // cleanup
+    sessionStorage.removeItem(KEY);
+    console.warn = origWarn;
+
+    return results;
+  }
+
+  function render(results) {
+    const tbody = document.querySelector('#resultTable tbody');
+    tbody.innerHTML = '';
+    results.forEach(r => {
+      const tr = document.createElement('tr');
+      tr.className = r.pass ? 'pass' : 'fail';
+      tr.innerHTML = `
+        <td><strong>${r.name}</strong></td>
+        <td><pre>${r.setup}</pre></td>
+        <td><pre>${r.expected}</pre></td>
+        <td><pre>${r.observed}</pre></td>
+        <td class="status ${r.pass ? 'pass' : 'fail'}">${r.pass ? 'PASS' : 'FAIL'}</td>`;
+      tbody.appendChild(tr);
+    });
+    document.getElementById('resultTable').hidden = false;
+
+    const passCount = results.filter(r => r.pass).length;
+    const summary = document.getElementById('summary');
+    summary.textContent = `${passCount} / ${results.length} PASS`;
+    summary.className = passCount === results.length ? 'allpass' : 'somefail';
+  }
+
+  document.getElementById('runBtn').addEventListener('click', () => {
+    const results = runAll();
+    render(results);
+    console.info('[integration-test] results:', results);
+  });
+})();
+</script>
+</body>
+</html>
