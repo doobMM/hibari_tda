@@ -565,6 +565,8 @@
     // Phase 4 생성 버튼
     $('btnGenerate').addEventListener('click', onClickGenerate);
     $('btnDownloadMidi').addEventListener('click', onClickDownloadMidi);
+    const btnPlayTonnetz = $('btnPlayInTonnetz');
+    if (btnPlayTonnetz) btnPlayTonnetz.addEventListener('click', onClickPlayInTonnetz);
   }
 
   // ── 변형 스택 (Q1) ────────────────────────────────────────────
@@ -1537,6 +1539,8 @@
 
       playState.lastGenerated = res;
       $('btnDownloadMidi').disabled = false;
+      const btnT = $('btnPlayInTonnetz');
+      if (btnT) btnT.disabled = false;
       setProgress(1, `생성 완료 · ${res.notes.length} notes · MIDI 저장 버튼으로 다운로드`);
     } catch (e) {
       log(`생성 실패: ${e.message}`, 'ERR');
@@ -1563,6 +1567,49 @@
     } catch (e) {
       log(`MIDI 저장 실패: ${e.message}`, 'ERR');
     }
+  }
+
+  // ── Tonnetz Demo 연동 (시나리오 1: publish → 자동재생) ─────────────
+  function onClickPlayInTonnetz() {
+    if (!playState.lastGenerated) {
+      log('재생할 생성 결과가 없습니다 (먼저 Generate)', 'ERR');
+      return;
+    }
+    if (!window.TDAState || typeof window.TDAState.publishSequence !== 'function') {
+      log('TDAState 모듈 미로드 (../../shared/state.js)', 'ERR');
+      return;
+    }
+    try {
+      const cur = playState.lastGenerated;
+      window.TDAState.publishSequence({
+        notes: cur.notes,
+        bpm: playState.bpm,
+        ticksPerEighth: 240,
+        source: 'hibari_dashboard',
+      });
+      log(`Tonnetz Demo 로 publish (${cur.notes.length} notes, bpm=${playState.bpm})`, 'OK');
+      // 같은 탭 내비게이션 → sessionStorage 보존
+      window.location.href = '../../tonnetz_demo/index.html?from=hibari&intent=autoplay';
+    } catch (e) {
+      log(`Tonnetz publish 실패: ${e.message}`, 'ERR');
+      console.error(e);
+    }
+  }
+
+  // ── 시나리오 8: 편집 시작 시 pending sequence 자동 소거 ────────────
+  // 정책: 편집 상태 데이터는 재생 대기열로 유지하지 않음. publishSequence 후
+  // hibari 로 돌아와 OM 을 수정하는 순간 stale 시퀀스를 즉시 clear.
+  function clearPendingOnEdit() {
+    try {
+      if (window.TDAState && typeof window.TDAState.consumeSequence === 'function') {
+        // peek + clear 의도로 consume 사용 (반환값 무시)
+        const wasThere = window.TDAState.peekSequence?.();
+        if (wasThere) {
+          window.TDAState.consumeSequence();
+          log('OM 편집 감지 → 이전 publish sequence clear', 'INFO');
+        }
+      }
+    } catch (e) { /* noop */ }
   }
 
   // ── 부트스트랩 본체 ─────────────────────────────────────────────────
@@ -1614,6 +1661,7 @@
           updateEditMeta(ed);
           updateOODBanner(ed);
           saveEditState(ed);
+          clearPendingOnEdit(); // 시나리오 8
         },
       });
       updateEditMeta(UI.editEditor);
