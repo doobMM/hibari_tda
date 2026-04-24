@@ -1588,6 +1588,7 @@
         source: 'hibari_dashboard',
       });
       log(`Tonnetz Demo 로 publish (${cur.notes.length} notes, bpm=${playState.bpm})`, 'OK');
+      console.info('[hibari→tonnetz] publish:', { notes: cur.notes.length, bpm: playState.bpm });
       // 같은 탭 내비게이션 → sessionStorage 보존
       window.location.href = '../../tonnetz_demo/index.html?from=hibari&intent=autoplay';
     } catch (e) {
@@ -1607,6 +1608,9 @@
         if (wasThere) {
           window.TDAState.consumeSequence();
           log('OM 편집 감지 → 이전 publish sequence clear', 'INFO');
+          console.info('[hibari] scenario8: pending sequence cleared on edit', {
+            source: wasThere.source, notes: wasThere.notes?.length
+          });
         }
       }
     } catch (e) { /* noop */ }
