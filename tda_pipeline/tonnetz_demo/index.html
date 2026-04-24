@@ -117,6 +117,21 @@
           <div class="panel panel-default">
             <div class="panel-heading"><span class="en">MIDI Playback</span><span class="ko">재생</span></div>
             <div class="panel-body">
+              <!-- ── hibari_dashboard 발행 배너 (직접 URL 진입 시만 노출) ── -->
+              <div id="hibariPendingBanner" class="alert alert-info" hidden
+                   style="padding:8px 12px;margin-bottom:10px;font-size:12px">
+                <span class="en">A sequence from hibari_dashboard is waiting. Play it?</span>
+                <span class="ko">이전 세션 시퀀스가 있습니다. 재생할까요?</span>
+                <div style="margin-top:6px">
+                  <button id="hibariBannerPlayBtn" class="btn btn-primary btn-xs">
+                    <i class="fa fa-play"></i>
+                    <span class="en">Play</span><span class="ko">재생</span>
+                  </button>
+                  <button id="hibariBannerDismissBtn" class="btn btn-default btn-xs">
+                    <span class="en">Dismiss</span><span class="ko">무시</span>
+                  </button>
+                </div>
+              </div>
               <!-- ── Preloaded songs ───────────────────────────────── -->
               <div id="preloadedSongs" style="margin-bottom:12px">
                 <div style="font-size:10px;color:#aaa;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:5px">
@@ -161,6 +176,11 @@
                 </button>
                 <button id="recordBtn" class="btn btn-default btn-sm">
                   <i class="fa fa-circle" style="color:#c00"></i> REC
+                </button>
+                <button id="hibariSaveMidiBtn" class="btn btn-success btn-sm" style="display:none"
+                        title="hibari_dashboard 에서 받은 시퀀스를 MIDI 로 저장">
+                  <i class="fa fa-download"></i>
+                  <span class="en">Save MIDI</span><span class="ko">MIDI 저장</span>
                 </button>
               </div>
               <div style="margin-top:10px">
@@ -927,6 +947,10 @@
 
     <script src="js/main.js"></script>
     <script src="js/midifile.js"></script>
+    <!-- hibari_dashboard 연동: 공유 상태 + MIDI IO 먼저, 그 다음 bridge -->
+    <script src="../shared/midi-io.js"></script>
+    <script src="../shared/state.js"></script>
+    <script src="js/hibari-bridge.js"></script>
     <script src="js/touch.js"></script>   <!-- tap/click canvas to play -->
     <!-- Inline TDA data (works with both http:// and file://) -->
     <script src="js/hibari_barcode_data.js"></script>
