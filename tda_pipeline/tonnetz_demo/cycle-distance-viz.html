@@ -13,10 +13,15 @@
   .tab.active { background: #1976d2; color: #fff; border-color: #1976d2; font-weight: 600; }
   .layout { display: grid; grid-template-columns: 1fr 360px; gap: 16px; }
   .heatmap-panel { background: #fff; border: 1px solid #e0e0e0; border-radius: 6px; padding: 16px; overflow: auto; }
-  .heatmap-panel h2 { font-size: 14px; margin: 0 0 8px; }
+  .heatmap-panel h2 { font-size: 14px; margin: 0 0 4px; }
+  .heatmap-panel .character { font-size: 12px; color: #1976d2; margin-bottom: 8px; padding: 6px 10px; background: #e3f2fd; border-left: 3px solid #1976d2; border-radius: 3px; line-height: 1.4; }
   .heatmap-panel .stats { font-size: 11px; color: #666; margin-bottom: 10px; font-family: ui-monospace, monospace; }
-  .legend { display: inline-block; margin-left: 12px; font-size: 11px; color: #666; }
+  .controls { display: flex; gap: 16px; align-items: center; margin: 8px 0 10px; flex-wrap: wrap; }
+  .controls label { font-size: 12px; cursor: pointer; user-select: none; display: inline-flex; align-items: center; gap: 5px; }
+  .controls label input { cursor: pointer; }
+  .legend { display: inline-block; font-size: 11px; color: #666; }
   .legend .swatch { display: inline-block; width: 14px; height: 12px; vertical-align: middle; margin: 0 2px; border: 1px solid #ddd; }
+  .legend.membership .dot { display: inline-block; width: 8px; height: 8px; vertical-align: middle; margin: 0 3px; background: #ffd600; border: 1px solid #f57c00; border-radius: 50%; }
   svg.heatmap { display: block; user-select: none; }
   .side-panel { background: #fff; border: 1px solid #e0e0e0; border-radius: 6px; padding: 14px; max-height: 78vh; overflow-y: auto; }
   .side-panel h2 { font-size: 14px; margin: 0 0 8px; }
@@ -54,10 +59,21 @@
 <div class="layout">
   <div class="heatmap-panel">
     <h2 id="heatTitle">Tonnetz distance matrix</h2>
+    <div class="character" id="heatCharacter"></div>
     <div class="stats" id="heatStats">로딩 중...</div>
-    <div>
+    <div class="controls">
+      <label>
+        <input type="checkbox" id="toggleMembership" checked>
+        <strong>cycle 멤버십 표시</strong> (note 쌍이 cycle 에 등장하면 점)
+      </label>
+      <label>
+        <input type="checkbox" id="toggleSizeByCount" checked>
+        점 크기 = 등장 횟수
+      </label>
+    </div>
+    <div class="controls">
       <span class="legend">
-        가까움
+        거리: 가까움
         <span class="swatch" style="background:#0d47a1"></span>
         <span class="swatch" style="background:#42a5f5"></span>
         <span class="swatch" style="background:#bbdefb"></span>
@@ -66,6 +82,11 @@
         <span class="swatch" style="background:#fb8c00"></span>
         <span class="swatch" style="background:#bf360c"></span>
         멈
+      </span>
+      <span class="legend membership">
+        멤버십: <span class="dot" style="width:4px;height:4px"></span> 1회
+        <span class="dot" style="width:7px;height:7px"></span> 중간
+        <span class="dot" style="width:11px;height:11px"></span> 많음
       </span>
     </div>
     <svg id="heatmap" class="heatmap"></svg>
@@ -88,6 +109,27 @@
 let DATA = null;
 let CURRENT_METRIC = 'tonnetz';
 let SELECTED_CYCLE = null;
+let SHOW_MEMBERSHIP = true;
+let SIZE_BY_COUNT = true;
+const MEMBERSHIP_CACHE = {};  // metric → {matrix: N×N count, max: number}
+
+const METRIC_CHARACTER = {
+  tonnetz: {
+    title: 'Tonnetz distance matrix (3-축 격자)',
+    character: '<strong>Riemann 격자</strong> — 장3도 / 단3도 / 완전5도 / 옥타브 가까움 강조. ' +
+      '예상되는 가까운 쌍: <code>C↔E</code> (장3도), <code>C↔G</code> (5도), <code>C4↔C5</code> (옥타브).'
+  },
+  dft: {
+    title: 'DFT distance matrix (스펙트럼 거리)',
+    character: '<strong>스펙트럼 거리</strong> — pitch class 의 푸리에 변환 6차원 벡터 비교. ' +
+      '같은 pitch class set (예: whole-tone <code>F-G-A-B</code>, pentatonic <code>C-D-E-G-A</code>) 은 거리 0.'
+  },
+  voice_leading: {
+    title: 'Voice Leading distance matrix (성부진행 거리)',
+    character: '<strong>성부진행 거리</strong> — 두 note 사이 최소 반음 이동량. ' +
+      '예상되는 가까운 쌍: <code>E4↔F4</code> (반음), <code>C4↔D4</code> (온음). 음정이 작을수록 가까움.'
+  },
+};
 
 // 색상: 0(가까움) → 1(멈), turbo-like
 function distColor(t) {
@@ -107,6 +149,26 @@ function tightClass(t) {
   if (t < 0.75) return 't2';
   if (t < 1.0) return 't3';
   return 't4';
+}
+
+// note 쌍 (i, j) 가 몇 개 cycle 에 같이 등장하는지 N×N 행렬
+function buildMembershipMatrix(metric) {
+  if (MEMBERSHIP_CACHE[metric]) return MEMBERSHIP_CACHE[metric];
+  const N = DATA.notes.length;
+  const mat = Array.from({ length: N }, () => new Array(N).fill(0));
+  const cycles = DATA.metrics[metric].cycles;
+  cycles.forEach(c => {
+    const idxs = c.indices;
+    for (let a = 0; a < idxs.length; a++) {
+      for (let b = 0; b < idxs.length; b++) {
+        if (idxs[a] !== idxs[b]) mat[idxs[a]][idxs[b]] += 1;
+      }
+    }
+  });
+  let mx = 0;
+  for (let i = 0; i < N; i++) for (let j = 0; j < N; j++) if (mat[i][j] > mx) mx = mat[i][j];
+  MEMBERSHIP_CACHE[metric] = { matrix: mat, max: mx };
+  return MEMBERSHIP_CACHE[metric];
 }
 
 function renderHeatmap() {
@@ -147,6 +209,10 @@ function renderHeatmap() {
     svg.appendChild(txt);
   }
 
+  const memData = buildMembershipMatrix(CURRENT_METRIC);
+  const memMat = memData.matrix;
+  const memMax = memData.max || 1;
+
   // Cells
   for (let i = 0; i < N; i++) {
     for (let j = 0; j < N; j++) {
@@ -164,10 +230,45 @@ function renderHeatmap() {
       rect.setAttribute('data-j', j);
       rect.setAttribute('class', 'cell');
       const tip = document.createElementNS('http://www.w3.org/2000/svg', 'title');
-      tip.textContent = `${DATA.notes[i].name}(${DATA.notes[i].dur}) ↔ ${DATA.notes[j].name}(${DATA.notes[j].dur})  d=${d.toFixed(3)}`;
+      tip.textContent = `${DATA.notes[i].name}(${DATA.notes[i].dur}) ↔ ${DATA.notes[j].name}(${DATA.notes[j].dur})  d=${d.toFixed(3)}  cycles=${memMat[i][j]}`;
       rect.appendChild(tip);
       svg.appendChild(rect);
     }
+  }
+
+  // Membership dots layer (above cells)
+  if (SHOW_MEMBERSHIP) {
+    const dotLayer = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    dotLayer.setAttribute('id', 'memDots');
+    dotLayer.setAttribute('pointer-events', 'none');
+    for (let i = 0; i < N; i++) {
+      for (let j = 0; j < N; j++) {
+        if (i === j) continue;
+        const cnt = memMat[i][j];
+        if (cnt === 0) continue;
+        // 점 크기: 토글에 따라 고정 또는 등장 횟수 비례 (sqrt 스케일로 시각적 균형)
+        let r;
+        if (SIZE_BY_COUNT) {
+          const norm = Math.sqrt(cnt / memMax);  // 0~1
+          r = 1.6 + norm * (cellSize * 0.42 - 1.6);  // 1.6 ~ 약 9.2
+        } else {
+          r = 2.2;
+        }
+        const dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        dot.setAttribute('cx', margin.left + j * cellSize + cellSize / 2);
+        dot.setAttribute('cy', margin.top + i * cellSize + cellSize / 2);
+        dot.setAttribute('r', r);
+        dot.setAttribute('fill', '#ffd600');
+        dot.setAttribute('stroke', '#f57c00');
+        dot.setAttribute('stroke-width', '0.7');
+        dot.setAttribute('opacity', '0.9');
+        dot.setAttribute('class', 'memdot');
+        dot.setAttribute('data-i', i);
+        dot.setAttribute('data-j', j);
+        dotLayer.appendChild(dot);
+      }
+    }
+    svg.appendChild(dotLayer);
   }
 
   highlightCycle();
@@ -175,7 +276,13 @@ function renderHeatmap() {
 
 function highlightCycle() {
   const cells = document.querySelectorAll('#heatmap rect.cell');
-  cells.forEach(c => c.removeAttribute('opacity'));
+  const dots = document.querySelectorAll('#heatmap circle.memdot');
+  cells.forEach(c => {
+    c.removeAttribute('opacity');
+    c.setAttribute('stroke', '#fff');
+    c.setAttribute('stroke-width', '0.5');
+  });
+  dots.forEach(d => d.setAttribute('opacity', '0.9'));
   if (!SELECTED_CYCLE) return;
   const m = DATA.metrics[CURRENT_METRIC];
   const cyc = m.cycles.find(c => c.id === SELECTED_CYCLE);
@@ -195,6 +302,12 @@ function highlightCycle() {
     } else {
       c.setAttribute('opacity', '0.18');
     }
+  });
+  dots.forEach(d => {
+    const i = +d.getAttribute('data-i');
+    const j = +d.getAttribute('data-j');
+    const isCycle = set.has(i) && set.has(j);
+    d.setAttribute('opacity', isCycle ? '1' : '0.18');
   });
 }
 
@@ -267,14 +380,15 @@ function setMetric(metric) {
   document.querySelectorAll('.tab').forEach(t => {
     t.classList.toggle('active', t.dataset.metric === metric);
   });
-  document.getElementById('heatTitle').textContent =
-    metric === 'tonnetz' ? 'Tonnetz distance matrix (3-축 격자)' :
-    metric === 'dft' ? 'DFT distance matrix (스펙트럼 거리)' :
-    'Voice Leading distance matrix (성부진행 거리)';
+  const meta = METRIC_CHARACTER[metric];
+  document.getElementById('heatTitle').textContent = meta.title;
+  document.getElementById('heatCharacter').innerHTML = meta.character;
   const stats = DATA.metrics[metric].stats;
+  const memData = buildMembershipMatrix(metric);
   document.getElementById('heatStats').textContent =
     `min ${stats.min_dist.toFixed(3)} · max ${stats.max_dist.toFixed(3)} · mean ${stats.mean_global_dist.toFixed(3)}  |  ` +
-    `cycles ${DATA.metrics[metric].cycles.length}, median tightness ${stats.median_tightness.toFixed(2)}`;
+    `cycles ${DATA.metrics[metric].cycles.length}, median tightness ${stats.median_tightness.toFixed(2)}  |  ` +
+    `cycle 멤버십 max ${memData.max} (가장 빈번한 note 쌍이 등장한 cycle 수)`;
   renderHeatmap();
   renderCycleList();
   renderInfoBox();
@@ -286,6 +400,14 @@ fetch('../docs/cycle_distance_data.json')
     DATA = json;
     document.querySelectorAll('.tab').forEach(t => {
       t.addEventListener('click', () => setMetric(t.dataset.metric));
+    });
+    document.getElementById('toggleMembership').addEventListener('change', e => {
+      SHOW_MEMBERSHIP = e.target.checked;
+      renderHeatmap();
+    });
+    document.getElementById('toggleSizeByCount').addEventListener('change', e => {
+      SIZE_BY_COUNT = e.target.checked;
+      renderHeatmap();
     });
     setMetric('tonnetz');
   })
