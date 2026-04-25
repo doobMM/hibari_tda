@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>cycle ↔ distance 시각화 — hibari</title>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, system-ui, sans-serif; margin: 0; padding: 16px 24px; color: #222; background: #fafafa; }
+  h1 { font-size: 18px; margin: 0 0 4px; }
+  p.lead { color: #555; font-size: 13px; margin: 0 0 16px; }
+  .tabs { display: flex; gap: 6px; margin-bottom: 12px; }
+  .tab { padding: 8px 14px; border: 1px solid #ccc; background: #fff; cursor: pointer; font-size: 13px; border-radius: 4px; }
+  .tab.active { background: #1976d2; color: #fff; border-color: #1976d2; font-weight: 600; }
+  .layout { display: grid; grid-template-columns: 1fr 360px; gap: 16px; }
+  .heatmap-panel { background: #fff; border: 1px solid #e0e0e0; border-radius: 6px; padding: 16px; overflow: auto; }
+  .heatmap-panel h2 { font-size: 14px; margin: 0 0 8px; }
+  .heatmap-panel .stats { font-size: 11px; color: #666; margin-bottom: 10px; font-family: ui-monospace, monospace; }
+  .legend { display: inline-block; margin-left: 12px; font-size: 11px; color: #666; }
+  .legend .swatch { display: inline-block; width: 14px; height: 12px; vertical-align: middle; margin: 0 2px; border: 1px solid #ddd; }
+  svg.heatmap { display: block; user-select: none; }
+  .side-panel { background: #fff; border: 1px solid #e0e0e0; border-radius: 6px; padding: 14px; max-height: 78vh; overflow-y: auto; }
+  .side-panel h2 { font-size: 14px; margin: 0 0 8px; }
+  .side-panel .summary { font-size: 11px; color: #666; margin-bottom: 12px; padding: 8px; background: #f5f5f5; border-radius: 4px; line-height: 1.4; }
+  .cycle-row { padding: 6px 8px; cursor: pointer; border-radius: 3px; font-size: 12px; border-left: 3px solid transparent; }
+  .cycle-row:hover { background: #f0f7ff; }
+  .cycle-row.selected { background: #fff3cd; border-left-color: #f57c00; font-weight: 500; }
+  .cycle-row .id { font-weight: 600; color: #333; display: inline-block; width: 28px; }
+  .cycle-row .tight { font-family: ui-monospace, monospace; font-size: 10px; padding: 1px 4px; border-radius: 3px; margin-right: 6px; }
+  .cycle-row .tight.t1 { background: #c8e6c9; color: #2e7d32; }
+  .cycle-row .tight.t2 { background: #fff9c4; color: #827717; }
+  .cycle-row .tight.t3 { background: #ffe0b2; color: #e65100; }
+  .cycle-row .tight.t4 { background: #ffcdd2; color: #c62828; }
+  .cycle-row .pitches { color: #666; font-family: ui-monospace, monospace; font-size: 10px; }
+  #infoBox { padding: 10px; background: #e3f2fd; border-radius: 4px; font-size: 12px; min-height: 60px; margin-bottom: 8px; }
+  #infoBox.empty { color: #999; font-style: italic; }
+  .footer { margin-top: 14px; font-size: 11px; color: #888; }
+  code { font-family: ui-monospace, SFMono-Regular, monospace; font-size: 11px; background: #f3f3f3; padding: 1px 4px; border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<h1>note 거리행렬 ↔ 발견된 cycle 비교 (hibari)</h1>
+<p class="lead">
+  각 musical distance 에서 어떤 note 끼리 가까운지 (히트맵), 그리고 PH 가 발견한 cycle 들이 정말 그 가까운 note 들의 묶음인지 (tightness) 확인.
+  cycle 행을 클릭하면 히트맵에 해당 note 들이 강조됨.
+</p>
+
+<div class="tabs">
+  <button class="tab active" data-metric="tonnetz">Tonnetz</button>
+  <button class="tab" data-metric="dft">DFT</button>
+  <button class="tab" data-metric="voice_leading">Voice Leading</button>
+</div>
+
+<div class="layout">
+  <div class="heatmap-panel">
+    <h2 id="heatTitle">Tonnetz distance matrix</h2>
+    <div class="stats" id="heatStats">로딩 중...</div>
+    <div>
+      <span class="legend">
+        가까움
+        <span class="swatch" style="background:#0d47a1"></span>
+        <span class="swatch" style="background:#42a5f5"></span>
+        <span class="swatch" style="background:#bbdefb"></span>
+        <span class="swatch" style="background:#fff8e1"></span>
+        <span class="swatch" style="background:#ffe0b2"></span>
+        <span class="swatch" style="background:#fb8c00"></span>
+        <span class="swatch" style="background:#bf360c"></span>
+        멈
+      </span>
+    </div>
+    <svg id="heatmap" class="heatmap"></svg>
+  </div>
+
+  <div class="side-panel">
+    <h2 id="cycleTitle">cycles</h2>
+    <div class="summary" id="cycleSummary"></div>
+    <div id="infoBox" class="empty">cycle 을 클릭하면 상세 정보가 여기에 표시됩니다.</div>
+    <div id="cycleList"></div>
+  </div>
+</div>
+
+<p class="footer">
+  데이터: <code>docs/cycle_distance_data.json</code> · 생성: <code>tools/compute_distance_data.py</code> ·
+  <strong>tightness</strong> = cycle 내부 평균거리 / 전체 평균거리 (1 미만 = 가까운 note 묶음).
+</p>
+
+<script>
+let DATA = null;
+let CURRENT_METRIC = 'tonnetz';
+let SELECTED_CYCLE = null;
+
+// 색상: 0(가까움) → 1(멈), turbo-like
+function distColor(t) {
+  // t in [0,1]
+  if (t <= 0.15) return '#0d47a1';
+  if (t <= 0.30) return '#1976d2';
+  if (t <= 0.45) return '#42a5f5';
+  if (t <= 0.55) return '#bbdefb';
+  if (t <= 0.65) return '#fff8e1';
+  if (t <= 0.75) return '#ffe0b2';
+  if (t <= 0.85) return '#fb8c00';
+  return '#bf360c';
+}
+
+function tightClass(t) {
+  if (t < 0.5) return 't1';
+  if (t < 0.75) return 't2';
+  if (t < 1.0) return 't3';
+  return 't4';
+}
+
+function renderHeatmap() {
+  const m = DATA.metrics[CURRENT_METRIC];
+  const N = DATA.notes.length;
+  const cellSize = 22;
+  const margin = { top: 50, left: 60, right: 10, bottom: 10 };
+  const svgW = margin.left + cellSize * N + margin.right;
+  const svgH = margin.top + cellSize * N + margin.bottom;
+  const svg = document.getElementById('heatmap');
+  svg.setAttribute('width', svgW);
+  svg.setAttribute('height', svgH);
+  svg.innerHTML = '';
+
+  const dMax = m.stats.max_dist;
+
+  // X labels (top)
+  for (let i = 0; i < N; i++) {
+    const txt = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    txt.setAttribute('x', margin.left + i * cellSize + cellSize / 2);
+    txt.setAttribute('y', margin.top - 6);
+    txt.setAttribute('text-anchor', 'start');
+    txt.setAttribute('transform', `rotate(-60 ${margin.left + i * cellSize + cellSize / 2} ${margin.top - 6})`);
+    txt.setAttribute('font-size', '10');
+    txt.setAttribute('fill', '#555');
+    txt.textContent = DATA.notes[i].name;
+    svg.appendChild(txt);
+  }
+  // Y labels (left)
+  for (let i = 0; i < N; i++) {
+    const txt = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    txt.setAttribute('x', margin.left - 4);
+    txt.setAttribute('y', margin.top + i * cellSize + cellSize / 2 + 4);
+    txt.setAttribute('text-anchor', 'end');
+    txt.setAttribute('font-size', '10');
+    txt.setAttribute('fill', '#555');
+    txt.textContent = DATA.notes[i].name;
+    svg.appendChild(txt);
+  }
+
+  // Cells
+  for (let i = 0; i < N; i++) {
+    for (let j = 0; j < N; j++) {
+      const d = m.distance[i][j];
+      const t = dMax > 0 ? d / dMax : 0;
+      const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+      rect.setAttribute('x', margin.left + j * cellSize);
+      rect.setAttribute('y', margin.top + i * cellSize);
+      rect.setAttribute('width', cellSize);
+      rect.setAttribute('height', cellSize);
+      rect.setAttribute('fill', i === j ? '#222' : distColor(t));
+      rect.setAttribute('stroke', '#fff');
+      rect.setAttribute('stroke-width', '0.5');
+      rect.setAttribute('data-i', i);
+      rect.setAttribute('data-j', j);
+      rect.setAttribute('class', 'cell');
+      const tip = document.createElementNS('http://www.w3.org/2000/svg', 'title');
+      tip.textContent = `${DATA.notes[i].name}(${DATA.notes[i].dur}) ↔ ${DATA.notes[j].name}(${DATA.notes[j].dur})  d=${d.toFixed(3)}`;
+      rect.appendChild(tip);
+      svg.appendChild(rect);
+    }
+  }
+
+  highlightCycle();
+}
+
+function highlightCycle() {
+  const cells = document.querySelectorAll('#heatmap rect.cell');
+  cells.forEach(c => c.removeAttribute('opacity'));
+  if (!SELECTED_CYCLE) return;
+  const m = DATA.metrics[CURRENT_METRIC];
+  const cyc = m.cycles.find(c => c.id === SELECTED_CYCLE);
+  if (!cyc) return;
+  const set = new Set(cyc.indices);
+
+  cells.forEach(c => {
+    const i = +c.getAttribute('data-i');
+    const j = +c.getAttribute('data-j');
+    const isCycle = set.has(i) && set.has(j) && i !== j;
+    const isOnAxis = set.has(i) || set.has(j);
+    if (isCycle) {
+      c.setAttribute('stroke', '#f57c00');
+      c.setAttribute('stroke-width', '2');
+    } else if (isOnAxis) {
+      c.setAttribute('opacity', '0.95');
+    } else {
+      c.setAttribute('opacity', '0.18');
+    }
+  });
+}
+
+function renderCycleList() {
+  const m = DATA.metrics[CURRENT_METRIC];
+  const list = document.getElementById('cycleList');
+  list.innerHTML = '';
+  document.getElementById('cycleTitle').textContent = `${m.cycles.length} cycles (tightness 오름차순)`;
+
+  const summary = document.getElementById('cycleSummary');
+  summary.innerHTML = `
+    cycle 수: <strong>${m.cycles.length}</strong>  ·
+    tightness median <strong>${m.stats.median_tightness.toFixed(2)}</strong> ·
+    범위 [${m.stats.min_tightness.toFixed(2)}, ${m.stats.max_tightness.toFixed(2)}]<br>
+    <span style="color:#2e7d32">tight (&lt;1.0): ${m.stats.n_cycles_below_1_0 ?? m.stats['n_cycles_below_1.0']}</span>  ·
+    <span style="color:#c62828">loose (≥1.0): ${m.stats.n_cycles_above_1_0 ?? m.stats['n_cycles_above_1.0']}</span><br>
+    전체 거리 평균: ${m.stats.mean_global_dist.toFixed(3)} (범위 ${m.stats.min_dist.toFixed(3)} ~ ${m.stats.max_dist.toFixed(3)})
+  `;
+
+  m.cycles.forEach(c => {
+    const row = document.createElement('div');
+    row.className = 'cycle-row';
+    if (c.id === SELECTED_CYCLE) row.classList.add('selected');
+    row.innerHTML = `
+      <span class="id">#${c.id}</span>
+      <span class="tight ${tightClass(c.tightness)}">${c.tightness.toFixed(2)}</span>
+      <span class="pitches">${c.pitch_names.join(' ')}</span>
+    `;
+    row.addEventListener('click', () => {
+      SELECTED_CYCLE = (SELECTED_CYCLE === c.id) ? null : c.id;
+      renderCycleList();
+      highlightCycle();
+      renderInfoBox();
+    });
+    list.appendChild(row);
+  });
+}
+
+function renderInfoBox() {
+  const box = document.getElementById('infoBox');
+  if (!SELECTED_CYCLE) {
+    box.className = 'empty';
+    box.textContent = 'cycle 을 클릭하면 상세 정보가 여기에 표시됩니다.';
+    return;
+  }
+  const m = DATA.metrics[CURRENT_METRIC];
+  const cyc = m.cycles.find(c => c.id === SELECTED_CYCLE);
+  if (!cyc) return;
+  box.className = '';
+  const interp = cyc.tightness < 0.5
+    ? '<span style="color:#2e7d32"><strong>매우 tight</strong> — cycle 이 거리상 정말 가까운 note 묶음</span>'
+    : cyc.tightness < 0.75
+    ? '<span style="color:#827717"><strong>tight</strong> — cycle 이 평균보다 가까운 note 묶음</span>'
+    : cyc.tightness < 1.0
+    ? '<span style="color:#e65100"><strong>약하게 tight</strong> — 거리 기준으로는 미묘</span>'
+    : '<span style="color:#c62828"><strong>loose</strong> — cycle 이 거리상 가까운 묶음이 아님 (위상학적으로만 cycle)</span>';
+  box.innerHTML = `
+    <strong>cycle #${cyc.id}</strong> (${m.cycles.length}개 중)<br>
+    note: <code>${cyc.pitch_names.join(', ')}</code> (${cyc.n_pitches}개)<br>
+    indices(0-base): <code>${cyc.indices.join(', ')}</code><br>
+    내부 평균거리: <strong>${cyc.mean_intra_dist.toFixed(3)}</strong> · 전체 평균: ${m.stats.mean_global_dist.toFixed(3)} ·
+    <strong>tightness ${cyc.tightness.toFixed(2)}</strong><br>
+    ${interp}
+  `;
+}
+
+function setMetric(metric) {
+  CURRENT_METRIC = metric;
+  SELECTED_CYCLE = null;
+  document.querySelectorAll('.tab').forEach(t => {
+    t.classList.toggle('active', t.dataset.metric === metric);
+  });
+  document.getElementById('heatTitle').textContent =
+    metric === 'tonnetz' ? 'Tonnetz distance matrix (3-축 격자)' :
+    metric === 'dft' ? 'DFT distance matrix (스펙트럼 거리)' :
+    'Voice Leading distance matrix (성부진행 거리)';
+  const stats = DATA.metrics[metric].stats;
+  document.getElementById('heatStats').textContent =
+    `min ${stats.min_dist.toFixed(3)} · max ${stats.max_dist.toFixed(3)} · mean ${stats.mean_global_dist.toFixed(3)}  |  ` +
+    `cycles ${DATA.metrics[metric].cycles.length}, median tightness ${stats.median_tightness.toFixed(2)}`;
+  renderHeatmap();
+  renderCycleList();
+  renderInfoBox();
+}
+
+fetch('../docs/cycle_distance_data.json')
+  .then(r => r.json())
+  .then(json => {
+    DATA = json;
+    document.querySelectorAll('.tab').forEach(t => {
+      t.addEventListener('click', () => setMetric(t.dataset.metric));
+    });
+    setMetric('tonnetz');
+  })
+  .catch(e => {
+    document.getElementById('heatStats').textContent = `데이터 로드 실패: ${e.message} (tools/compute_distance_data.py 를 먼저 실행하세요)`;
+  });
+</script>
+
+</body>
+</html>
