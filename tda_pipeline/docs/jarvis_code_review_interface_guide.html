@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jarvis 코드 점검 인터페이스 흐름 설명서</title>
+<style>
+  :root {
+    --bg: #0b1020;
+    --paper: #f7f3ea;
+    --ink: #172033;
+    --muted: #687083;
+    --line: #d7d0c4;
+    --panel: #ffffff;
+    --panel-2: #eef4f8;
+    --navy: #263b66;
+    --cyan: #0f9db4;
+    --green: #17865d;
+    --violet: #6f55aa;
+    --orange: #c95f22;
+    --yellow: #b88a12;
+    --red: #b8323b;
+    --gray: #687083;
+    --shadow: 0 18px 50px rgba(10, 18, 38, 0.18);
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "Noto Sans KR", "Segoe UI", system-ui, sans-serif;
+    line-height: 1.65;
+  }
+  a { color: var(--navy); }
+  code {
+    padding: 0.1rem 0.35rem;
+    border-radius: 0.3rem;
+    background: rgba(38, 59, 102, 0.09);
+    font-family: "Cascadia Mono", "Consolas", monospace;
+    font-size: 0.92em;
+  }
+  .deck {
+    width: min(100%, 1080px);
+    margin: 0 auto;
+    padding: 1rem;
+  }
+  .page {
+    min-height: calc(100vh - 2rem);
+    margin: 0 0 1rem;
+    padding: clamp(1.15rem, 3vw, 2.6rem);
+    background: var(--paper);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    box-shadow: var(--shadow);
+    display: flex;
+    flex-direction: column;
+    gap: 1.15rem;
+  }
+  .kicker {
+    color: var(--cyan);
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-size: 0.78rem;
+  }
+  h1, h2, h3, p { margin: 0; }
+  h1 {
+    font-size: clamp(2.1rem, 7vw, 5.7rem);
+    line-height: 0.98;
+    letter-spacing: 0;
+    max-width: 900px;
+  }
+  h2 {
+    font-size: clamp(1.55rem, 4vw, 3.05rem);
+    line-height: 1.06;
+    letter-spacing: 0;
+    max-width: 930px;
+  }
+  h3 {
+    font-size: 1rem;
+    color: var(--navy);
+    margin-bottom: 0.25rem;
+  }
+  .lead {
+    font-size: clamp(1.02rem, 2.2vw, 1.35rem);
+    color: #2a3242;
+    max-width: 880px;
+  }
+  .small { color: var(--muted); font-size: 0.92rem; }
+  .toc {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    gap: 0.55rem;
+    margin-top: 1rem;
+  }
+  .toc a {
+    display: block;
+    padding: 0.75rem 0.85rem;
+    color: var(--ink);
+    text-decoration: none;
+    background: rgba(255, 255, 255, 0.65);
+    border: 1px solid var(--line);
+    border-radius: 0.55rem;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+    gap: 0.8rem;
+  }
+  .two {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1rem;
+  }
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 0.7rem;
+    padding: 1rem;
+  }
+  .panel.tint { background: var(--panel-2); }
+  .panel strong { color: var(--navy); }
+  .note {
+    padding: 1rem;
+    border-left: 5px solid var(--cyan);
+    background: rgba(15, 157, 180, 0.09);
+  }
+  .warn {
+    padding: 1rem;
+    border-left: 5px solid var(--red);
+    background: rgba(184, 50, 59, 0.08);
+  }
+  .stat-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.75rem;
+  }
+  .stat {
+    padding: 1rem;
+    border: 1px solid var(--line);
+    background: #fff;
+    border-radius: 0.7rem;
+  }
+  .stat b {
+    display: block;
+    font-size: clamp(1.8rem, 5vw, 3rem);
+    line-height: 1;
+    color: var(--navy);
+  }
+  .flow {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 0.7rem;
+    align-items: stretch;
+  }
+  .flow .step {
+    min-height: 96px;
+    padding: 0.8rem;
+    border-radius: 0.7rem;
+    border: 1px solid var(--line);
+    background: #fff;
+    position: relative;
+  }
+  .step .num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.7rem;
+    height: 1.7rem;
+    margin-bottom: 0.35rem;
+    color: #fff;
+    background: var(--navy);
+    border-radius: 999px;
+    font-weight: 800;
+    font-size: 0.85rem;
+  }
+  .tree {
+    display: grid;
+    gap: 0.55rem;
+  }
+  .tree-row {
+    display: grid;
+    grid-template-columns: 11rem 1fr;
+    gap: 0.65rem;
+    align-items: stretch;
+  }
+  .stage {
+    padding: 0.75rem;
+    border-radius: 0.6rem;
+    color: #fff;
+    font-weight: 800;
+  }
+  .mods {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+    align-items: center;
+    padding: 0.65rem;
+    border: 1px solid var(--line);
+    background: #fff;
+    border-radius: 0.6rem;
+  }
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.32rem 0.55rem;
+    border-radius: 999px;
+    background: rgba(38, 59, 102, 0.08);
+    color: var(--ink);
+    font-size: 0.88rem;
+    white-space: nowrap;
+  }
+  .dot {
+    width: 0.65rem;
+    height: 0.65rem;
+    border-radius: 50%;
+    display: inline-block;
+  }
+  .blue { background: #3a6ccf; }
+  .green { background: var(--green); }
+  .violet { background: var(--violet); }
+  .orange { background: var(--orange); }
+  .yellow { background: var(--yellow); }
+  .red { background: var(--red); }
+  .gray { background: var(--gray); }
+  .cyan { background: var(--cyan); }
+  .navy { background: var(--navy); }
+  .mock {
+    display: grid;
+    grid-template-columns: 230px minmax(0, 1fr) 280px;
+    min-height: 380px;
+    border: 1px solid #a8b2c2;
+    border-radius: 0.8rem;
+    overflow: hidden;
+    background: #07101c;
+    color: #d9ecf6;
+  }
+  .mock .head {
+    grid-column: 1 / -1;
+    padding: 0.65rem 0.9rem;
+    background: #08192c;
+    border-bottom: 1px solid rgba(120, 220, 255, 0.28);
+    font-weight: 800;
+    color: #48c7e5;
+  }
+  .mock .left, .mock .center, .mock .right {
+    padding: 0.8rem;
+    min-width: 0;
+  }
+  .mock .left {
+    background: #091527;
+    border-right: 1px solid rgba(120, 220, 255, 0.22);
+  }
+  .mock .center {
+    background: #0b1c2e;
+    border-right: 1px solid rgba(120, 220, 255, 0.22);
+  }
+  .mock .right { background: #091527; }
+  .mock-line {
+    height: 0.75rem;
+    border-radius: 99px;
+    margin: 0.55rem 0;
+    background: rgba(170, 210, 230, 0.28);
+  }
+  .mock-line.short { width: 60%; }
+  .mock-line.mid { width: 78%; }
+  .mock-line.hot { background: rgba(184, 50, 59, 0.78); width: 48%; }
+  .code-block {
+    padding: 1rem;
+    overflow-x: auto;
+    border-radius: 0.7rem;
+    color: #e6edf3;
+    background: #111827;
+    font-family: "Cascadia Mono", "Consolas", monospace;
+    font-size: 0.86rem;
+    line-height: 1.55;
+  }
+  .checklist {
+    display: grid;
+    gap: 0.55rem;
+  }
+  .check {
+    display: grid;
+    grid-template-columns: 2rem 1fr;
+    gap: 0.55rem;
+    align-items: start;
+    padding: 0.72rem;
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 0.6rem;
+  }
+  .check b {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.55rem;
+    height: 1.55rem;
+    border-radius: 999px;
+    color: #fff;
+    background: var(--navy);
+    font-size: 0.82rem;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    overflow: hidden;
+    border-radius: 0.7rem;
+    background: #fff;
+  }
+  th, td {
+    padding: 0.72rem;
+    border: 1px solid var(--line);
+    vertical-align: top;
+    text-align: left;
+  }
+  th {
+    background: var(--navy);
+    color: #fff;
+  }
+  .page-num {
+    margin-top: auto;
+    color: var(--muted);
+    font-size: 0.82rem;
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    border-top: 1px solid var(--line);
+    padding-top: 0.7rem;
+  }
+  @media (max-width: 760px) {
+    .deck { padding: 0; }
+    .page {
+      min-height: auto;
+      margin: 0;
+      border-left: 0;
+      border-right: 0;
+      box-shadow: none;
+    }
+    .stat-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .tree-row { grid-template-columns: 1fr; }
+    .mock { grid-template-columns: 1fr; }
+    .mock .head { grid-column: auto; }
+    .mock .left, .mock .center {
+      border-right: 0;
+      border-bottom: 1px solid rgba(120, 220, 255, 0.22);
+    }
+  }
+  @media print {
+    body { background: #fff; }
+    .deck { width: 100%; padding: 0; }
+    .page {
+      min-height: 100vh;
+      margin: 0;
+      border: 0;
+      box-shadow: none;
+      page-break-after: always;
+    }
+    a { color: inherit; text-decoration: none; }
+  }
+</style>
+</head>
+<body>
+<main class="deck">
+
+<section class="page" id="p01">
+  <div class="kicker">Control Tower / Session E</div>
+  <h1>Jarvis 코드 점검 인터페이스 흐름 설명서</h1>
+  <p class="lead">
+    이 문서는 GitHub 저장소 안에 준비된 코드 점검용 웹 인터페이스를 사람이 처음 열기 전에 이해할 수 있도록,
+    위계와 작동 흐름을 15쪽 내외의 HTML 문서로 정리한 것입니다.
+  </p>
+  <div class="note">
+    핵심 결론: 이 인터페이스는 <strong>코드를 실행하는 도구</strong>가 아니라,
+    Python 소스 파일을 AST로 읽어 <strong>모듈 트리, 함수 목록, 코드 원문, 함수 설명, 최근 수정 표시</strong>를
+    한 화면에 묶어 보여주는 정적 코드 탐색 대시보드입니다.
+  </div>
+  <div class="toc">
+    <a href="#p02">01. 무엇을 보는 도구인가</a>
+    <a href="#p03">02. 파일 위계</a>
+    <a href="#p04">03. 생성 흐름</a>
+    <a href="#p05">04. 화면 구조</a>
+    <a href="#p06">05. 파이프라인 트리</a>
+    <a href="#p07">06. 모듈별 역할</a>
+    <a href="#p08">07. 함수 클릭 흐름</a>
+    <a href="#p09">08. 최근 수정 표시</a>
+    <a href="#p10">09. 리뷰 동선</a>
+    <a href="#p11">10. Code Map과 차이</a>
+    <a href="#p12">11. 공개/보안 판단</a>
+    <a href="#p13">12. 한계</a>
+    <a href="#p14">13. 개선 제안</a>
+    <a href="#p15">14. 바로 쓰는 순서</a>
+  </div>
+  <div class="page-num"><span>작성 기준: 2026-04-26 로컬 저장소</span><span>1 / 15</span></div>
+</section>
+
+<section class="page" id="p02">
+  <div class="kicker">What It Is</div>
+  <h2>1. 이 도구는 “코드 전체를 외우지 않아도 되는 조종석”입니다</h2>
+  <p class="lead">
+    Jarvis 스타일 대시보드의 목적은 코드 리뷰 전에 “어디부터 봐야 하는지”를 줄여주는 것입니다.
+    파일을 하나씩 열어 헤매기 전에, 파이프라인을 단계별로 펼치고 함수 단위로 바로 이동하게 합니다.
+  </p>
+  <div class="grid">
+    <div class="panel">
+      <h3>왼쪽</h3>
+      <p>파이프라인 단계와 모듈 트리. 어떤 파일이 어느 단계에 속하는지 보여줍니다.</p>
+    </div>
+    <div class="panel">
+      <h3>가운데</h3>
+      <p>선택한 파일의 Python 코드 원문. Prism 하이라이트로 코드 읽기 부담을 줄입니다.</p>
+    </div>
+    <div class="panel">
+      <h3>오른쪽</h3>
+      <p>선택한 함수의 역할, 인자, 기본값, 반환값, 라인 범위를 요약합니다.</p>
+    </div>
+    <div class="panel">
+      <h3>아래 상태바</h3>
+      <p>현재 모듈, 현재 함수, 라인 범위, 시각을 계속 보여줘 탐색 위치를 잃지 않게 합니다.</p>
+    </div>
+  </div>
+  <div class="note">
+    비전공자 관점으로 말하면, 이 대시보드는 “코드가 실제로 어떤 순서로 음악을 분석하고 생성하는지”를
+    연구 파이프라인의 목차처럼 볼 수 있게 해줍니다.
+  </div>
+  <div class="page-num"><span>대상 파일: <code>tda_pipeline/docs/pipeline_dashboard.html</code></span><span>2 / 15</span></div>
+</section>
+
+<section class="page" id="p03">
+  <div class="kicker">File Hierarchy</div>
+  <h2>2. 실제 위계는 생성기 하나와 결과 HTML 하나로 나뉩니다</h2>
+  <div class="two">
+    <div class="panel tint">
+      <h3>생성기</h3>
+      <p><code>tda_pipeline/tools/gen_dashboard.py</code></p>
+      <p>Python 파일들을 읽고, 함수 메타데이터를 추출하고, 최종 HTML 문자열을 만듭니다.</p>
+    </div>
+    <div class="panel tint">
+      <h3>결과물</h3>
+      <p><code>tda_pipeline/docs/pipeline_dashboard.html</code></p>
+      <p>브라우저에서 여는 정적 페이지입니다. 서버 없이도 열 수 있지만, CDN 연결이 있으면 코드 하이라이트가 더 잘 보입니다.</p>
+    </div>
+  </div>
+  <div class="flow">
+    <div class="step"><span class="num">1</span><h3>Python 소스</h3><p><code>pipeline.py</code>, <code>generation.py</code> 등</p></div>
+    <div class="step"><span class="num">2</span><h3>AST 파싱</h3><p>함수, 클래스 메서드, docstring, 타입 힌트 추출</p></div>
+    <div class="step"><span class="num">3</span><h3>Git 로그 확인</h3><p>최근 30일 수정된 함수 라인 표시</p></div>
+    <div class="step"><span class="num">4</span><h3>HTML 생성</h3><p><code>MODULES</code>, <code>TREE</code> JSON을 페이지 안에 삽입</p></div>
+  </div>
+  <div class="panel">
+    <h3>현재 포함된 모듈</h3>
+    <p><code>pipeline</code>, <code>config</code>, <code>preprocessing</code>, <code>weights</code>, <code>topology</code>, <code>musical_metrics</code>, <code>overlap</code>, <code>cycle_selector</code>, <code>temporal_reorder</code>, <code>generation</code>, <code>eval_metrics</code></p>
+  </div>
+  <div class="page-num"><span>생성 명령: <code>python tda_pipeline/tools/gen_dashboard.py</code></span><span>3 / 15</span></div>
+</section>
+
+<section class="page" id="p04">
+  <div class="kicker">Build-Time Flow</div>
+  <h2>3. HTML은 실행 중 분석하지 않고, 생성 시점에 이미 코드 정보를 품고 있습니다</h2>
+  <div class="flow">
+    <div class="step"><span class="num">1</span><h3><code>MODULE_FILES</code></h3><p>어떤 Python 파일을 읽을지 고정 목록으로 정의합니다.</p></div>
+    <div class="step"><span class="num">2</span><h3><code>parse_module</code></h3><p>각 파일을 읽고 AST 트리로 변환합니다.</p></div>
+    <div class="step"><span class="num">3</span><h3><code>_extract_func</code></h3><p>함수 이름, 클래스, 라인, 인자, 반환 타입을 뽑습니다.</p></div>
+    <div class="step"><span class="num">4</span><h3><code>_get_recent_lines</code></h3><p><code>git log --since=30 days ago</code>로 최근 수정 라인을 찾습니다.</p></div>
+    <div class="step"><span class="num">5</span><h3><code>build_html</code></h3><p>모듈 데이터와 트리 데이터를 HTML 템플릿에 삽입합니다.</p></div>
+  </div>
+  <pre class="code-block">MODULE_FILES -> parse_module()
+             -> source / line_count / functions[]
+             -> recently_modified 표시
+PIPELINE_TREE -> 왼쪽 탐색 트리
+MODULES + TREE -> pipeline_dashboard.html 안에 정적 JSON으로 삽입</pre>
+  <div class="note">
+    그래서 대시보드를 열 때 Python이 다시 돌지는 않습니다. 브라우저는 이미 HTML 안에 들어 있는 JSON을 읽어서
+    트리와 패널을 그릴 뿐입니다.
+  </div>
+  <div class="page-num"><span>중요 함수: <code>parse_module</code>, <code>build_html</code>, <code>main</code></span><span>4 / 15</span></div>
+</section>
+
+<section class="page" id="p05">
+  <div class="kicker">Screen Layout</div>
+  <h2>4. 화면은 세 개의 패널로 나뉘며, 클릭 흐름은 왼쪽에서 오른쪽으로 갑니다</h2>
+  <div class="mock" aria-label="Jarvis dashboard layout mock">
+    <div class="head">TDA PIPELINE SYSTEM</div>
+    <div class="left">
+      <strong>Pipeline Tree</strong>
+      <div class="mock-line hot"></div>
+      <div class="mock-line mid"></div>
+      <div class="mock-line short"></div>
+      <div class="mock-line"></div>
+      <div class="mock-line mid"></div>
+      <p class="small">모듈과 함수 목록</p>
+    </div>
+    <div class="center">
+      <strong>Code Viewer</strong>
+      <div class="mock-line"></div>
+      <div class="mock-line mid"></div>
+      <div class="mock-line"></div>
+      <div class="mock-line short"></div>
+      <div class="mock-line hot"></div>
+      <div class="mock-line"></div>
+      <p class="small">선택된 함수 라인으로 자동 스크롤</p>
+    </div>
+    <div class="right">
+      <strong>Function Analysis</strong>
+      <div class="mock-line mid"></div>
+      <div class="mock-line short"></div>
+      <div class="mock-line"></div>
+      <p class="small">설명, 파라미터, 반환값</p>
+    </div>
+  </div>
+  <div class="two">
+    <div class="panel">
+      <h3>좋은 점</h3>
+      <p>코드 원문과 설명이 분리되어 있어, 함수를 클릭하면 “어디에 있고 무엇을 받는지”가 즉시 보입니다.</p>
+    </div>
+    <div class="panel">
+      <h3>주의할 점</h3>
+      <p>현재 레이아웃은 데스크톱 중심입니다. 모바일에서는 세 패널이 좁아지므로 설명 문서와 함께 보는 편이 안전합니다.</p>
+    </div>
+  </div>
+  <div class="page-num"><span>런타임 JS 핵심: <code>buildTree</code>, <code>selectMod</code>, <code>selectFn</code></span><span>5 / 15</span></div>
+</section>
+
+<section class="page" id="p06">
+  <div class="kicker">Pipeline Tree</div>
+  <h2>5. 왼쪽 트리는 연구 파이프라인을 단계별로 접고 펼치는 목차입니다</h2>
+  <div class="tree">
+    <div class="tree-row">
+      <div class="stage navy">진입 / 설정</div>
+      <div class="mods"><span class="pill"><span class="dot navy"></span>pipeline.py</span><span class="pill"><span class="dot gray"></span>config.py</span></div>
+    </div>
+    <div class="tree-row">
+      <div class="stage blue">Stage 1 전처리</div>
+      <div class="mods"><span class="pill"><span class="dot blue"></span>preprocessing.py</span></div>
+    </div>
+    <div class="tree-row">
+      <div class="stage green">Stage 2 Homology</div>
+      <div class="mods"><span class="pill"><span class="dot green"></span>weights.py</span><span class="pill"><span class="dot yellow"></span>topology.py</span><span class="pill"><span class="dot orange"></span>musical_metrics.py</span></div>
+    </div>
+    <div class="tree-row">
+      <div class="stage violet">Stage 3 중첩행렬</div>
+      <div class="mods"><span class="pill"><span class="dot violet"></span>overlap.py</span></div>
+    </div>
+    <div class="tree-row">
+      <div class="stage cyan">Stage 3.5 선택 기능</div>
+      <div class="mods"><span class="pill"><span class="dot violet"></span>cycle_selector.py</span><span class="pill"><span class="dot gray"></span>temporal_reorder.py</span></div>
+    </div>
+    <div class="tree-row">
+      <div class="stage orange">Stage 4 생성</div>
+      <div class="mods"><span class="pill"><span class="dot orange"></span>generation.py</span></div>
+    </div>
+    <div class="tree-row">
+      <div class="stage yellow">평가</div>
+      <div class="mods"><span class="pill"><span class="dot yellow"></span>eval_metrics.py</span></div>
+    </div>
+  </div>
+  <div class="note">
+    이 구조 덕분에 “전처리 문제인가, 거리 함수 문제인가, 생성 문제인가”를 먼저 나눠서 볼 수 있습니다.
+    코드 점검의 첫 질문은 파일명이 아니라 <strong>어느 단계에서 문제가 생겼는가</strong>가 됩니다.
+  </div>
+  <div class="page-num"><span>트리 정의 위치: <code>PIPELINE_TREE</code></span><span>6 / 15</span></div>
+</section>
+
+<section class="page" id="p07">
+  <div class="kicker">Module Roles</div>
+  <h2>6. 모듈은 “음악을 데이터로 바꾸고, 구조를 찾고, 다시 음악으로 돌리는” 순서로 배치됩니다</h2>
+  <table>
+    <thead><tr><th>모듈</th><th>비전공자용 역할</th><th>점검할 때 보는 질문</th></tr></thead>
+    <tbody>
+      <tr><td><code>pipeline.py</code></td><td>전체 과정을 순서대로 부르는 지휘자</td><td>단계 연결, 캐시, 설정 전달이 맞는가</td></tr>
+      <tr><td><code>preprocessing.py</code></td><td>MIDI를 음표와 화음 목록으로 바꾸는 입구</td><td>음표 개수, 시간 양자화, 악기 분리가 맞는가</td></tr>
+      <tr><td><code>weights.py</code></td><td>음표 사이의 가까움과 멂을 숫자로 만드는 곳</td><td>intra/inter/simul 가중치가 의도대로 섞이는가</td></tr>
+      <tr><td><code>topology.py</code></td><td>Persistent Homology 계산을 감싸는 래퍼</td><td>거리 행렬이 barcode 계산에 안전하게 들어가는가</td></tr>
+      <tr><td><code>musical_metrics.py</code></td><td>Tonnetz, voice-leading, DFT 같은 음악적 거리</td><td>설정값이 실제 거리 계산에 반영되는가</td></tr>
+      <tr><td><code>overlap.py</code></td><td>발견된 cycle을 시간축의 중첩행렬로 바꾸는 곳</td><td>cycle 활성화, per-cycle threshold가 맞는가</td></tr>
+      <tr><td><code>generation.py</code></td><td>중첩행렬을 바탕으로 새 음표를 만드는 곳</td><td>Algorithm 1/2 입력과 출력이 같은 약속을 쓰는가</td></tr>
+    </tbody>
+  </table>
+  <div class="page-num"><span>현재 대시보드 기준 총 11개 모듈</span><span>7 / 15</span></div>
+</section>
+
+<section class="page" id="p08">
+  <div class="kicker">Click Flow</div>
+  <h2>7. 함수 하나를 클릭하면 세 가지 일이 동시에 일어납니다</h2>
+  <div class="flow">
+    <div class="step"><span class="num">1</span><h3>함수 선택</h3><p>왼쪽 함수 목록에서 <code>run_generation_algo1()</code> 같은 항목을 누릅니다.</p></div>
+    <div class="step"><span class="num">2</span><h3>코드 이동</h3><p>가운데 코드 패널이 해당 라인 범위로 부드럽게 스크롤합니다.</p></div>
+    <div class="step"><span class="num">3</span><h3>라인 강조</h3><p>선택 함수 전체 영역에 반투명 하이라이트가 깔립니다.</p></div>
+    <div class="step"><span class="num">4</span><h3>설명 렌더</h3><p>오른쪽 패널이 함수 설명, 인자 표, 반환값을 다시 그립니다.</p></div>
+    <div class="step"><span class="num">5</span><h3>상태 갱신</h3><p>아래 상태바가 현재 함수명과 라인 범위를 표시합니다.</p></div>
+  </div>
+  <pre class="code-block">selectFn(modName, fnName)
+  -> selectMod(modName) if needed
+  -> find function metadata
+  -> scrollToLine(lineno, end_lineno)
+  -> renderDoc(function)
+  -> update status bar</pre>
+  <div class="note">
+    중요한 점은 이 대시보드가 “함수의 실행 결과”를 보여주는 것이 아니라,
+    “함수를 읽기 위한 위치와 맥락”을 즉시 조립해준다는 것입니다.
+  </div>
+  <div class="page-num"><span>함수 선택 구현: <code>selectFn</code>, <code>scrollToLine</code>, <code>renderDoc</code></span><span>8 / 15</span></div>
+</section>
+
+<section class="page" id="p09">
+  <div class="kicker">Recent Change Signal</div>
+  <h2>8. 빨간 점은 “최근 30일 안에 손댄 함수”를 뜻합니다</h2>
+  <div class="stat-grid">
+    <div class="stat"><b>4,933</b><span>대상 코드 라인</span></div>
+    <div class="stat"><b>110</b><span>추출된 함수/메서드</span></div>
+    <div class="stat"><b>93</b><span>최근 수정 표시 함수</span></div>
+    <div class="stat"><b>11</b><span>대상 모듈</span></div>
+  </div>
+  <div class="two">
+    <div class="panel">
+      <h3>어떻게 계산하나</h3>
+      <p><code>git log --since=30 days ago --unified=0</code>의 diff hunk 라인을 모아, 그 라인이 함수 시작-끝 범위 안에 들어가면 <code>recently_modified</code>를 켭니다.</p>
+    </div>
+    <div class="panel">
+      <h3>어떻게 읽나</h3>
+      <p>빨간 점이 많다는 건 최근 변경이 몰려 있다는 뜻입니다. 리뷰 우선순위는 “빨간 점 + 단계 핵심 함수 + 설정 전달 함수”부터 잡는 편이 좋습니다.</p>
+    </div>
+  </div>
+  <div class="warn">
+    이 표시는 정확한 위험도 점수가 아닙니다. 최근 수정 여부만 알려주므로, 논문 수치나 생성 결과와 연결되는 함수는 별도로 테스트해야 합니다.
+  </div>
+  <div class="page-num"><span>현재 수치는 2026-04-26 로컬 파싱 결과</span><span>9 / 15</span></div>
+</section>
+
+<section class="page" id="p10">
+  <div class="kicker">Review Route</div>
+  <h2>9. 실제 코드 점검은 “단계 -> 빨간 함수 -> 데이터 계약” 순서가 가장 쉽습니다</h2>
+  <div class="checklist">
+    <div class="check"><b>1</b><p><strong>Stage 1부터 Stage 4까지 큰 흐름을 훑습니다.</strong><br>먼저 <code>pipeline.py</code>에서 전체 단계가 어떤 순서로 호출되는지 봅니다.</p></div>
+    <div class="check"><b>2</b><p><strong>최근 수정 함수만 먼저 엽니다.</strong><br>빨간 점이 있는 함수는 버그가 있다는 뜻이 아니라, 리뷰 대비 효율이 가장 높은 후보입니다.</p></div>
+    <div class="check"><b>3</b><p><strong>입력/출력 약속을 확인합니다.</strong><br><code>notes_label</code>, <code>notes_dict</code>, <code>overlap_matrix</code>처럼 단계 사이를 건너는 데이터 구조를 우선 봅니다.</p></div>
+    <div class="check"><b>4</b><p><strong>설정값 전달을 봅니다.</strong><br><code>octave_weight</code>, <code>duration_weight</code>, <code>alpha</code>, <code>rate</code> 같은 실험 파라미터가 실제 함수에 들어가는지 확인합니다.</p></div>
+    <div class="check"><b>5</b><p><strong>필요하면 Code Map으로 호출 관계를 확인합니다.</strong><br>대시보드는 함수 설명에 강하고, Code Map은 호출 흐름 시각화에 강합니다.</p></div>
+  </div>
+  <div class="page-num"><span>추천 시작점: <code>pipeline.py</code>의 <code>run_preprocessing</code></span><span>10 / 15</span></div>
+</section>
+
+<section class="page" id="p11">
+  <div class="kicker">Code Map vs Dashboard</div>
+  <h2>10. 비슷해 보이는 두 HTML은 역할이 다릅니다</h2>
+  <div class="two">
+    <div class="panel">
+      <h3><code>pipeline_dashboard.html</code></h3>
+      <p><strong>코드 읽기용 조종석</strong>입니다. 파일 원문, 함수 목록, 인자/반환값, 최근 수정 표시를 한 화면에서 봅니다.</p>
+      <p class="small">생성기: <code>tools/gen_dashboard.py</code></p>
+    </div>
+    <div class="panel">
+      <h3><code>code_map_pipeline.html</code></h3>
+      <p><strong>호출 관계 지도</strong>입니다. Mermaid flowchart로 <code>pipeline.py</code>가 어떤 외부 함수들을 부르는지 보여줍니다.</p>
+      <p class="small">생성기: <code>tools/gen_code_map.py</code></p>
+    </div>
+  </div>
+  <table>
+    <thead><tr><th>상황</th><th>먼저 열 것</th><th>이유</th></tr></thead>
+    <tbody>
+      <tr><td>함수 내용을 직접 읽어야 함</td><td><code>pipeline_dashboard.html</code></td><td>코드 원문과 함수 설명이 같이 보임</td></tr>
+      <tr><td>어떤 모듈로 호출이 넘어가는지 보고 싶음</td><td><code>code_map_pipeline.html</code></td><td>화살표로 단계 간 연결이 보임</td></tr>
+      <tr><td>최근 변경 리뷰</td><td><code>pipeline_dashboard.html</code></td><td>빨간 점이 함수 목록에 바로 표시됨</td></tr>
+      <tr><td>비전공자 설명</td><td>이 문서</td><td>기능보다 흐름과 판단 기준을 먼저 설명함</td></tr>
+    </tbody>
+  </table>
+  <div class="page-num"><span>관련 파일: <code>docs/code_map_pipeline.html</code></span><span>11 / 15</span></div>
+</section>
+
+<section class="page" id="p12">
+  <div class="kicker">Publishing and Privacy</div>
+  <h2>11. 현재 GitHub Pages 기본 배포에는 이 코드 대시보드가 포함되지 않습니다</h2>
+  <p class="lead">
+    현재 Pages workflow는 <code>hibari_dashboard</code>, <code>tonnetz_demo</code>, <code>filtration_viz</code>, <code>shared</code>,
+    그리고 <code>tda_pipeline/index.html</code> 중심으로 사이트를 조립합니다.
+    <code>tda_pipeline/docs/pipeline_dashboard.html</code>은 자동 복사 대상이 아닙니다.
+  </p>
+  <div class="two">
+    <div class="panel">
+      <h3>장점</h3>
+      <p>대시보드는 HTML 안에 Python 소스 전체를 삽입합니다. 자동 공개되지 않는 현재 상태는 민감정보 비공개 기본값에 맞습니다.</p>
+    </div>
+    <div class="panel">
+      <h3>공개하려면 필요한 일</h3>
+      <p>workflow에서 <code>docs/</code> 또는 특정 HTML 파일을 <code>_site</code>로 복사해야 합니다. 공개 전에는 코드와 데이터에 민감정보가 없는지 먼저 확인해야 합니다.</p>
+    </div>
+  </div>
+  <div class="warn">
+    공개 전 점검: API 키, 로컬 경로, 실험 미공개 결과, 개인 메모, GitHub 토큰, private 데이터 경로가 HTML 안에 들어가지 않았는지 확인해야 합니다.
+  </div>
+  <div class="page-num"><span>workflow: <code>.github/workflows/pages.yml</code></span><span>12 / 15</span></div>
+</section>
+
+<section class="page" id="p13">
+  <div class="kicker">Limitations</div>
+  <h2>12. 이 인터페이스가 잘하는 것과 못하는 것을 분리해야 합니다</h2>
+  <div class="grid">
+    <div class="panel">
+      <h3>잘함: 구조 파악</h3>
+      <p>어떤 파일과 함수가 파이프라인의 어느 단계에 속하는지 빠르게 보여줍니다.</p>
+    </div>
+    <div class="panel">
+      <h3>잘함: 함수 단위 이동</h3>
+      <p>라인 범위와 설명이 바로 보이므로 코드 리뷰의 진입 비용이 낮습니다.</p>
+    </div>
+    <div class="panel">
+      <h3>못함: 동적 실행 추적</h3>
+      <p>실제 런타임 호출 순서, 브랜치, 데이터 값은 보여주지 않습니다. 정적 분석 결과입니다.</p>
+    </div>
+    <div class="panel">
+      <h3>못함: 테스트 판정</h3>
+      <p>빨간 점은 최근 수정 표시일 뿐, 테스트 실패나 논문 수치 불일치를 직접 말해주지 않습니다.</p>
+    </div>
+    <div class="panel">
+      <h3>못함: 완전한 호출 그래프</h3>
+      <p>대시보드는 코드 보기 중심입니다. 깊은 호출 관계는 <code>gen_code_map.py</code> 쪽이 더 적합합니다.</p>
+    </div>
+    <div class="panel">
+      <h3>주의: docstring 품질 의존</h3>
+      <p>오른쪽 설명 패널은 docstring과 타입 힌트가 충실할수록 좋아집니다.</p>
+    </div>
+  </div>
+  <div class="page-num"><span>정적 스냅샷이므로 코드 변경 후 재생성 필요</span><span>13 / 15</span></div>
+</section>
+
+<section class="page" id="p14">
+  <div class="kicker">Next Improvements</div>
+  <h2>13. 다음 개선은 “도달 실패를 줄이는 기능”부터가 좋습니다</h2>
+  <div class="checklist">
+    <div class="check"><b>1</b><p><strong>모바일 보기 모드</strong><br>세 패널을 탭으로 전환하는 모바일 전용 레이아웃을 추가하면 실제 GitHub Pages 확인성이 좋아집니다.</p></div>
+    <div class="check"><b>2</b><p><strong>검색 범위 확대</strong><br>현재 검색은 함수명 중심입니다. docstring, 파라미터명, 파일명 검색까지 확장하면 리뷰 시간이 줄어듭니다.</p></div>
+    <div class="check"><b>3</b><p><strong>민감정보 경고 배너</strong><br>HTML 안에 소스가 포함된다는 안내를 상단에 고정하면 공개 실수를 줄일 수 있습니다.</p></div>
+    <div class="check"><b>4</b><p><strong>Code Map 연결 버튼</strong><br>대시보드에서 같은 모듈의 Mermaid 지도 페이지로 바로 이동하게 하면 “읽기”와 “흐름 보기”가 연결됩니다.</p></div>
+    <div class="check"><b>5</b><p><strong>테스트/진단 링크</strong><br>함수별 관련 테스트나 <code>diagnose.py</code> 루틴을 메타데이터로 연결하면 점검이 실행 단계까지 이어집니다.</p></div>
+  </div>
+  <div class="note">
+    E 세션 관점의 우선순위는 예쁜 효과보다 “사용자가 다음에 어디를 눌러야 하는지”를 줄이는 것입니다.
+    현재 대시보드는 구조 파악에는 충분하고, 다음 과제는 모바일과 공개 안전장치입니다.
+  </div>
+  <div class="page-num"><span>개선 후보는 별도 B/D 세션으로 넘기는 것이 적합</span><span>14 / 15</span></div>
+</section>
+
+<section class="page" id="p15">
+  <div class="kicker">How To Use</div>
+  <h2>14. 지금 바로 확인하는 순서</h2>
+  <div class="checklist">
+    <div class="check"><b>1</b><p><strong>이 설명서로 큰 구조를 먼저 봅니다.</strong><br><code>tda_pipeline/docs/jarvis_code_review_interface_guide.html</code></p></div>
+    <div class="check"><b>2</b><p><strong>Jarvis 대시보드를 엽니다.</strong><br><code>tda_pipeline/docs/pipeline_dashboard.html</code></p></div>
+    <div class="check"><b>3</b><p><strong><code>pipeline.py</code> 함수 목록을 펼칩니다.</strong><br><code>run_preprocessing</code> -> <code>run_homology_search</code> -> <code>run_overlap_construction</code> -> <code>run_generation_algo1/2</code> 순서로 봅니다.</p></div>
+    <div class="check"><b>4</b><p><strong>빨간 점이 있는 함수만 먼저 읽습니다.</strong><br>최근 수정 함수는 리뷰 효율이 높습니다.</p></div>
+    <div class="check"><b>5</b><p><strong>호출 관계가 헷갈리면 Code Map을 엽니다.</strong><br><code>tda_pipeline/docs/code_map_pipeline.html</code></p></div>
+    <div class="check"><b>6</b><p><strong>공개 전에는 배포 대상을 다시 확인합니다.</strong><br>현재 workflow는 이 코드 대시보드를 자동 공개하지 않습니다. 공개하려면 별도 판단이 필요합니다.</p></div>
+  </div>
+  <div class="panel tint">
+    <h3>E 세션 판단</h3>
+    <p>
+      이 작업은 E가 큰 흐름과 공개 범위를 잡고, D가 설명 문서화하는 성격입니다.
+      실제 코드 내부 오류 수정이나 대시보드 기능 개선이 필요해지면 B 세션으로 넘기는 것이 맞습니다.
+    </p>
+  </div>
+  <div class="page-num"><span>끝. 다음 행동: HTML을 브라우저에서 열어 확인</span><span>15 / 15</span></div>
+</section>
+
+</main>
+</body>
+</html>
