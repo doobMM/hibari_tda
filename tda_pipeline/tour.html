@@ -343,6 +343,11 @@
 
       let t0 = performance.now();
       const PERIOD = 6000;
+      // 가시성·모션 설정 게이팅 — 화면 밖이면 RAF 중단, reduced-motion 시 정지 프레임
+      let running = false;
+      let rafId = null;
+      const reducedMotion = window.matchMedia &&
+        window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       function frame(now) {
         const phase = ((now - t0) % PERIOD) / PERIOD;          // 0→1
         const eps = 30 + phase * 200;                           // ε 자람
@@ -389,9 +394,25 @@
         ctx.strokeRect(60, 12, 120, 8);
         ctx.fillStyle = '#6cc24a';
         ctx.fillRect(60, 12, 120 * phase, 8);
-        requestAnimationFrame(frame);
+        if (running) rafId = requestAnimationFrame(frame);
       }
-      requestAnimationFrame(frame);
+      if (reducedMotion) {
+        // 모션 최소화: 고리가 닫힌 정지 프레임 1장만
+        frame(t0 + PERIOD * 0.55);
+        return;
+      }
+      const vis = new IntersectionObserver((entries) => {
+        for (const e of entries) {
+          if (e.isIntersecting && !running) {
+            running = true;
+            rafId = requestAnimationFrame(frame);
+          } else if (!e.isIntersecting && running) {
+            running = false;
+            if (rafId) cancelAnimationFrame(rafId);
+          }
+        }
+      }, { threshold: 0.05 });
+      vis.observe(cv);
     }
 
     // ── 4. 실제 OM 렌더 ────────────────────────────────────────────

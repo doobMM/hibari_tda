@@ -1926,6 +1926,9 @@
 
   // 생성 메인 — 기본은 30초 세그먼트(T=60), '전곡' 선택 시 전체.
   // opts.quiet — 라이브 모드 재생성 시 로그 최소화.
+  // genToken: 라이브 모드에서 async FC 추론 중 재편집 시 늦게 도착한
+  // stale 결과가 최신 결과를 덮어쓰지 않도록 세대 가드.
+  let genToken = 0;
   async function generateNow(opts = {}) {
     if (!UI.editEditor || !UI.data) { log('데이터 미로드', 'ERR'); return; }
     if (!window.GenerationAlgo1) { log('GenerationAlgo1 모듈 미로드', 'ERR'); return; }
@@ -1966,6 +1969,7 @@
           log(`${algoLabel} 전곡 생성 (T=${overlap.T}, ${bars}마디, seed=${seed}, temp=${temperature.toFixed(1)})`);
         }
       }
+      const myToken = ++genToken;
       if (algo === 'algo2') await ensureFcLoaded();
 
       const t0 = performance.now();
@@ -1975,6 +1979,7 @@
       } else {
         res = runAlgo1Once({ overlap, instLen, temperature, seed });
       }
+      if (myToken !== genToken) return null;   // 더 새로운 생성이 시작됨 — stale 폐기
       res.offset = offset;
       res.segment = seg ? { m: seg.m, start: seg.start, len: seg.len } : null;
       const dt = performance.now() - t0;
