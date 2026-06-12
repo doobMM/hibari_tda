@@ -629,10 +629,11 @@
     const btnPlayTonnetz = $('btnPlayInTonnetz');
     if (btnPlayTonnetz) btnPlayTonnetz.addEventListener('click', onClickPlayInTonnetz);
 
-    // 30초 세그먼트 + 인페이지 재생 + 라이브 모드 + 품질 맵
+    // 30초 세그먼트 + 인페이지 재생 + 라이브 모드 + 품질 맵 + 구조 탐험
     wireSegmentControls();
     wireLiveMode();
     wireQualityMap();
+    wireVaePanel();
     const btnPlayLocal = $('btnPlayLocal');
     if (btnPlayLocal) btnPlayLocal.addEventListener('click', playLastGenerated);
     const btnStopLocal = $('btnStopLocal');
@@ -1616,6 +1617,7 @@
     updateSegmentHint();
     stopLocalPlayback();
     invalidateGeneratedOnEdit();   // 이전 생성물은 다른 구간 결과
+    vaeResetBase();                // 다른 블록 = 다른 latent 끝점
     liveMaybeRegenerate();
   }
 
@@ -1881,6 +1883,178 @@
     renderQualityMap();
   }
 
+  // ── 구조 탐험 (VAE) — latent 슬라이더 · 새 구조 · 매니폴드 보정 ──────
+  // 학습: scripts/train_om_vae_and_export.py (window=60 = 30초 세그먼트와 동일)
+  const vaeState = {
+    vae: null,
+    base: null,        // { m, z } — 슬라이더 0% 끝점 (사용자가 그린 상태의 latent)
+    applying: false,   // VAE 가 setMatrix 하는 동안 base 무효화 방지
+    token: 0,          // 슬라이더 연타 시 stale decode 폐기
+  };
+
+  function setVaeStatus(msg) {
+    const el = $('vaeStatus');
+    if (el) el.textContent = msg;
+  }
+
+  async function ensureVaeLoaded() {
+    if (!window.VAEExplorer) throw new Error('VAEExplorer 모듈 미로드');
+    if (!vaeState.vae) vaeState.vae = new window.VAEExplorer();
+    if (!vaeState.vae.dec) {
+      setVaeStatus('VAE 모델 로드 중… (~2MB)');
+      await vaeState.vae.load();
+      setVaeStatus('준비 완료 — 슬라이더로 hibari다움을 조절하세요');
+      log(`VAE 로드 완료 (${vaeState.vae.meta.architecture})`, 'OK');
+    }
+  }
+
+  // 세그먼트 필수 — 전곡 모드면 안내 후 null
+  function getVaeSegment() {
+    const seg = getSegment();
+    if (!seg) setVaeStatus('전곡 모드에서는 사용할 수 없습니다 — 30초 블록을 선택하세요');
+    return seg;
+  }
+
+  // 현재 편집 OM 의 세그먼트를 [0,1] 연속 Float32Array(window*K) 로 읽기
+  function readSegmentContinuous(seg) {
+    const ed = UI.editEditor;
+    const K = ed.K;
+    const vals = ed.getMatrix();
+    const out = new Float32Array(seg.len * K);
+    for (let i = 0; i < seg.len * K; i++) {
+      const v = +vals[seg.start * K + i];
+      out[i] = v > 1 ? 1 : (v > 0 ? v : 0);
+    }
+    return out;
+  }
+
+  // decode 결과를 편집 OM 의 세그먼트 창에 기록.
+  // 이진 모드: 고정 τ 대신 밀도 일치 이진화 — 디코더 출력은 확률이라
+  // 기대 활성 수 N = Σp 만큼 상위 셀을 켠다 (τ=0.7 은 과소 활성 유발).
+  function applyVaeSegment(decoded, seg) {
+    const ed = UI.editEditor;
+    const K = ed.K;
+    const isBinary = ed.displayMode !== 'continuous';
+    const Alloc = isBinary ? Int8Array : Float32Array;
+    const full = new Alloc(ed.getMatrix());
+    const n = seg.len * K;
+    if (isBinary) {
+      let sum = 0;
+      for (let i = 0; i < n; i++) sum += decoded[i];
+      const target = Math.max(0, Math.min(n, Math.round(sum)));
+      const order = Array.from({ length: n }, (_, i) => i)
+        .sort((a, b) => decoded[b] - decoded[a]);
+      const on = new Uint8Array(n);
+      for (let k = 0; k < target; k++) on[order[k]] = 1;
+      for (let i = 0; i < n; i++) full[seg.start * K + i] = on[i];
+    } else {
+      for (let i = 0; i < n; i++) {
+        const v = decoded[i];
+        full[seg.start * K + i] = v > 1 ? 1 : (v > 0 ? v : 0);
+      }
+    }
+    vaeState.applying = true;
+    try { ed.setMatrix(full); } finally { vaeState.applying = false; }
+  }
+
+  async function vaeCaptureBase(seg) {
+    const z = await vaeState.vae.encode(readSegmentContinuous(seg));
+    vaeState.base = { m: seg.m, z };
+  }
+
+  // 수동 편집·세그먼트 이동 시 base 무효화 + 슬라이더 0 복귀 (표시만)
+  function vaeResetBase() {
+    if (vaeState.applying) return;
+    vaeState.base = null;
+    const s = $('sliderVaeMix');
+    if (s && s.value !== '0') {
+      s.value = '0';
+      const v = $('sliderVaeMixVal');
+      if (v) v.textContent = '0%';
+    }
+  }
+
+  async function onVaeMixInput() {
+    const slider = $('sliderVaeMix');
+    const t = (+slider.value) / 100;
+    const valEl = $('sliderVaeMixVal');
+    if (valEl) valEl.textContent = Math.round(t * 100) + '%';
+    const myToken = ++vaeState.token;
+    try {
+      await ensureVaeLoaded();
+      const seg = getVaeSegment();
+      if (!seg) return;
+      if (!vaeState.base || vaeState.base.m !== seg.m) await vaeCaptureBase(seg);
+      const zRef = vaeState.vae.zRef(seg.m);
+      if (!zRef) { setVaeStatus('참조 latent 없음 (meta 확인)'); return; }
+      const z = window.VAEExplorer.lerp(vaeState.base.z, zRef, t);
+      const decoded = await vaeState.vae.decode(z);
+      if (myToken !== vaeState.token) return;   // 슬라이더가 더 움직임 — stale 폐기
+      applyVaeSegment(decoded, seg);
+      setVaeStatus(`보간 ${Math.round(t * 100)}% 적용 (블록 ${seg.m})`);
+    } catch (e) {
+      setVaeStatus('오류: ' + e.message);
+      console.error(e);
+    }
+  }
+
+  // 🎲 새 구조: z ~ N(0, I) — hibari 문법 안의 무작위 구조
+  async function onVaeDice() {
+    try {
+      await ensureVaeLoaded();
+      const seg = getVaeSegment();
+      if (!seg) return;
+      const seedInput = $('sliderSeed');
+      const seed = (parseInt(seedInput && seedInput.value, 10) || 0) + Date.now() % 9973;
+      const rng = window.GenerationAlgo1
+        ? window.GenerationAlgo1.makeRng(seed >>> 0)
+        : Math.random;
+      const z = window.VAEExplorer.randn(vaeState.vae.meta.latent_dim, rng);
+      const decoded = await vaeState.vae.decode(z);
+      applyVaeSegment(decoded, seg);
+      // 새 구조가 슬라이더 0% 끝점이 되도록 base 갱신
+      vaeState.applying = true;
+      vaeState.base = { m: seg.m, z };
+      vaeState.applying = false;
+      const s = $('sliderVaeMix');
+      if (s) { s.value = '0'; const v = $('sliderVaeMixVal'); if (v) v.textContent = '0%'; }
+      setVaeStatus(`새 구조 적용 (블록 ${seg.m}) — 슬라이더로 hibari 쪽으로 끌어보세요`);
+      log(`VAE 새 구조 샘플 (블록 ${seg.m})`);
+    } catch (e) {
+      setVaeStatus('오류: ' + e.message);
+      console.error(e);
+    }
+  }
+
+  // 🌿 부드럽게 보정: encode→decode 재구성 = 학습 매니폴드로 사영 (OOD 완화)
+  async function onVaeSmooth() {
+    try {
+      await ensureVaeLoaded();
+      const seg = getVaeSegment();
+      if (!seg) return;
+      const z = await vaeState.vae.encode(readSegmentContinuous(seg));
+      const decoded = await vaeState.vae.decode(z);
+      applyVaeSegment(decoded, seg);
+      vaeState.base = { m: seg.m, z };
+      const s = $('sliderVaeMix');
+      if (s) { s.value = '0'; const v = $('sliderVaeMixVal'); if (v) v.textContent = '0%'; }
+      setVaeStatus(`부드럽게 보정 완료 (블록 ${seg.m}) — 손그림이 hibari 구조 문법으로 정돈됨`);
+      log(`VAE 매니폴드 보정 (블록 ${seg.m})`);
+    } catch (e) {
+      setVaeStatus('오류: ' + e.message);
+      console.error(e);
+    }
+  }
+
+  function wireVaePanel() {
+    const slider = $('sliderVaeMix');
+    if (slider) slider.addEventListener('input', onVaeMixInput);
+    const dice = $('btnVaeDice');
+    if (dice) dice.addEventListener('click', onVaeDice);
+    const smooth = $('btnVaeSmooth');
+    if (smooth) smooth.addEventListener('click', onVaeSmooth);
+  }
+
   // 알고리즘 1: overlap(이미 슬라이스된 형태 포함) 하나 생성
   function runAlgo1Once({ overlap, instLen, temperature, seed }) {
     const { NodePool, CycleSetManager, algorithm1, makeRng } = window.GenerationAlgo1;
@@ -2130,6 +2304,7 @@
           updateOODBanner(ed);
           saveEditState(ed);
           clearPendingOnEdit(); // 시나리오 8
+          vaeResetBase();        // 수동 편집 → VAE 슬라이더 0% 끝점 재설정
           liveMaybeRegenerate(); // 라이브 모드: 편집 → 자동 재생성·재생
         },
       });
