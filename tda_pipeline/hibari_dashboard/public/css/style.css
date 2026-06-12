@@ -787,6 +787,62 @@ details[open] > .disclosure-summary::before {
   cursor: pointer;
 }
 
+/* ── Segment row (30초 생성 구간) ────────────────────────────────────────── */
+.segment-row {
+  display: grid;
+  grid-template-columns: 36px auto 1fr auto;
+  align-items: center;
+  gap: var(--space-1);
+}
+.segment-row__label {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+}
+.segment-row__select { min-width: 0; }
+.segment-row .btn--small { padding: var(--space-1) var(--space-2); }
+
+/* ── Button pair (듣기/정지) ─────────────────────────────────────────────── */
+.btn-pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-2);
+}
+
+/* ── Check row (라이브 모드) ─────────────────────────────────────────────── */
+.check-row {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  cursor: pointer;
+  user-select: none;
+  line-height: 1.4;
+}
+.check-row input[type="checkbox"] {
+  accent-color: var(--accent-teal);
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+/* ── 품질 맵 (구조 × 신선함) ─────────────────────────────────────────────── */
+.quality-map__canvas-wrap {
+  display: flex;
+  justify-content: center;
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background: var(--surface-canvas);
+}
+.quality-map__canvas-wrap canvas {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
 /* ── Radio row ───────────────────────────────────────────────────────────── */
 .radio-row {
   display: flex;

@@ -142,8 +142,10 @@
     playState.lastGenerated = null;
     const mainTonnetz = $('btnPlayInTonnetz');
     const mainDownload = $('btnDownloadMidi');
+    const mainPlay = $('btnPlayLocal');
     if (mainTonnetz) mainTonnetz.disabled = true;
     if (mainDownload) mainDownload.disabled = true;
+    if (mainPlay) mainPlay.disabled = true;
     syncActionButtons();
     setWorkflowStage(1);
     setText('actionSummary', 'OM이 바뀌었습니다 · 다시 생성하세요');
@@ -626,6 +628,15 @@
     $('btnDownloadMidi').addEventListener('click', onClickDownloadMidi);
     const btnPlayTonnetz = $('btnPlayInTonnetz');
     if (btnPlayTonnetz) btnPlayTonnetz.addEventListener('click', onClickPlayInTonnetz);
+
+    // 30초 세그먼트 + 인페이지 재생 + 라이브 모드 + 품질 맵
+    wireSegmentControls();
+    wireLiveMode();
+    wireQualityMap();
+    const btnPlayLocal = $('btnPlayLocal');
+    if (btnPlayLocal) btnPlayLocal.addEventListener('click', playLastGenerated);
+    const btnStopLocal = $('btnStopLocal');
+    if (btnStopLocal) btnStopLocal.addEventListener('click', stopLocalPlayback);
 
     const actionGenerate = $('actionGenerate');
     if (actionGenerate) actionGenerate.addEventListener('click', onClickGenerate);
@@ -1527,6 +1538,349 @@
     return eighths * (30 / bpm);
   }
 
+  // ── 30초 세그먼트 (T=60 ≈ 30초 @ bpm 60) ──────────────────────────
+  const SEGMENT_STEPS = 60;
+  const SEGMENT_KEY = 'hibari_dashboard_segment_v1';
+  const segState = { mode: 'segment', m: 0 };   // mode: 'segment' | 'full'
+
+  function segmentCount(T) { return Math.max(1, Math.floor(T / SEGMENT_STEPS)); }
+
+  function fmtStepTime(step) {
+    const sec = Math.round(step * 0.5);   // bpm 60 → 8분음표 1개 = 0.5초
+    const m = Math.floor(sec / 60), s = sec % 60;
+    return `${m}:${String(s).padStart(2, '0')}`;
+  }
+
+  function getSegment() {
+    if (!UI.editEditor || segState.mode === 'full') return null;
+    const n = segmentCount(UI.editEditor.T);
+    const m = Math.max(0, Math.min(n - 1, segState.m | 0));
+    return { m, start: m * SEGMENT_STEPS, len: SEGMENT_STEPS };
+  }
+
+  function saveSegmentState() {
+    try { localStorage.setItem(SEGMENT_KEY, JSON.stringify(segState)); } catch (e) {}
+  }
+  function loadSegmentState() {
+    try {
+      const b = JSON.parse(localStorage.getItem(SEGMENT_KEY));
+      if (b && (b.mode === 'full' || b.mode === 'segment')) {
+        segState.mode = b.mode;
+        segState.m = b.m | 0;
+      }
+    } catch (e) {}
+  }
+
+  function applySegmentToEditors() {
+    const seg = getSegment();
+    [UI.refEditor, UI.editEditor].forEach((ed) => {
+      if (!ed || typeof ed.setSegment !== 'function') return;
+      if (seg) ed.setSegment(seg.start, seg.len);
+      else ed.setSegment(null, null);
+    });
+  }
+
+  function updateSegmentHint() {
+    const hint = $('segmentHint');
+    if (!hint) return;
+    const seg = getSegment();
+    hint.textContent = seg
+      ? `30초 세그먼트 · step ${seg.start}–${seg.start + seg.len} (${fmtStepTime(seg.start)}–${fmtStepTime(seg.start + seg.len)}) · 캔버스의 밝은 구간만 생성`
+      : '전곡 모드 (약 9분) — 데모는 30초 블록을 권장합니다';
+  }
+
+  function populateSegmentSelect() {
+    const sel = $('segmentSelect');
+    if (!sel || !UI.editEditor) return;
+    const T = UI.editEditor.T;
+    const n = segmentCount(T);
+    sel.innerHTML = '';
+    for (let m = 0; m < n; m++) {
+      const opt = document.createElement('option');
+      opt.value = String(m);
+      opt.textContent = `블록 ${m} · ${fmtStepTime(m * SEGMENT_STEPS)}–${fmtStepTime((m + 1) * SEGMENT_STEPS)}`;
+      sel.appendChild(opt);
+    }
+    const full = document.createElement('option');
+    full.value = 'full';
+    full.textContent = `전곡 (${fmtStepTime(T)} · 연구용)`;
+    sel.appendChild(full);
+    segState.m = Math.max(0, Math.min(n - 1, segState.m | 0));
+    sel.value = segState.mode === 'full' ? 'full' : String(segState.m);
+    updateSegmentHint();
+  }
+
+  function onSegmentChanged() {
+    saveSegmentState();
+    applySegmentToEditors();
+    updateSegmentHint();
+    stopLocalPlayback();
+    invalidateGeneratedOnEdit();   // 이전 생성물은 다른 구간 결과
+    liveMaybeRegenerate();
+  }
+
+  function wireSegmentControls() {
+    const sel = $('segmentSelect');
+    if (!sel) return;
+    sel.addEventListener('change', () => {
+      if (sel.value === 'full') {
+        segState.mode = 'full';
+      } else {
+        segState.mode = 'segment';
+        segState.m = parseInt(sel.value, 10) || 0;
+      }
+      onSegmentChanged();
+      log(segState.mode === 'full' ? '구간: 전곡' : `구간: 블록 ${segState.m}`);
+    });
+    const stepBlock = (d) => {
+      const n = segmentCount(UI.editEditor ? UI.editEditor.T : SEGMENT_STEPS);
+      if (segState.mode === 'full') segState.mode = 'segment';
+      segState.m = ((segState.m + d) % n + n) % n;
+      sel.value = String(segState.m);
+      onSegmentChanged();
+      log(`구간: 블록 ${segState.m}`);
+    };
+    const prev = $('btnSegPrev');
+    const next = $('btnSegNext');
+    if (prev) prev.addEventListener('click', () => stepBlock(-1));
+    if (next) next.addEventListener('click', () => stepBlock(1));
+  }
+
+  // ── 인페이지 재생 (생성 결과 ♪ 듣기) ────────────────────────────────
+  function playLastGenerated() {
+    if (!playState.lastGenerated) {
+      log('재생할 생성 결과가 없습니다 (먼저 생성)', 'ERR');
+      return;
+    }
+    const player = ensurePlayer();
+    const bpm = playState.bpm;
+    const notesSec = playState.lastGenerated.notes.map(
+      (n) => [eighthsToSec(n[0], bpm), n[1], eighthsToSec(n[2], bpm)]
+    );
+    const btnStop = $('btnStopLocal');
+    if (btnStop) btnStop.disabled = false;
+    player.play(notesSec, {
+      onProgress: (t, total) => {
+        setProgress(total > 0 ? t / total : 0,
+          `재생 중 ${t.toFixed(1)}s / ${total.toFixed(1)}s`);
+      },
+      onEnd: () => {
+        setProgress(1, '재생 완료');
+        if (btnStop) btnStop.disabled = true;
+      },
+    });
+  }
+
+  function stopLocalPlayback() {
+    if (playState.genPlayer && playState.genPlayer.isPlaying) {
+      playState.genPlayer.stop();
+      setProgress(0, '정지');
+    }
+    const btnStop = $('btnStopLocal');
+    if (btnStop) btnStop.disabled = true;
+  }
+
+  // ── 라이브 모드 — 편집하면 debounce 후 자동 재생성 + 재생 ──────────
+  const LIVE_DEBOUNCE_MS = 500;
+  let liveTimer = null;
+
+  function liveMaybeRegenerate() {
+    const chk = $('chkLive');
+    if (!chk || !chk.checked) return;
+    if (liveTimer) clearTimeout(liveTimer);
+    liveTimer = setTimeout(async () => {
+      liveTimer = null;
+      const res = await generateNow({ quiet: true });
+      if (res) playLastGenerated();
+    }, LIVE_DEBOUNCE_MS);
+  }
+
+  function wireLiveMode() {
+    const chk = $('chkLive');
+    if (!chk) return;
+    chk.addEventListener('change', () => {
+      if (chk.checked) {
+        log('라이브 모드 ON — OM을 편집하면 자동으로 생성·재생합니다', 'OK');
+        liveMaybeRegenerate();
+      } else {
+        if (liveTimer) { clearTimeout(liveTimer); liveTimer = null; }
+        stopLocalPlayback();
+        log('라이브 모드 OFF');
+      }
+    });
+  }
+
+  // ── 품질 맵 — 구조 보존 × 신선함 산점도 ────────────────────────────
+  // x = 위상 구조 보존: 편집 OM(세그먼트)의 cycle별 활성 분포 vs 참조 동일 구간 (1 − JS)
+  // y = 신선함: 생성 (pitch, dur) 분포 vs 원곡 분포의 JS divergence (논문 평가 지표와 동일 계열)
+  const qualityState = { points: [], cap: 60 };
+
+  function jsDivergence(p, q) {
+    // p, q: 정규화된 분포 (합 1). log2 기준 → [0, 1].
+    const eps = 1e-12;
+    let js = 0;
+    for (let i = 0; i < p.length; i++) {
+      const pi = p[i] + eps, qi = q[i] + eps, mi = 0.5 * (pi + qi);
+      js += 0.5 * pi * Math.log2(pi / mi) + 0.5 * qi * Math.log2(qi / mi);
+    }
+    return Math.max(0, Math.min(1, js));
+  }
+
+  function normalizeDist(arr) {
+    let s = 0;
+    for (const v of arr) s += v;
+    if (s <= 0) return arr.map(() => 1 / arr.length);
+    return arr.map((v) => v / s);
+  }
+
+  function computeStructureScore(seg) {
+    const ed = UI.editEditor;
+    const K = ed.K;
+    const vals = ed.getMatrix();
+    const ref = ed.reference;
+    if (!ref) return 1;
+    const start = seg ? seg.start : 0;
+    const len = seg ? seg.len : ed.T;
+    const e = new Array(K).fill(0);
+    const r = new Array(K).fill(0);
+    for (let t = start; t < start + len; t++) {
+      for (let c = 0; c < K; c++) {
+        const i = t * K + c;
+        e[c] += Math.max(0, vals[i]);
+        r[c] += Math.max(0, ref[i]);
+      }
+    }
+    return 1 - jsDivergence(normalizeDist(e), normalizeDist(r));
+  }
+
+  function computeFreshnessScore(notes) {
+    // (pitch, dur) note 단위 분포 — 논문 JS 평가와 동일한 단위
+    const gen = new Map();
+    for (const n of notes) {
+      const key = n[1] * 1000 + Math.max(1, (n[2] - n[0]) | 0);
+      gen.set(key, (gen.get(key) || 0) + 1);
+    }
+    const orig = new Map();
+    for (const l of UI.data.notesMeta.labels) {
+      const key = l.pitch * 1000 + Math.max(1, l.dur | 0);
+      orig.set(key, (orig.get(key) || 0) + (l.count || 1));
+    }
+    const keys = Array.from(new Set([...gen.keys(), ...orig.keys()])).sort((a, b) => a - b);
+    const p = keys.map((k) => gen.get(k) || 0);
+    const q = keys.map((k) => orig.get(k) || 0);
+    return jsDivergence(normalizeDist(p), normalizeDist(q));
+  }
+
+  function updateQualityMap(res, seg, info) {
+    const S = computeStructureScore(seg);
+    const F = computeFreshnessScore(res.notes);
+    qualityState.points.push({
+      S, F,
+      algo: info.algo,
+      seed: info.seed,
+      seg: seg ? seg.m : 'full',
+      ts: Date.now(),
+    });
+    if (qualityState.points.length > qualityState.cap) {
+      qualityState.points.splice(0, qualityState.points.length - qualityState.cap);
+    }
+    const meta = $('qualityMapMeta');
+    if (meta) {
+      meta.textContent =
+        `구조 보존 ${(S * 100).toFixed(0)}% · 신선함 JS=${F.toFixed(3)} · ${info.algoLabel} seed ${info.seed}`;
+    }
+    renderQualityMap();
+  }
+
+  function renderQualityMap() {
+    const cv = $('qualityMapCanvas');
+    if (!cv) return;
+    const ctx = cv.getContext('2d');
+    const W = cv.width, H = cv.height;
+    const css = getComputedStyle(document.documentElement);
+    const colCanvas = css.getPropertyValue('--surface-canvas').trim() || '#101322';
+    const colGrid = css.getPropertyValue('--grid-line').trim() || 'rgba(255,255,255,0.08)';
+    const colText = css.getPropertyValue('--text-dim').trim() ||
+                    css.getPropertyValue('--text-secondary').trim() || '#888';
+    const colA1 = css.getPropertyValue('--accent-teal').trim() || '#34d399';
+    const colA2 = css.getPropertyValue('--accent-amber').trim() || '#fbbf24';
+
+    ctx.clearRect(0, 0, W, H);
+    ctx.fillStyle = colCanvas;
+    ctx.fillRect(0, 0, W, H);
+
+    const pad = { l: 26, r: 8, t: 10, b: 22 };
+    const plotW = W - pad.l - pad.r;
+    const plotH = H - pad.t - pad.b;
+
+    // sqrt 스케일 — JS 가 작은 영역(좋은 생성)을 넓게 펼침
+    const xOf = (S) => pad.l + plotW * (1 - Math.sqrt(Math.max(0, Math.min(1, 1 - S))));
+    const yOf = (F) => pad.t + plotH * (1 - Math.sqrt(Math.max(0, Math.min(1, F))));
+
+    // 격자 + 축
+    ctx.strokeStyle = colGrid;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    for (const fr of [0.25, 0.5, 0.75]) {
+      ctx.moveTo(pad.l + plotW * fr, pad.t); ctx.lineTo(pad.l + plotW * fr, pad.t + plotH);
+      ctx.moveTo(pad.l, pad.t + plotH * fr); ctx.lineTo(pad.l + plotW, pad.t + plotH * fr);
+    }
+    ctx.rect(pad.l, pad.t, plotW, plotH);
+    ctx.stroke();
+
+    // 목표 사분면 힌트 (오른쪽 위)
+    ctx.fillStyle = 'rgba(52, 211, 153, 0.07)';
+    ctx.fillRect(pad.l + plotW * 0.55, pad.t, plotW * 0.45, plotH * 0.45);
+
+    ctx.fillStyle = colText;
+    ctx.font = '10px "JetBrains Mono", monospace';
+    ctx.fillText('신선함 ↑', pad.l + 2, pad.t + 10);
+    ctx.textAlign = 'right';
+    ctx.fillText('구조 보존 →', W - pad.r, H - 8);
+    ctx.textAlign = 'left';
+
+    // 점들 — 과거는 흐리게, 최신은 크게 + 링
+    const pts = qualityState.points;
+    for (let i = 0; i < pts.length; i++) {
+      const p = pts[i];
+      const isLast = i === pts.length - 1;
+      const x = xOf(p.S), y = yOf(p.F);
+      const col = p.algo === 'algo2' ? colA2 : colA1;
+      ctx.globalAlpha = isLast ? 1 : Math.max(0.15, 0.65 * (i + 1) / pts.length);
+      ctx.fillStyle = col;
+      ctx.beginPath();
+      ctx.arc(x, y, isLast ? 5 : 3, 0, Math.PI * 2);
+      ctx.fill();
+      if (isLast) {
+        ctx.globalAlpha = 0.9;
+        ctx.strokeStyle = col;
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.arc(x, y, 8, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  function wireQualityMap() {
+    const btn = $('btnQualityClear');
+    if (btn) {
+      btn.addEventListener('click', () => {
+        qualityState.points = [];
+        const meta = $('qualityMapMeta');
+        if (meta) meta.textContent = '생성할 때마다 점이 찍힙니다';
+        renderQualityMap();
+      });
+    }
+    // 테마 전환 시 재렌더 (토큰 색이 바뀌므로)
+    try {
+      new MutationObserver(() => renderQualityMap())
+        .observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+    } catch (e) {}
+    renderQualityMap();
+  }
+
   // 알고리즘 1: overlap(이미 슬라이스된 형태 포함) 하나 생성
   function runAlgo1Once({ overlap, instLen, temperature, seed }) {
     const { NodePool, CycleSetManager, algorithm1, makeRng } = window.GenerationAlgo1;
@@ -1570,8 +1924,9 @@
     }
   }
 
-  // 생성 버튼 메인 핸들러 — 34마디 전곡 1개
-  async function onClickGenerate() {
+  // 생성 메인 — 기본은 30초 세그먼트(T=60), '전곡' 선택 시 전체.
+  // opts.quiet — 라이브 모드 재생성 시 로그 최소화.
+  async function generateNow(opts = {}) {
     if (!UI.editEditor || !UI.data) { log('데이터 미로드', 'ERR'); return; }
     if (!window.GenerationAlgo1) { log('GenerationAlgo1 모듈 미로드', 'ERR'); return; }
 
@@ -1580,41 +1935,73 @@
     const seed = parseInt($('sliderSeed').value, 10) || 0;
 
     const { buildHibariInstLen } = window.GenerationAlgo1;
-    const fullInstLen = buildHibariInstLen(UI.editEditor.T);
-    const fullOverlap = {
-      T: UI.editEditor.T,
-      K: UI.editEditor.K,
-      values: UI.editEditor.getMatrix(),
-    };
+    const K = UI.editEditor.K;
+    const fullT = UI.editEditor.T;
+    const fullInstLen = buildHibariInstLen(fullT);
+    const fullValues = UI.editEditor.getMatrix();
+
+    // 세그먼트 슬라이스 — 선택 구간만 생성 (메모: T=60 ≈ 30초)
+    const seg = getSegment();
+    let overlap, instLen, offset;
+    if (seg) {
+      overlap = {
+        T: seg.len, K,
+        values: fullValues.slice(seg.start * K, (seg.start + seg.len) * K),
+      };
+      instLen = fullInstLen.slice(seg.start, seg.start + seg.len);
+      offset = seg.start;
+    } else {
+      overlap = { T: fullT, K, values: fullValues };
+      instLen = fullInstLen;
+      offset = 0;
+    }
 
     try {
       const algoLabel = algo === 'algo2' ? 'Algorithm 2 (FC)' : 'Algorithm 1';
-      const bars = Math.round(fullOverlap.T / BAR_STEPS);
-      log(`${algoLabel} 전곡 생성 (T=${fullOverlap.T}, ${bars}마디, seed=${seed}, temp=${temperature.toFixed(1)})`);
+      if (!opts.quiet) {
+        if (seg) {
+          log(`${algoLabel} 30초 세그먼트 생성 (블록 ${seg.m}, step ${seg.start}–${seg.start + seg.len}, seed=${seed}, temp=${temperature.toFixed(1)})`);
+        } else {
+          const bars = Math.round(overlap.T / BAR_STEPS);
+          log(`${algoLabel} 전곡 생성 (T=${overlap.T}, ${bars}마디, seed=${seed}, temp=${temperature.toFixed(1)})`);
+        }
+      }
       if (algo === 'algo2') await ensureFcLoaded();
 
       const t0 = performance.now();
       let res;
       if (algo === 'algo2') {
-        res = await runAlgo2Once({ overlap: fullOverlap, temperature, seed });
+        res = await runAlgo2Once({ overlap, temperature, seed });
       } else {
-        res = runAlgo1Once({ overlap: fullOverlap, instLen: fullInstLen, temperature, seed });
+        res = runAlgo1Once({ overlap, instLen, temperature, seed });
       }
-      res.offset = 0;
+      res.offset = offset;
+      res.segment = seg ? { m: seg.m, start: seg.start, len: seg.len } : null;
       const dt = performance.now() - t0;
-      log(`생성 완료 (${dt.toFixed(0)}ms, ${res.notes.length} notes)`, 'OK');
+      if (!opts.quiet) log(`생성 완료 (${dt.toFixed(0)}ms, ${res.notes.length} notes)`, 'OK');
 
       playState.lastGenerated = res;
       $('btnDownloadMidi').disabled = false;
       const btnT = $('btnPlayInTonnetz');
       if (btnT) btnT.disabled = false;
+      const btnP = $('btnPlayLocal');
+      if (btnP) btnP.disabled = false;
       syncActionButtons();
-      setProgress(1, `생성 완료 · ${res.notes.length} notes · MIDI 저장 버튼으로 다운로드`);
+
+      // 품질 맵 점 추가 (구조 보존 × 신선함)
+      try { updateQualityMap(res, seg, { algo, algoLabel, seed }); } catch (e) { console.warn('quality map:', e); }
+
+      const segLabel = seg ? `블록 ${seg.m}` : '전곡';
+      setProgress(1, `생성 완료 (${segLabel}) · ${res.notes.length} notes · ♪ 듣기 또는 MIDI 저장`);
+      return res;
     } catch (e) {
       log(`생성 실패: ${e.message}`, 'ERR');
       console.error(e);
+      return null;
     }
   }
+
+  function onClickGenerate() { return generateNow({}); }
 
   function onClickDownloadMidi() {
     if (!playState.lastGenerated) {
@@ -1629,7 +2016,8 @@
         velocity: 80,
       });
       const seed = parseInt($('sliderSeed').value, 10) || 0;
-      const fname = `hibari_dash_seed${seed}_off${cur.offset|0}.mid`;
+      const segTag = cur.segment ? `m${cur.segment.m}` : 'full';
+      const fname = `hibari_dash_seed${seed}_${segTag}.mid`;
       window.MidiIO.downloadBytes(bytes, fname);
       log(`MIDI 다운로드: ${fname} (${(bytes.length / 1024).toFixed(1)} KB)`, 'OK');
     } catch (e) {
@@ -1737,6 +2125,7 @@
           updateOODBanner(ed);
           saveEditState(ed);
           clearPendingOnEdit(); // 시나리오 8
+          liveMaybeRegenerate(); // 라이브 모드: 편집 → 자동 재생성·재생
         },
       });
       updateEditMeta(UI.editEditor);
@@ -1775,6 +2164,11 @@
       });
 
       if (UI.stack.length > 0) recomputeStackToEditor();
+
+      // 30초 세그먼트 — 저장된 선택 복구 → 셀렉트 채우기 → 캔버스 밴드 표시
+      loadSegmentState();
+      populateSegmentSelect();
+      applySegmentToEditors();
 
       // 사이클 미리듣기 목록 + 시각화 초기 렌더 (c0 기본 표시)
       populateCycleList();

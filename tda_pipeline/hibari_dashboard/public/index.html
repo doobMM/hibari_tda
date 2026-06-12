@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="ko" data-theme="light">
 <head>
   <meta charset="utf-8">
@@ -7,8 +7,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=Jua&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/tokens.css?v=4.14">
-  <link rel="stylesheet" href="css/style.css?v=4.14">
+  <link rel="stylesheet" href="css/tokens.css?v=4.15">
+  <link rel="stylesheet" href="css/style.css?v=4.15">
   <link rel="stylesheet" href="../../shared/nav.css">
 </head>
 <body>
@@ -231,6 +231,13 @@
           </label>
         </div>
         <p class="hint hint--algo" id="algoInputHint">입력: 이진 OM (τ=0.7)</p>
+        <div class="segment-row" aria-label="생성 구간">
+          <span class="segment-row__label">구간</span>
+          <button class="btn btn--small" id="btnSegPrev" type="button" title="이전 블록" aria-label="이전 블록">◀</button>
+          <select class="select segment-row__select" id="segmentSelect" aria-label="생성 구간 선택"></select>
+          <button class="btn btn--small" id="btnSegNext" type="button" title="다음 블록" aria-label="다음 블록">▶</button>
+        </div>
+        <p class="hint" id="segmentHint">30초 세그먼트 (T=60 step) · 캔버스에 구간이 표시됩니다</p>
         <div class="slider-row" aria-label="Temperature">
           <span class="slider-row__label">Temperature</span>
           <input class="slider-row__track" type="range" id="sliderTemp"
@@ -249,6 +256,14 @@
       <div class="control-group">
         <h2 class="control-group__heading">재생</h2>
         <button class="btn btn--primary" id="btnGenerate">▶ 생성</button>
+        <div class="btn-pair">
+          <button class="btn" id="btnPlayLocal" disabled title="생성 결과를 이 페이지에서 바로 재생">&#x266A; 듣기</button>
+          <button class="btn" id="btnStopLocal" disabled title="재생 정지">&#x25A0; 정지</button>
+        </div>
+        <label class="check-row" title="OM을 편집하면 잠시 후 자동으로 다시 생성하고 들려줍니다">
+          <input type="checkbox" id="chkLive">
+          라이브 모드 — 그리면 음악이 따라옵니다
+        </label>
         <button class="btn" id="btnPlayInTonnetz" disabled title="생성된 시퀀스를 Tonnetz Demo 에서 자동 재생">&#x1F39B;&#xFE0F; Tonnetz 에서 재생</button>
         <button class="btn" id="btnDownloadMidi" disabled>&#x1F4BE; MIDI 저장</button>
         <div class="progress-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100">
@@ -256,6 +271,24 @@
         </div>
         <div class="meta-row" id="playbackMeta">대기 중</div>
       </div>
+
+      <!-- Section: 품질 맵 (구조 보존 × 신선함) -->
+      <details class="control-group disclosure-group" id="qualityMapGroup" open>
+        <summary class="disclosure-summary">
+          <span>품질 맵</span>
+          <span class="disclosure-summary__meta">구조 × 신선함</span>
+        </summary>
+        <p class="hint">
+          가로 = <b>위상 구조 보존</b> (편집 OM이 hibari 참조의 cycle 분포를 얼마나 유지하는지),
+          세로 = <b>신선함</b> (생성된 음의 분포가 원곡과 얼마나 다른지, JS divergence).
+          오른쪽 위 = "hibari 구조인데 새로운 음악".
+        </p>
+        <div class="quality-map__canvas-wrap">
+          <canvas id="qualityMapCanvas" width="260" height="208" aria-label="생성 품질 산점도"></canvas>
+        </div>
+        <div class="meta-row" id="qualityMapMeta">생성할 때마다 점이 찍힙니다</div>
+        <button class="btn btn--small" id="btnQualityClear" type="button">점 지우기</button>
+      </details>
 
       <!-- Section: 사이클 미리듣기 & 시각화 -->
       <details class="control-group cycle-preview disclosure-group" id="cyclePreview">
@@ -380,15 +413,15 @@
   </script>
 
   <!-- ── App scripts ────────────────────────────────────────────────────── -->
-  <script src="js/data-loader.js?v=4.14"></script>
-  <script src="js/overlap-editor.js?v=4.14"></script>
-  <script src="js/generation-algo1.js?v=4.14"></script>
-  <script src="js/generation-algo2.js?v=4.14"></script>
+  <script src="js/data-loader.js?v=4.15"></script>
+  <script src="js/overlap-editor.js?v=4.15"></script>
+  <script src="js/generation-algo1.js?v=4.15"></script>
+  <script src="js/generation-algo2.js?v=4.15"></script>
   <script src="../../shared/midi-io.js?v=4.12"></script>
   <script src="../../shared/state.js?v=4.12"></script>
-  <script src="js/audio-playback.js?v=4.14"></script>
-  <script src="js/ood-detector.js?v=4.14"></script>
-  <script src="js/ui-bootstrap.js?v=4.14"></script>
+  <script src="js/audio-playback.js?v=4.15"></script>
+  <script src="js/ood-detector.js?v=4.15"></script>
+  <script src="js/ui-bootstrap.js?v=4.15"></script>
 
 </body>
 </html>

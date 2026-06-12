@@ -122,6 +122,13 @@
     }
     getMatrix() { return this.values; }
 
+    // 생성 구간 하이라이트 — {start, len} (시점 단위) 또는 null(전곡).
+    // 구간 밖은 살짝 어둡게, 경계는 액센트 선으로 표시.
+    setSegment(start, len) {
+      this.segment = (start == null || len == null) ? null : { start: start | 0, len: len | 0 };
+      this._scheduleRender();
+    }
+
     setReference(ref) {
       if (ref && ref.length !== this.T * this.K) {
         throw new Error(`setReference 크기 불일치`);
@@ -751,6 +758,26 @@
           ctx.moveTo(ox + tStart * cellW, y);
           ctx.lineTo(ox + tEnd * cellW, y);
         }
+        ctx.stroke();
+      }
+
+      // 생성 구간 오버레이 — 구간 밖 dim + 경계 액센트 선
+      if (this.segment) {
+        const segX0 = ox + this.segment.start * cellW;
+        const segX1 = ox + (this.segment.start + this.segment.len) * cellW;
+        const bandTop = oy + cStart * cellH;
+        const bandH = (cEnd - cStart) * cellH;
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        ctx.fillStyle = isDark ? 'rgba(5, 8, 5, 0.55)' : 'rgba(245, 248, 242, 0.62)';
+        if (segX0 > ox) ctx.fillRect(ox, bandTop, segX0 - ox, bandH);
+        const rightEdge = ox + this.T * cellW;
+        if (segX1 < rightEdge) ctx.fillRect(segX1, bandTop, rightEdge - segX1, bandH);
+        const accent = readCssVar('--accent-teal') || '#34d399';
+        ctx.strokeStyle = accent;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(segX0 + 1, bandTop); ctx.lineTo(segX0 + 1, bandTop + bandH);
+        ctx.moveTo(segX1 - 1, bandTop); ctx.lineTo(segX1 - 1, bandTop + bandH);
         ctx.stroke();
       }
 
