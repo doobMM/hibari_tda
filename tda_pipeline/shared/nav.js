@@ -50,7 +50,7 @@
 
     var brand = document.createElement('span');
     brand.className = 'tda-nav__brand';
-    brand.innerHTML = '<span class="tda-nav__brand-glyph" aria-hidden="true">◴</span><span>hibari · TDA</span>';
+    brand.innerHTML = '<span class="tda-nav__brand-glyph" aria-hidden="true">🌱</span><span>hibari · TDA</span>';
     nav.appendChild(brand);
 
     var ul = document.createElement('ul');

@@ -713,8 +713,9 @@
           for (let c = cStart; c < cEnd; c++) {
             let v = this.values[this.idx(t, c)];
             if (v < 0) v = 0; else if (v > 1) v = 1;
+            // 연속 활성도: 마른 풀(연노랑-연두) → 짙은 풀 (괴물 그린 스킨)
             const L = baseL + (peakL - baseL) * v;
-            const H = 200 - 40 * v;
+            const H = 80 + 50 * v;
             ctx.fillStyle = `hsl(${H}, 70%, ${L}%)`;
             ctx.fillRect(ox + t * cellW, oy + c * cellH, Math.ceil(cellW), Math.ceil(cellH));
           }

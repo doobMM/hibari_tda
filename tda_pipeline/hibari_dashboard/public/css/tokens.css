@@ -1,57 +1,59 @@
 /* ==========================================================================
    tokens.css — Hibari Dashboard Design Tokens
-   Palette direction: playful research instrument — mint, sky, coral, lavender
+   Palette direction: 괴물(2023) 포스터의 푸릇푸릇한 들판 — 풀, 이끼, 햇살, 하늘
+   생명력 있는 그린 단일 계열. 변수명(--accent-teal 등)은 호환을 위해 유지하되
+   값은 모두 그린 스펙트럼으로 재지정.
    4px base unit, mobile-first controls, readable Korean UI
    ========================================================================== */
 
-/* ── Dark mode (default) ─────────────────────────────────────────────────── */
+/* ── Dark mode — 밤의 숲 ─────────────────────────────────────────────────── */
 :root {
   /* Surface */
-  --surface-base:       #11121b;
-  --surface-raised:     #191b28;
-  --surface-overlay:    #23263a;
-  --surface-canvas:     #101322;
+  --surface-base:       #0e1410;
+  --surface-raised:     #152017;
+  --surface-overlay:    #1d2b20;
+  --surface-canvas:     #0f1812;
 
   /* Borders */
-  --border-hairline:    #2b3047;
-  --border-default:     #3a405d;
-  --border-focus:       #5eead4;
+  --border-hairline:    #24352a;
+  --border-default:     #33493a;
+  --border-focus:       #7ed957;
 
   /* Text */
-  --text-primary:       #f5f7ff;
-  --text-secondary:     #b8c1d9;
-  --text-tertiary:      #7d89a8;
+  --text-primary:       #eef5e9;
+  --text-secondary:     #b6c9ad;
+  --text-tertiary:      #7c937a;
 
-  /* Accent — cool teal (primary) */
-  --accent-teal:        #5eead4;
-  --accent-teal-dim:    rgba(94, 234, 212, 0.16);
-  --accent-teal-border: rgba(94, 234, 212, 0.38);
+  /* Accent — 달빛 받은 풀 (primary, 구명: teal) */
+  --accent-teal:        #7ed957;
+  --accent-teal-dim:    rgba(126, 217, 87, 0.16);
+  --accent-teal-border: rgba(126, 217, 87, 0.38);
 
-  /* Accent — muted amber (secondary) */
-  --accent-amber:       #fbbf24;
-  --accent-amber-dim:   rgba(251, 191, 36, 0.14);
-  --accent-amber-border:rgba(251, 191, 36, 0.38);
+  /* Accent — 저녁 햇살 (secondary, 구명: amber) */
+  --accent-amber:       #e8c25a;
+  --accent-amber-dim:   rgba(232, 194, 90, 0.14);
+  --accent-amber-border:rgba(232, 194, 90, 0.38);
 
   /* Semantic */
-  --color-ok:           #7dd3fc;
-  --color-warn:         #fbbf24;
-  --color-danger:       #fb7185;
-  --color-ok-dim:       rgba(125, 211, 252, 0.14);
-  --color-warn-dim:     rgba(251, 191, 36, 0.14);
-  --color-danger-dim:   rgba(251, 113, 133, 0.14);
-  --color-ok-border:    rgba(125, 211, 252, 0.34);
-  --color-warn-border:  rgba(251, 191, 36, 0.34);
-  --color-danger-border:rgba(251, 113, 133, 0.34);
+  --color-ok:           #8fd6a8;
+  --color-warn:         #e8c25a;
+  --color-danger:       #e07856;
+  --color-ok-dim:       rgba(143, 214, 168, 0.14);
+  --color-warn-dim:     rgba(232, 194, 90, 0.14);
+  --color-danger-dim:   rgba(224, 120, 86, 0.14);
+  --color-ok-border:    rgba(143, 214, 168, 0.34);
+  --color-warn-border:  rgba(232, 194, 90, 0.34);
+  --color-danger-border:rgba(224, 120, 86, 0.34);
 
-  /* Canvas cell states — passed to JS via CSS but also hardcoded in overlap-editor.js */
-  --cell-on:            #34d399;
-  --cell-off:           #1b2034;
-  --cell-hover:         #fbbf24;
-  --cell-diff-add:      #60a5fa;
-  --cell-diff-remove:   #fb7185;
+  /* Canvas cell states — overlap-editor.js 가 render 시점에 읽음 */
+  --cell-on:            #5fbf49;
+  --cell-off:           #16231a;
+  --cell-hover:         #e8c25a;
+  --cell-diff-add:      #5fa8e0;
+  --cell-diff-remove:   #e07856;
 
   /* Grid lines (drawn on canvas) */
-  --grid-line:          rgba(255, 255, 255, 0.06);
+  --grid-line:          rgba(255, 255, 255, 0.05);
 
   /* Typography */
   --font-ui:   'Gowun Dodum', system-ui, -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
@@ -91,44 +93,46 @@
   --panel-width:     260px;   /* left/right control panels (normal) */
 }
 
-/* ── Light mode (기본) — playful mint × sky × coral ─────────────────────── */
+/* ── Light mode (기본) — 햇살 가득한 들판 ────────────────────────────────── */
 [data-theme="light"] {
-  --surface-base:       #f8fbff;
-  --surface-raised:     rgba(255, 255, 255, 0.84);
+  --surface-base:       #f3f7ec;
+  --surface-raised:     rgba(255, 255, 255, 0.80);
   --surface-overlay:    #ffffff;
-  --surface-canvas:     #f4f9ff;
+  --surface-canvas:     #eef4e2;
 
-  --border-hairline:    #d8e4f4;
-  --border-default:     #bfd0e7;
-  --border-focus:       #00a6a6;
+  --border-hairline:    #d7e3c8;
+  --border-default:     #b9cda3;
+  --border-focus:       #3a8f3d;
 
-  --text-primary:       #243043;
-  --text-secondary:     #536075;
-  --text-tertiary:      #8190a8;
+  --text-primary:       #22331f;
+  --text-secondary:     #48603f;
+  --text-tertiary:      #7a9070;
 
-  --accent-teal:        #00a6a6;
-  --accent-teal-dim:    rgba(0, 166, 166, 0.13);
-  --accent-teal-border: rgba(0, 166, 166, 0.34);
+  /* 풀잎 그린 (primary) */
+  --accent-teal:        #3a8f3d;
+  --accent-teal-dim:    rgba(58, 143, 61, 0.13);
+  --accent-teal-border: rgba(58, 143, 61, 0.36);
 
-  --accent-amber:       #ffb547;
-  --accent-amber-dim:   rgba(255, 181, 71, 0.18);
-  --accent-amber-border:rgba(255, 181, 71, 0.42);
+  /* 햇살 (secondary) */
+  --accent-amber:       #dba93f;
+  --accent-amber-dim:   rgba(219, 169, 63, 0.18);
+  --accent-amber-border:rgba(219, 169, 63, 0.42);
 
-  --color-ok:           #2ca66f;
-  --color-warn:         #e99a12;
-  --color-danger:       #e65076;
-  --color-ok-dim:       rgba(44, 166, 111, 0.13);
-  --color-warn-dim:     rgba(233, 154, 18, 0.15);
-  --color-danger-dim:   rgba(230, 80, 118, 0.13);
-  --color-ok-border:    rgba(44, 166, 111, 0.34);
-  --color-warn-border:  rgba(233, 154, 18, 0.38);
-  --color-danger-border:rgba(230, 80, 118, 0.34);
+  --color-ok:           #2f8f57;
+  --color-warn:         #c98f1d;
+  --color-danger:       #cf5f3e;
+  --color-ok-dim:       rgba(47, 143, 87, 0.13);
+  --color-warn-dim:     rgba(201, 143, 29, 0.15);
+  --color-danger-dim:   rgba(207, 95, 62, 0.13);
+  --color-ok-border:    rgba(47, 143, 87, 0.34);
+  --color-warn-border:  rgba(201, 143, 29, 0.38);
+  --color-danger-border:rgba(207, 95, 62, 0.34);
 
-  --cell-on:            #26a96c;
-  --cell-off:           #eaf1ff;
-  --cell-hover:         #ffb547;
-  --cell-diff-add:      #5179ff;
-  --cell-diff-remove:   #ff5c8a;
+  --cell-on:            #58a83c;
+  --cell-off:           #e9f1da;
+  --cell-hover:         #dba93f;
+  --cell-diff-add:      #3f8fcf;
+  --cell-diff-remove:   #cf5f3e;
 
-  --grid-line:          rgba(36, 48, 67, 0.08);
+  --grid-line:          rgba(34, 51, 31, 0.07);
 }

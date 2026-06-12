@@ -36,19 +36,21 @@ body {
   background-position: -1px -1px;
 }
 
-/* Light 모드: mint, sky, coral, lavender의 밝은 악기 같은 배경 */
+/* Light 모드: 괴물(2023) 포스터 — 햇살 비치는 들판, 풀, 옅은 하늘 */
 [data-theme="light"] body {
   background:
-    radial-gradient(circle at 12% 10%, rgba(125, 236, 210, 0.34) 0%, transparent 42%),
-    radial-gradient(circle at 85% 12%, rgba(137, 180, 255, 0.28) 0%, transparent 40%),
-    radial-gradient(circle at 88% 88%, rgba(255, 147, 117, 0.24) 0%, transparent 42%),
-    linear-gradient(135deg, #f8fbff 0%, #f3fbf9 52%, #fff8fb 100%);
+    radial-gradient(circle at 14% 8%,  rgba(255, 236, 170, 0.40) 0%, transparent 40%),
+    radial-gradient(circle at 86% 10%, rgba(173, 216, 230, 0.26) 0%, transparent 38%),
+    radial-gradient(circle at 50% 105%, rgba(88, 168, 60, 0.22) 0%, transparent 52%),
+    radial-gradient(circle at 8% 92%,  rgba(58, 143, 61, 0.16) 0%, transparent 45%),
+    linear-gradient(180deg, #f4f9ee 0%, #f1f6e6 55%, #e9f1d8 100%);
   background-attachment: fixed;
   background-image:
-    radial-gradient(circle at 12% 10%, rgba(125, 236, 210, 0.34) 0%, transparent 42%),
-    radial-gradient(circle at 85% 12%, rgba(137, 180, 255, 0.28) 0%, transparent 40%),
-    radial-gradient(circle at 88% 88%, rgba(255, 147, 117, 0.24) 0%, transparent 42%),
-    linear-gradient(135deg, #f8fbff 0%, #f3fbf9 52%, #fff8fb 100%);
+    radial-gradient(circle at 14% 8%,  rgba(255, 236, 170, 0.40) 0%, transparent 40%),
+    radial-gradient(circle at 86% 10%, rgba(173, 216, 230, 0.26) 0%, transparent 38%),
+    radial-gradient(circle at 50% 105%, rgba(88, 168, 60, 0.22) 0%, transparent 52%),
+    radial-gradient(circle at 8% 92%,  rgba(58, 143, 61, 0.16) 0%, transparent 45%),
+    linear-gradient(180deg, #f4f9ee 0%, #f1f6e6 55%, #e9f1d8 100%);
 }
 
 h1, h2, h3, h4 { font-family: var(--font-display); font-weight: 400; letter-spacing: 0; line-height: 1.3; }
@@ -81,11 +83,26 @@ button { font-family: var(--font-ui); }
   gap: var(--space-3);
 }
 
+/* 생명력 — 풀이 바람에 흔들리듯 아주 천천히 숨쉬는 모션 */
+@keyframes breathe {
+  0%, 100% { transform: scale(1);    opacity: 1; }
+  50%      { transform: scale(1.12); opacity: 0.82; }
+}
+@keyframes sway {
+  0%, 100% { transform: rotate(-3deg); }
+  50%      { transform: rotate(3deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .app-header__glyph, .workflow-step.is-active .workflow-step__num { animation: none !important; }
+}
+
 .app-header__glyph {
   font-size: var(--text-xl);
   color: var(--accent-teal);
   line-height: 1;
   align-self: center;
+  animation: sway 6s ease-in-out infinite;
+  transform-origin: bottom center;
   opacity: 0.85;
 }
 
@@ -211,6 +228,7 @@ button { font-family: var(--font-ui); }
   background: var(--accent-teal-dim);
   color: var(--accent-teal);
   box-shadow: 0 0 0 4px var(--accent-teal-dim);
+  animation: breathe 3.6s ease-in-out infinite;
 }
 
 .workflow-step.is-complete .workflow-step__num {
@@ -668,15 +686,15 @@ details[open] > .disclosure-summary::before {
   outline-offset: 2px;
 }
 
-/* Primary — teal */
+/* Primary — 풀잎 그린 (새싹→짙은 풀 그라데이션) */
 .btn--primary {
   border-color: var(--accent-teal-border);
-  background: linear-gradient(135deg, var(--accent-teal), #5ec8ff);
+  background: linear-gradient(135deg, #6cc24a, var(--accent-teal));
   color: #ffffff;
-  box-shadow: 0 6px 16px rgba(0, 166, 166, 0.16);
+  box-shadow: 0 6px 16px rgba(58, 143, 61, 0.18);
 }
 .btn--primary:hover:not(:disabled) {
-  background: linear-gradient(135deg, var(--accent-teal), #5ec8ff);
+  background: linear-gradient(135deg, #7ed957, var(--accent-teal));
   border-color: var(--accent-teal);
   color: #ffffff;
 }
@@ -1606,15 +1624,15 @@ details[open] > .disclosure-summary::before {
 }
 .legend__bar--cont {
   background: linear-gradient(to right,
-    hsl(200, 70%, 50%) 0%,
-    hsl(180, 70%, 45%) 50%,
-    hsl(160, 70%, 38%) 100%);
+    hsl(80, 70%, 18%) 0%,
+    hsl(105, 70%, 38%) 50%,
+    hsl(130, 70%, 55%) 100%);
 }
 [data-theme="light"] .legend__bar--cont {
   background: linear-gradient(to right,
-    hsl(200, 70%, 90%) 0%,
-    hsl(180, 70%, 60%) 50%,
-    hsl(160, 70%, 35%) 100%);
+    hsl(80, 70%, 92%) 0%,
+    hsl(105, 70%, 60%) 50%,
+    hsl(130, 70%, 32%) 100%);
 }
 
 /* ==========================================================================
