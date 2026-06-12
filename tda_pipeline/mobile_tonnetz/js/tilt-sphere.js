@@ -1,6 +1,7 @@
 import { AudioEngine } from './audio-engine.js';
 import { nodePC, PC_NAME } from './tonnetz-pc.js';
 import { requestSensorPermission } from './sensor-permission.js';
+import { runGeneration } from './generator.js';
 
 // ── Constants ──────────────────────────────────────────────────────────────
 const SESSION_SEC    = 30;
@@ -64,6 +65,9 @@ let lastTriggeredKey = '';
 // Each entry: { step, pc, r, c }  (120 entries over 30 s)
 let recording     = [];     // filled during 'recording' state
 let recordStartT  = 0;
+
+// ── Generation playback handle ────────────────────────────────────────────
+let activePlayback = null;
 
 // ── Resize / layout ────────────────────────────────────────────────────────
 function resize() {
@@ -204,6 +208,10 @@ function step(now) {
 // ── Session controls ───────────────────────────────────────────────────────
 async function startRecording() {
   await audio.unlock();
+  // 새 녹음 시작 시 이전 생성 결과 정리
+  if (activePlayback) { activePlayback.stop(); activePlayback = null; }
+  hideGenerateButton();
+
   appState    = 'recording';
   recording   = [];
   recordStartT = performance.now();
@@ -241,18 +249,78 @@ function showGenerateButton() {
       'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);' +
       'padding:12px 28px;border-radius:24px;border:none;background:#6fa66a;' +
       'color:#fff;font-size:1rem;font-weight:600;cursor:pointer;z-index:50;' +
-      'box-shadow:0 4px 16px rgba(0,0,0,0.35);';
-    btn.textContent = '🎵 생성하기 (' + recording.length + ' steps)';
-    btn.onclick = () => {
-      // Phase 2+3: OM 변환 → Algo1 생성 (다음 단계에서 구현)
-      const summary = recording.map(e => PC_NAME[e.pc]).join(' → ');
-      btn.textContent = '🔄 구현 예정 — 녹음된 경로: ' + summary.slice(0, 60) + '…';
-      btn.disabled = true;
-    };
+      'box-shadow:0 4px 16px rgba(0,0,0,0.35);white-space:nowrap;';
     document.body.appendChild(btn);
-  } else {
+  }
+  btn.textContent = '🎵 생성하기 (' + recording.length + ' steps)';
+  btn.disabled = false;
+  btn.onclick = onGenerateClick;
+}
+
+function hideGenerateButton() {
+  const btn = document.getElementById('btnGenerate');
+  if (btn) btn.remove();
+}
+
+async function onGenerateClick() {
+  const btn = document.getElementById('btnGenerate');
+  if (!btn) return;
+
+  // 재생 중이면 중단
+  if (activePlayback) {
+    activePlayback.stop();
+    activePlayback = null;
     btn.textContent = '🎵 생성하기 (' + recording.length + ' steps)';
+    btn.style.background = '#6fa66a';
+    return;
+  }
+
+  if (recording.length === 0) {
+    btn.textContent = '⚠ 녹음이 비어있음';
+    btn.disabled = true;
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = '🔄 생성 중…';
+
+  try {
+    await audio.unlock();
+    const res = await runGeneration(recording, audio, {
+      T: 120,            // 30s × (1000/250ms)
+      K: 14,
+      stepMs: 250,
+      temperature: 3.0,
+      windowSize: 4,
+    });
+    activePlayback = res.playback;
+
+    const m = res.meta;
+    console.log('[gen] seed=' + m.seed + ' notes=' + m.numNotes +
+      ' density=' + (m.density * 100).toFixed(1) + '% fails=' + m.resampleFails +
+      ' elapsed=' + m.genElapsedMs.toFixed(0) + 'ms');
+
+    btn.textContent = '⏹ 중지 (' + m.numNotes + ' notes)';
+    btn.style.background = '#b05a5a';
     btn.disabled = false;
+
+    // 재생 끝나면 원래 상태로
+    setTimeout(() => {
+      if (activePlayback === res.playback) {
+        activePlayback = null;
+        btn.textContent = '🎵 다시 생성 (seed 변경)';
+        btn.style.background = '#6fa66a';
+        btn.disabled = false;
+      }
+    }, res.playback.totalMs);
+  } catch (err) {
+    console.error('[gen] 실패', err);
+    btn.textContent = '⚠ 실패: ' + (err.message || err);
+    btn.disabled = false;
+    setTimeout(() => {
+      btn.textContent = '🎵 다시 시도';
+      btn.style.background = '#6fa66a';
+    }, 2500);
   }
 }
 

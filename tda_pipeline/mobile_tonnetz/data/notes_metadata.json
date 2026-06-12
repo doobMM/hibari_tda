@@ -1,0 +1,192 @@
+{
+  "num_notes": 23,
+  "total_count_per_module": 59,
+  "num_modules_reference": 65,
+  "labels": [
+    {
+      "label": 1,
+      "label_idx": 0,
+      "pitch": 52,
+      "dur": 2,
+      "count": 2,
+      "pc": 4
+    },
+    {
+      "label": 2,
+      "label_idx": 1,
+      "pitch": 53,
+      "dur": 2,
+      "count": 2,
+      "pc": 5
+    },
+    {
+      "label": 3,
+      "label_idx": 2,
+      "pitch": 55,
+      "dur": 2,
+      "count": 2,
+      "pc": 7
+    },
+    {
+      "label": 4,
+      "label_idx": 3,
+      "pitch": 57,
+      "dur": 2,
+      "count": 2,
+      "pc": 9
+    },
+    {
+      "label": 5,
+      "label_idx": 4,
+      "pitch": 57,
+      "dur": 6,
+      "count": 1,
+      "pc": 9
+    },
+    {
+      "label": 6,
+      "label_idx": 5,
+      "pitch": 59,
+      "dur": 2,
+      "count": 4,
+      "pc": 11
+    },
+    {
+      "label": 7,
+      "label_idx": 6,
+      "pitch": 60,
+      "dur": 2,
+      "count": 2,
+      "pc": 0
+    },
+    {
+      "label": 8,
+      "label_idx": 7,
+      "pitch": 60,
+      "dur": 6,
+      "count": 1,
+      "pc": 0
+    },
+    {
+      "label": 9,
+      "label_idx": 8,
+      "pitch": 62,
+      "dur": 2,
+      "count": 2,
+      "pc": 2
+    },
+    {
+      "label": 10,
+      "label_idx": 9,
+      "pitch": 64,
+      "dur": 2,
+      "count": 4,
+      "pc": 4
+    },
+    {
+      "label": 11,
+      "label_idx": 10,
+      "pitch": 64,
+      "dur": 6,
+      "count": 1,
+      "pc": 4
+    },
+    {
+      "label": 12,
+      "label_idx": 11,
+      "pitch": 65,
+      "dur": 2,
+      "count": 2,
+      "pc": 5
+    },
+    {
+      "label": 13,
+      "label_idx": 12,
+      "pitch": 65,
+      "dur": 5,
+      "count": 1,
+      "pc": 5
+    },
+    {
+      "label": 14,
+      "label_idx": 13,
+      "pitch": 65,
+      "dur": 6,
+      "count": 1,
+      "pc": 5
+    },
+    {
+      "label": 15,
+      "label_idx": 14,
+      "pitch": 67,
+      "dur": 1,
+      "count": 5,
+      "pc": 7
+    },
+    {
+      "label": 16,
+      "label_idx": 15,
+      "pitch": 69,
+      "dur": 1,
+      "count": 4,
+      "pc": 9
+    },
+    {
+      "label": 17,
+      "label_idx": 16,
+      "pitch": 69,
+      "dur": 5,
+      "count": 1,
+      "pc": 9
+    },
+    {
+      "label": 18,
+      "label_idx": 17,
+      "pitch": 71,
+      "dur": 1,
+      "count": 3,
+      "pc": 11
+    },
+    {
+      "label": 19,
+      "label_idx": 18,
+      "pitch": 72,
+      "dur": 1,
+      "count": 6,
+      "pc": 0
+    },
+    {
+      "label": 20,
+      "label_idx": 19,
+      "pitch": 74,
+      "dur": 1,
+      "count": 5,
+      "pc": 2
+    },
+    {
+      "label": 21,
+      "label_idx": 20,
+      "pitch": 76,
+      "dur": 1,
+      "count": 4,
+      "pc": 4
+    },
+    {
+      "label": 22,
+      "label_idx": 21,
+      "pitch": 79,
+      "dur": 1,
+      "count": 2,
+      "pc": 7
+    },
+    {
+      "label": 23,
+      "label_idx": 22,
+      "pitch": 81,
+      "dur": 1,
+      "count": 2,
+      "pc": 9
+    }
+  ],
+  "description": "각 note는 (pitch, dur) 튜플 고유. label 은 1-indexed. JS 포팅 시 label_idx (0-indexed) 사용 권장. count 는 한 모듈 내 빈도. 전곡 빈도는 count × num_modules_reference."
+}

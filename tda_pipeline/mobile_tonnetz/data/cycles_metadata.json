@@ -1,0 +1,387 @@
+{
+  "num_cycles": 14,
+  "source": "DFT timeflow PH (α=0.25, w_o=0.3, w_d=1.0) + decayed lag 1~4, K=14",
+  "cycles": [
+    {
+      "cycle_idx": 0,
+      "vertices_0idx": [
+        0,
+        1,
+        2,
+        6,
+        8,
+        9
+      ],
+      "note_labels_1idx": [
+        1,
+        2,
+        3,
+        7,
+        9,
+        10
+      ],
+      "note_labels_0idx": [
+        0,
+        1,
+        2,
+        6,
+        8,
+        9
+      ],
+      "size": 6,
+      "tau": 0.7,
+      "persistence_entries": [],
+      "max_persistence": 0.0
+    },
+    {
+      "cycle_idx": 1,
+      "vertices_0idx": [
+        0,
+        1,
+        6,
+        8
+      ],
+      "note_labels_1idx": [
+        1,
+        2,
+        7,
+        9
+      ],
+      "note_labels_0idx": [
+        0,
+        1,
+        6,
+        8
+      ],
+      "size": 4,
+      "tau": 0.7,
+      "persistence_entries": [],
+      "max_persistence": 0.0
+    },
+    {
+      "cycle_idx": 2,
+      "vertices_0idx": [
+        0,
+        4,
+        5,
+        7,
+        8,
+        10,
+        16
+      ],
+      "note_labels_1idx": [
+        1,
+        5,
+        6,
+        8,
+        9,
+        11,
+        17
+      ],
+      "note_labels_0idx": [
+        0,
+        4,
+        5,
+        7,
+        8,
+        10,
+        16
+      ],
+      "size": 7,
+      "tau": 0.3,
+      "persistence_entries": [],
+      "max_persistence": 0.0
+    },
+    {
+      "cycle_idx": 3,
+      "vertices_0idx": [
+        1,
+        2,
+        3,
+        5
+      ],
+      "note_labels_1idx": [
+        2,
+        3,
+        4,
+        6
+      ],
+      "note_labels_0idx": [
+        1,
+        2,
+        3,
+        5
+      ],
+      "size": 4,
+      "tau": 0.7,
+      "persistence_entries": [],
+      "max_persistence": 0.0
+    },
+    {
+      "cycle_idx": 4,
+      "vertices_0idx": [
+        1,
+        5,
+        6,
+        8
+      ],
+      "note_labels_1idx": [
+        2,
+        6,
+        7,
+        9
+      ],
+      "note_labels_0idx": [
+        1,
+        5,
+        6,
+        8
+      ],
+      "size": 4,
+      "tau": 0.7,
+      "persistence_entries": [],
+      "max_persistence": 0.0
+    },
+    {
+      "cycle_idx": 5,
+      "vertices_0idx": [
+        1,
+        8,
+        9,
+        14
+      ],
+      "note_labels_1idx": [
+        2,
+        9,
+        10,
+        15
+      ],
+      "note_labels_0idx": [
+        1,
+        8,
+        9,
+        14
+      ],
+      "size": 4,
+      "tau": 0.4,
+      "persistence_entries": [],
+      "max_persistence": 0.0
+    },
+    {
+      "cycle_idx": 6,
+      "vertices_0idx": [
+        14,
+        15,
+        17,
+        18,
+        19,
+        22
+      ],
+      "note_labels_1idx": [
+        15,
+        16,
+        18,
+        19,
+        20,
+        23
+      ],
+      "note_labels_0idx": [
+        14,
+        15,
+        17,
+        18,
+        19,
+        22
+      ],
+      "size": 6,
+      "tau": 0.1,
+      "persistence_entries": [],
+      "max_persistence": 0.0
+    },
+    {
+      "cycle_idx": 7,
+      "vertices_0idx": [
+        14,
+        15,
+        17,
+        18,
+        20
+      ],
+      "note_labels_1idx": [
+        15,
+        16,
+        18,
+        19,
+        21
+      ],
+      "note_labels_0idx": [
+        14,
+        15,
+        17,
+        18,
+        20
+      ],
+      "size": 5,
+      "tau": 0.3,
+      "persistence_entries": [],
+      "max_persistence": 0.0
+    },
+    {
+      "cycle_idx": 8,
+      "vertices_0idx": [
+        14,
+        15,
+        18,
+        20
+      ],
+      "note_labels_1idx": [
+        15,
+        16,
+        19,
+        21
+      ],
+      "note_labels_0idx": [
+        14,
+        15,
+        18,
+        20
+      ],
+      "size": 4,
+      "tau": 0.4,
+      "persistence_entries": [],
+      "max_persistence": 0.0
+    },
+    {
+      "cycle_idx": 9,
+      "vertices_0idx": [
+        18,
+        19,
+        20,
+        21,
+        22
+      ],
+      "note_labels_1idx": [
+        19,
+        20,
+        21,
+        22,
+        23
+      ],
+      "note_labels_0idx": [
+        18,
+        19,
+        20,
+        21,
+        22
+      ],
+      "size": 5,
+      "tau": 0.1,
+      "persistence_entries": [],
+      "max_persistence": 0.0
+    },
+    {
+      "cycle_idx": 10,
+      "vertices_0idx": [
+        2,
+        5,
+        8,
+        9,
+        11
+      ],
+      "note_labels_1idx": [
+        3,
+        6,
+        9,
+        10,
+        12
+      ],
+      "note_labels_0idx": [
+        2,
+        5,
+        8,
+        9,
+        11
+      ],
+      "size": 5,
+      "tau": 0.5,
+      "persistence_entries": [],
+      "max_persistence": 0.0
+    },
+    {
+      "cycle_idx": 11,
+      "vertices_0idx": [
+        2,
+        5,
+        9,
+        11
+      ],
+      "note_labels_1idx": [
+        3,
+        6,
+        10,
+        12
+      ],
+      "note_labels_0idx": [
+        2,
+        5,
+        9,
+        11
+      ],
+      "size": 4,
+      "tau": 0.35,
+      "persistence_entries": [],
+      "max_persistence": 0.0
+    },
+    {
+      "cycle_idx": 12,
+      "vertices_0idx": [
+        3,
+        5,
+        9,
+        11
+      ],
+      "note_labels_1idx": [
+        4,
+        6,
+        10,
+        12
+      ],
+      "note_labels_0idx": [
+        3,
+        5,
+        9,
+        11
+      ],
+      "size": 4,
+      "tau": 0.4,
+      "persistence_entries": [],
+      "max_persistence": 0.0
+    },
+    {
+      "cycle_idx": 13,
+      "vertices_0idx": [
+        4,
+        5,
+        6,
+        16
+      ],
+      "note_labels_1idx": [
+        5,
+        6,
+        7,
+        17
+      ],
+      "note_labels_0idx": [
+        4,
+        5,
+        6,
+        16
+      ],
+      "size": 4,
+      "tau": 0.3,
+      "persistence_entries": [],
+      "max_persistence": 0.0
+    }
+  ],
+  "description": "각 cycle 은 note 정점들의 순환 구조. vertices_0idx 는 내부 행렬 접근용, note_labels_1idx 는 notes_metadata 의 label 과 매칭. tau 는 per-cycle 이진화 임계값 (greedy search, α=0.25 기준)."
+}
