@@ -55,9 +55,9 @@
   /* Grid lines (drawn on canvas) */
   --grid-line:          rgba(255, 255, 255, 0.05);
 
-  /* Typography */
-  --font-ui:   'Gowun Dodum', system-ui, -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
-  --font-display: 'Jua', 'Gowun Dodum', system-ui, sans-serif;
+  /* Typography — 절제된 서체. 생동감은 모션·색이 담당 (귀여운 폰트 금지) */
+  --font-ui:   'Noto Sans KR', system-ui, -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
+  --font-display: 'Noto Serif KR', 'Noto Sans KR', system-ui, serif;
   --font-mono: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', 'Consolas', monospace;
 
   /* Type scale */

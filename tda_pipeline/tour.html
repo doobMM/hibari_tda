@@ -7,7 +7,7 @@
   <meta name="description" content="사카모토 류이치의 hibari를 위상수학(Persistent Homology)으로 분석하고, 중첩행렬을 그려서 비슷한 구조의 새 음악을 생성하는 방법을 6단계로 설명합니다.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=Jua&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=Noto+Serif+KR:wght@500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="./hibari_dashboard/public/css/tokens.css?v=4.16">
   <link rel="stylesheet" href="./shared/nav.css">
   <style>
@@ -30,7 +30,7 @@
     .hero { min-height: 78vh; display: flex; flex-direction: column; justify-content: center; gap: 18px; }
     .hero__sprout { font-size: 44px; animation: sway 6s ease-in-out infinite; transform-origin: bottom center; width: fit-content; }
     @keyframes sway { 0%,100% { transform: rotate(-4deg);} 50% { transform: rotate(4deg);} }
-    h1 { font-family: var(--font-display); font-weight: 400; font-size: clamp(28px, 5.4vw, 44px); line-height: 1.25; }
+    h1 { font-family: var(--font-display); font-weight: 600; font-size: clamp(28px, 5.4vw, 44px); line-height: 1.3; letter-spacing: -0.01em; }
     .hero__sub { font-size: 17px; color: var(--text-secondary); max-width: 560px; }
     .hero__down { margin-top: 26px; color: var(--accent-teal); font-size: 14px; animation: bob 2.2s ease-in-out infinite; width: fit-content; }
     @keyframes bob { 0%,100% { transform: translateY(0);} 50% { transform: translateY(8px);} }
@@ -45,7 +45,7 @@
       background: var(--accent-teal); color: #fff;
       font-family: var(--font-mono); font-size: 15px; margin-bottom: 10px;
     }
-    h2 { font-family: var(--font-display); font-weight: 400; font-size: clamp(21px, 3.6vw, 28px); margin-bottom: 14px; }
+    h2 { font-family: var(--font-display); font-weight: 600; font-size: clamp(21px, 3.6vw, 28px); margin-bottom: 14px; letter-spacing: -0.01em; }
     .step p { color: var(--text-secondary); font-size: 15.5px; margin-bottom: 12px; }
     .step b, .step strong { color: var(--text-primary); }
     .figure {
