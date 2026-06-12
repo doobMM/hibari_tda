@@ -1,10 +1,14 @@
-name: Deploy Hibari Dashboard to GitHub Pages
+name: Deploy Hibari TDA Visualizations to GitHub Pages
 
 on:
   push:
     branches: [main]
     paths:
       - 'tda_pipeline/hibari_dashboard/**'
+      - 'tda_pipeline/tonnetz_demo/**'
+      - 'tda_pipeline/filtration_viz/**'
+      - 'tda_pipeline/shared/**'
+      - 'tda_pipeline/index.html'
       - '.github/workflows/pages.yml'
   workflow_dispatch:
 
@@ -30,10 +34,31 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v4
 
-      - name: Upload hibari_dashboard/ as Pages artifact
+      - name: Assemble site (3 viz + shared nav + root redirect)
+        run: |
+          set -euo pipefail
+          mkdir -p _site
+          cp -R tda_pipeline/hibari_dashboard  _site/hibari_dashboard
+          cp -R tda_pipeline/tonnetz_demo      _site/tonnetz_demo
+          cp -R tda_pipeline/filtration_viz    _site/filtration_viz
+          cp -R tda_pipeline/shared            _site/shared
+          cp    tda_pipeline/index.html        _site/index.html
+          # 구 URL 호환: /public/ → /hibari_dashboard/public/
+          mkdir -p _site/public
+          cat > _site/public/index.html <<'HTML'
+          <!doctype html>
+          <meta charset="utf-8">
+          <meta http-equiv="refresh" content="0; url=../hibari_dashboard/public/">
+          <title>Redirecting…</title>
+          <p>Redirecting to <a href="../hibari_dashboard/public/">OM Dashboard</a>.</p>
+          HTML
+          echo "── Published tree ──"
+          find _site -maxdepth 2 -type d | sort
+
+      - name: Upload _site/ as Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: tda_pipeline/hibari_dashboard
+          path: _site
 
       - name: Deploy to GitHub Pages
         id: deployment

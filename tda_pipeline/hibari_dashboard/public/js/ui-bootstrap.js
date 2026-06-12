@@ -89,6 +89,7 @@
     const diff = editor.diffCount();
     const total = editor.T * editor.K;
     const diffPct = (diff / total * 100).toFixed(2);
+    const isCont = editor.displayMode === 'continuous';
     if (editor.displayMode === 'continuous') {
       $('editMeta').textContent =
         `평균 활성도 ${pct}% · 변경 ${diff}셀 (>5%p, ${diffPct}%)`;
@@ -96,10 +97,56 @@
       $('editMeta').textContent =
         `density ${pct}% · diff ${diff} (${diffPct}%)`;
     }
+    setText('metricMode', isCont ? '연속 OM' : '이진 OM');
+    setText('metricDensity', isCont ? `평균 활성도 ${pct}%` : `density ${pct}%`);
+    setText('metricDiff', diff > 0 ? `참조와 ${diff}셀 다름 (${diffPct}%)` : '참조와 동일');
+    setText('workflowStatus', diff > 0 ? `편집됨 · ${diff}셀 변경` : '참조와 같은 상태입니다');
+    setText('actionSummary', diff > 0 ? '변경된 OM으로 생성할 수 있습니다' : 'OM을 편집하거나 바로 생성하세요');
+    const diffPill = $('metricDiff');
+    if (diffPill) diffPill.classList.toggle('status-pill--changed', diff > 0);
   }
 
   function updateRefMeta(editor) {
     $('refMeta').textContent = `T=${editor.T} × K=${editor.K}`;
+  }
+
+  function setText(id, text) {
+    const el = $(id);
+    if (el) el.textContent = text;
+  }
+
+  function setWorkflowStage(stage) {
+    const current = Math.max(1, Math.min(3, stage | 0));
+    document.querySelectorAll('.workflow-step[data-stage]').forEach((el) => {
+      const n = parseInt(el.dataset.stage, 10);
+      el.classList.toggle('is-active', n === current);
+      el.classList.toggle('is-complete', n < current);
+    });
+  }
+
+  function syncActionButtons() {
+    const hasGenerated = !!(typeof playState !== 'undefined' && playState.lastGenerated);
+    const tonnetz = $('actionTonnetz');
+    const download = $('actionDownload');
+    if (tonnetz) tonnetz.disabled = !hasGenerated;
+    if (download) download.disabled = !hasGenerated;
+    if (hasGenerated) {
+      setWorkflowStage(2);
+      setText('workflowStatus', '음악 생성 완료 · Tonnetz 확인 가능');
+      setText('actionSummary', '생성 완료 · Tonnetz에서 확인하세요');
+    }
+  }
+
+  function invalidateGeneratedOnEdit() {
+    if (typeof playState === 'undefined' || !playState.lastGenerated) return;
+    playState.lastGenerated = null;
+    const mainTonnetz = $('btnPlayInTonnetz');
+    const mainDownload = $('btnDownloadMidi');
+    if (mainTonnetz) mainTonnetz.disabled = true;
+    if (mainDownload) mainDownload.disabled = true;
+    syncActionButtons();
+    setWorkflowStage(1);
+    setText('actionSummary', 'OM이 바뀌었습니다 · 다시 생성하세요');
   }
 
   // ── OOD 배너 갱신 ───────────────────────────────────────────────────
@@ -539,12 +586,24 @@
     wireHelpModal();
     wirePhotoControls();
 
-    const diffToggle = $('toggleDiff');
-    diffToggle.addEventListener('change', () => {
+    function setDiffVisible(visible) {
       if (!UI.editEditor) return;
-      UI.editEditor.setDiffMode(diffToggle.checked);
-      log(`diff 하이라이트 ${diffToggle.checked ? 'ON' : 'OFF'}`);
-    });
+      UI.editEditor.setDiffMode(visible);
+      const quick = $('btnQuickDiff');
+      if (quick) {
+        quick.setAttribute('aria-pressed', visible ? 'true' : 'false');
+        quick.textContent = visible ? 'diff 끄기' : 'diff 보기';
+      }
+      log(`diff 하이라이트 ${visible ? 'ON' : 'OFF'}`);
+    }
+
+    const quickDiff = $('btnQuickDiff');
+    if (quickDiff) {
+      quickDiff.addEventListener('click', () => {
+        const next = quickDiff.getAttribute('aria-pressed') !== 'true';
+        setDiffVisible(next);
+      });
+    }
 
     // seed 랜덤화
     $('btnRandomSeed').addEventListener('click', () => {
@@ -567,6 +626,14 @@
     $('btnDownloadMidi').addEventListener('click', onClickDownloadMidi);
     const btnPlayTonnetz = $('btnPlayInTonnetz');
     if (btnPlayTonnetz) btnPlayTonnetz.addEventListener('click', onClickPlayInTonnetz);
+
+    const actionGenerate = $('actionGenerate');
+    if (actionGenerate) actionGenerate.addEventListener('click', onClickGenerate);
+    const actionTonnetz = $('actionTonnetz');
+    if (actionTonnetz) actionTonnetz.addEventListener('click', onClickPlayInTonnetz);
+    const actionDownload = $('actionDownload');
+    if (actionDownload) actionDownload.addEventListener('click', onClickDownloadMidi);
+    syncActionButtons();
   }
 
   // ── 변형 스택 (Q1) ────────────────────────────────────────────
@@ -1541,6 +1608,7 @@
       $('btnDownloadMidi').disabled = false;
       const btnT = $('btnPlayInTonnetz');
       if (btnT) btnT.disabled = false;
+      syncActionButtons();
       setProgress(1, `생성 완료 · ${res.notes.length} notes · MIDI 저장 버튼으로 다운로드`);
     } catch (e) {
       log(`생성 실패: ${e.message}`, 'ERR');
@@ -1587,6 +1655,8 @@
         ticksPerEighth: 240,
         source: 'hibari_dashboard',
       });
+      setWorkflowStage(3);
+      try { sessionStorage.setItem('tda:workflowStage', '3'); } catch (e) {}
       log(`Tonnetz Demo 로 publish (${cur.notes.length} notes, bpm=${playState.bpm})`, 'OK');
       console.info('[hibari→tonnetz] publish:', { notes: cur.notes.length, bpm: playState.bpm });
       // 같은 탭 내비게이션 → sessionStorage 보존
@@ -1662,6 +1732,7 @@
         reference: values,
         readonly: false,
         onChange: (ed) => {
+          invalidateGeneratedOnEdit();
           updateEditMeta(ed);
           updateOODBanner(ed);
           saveEditState(ed);

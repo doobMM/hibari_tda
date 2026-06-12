@@ -14,9 +14,29 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     <!-- Fira Code + Fira Sans (UI Pro Max: Dashboard Data pairing) -->
     <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&family=Fira+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
-    <link href="css/style.css" rel="stylesheet">
+    <link href="css/style.css?v=4.12" rel="stylesheet">
+    <link rel="stylesheet" href="../shared/nav.css">
   </head>
   <body>
+    <!-- Shared top nav (3 viz tabs) -->
+    <div id="tda-nav" data-active="tonnetz"></div>
+    <script src="../shared/nav.js" defer></script>
+    <section class="tda-workflow" aria-label="OM 생성 확인 흐름">
+      <div class="tda-workflow__step is-complete" data-stage="1">
+        <span class="tda-workflow__num">1</span>
+        <span class="tda-workflow__label">OM 편집</span>
+      </div>
+      <div class="tda-workflow__step is-complete" data-stage="2">
+        <span class="tda-workflow__num">2</span>
+        <span class="tda-workflow__label">음악 생성</span>
+      </div>
+      <div class="tda-workflow__step is-active" data-stage="3">
+        <span class="tda-workflow__num">3</span>
+        <span class="tda-workflow__label">Tonnetz 확인</span>
+      </div>
+      <span class="tda-workflow__status">생성 결과를 Tonnetz에서 확인하는 단계입니다</span>
+      <a class="tda-workflow__back" href="../hibari_dashboard/public/">OM으로 돌아가기</a>
+    </section>
     <div class="container-fullwidth">
       <nav class="navbar navbar-inverse navbar-static-top" id="navbar">
         <div class="navbar-header">

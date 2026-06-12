@@ -6,9 +6,9 @@
   <title>Hibari · Overlap Matrix Dashboard</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/tokens.css?v=4.11">
-  <link rel="stylesheet" href="css/style.css?v=4.11">
+  <link href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=Jua&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/tokens.css?v=4.14">
+  <link rel="stylesheet" href="css/style.css?v=4.14">
   <link rel="stylesheet" href="../../shared/nav.css">
 </head>
 <body>
@@ -44,23 +44,45 @@
       <span class="ood-banner__detail" id="oodDetail">편집 시작 후 계산됩니다</span>
     </section>
 
+    <section class="workflow-strip" aria-label="작업 흐름">
+      <div class="workflow-step is-active" data-stage="1">
+        <span class="workflow-step__num">1</span>
+        <span class="workflow-step__label">OM 편집</span>
+      </div>
+      <div class="workflow-step" data-stage="2">
+        <span class="workflow-step__num">2</span>
+        <span class="workflow-step__label">음악 생성</span>
+      </div>
+      <div class="workflow-step" data-stage="3">
+        <span class="workflow-step__num">3</span>
+        <span class="workflow-step__label">Tonnetz 확인</span>
+      </div>
+      <div class="workflow-strip__status" id="workflowStatus">참조와 같은 상태입니다</div>
+    </section>
+
+    <nav class="mobile-workbench-tabs" aria-label="작업 패널 바로가기">
+      <a href="#matrixArea">OM</a>
+      <a href="#editControls">편집</a>
+      <a href="#generateControls">생성</a>
+      <a href="#cyclePreview">사이클</a>
+    </nav>
+
     <!-- ── LEFT PANEL — edit controls ──────────────────────────────────── -->
-    <aside class="panel--left" aria-label="편집 컨트롤">
+    <aside class="panel--left" id="editControls" aria-label="편집 컨트롤">
 
       <!-- Section: 편집 -->
       <div class="control-group">
         <h2 class="control-group__heading">편집</h2>
         <button class="btn" id="btnReset">초기화 (참조 복구)</button>
         <button class="btn" id="btnClear">모두 지우기</button>
-        <label class="toggle">
-          <input type="checkbox" id="toggleDiff">
-          <span>참조와 diff 하이라이트</span>
-        </label>
       </div>
 
       <!-- Section: 사진 → 연속 OM (아이디어 B) -->
-      <div class="control-group photo-group">
-        <h2 class="control-group__heading">사진 → 연속 OM</h2>
+      <details class="control-group photo-group disclosure-group">
+        <summary class="disclosure-summary">
+          <span>사진 → 연속 OM</span>
+          <span class="disclosure-summary__meta">고급</span>
+        </summary>
         <p class="hint">풍경·한옥 처마·물결 등 사진을 업로드하면 이미지의 명암이 연속 OM 으로 변환됩니다. 변환 후 자동으로 Algorithm 2 (연속 입력) 로 전환됩니다.</p>
         <input type="file" id="photoInput" accept="image/*" hidden>
         <button class="btn btn--primary" id="btnPhotoPick" type="button">📷 사진 선택</button>
@@ -87,14 +109,16 @@
             <button class="btn btn--small" id="btnPhotoToggle" type="button" data-state="active">hibari 로 되돌리기</button>
           </div>
         </div>
-      </div>
+      </details>
 
       <!-- Section: 변형 스택 (Q1) -->
-      <div class="control-group">
-        <div class="stack-heading-row">
-          <h2 class="control-group__heading">변형 스택</h2>
+      <details class="control-group disclosure-group">
+        <summary class="disclosure-summary">
+          <span>변형 스택</span>
           <span class="stack-mode-badge" id="stackModeBadge" data-mode="binary"
                 title="현재 변형 입력 OM 종류 — 우측 알고리즘 선택과 동기">이진 OM 입력</span>
+        </summary>
+        <div class="stack-heading-row">
           <button class="btn btn--icon" id="btnStackHelp" type="button"
                   title="각 변형 설명 보기" aria-label="변형 설명 도움말">?</button>
         </div>
@@ -116,12 +140,19 @@
         <button class="btn" id="btnStackClear" type="button">스택 비우기 (참조로 복귀)</button>
 
         <div class="stack-list" id="stackList" role="list" aria-label="현재 적용된 변형 스택"></div>
-      </div>
+      </details>
 
     </aside>
 
     <!-- ── CENTER — matrix canvases ────────────────────────────────────── -->
-    <section class="matrix-area" aria-label="overlap matrix">
+    <section class="matrix-area" id="matrixArea" aria-label="overlap matrix">
+
+      <div class="matrix-statusbar" aria-label="편집 matrix 요약">
+        <span class="status-pill status-pill--strong" id="metricMode">이진 OM</span>
+        <span class="status-pill" id="metricDensity">density --</span>
+        <span class="status-pill" id="metricDiff">참조와 동일</span>
+        <button class="status-action" id="btnQuickDiff" type="button" aria-pressed="false">diff 보기</button>
+      </div>
 
       <!-- 사진 배너 — 두 OM 카드 밖 별도 슬롯. 두 canvas 와 동일 폭, 양 canvas 평균 높이만큼 stretch.
            카드 외부라서 카드 높이 경쟁을 일으키지 않음 → 참조/편집 canvas 가 같은 높이 유지. -->
@@ -184,7 +215,7 @@
     </section>
 
     <!-- ── RIGHT PANEL — generation + playback + cycle preview ────────── -->
-    <aside class="panel--right" aria-label="생성 · 재생 · 사이클 미리듣기 컨트롤">
+    <aside class="panel--right" id="generateControls" aria-label="생성 · 재생 · 사이클 미리듣기 컨트롤">
 
       <!-- Section: 생성 -->
       <div class="control-group">
@@ -227,8 +258,11 @@
       </div>
 
       <!-- Section: 사이클 미리듣기 & 시각화 -->
-      <div class="control-group cycle-preview">
-        <h2 class="control-group__heading">사이클 미리듣기</h2>
+      <details class="control-group cycle-preview disclosure-group" id="cyclePreview">
+        <summary class="disclosure-summary">
+          <span>사이클 미리듣기</span>
+          <span class="disclosure-summary__meta">c0-c13</span>
+        </summary>
         <p class="hint">각 cycle 은 Persistent Homology 로 찾은 음 연결 고리입니다. 행 번호(c0..c13)는 중첩행렬 Y축과 동일합니다.</p>
 
         <div class="cycle-list" id="cycleList" role="list" aria-label="사이클 미리듣기 목록"></div>
@@ -260,7 +294,7 @@
           </div>
           <div class="note-lookup__result" id="noteLookupResult" role="list" aria-live="polite"></div>
         </div>
-      </div>
+      </details>
 
     </aside>
 
@@ -276,6 +310,18 @@
     <span>hibari TDA research dashboard</span>
     <span>Phase 6 — OOD · ready</span>
   </footer>
+
+  <nav class="bottom-actionbar" aria-label="생성 및 재생 빠른 실행">
+    <div class="bottom-actionbar__summary">
+      <span class="bottom-actionbar__eyebrow">다음 행동</span>
+      <strong id="actionSummary">OM을 편집하거나 바로 생성하세요</strong>
+    </div>
+    <div class="bottom-actionbar__actions">
+      <button class="btn btn--primary" id="actionGenerate" type="button">생성</button>
+      <button class="btn" id="actionTonnetz" type="button" disabled>Tonnetz</button>
+      <button class="btn" id="actionDownload" type="button" disabled>MIDI</button>
+    </div>
+  </nav>
 
   <!-- ── 변형 도움말 모달 (Q2-b) ──────────────────────────────────────── -->
   <div class="modal-backdrop" id="helpModal" hidden role="dialog" aria-modal="true" aria-labelledby="helpModalTitle">
@@ -334,15 +380,15 @@
   </script>
 
   <!-- ── App scripts ────────────────────────────────────────────────────── -->
-  <script src="js/data-loader.js?v=4.11"></script>
-  <script src="js/overlap-editor.js?v=4.11"></script>
-  <script src="js/generation-algo1.js?v=4.11"></script>
-  <script src="js/generation-algo2.js?v=4.11"></script>
+  <script src="js/data-loader.js?v=4.14"></script>
+  <script src="js/overlap-editor.js?v=4.14"></script>
+  <script src="js/generation-algo1.js?v=4.14"></script>
+  <script src="js/generation-algo2.js?v=4.14"></script>
   <script src="../../shared/midi-io.js?v=4.12"></script>
   <script src="../../shared/state.js?v=4.12"></script>
-  <script src="js/audio-playback.js?v=4.11"></script>
-  <script src="js/ood-detector.js?v=4.11"></script>
-  <script src="js/ui-bootstrap.js?v=4.11"></script>
+  <script src="js/audio-playback.js?v=4.14"></script>
+  <script src="js/ood-detector.js?v=4.14"></script>
+  <script src="js/ui-bootstrap.js?v=4.14"></script>
 
 </body>
 </html>

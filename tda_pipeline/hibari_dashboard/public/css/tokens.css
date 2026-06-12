@@ -1,60 +1,61 @@
 /* ==========================================================================
    tokens.css — Hibari Dashboard Design Tokens
-   Palette direction: SKMT "async" album minimalism × Three.js math viz precision
-   4px base unit, flat/borderless, cool-teal + muted-amber on near-black
+   Palette direction: playful research instrument — mint, sky, coral, lavender
+   4px base unit, mobile-first controls, readable Korean UI
    ========================================================================== */
 
 /* ── Dark mode (default) ─────────────────────────────────────────────────── */
 :root {
   /* Surface */
-  --surface-base:       #0a0a0c;   /* near-black, slightly blue-tinted */
-  --surface-raised:     #111116;   /* card, panel */
-  --surface-overlay:    #18181f;   /* hover state, dropdown bg */
-  --surface-canvas:     #0d0d12;   /* canvas background */
+  --surface-base:       #11121b;
+  --surface-raised:     #191b28;
+  --surface-overlay:    #23263a;
+  --surface-canvas:     #101322;
 
   /* Borders */
-  --border-hairline:    #1e1e28;   /* faint structural line */
-  --border-default:     #252530;   /* default control border */
-  --border-focus:       #4ecdc4;   /* focus ring — teal accent */
+  --border-hairline:    #2b3047;
+  --border-default:     #3a405d;
+  --border-focus:       #5eead4;
 
   /* Text */
-  --text-primary:       #e8e8e0;   /* main body, labels */
-  --text-secondary:     #8a8a96;   /* muted meta, hints */
-  --text-tertiary:      #50505c;   /* disabled, placeholder */
+  --text-primary:       #f5f7ff;
+  --text-secondary:     #b8c1d9;
+  --text-tertiary:      #7d89a8;
 
   /* Accent — cool teal (primary) */
-  --accent-teal:        #4ecdc4;   /* interactive, active states */
-  --accent-teal-dim:    rgba(78, 205, 196, 0.15);  /* subtle bg tint */
-  --accent-teal-border: rgba(78, 205, 196, 0.35);  /* border at accent */
+  --accent-teal:        #5eead4;
+  --accent-teal-dim:    rgba(94, 234, 212, 0.16);
+  --accent-teal-border: rgba(94, 234, 212, 0.38);
 
   /* Accent — muted amber (secondary) */
-  --accent-amber:       #c9a84c;   /* hover highlight, warning */
-  --accent-amber-dim:   rgba(201, 168, 76, 0.12);
-  --accent-amber-border:rgba(201, 168, 76, 0.35);
+  --accent-amber:       #fbbf24;
+  --accent-amber-dim:   rgba(251, 191, 36, 0.14);
+  --accent-amber-border:rgba(251, 191, 36, 0.38);
 
   /* Semantic */
-  --color-ok:           #4ecdc4;   /* same as teal — success/ok */
-  --color-warn:         #c9a84c;   /* amber — warning */
-  --color-danger:       #c0565a;   /* muted red — danger */
-  --color-ok-dim:       rgba(78, 205, 196, 0.12);
-  --color-warn-dim:     rgba(201, 168, 76, 0.12);
-  --color-danger-dim:   rgba(192, 86, 90, 0.12);
-  --color-ok-border:    rgba(78, 205, 196, 0.30);
-  --color-warn-border:  rgba(201, 168, 76, 0.30);
-  --color-danger-border:rgba(192, 86, 90, 0.30);
+  --color-ok:           #7dd3fc;
+  --color-warn:         #fbbf24;
+  --color-danger:       #fb7185;
+  --color-ok-dim:       rgba(125, 211, 252, 0.14);
+  --color-warn-dim:     rgba(251, 191, 36, 0.14);
+  --color-danger-dim:   rgba(251, 113, 133, 0.14);
+  --color-ok-border:    rgba(125, 211, 252, 0.34);
+  --color-warn-border:  rgba(251, 191, 36, 0.34);
+  --color-danger-border:rgba(251, 113, 133, 0.34);
 
   /* Canvas cell states — passed to JS via CSS but also hardcoded in overlap-editor.js */
-  --cell-on:            #4ecdc4;   /* active cycle — teal, cool & precise */
-  --cell-off:           #111118;   /* inactive — near-black */
-  --cell-hover:         #c9a84c;   /* hover ring — amber */
-  --cell-diff-add:      #6fb3ff;   /* added cell — cool blue */
-  --cell-diff-remove:   #c0565a;   /* removed cell — muted red */
+  --cell-on:            #34d399;
+  --cell-off:           #1b2034;
+  --cell-hover:         #fbbf24;
+  --cell-diff-add:      #60a5fa;
+  --cell-diff-remove:   #fb7185;
 
   /* Grid lines (drawn on canvas) */
-  --grid-line:          rgba(255, 255, 255, 0.04);
+  --grid-line:          rgba(255, 255, 255, 0.06);
 
   /* Typography */
-  --font-ui:   system-ui, -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
+  --font-ui:   'Gowun Dodum', system-ui, -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
+  --font-display: 'Jua', 'Gowun Dodum', system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', 'Consolas', monospace;
 
   /* Type scale */
@@ -79,7 +80,7 @@
   /* Border radius */
   --radius-sm:  3px;
   --radius-md:  6px;
-  --radius-lg:  10px;
+  --radius-lg:  8px;
 
   /* Transition */
   --transition: 200ms ease;
@@ -90,47 +91,44 @@
   --panel-width:     260px;   /* left/right control panels (normal) */
 }
 
-/* ── Light mode (기본) — 복숭아 파스텔 × 히바리(종달새) 녹색 그라데이션 ─── */
+/* ── Light mode (기본) — playful mint × sky × coral ─────────────────────── */
 [data-theme="light"] {
-  /* Surface — 녹색 → 복숭아 그라데이션은 body background-image에서 */
-  --surface-base:       #f4f9ea;   /* 초원 끝자락 연녹색 */
-  --surface-raised:     rgba(255, 255, 255, 0.72);  /* 카드 — 반투명으로 그라데이션 비침 */
-  --surface-overlay:    #ffffff;                    /* hover / dropdown */
-  --surface-canvas:     #fbfaf2;   /* 크림 화이트 — matrix 캔버스 */
+  --surface-base:       #f8fbff;
+  --surface-raised:     rgba(255, 255, 255, 0.84);
+  --surface-overlay:    #ffffff;
+  --surface-canvas:     #f4f9ff;
 
-  --border-hairline:    #e8d9c6;   /* 복숭아 톤 경계 */
-  --border-default:     #d9c5ae;
-  --border-focus:       #6fa66a;   /* 히바리 녹색 포커스 링 */
+  --border-hairline:    #d8e4f4;
+  --border-default:     #bfd0e7;
+  --border-focus:       #00a6a6;
 
-  --text-primary:       #2f3a28;   /* 깊은 초원 녹색 — 가독성 */
-  --text-secondary:     #6b6255;   /* 따뜻한 회갈색 */
-  --text-tertiary:      #a89b89;
+  --text-primary:       #243043;
+  --text-secondary:     #536075;
+  --text-tertiary:      #8190a8;
 
-  /* Accent — 히바리 녹색 (primary) */
-  --accent-teal:        #6fa66a;   /* 히바리의 등짓 연녹색 */
-  --accent-teal-dim:    rgba(111, 166, 106, 0.16);
-  --accent-teal-border: rgba(111, 166, 106, 0.38);
+  --accent-teal:        #00a6a6;
+  --accent-teal-dim:    rgba(0, 166, 166, 0.13);
+  --accent-teal-border: rgba(0, 166, 166, 0.34);
 
-  /* Accent — 복숭아 (secondary) */
-  --accent-amber:       #e88f6a;   /* 복숭아 파스텔 */
-  --accent-amber-dim:   rgba(232, 143, 106, 0.15);
-  --accent-amber-border:rgba(232, 143, 106, 0.35);
+  --accent-amber:       #ffb547;
+  --accent-amber-dim:   rgba(255, 181, 71, 0.18);
+  --accent-amber-border:rgba(255, 181, 71, 0.42);
 
-  --color-ok:           #6fa66a;
-  --color-warn:         #e88f6a;
-  --color-danger:       #c44a52;
-  --color-ok-dim:       rgba(111, 166, 106, 0.14);
-  --color-warn-dim:     rgba(232, 143, 106, 0.14);
-  --color-danger-dim:   rgba(196, 74, 82, 0.12);
-  --color-ok-border:    rgba(111, 166, 106, 0.30);
-  --color-warn-border:  rgba(232, 143, 106, 0.30);
-  --color-danger-border:rgba(196, 74, 82, 0.30);
+  --color-ok:           #2ca66f;
+  --color-warn:         #e99a12;
+  --color-danger:       #e65076;
+  --color-ok-dim:       rgba(44, 166, 111, 0.13);
+  --color-warn-dim:     rgba(233, 154, 18, 0.15);
+  --color-danger-dim:   rgba(230, 80, 118, 0.13);
+  --color-ok-border:    rgba(44, 166, 111, 0.34);
+  --color-warn-border:  rgba(233, 154, 18, 0.38);
+  --color-danger-border:rgba(230, 80, 118, 0.34);
 
-  --cell-on:            #6fa66a;   /* 활성 — 히바리 녹색 */
-  --cell-off:           #f2e6d3;   /* 비활성 — 복숭아 크림 */
-  --cell-hover:         #e88f6a;   /* hover — 복숭아 */
-  --cell-diff-add:      #5b98b8;   /* 추가 — 연한 하늘 (초원 위 하늘) */
-  --cell-diff-remove:   #c44a52;
+  --cell-on:            #26a96c;
+  --cell-off:           #eaf1ff;
+  --cell-hover:         #ffb547;
+  --cell-diff-add:      #5179ff;
+  --cell-diff-remove:   #ff5c8a;
 
-  --grid-line:          rgba(111, 166, 106, 0.10);
+  --grid-line:          rgba(36, 48, 67, 0.08);
 }
