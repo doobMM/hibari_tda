@@ -9,6 +9,7 @@ on:
       - 'tda_pipeline/filtration_viz/**'
       - 'tda_pipeline/shared/**'
       - 'tda_pipeline/index.html'
+      - 'tda_pipeline/tour.html'
       - '.github/workflows/pages.yml'
   workflow_dispatch:
 
@@ -34,7 +35,7 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v4
 
-      - name: Assemble site (3 viz + shared nav + root redirect)
+      - name: Assemble site (tour + 3 viz + shared nav + root redirect)
         run: |
           set -euo pipefail
           mkdir -p _site
@@ -43,6 +44,7 @@ jobs:
           cp -R tda_pipeline/filtration_viz    _site/filtration_viz
           cp -R tda_pipeline/shared            _site/shared
           cp    tda_pipeline/index.html        _site/index.html
+          cp    tda_pipeline/tour.html         _site/tour.html
           # 구 URL 호환: /public/ → /hibari_dashboard/public/
           mkdir -p _site/public
           cat > _site/public/index.html <<'HTML'

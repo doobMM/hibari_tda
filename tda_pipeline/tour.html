@@ -1,0 +1,568 @@
+<!doctype html>
+<html lang="ko" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <title>hibari × 위상수학 — 중첩행렬로 음악을 만드는 법 (Guided Tour)</title>
+  <meta name="description" content="사카모토 류이치의 hibari를 위상수학(Persistent Homology)으로 분석하고, 중첩행렬을 그려서 비슷한 구조의 새 음악을 생성하는 방법을 6단계로 설명합니다.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=Jua&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./hibari_dashboard/public/css/tokens.css?v=4.16">
+  <link rel="stylesheet" href="./shared/nav.css">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: var(--font-ui);
+      color: var(--text-primary);
+      background:
+        radial-gradient(circle at 14% 8%,  rgba(255, 236, 170, 0.40) 0%, transparent 40%),
+        radial-gradient(circle at 86% 10%, rgba(173, 216, 230, 0.26) 0%, transparent 38%),
+        radial-gradient(circle at 50% 105%, rgba(88, 168, 60, 0.22) 0%, transparent 52%),
+        linear-gradient(180deg, #f4f9ee 0%, #f1f6e6 55%, #e9f1d8 100%);
+      background-attachment: fixed;
+      line-height: 1.75;
+    }
+    main { max-width: 760px; margin: 0 auto; padding: 0 20px 96px; }
+
+    /* ── Hero ── */
+    .hero { min-height: 78vh; display: flex; flex-direction: column; justify-content: center; gap: 18px; }
+    .hero__sprout { font-size: 44px; animation: sway 6s ease-in-out infinite; transform-origin: bottom center; width: fit-content; }
+    @keyframes sway { 0%,100% { transform: rotate(-4deg);} 50% { transform: rotate(4deg);} }
+    h1 { font-family: var(--font-display); font-weight: 400; font-size: clamp(28px, 5.4vw, 44px); line-height: 1.25; }
+    .hero__sub { font-size: 17px; color: var(--text-secondary); max-width: 560px; }
+    .hero__down { margin-top: 26px; color: var(--accent-teal); font-size: 14px; animation: bob 2.2s ease-in-out infinite; width: fit-content; }
+    @keyframes bob { 0%,100% { transform: translateY(0);} 50% { transform: translateY(8px);} }
+    @media (prefers-reduced-motion: reduce) { .hero__sprout, .hero__down { animation: none; } }
+
+    /* ── Steps ── */
+    section.step { padding: 64px 0 24px; opacity: 0; transform: translateY(24px); transition: opacity 700ms ease, transform 700ms ease; }
+    section.step.is-visible { opacity: 1; transform: none; }
+    .step__num {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 34px; height: 34px; border-radius: 50%;
+      background: var(--accent-teal); color: #fff;
+      font-family: var(--font-mono); font-size: 15px; margin-bottom: 10px;
+    }
+    h2 { font-family: var(--font-display); font-weight: 400; font-size: clamp(21px, 3.6vw, 28px); margin-bottom: 14px; }
+    .step p { color: var(--text-secondary); font-size: 15.5px; margin-bottom: 12px; }
+    .step b, .step strong { color: var(--text-primary); }
+    .figure {
+      background: var(--surface-overlay); border: 1px solid var(--border-hairline);
+      border-radius: var(--radius-lg); padding: 18px; margin: 18px 0;
+      box-shadow: 0 10px 30px rgba(34, 51, 31, 0.07);
+    }
+    .figure__caption { font-size: 12.5px; color: var(--text-tertiary); margin-top: 10px; font-family: var(--font-mono); }
+    canvas, svg { display: block; max-width: 100%; }
+    .pill {
+      display: inline-block; font-family: var(--font-mono); font-size: 12px;
+      background: var(--accent-teal-dim); color: var(--accent-teal);
+      border: 1px solid var(--accent-teal-border); border-radius: 999px;
+      padding: 2px 10px; margin: 0 2px;
+    }
+    .btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-family: var(--font-ui); font-size: 14.5px; cursor: pointer;
+      border: 1px solid var(--accent-teal-border); border-radius: var(--radius-md);
+      background: linear-gradient(135deg, #6cc24a, var(--accent-teal)); color: #fff;
+      padding: 10px 18px; text-decoration: none; transition: filter 150ms ease, transform 150ms ease;
+      min-height: 44px;
+    }
+    .btn:hover { filter: brightness(1.06); transform: translateY(-1px); }
+    .btn--ghost { background: var(--surface-overlay); color: var(--accent-teal); }
+    .btnrow { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
+
+    /* 미니 OM 페인트 */
+    #paintCanvas { cursor: crosshair; touch-action: none; border-radius: var(--radius-sm); width: 100%; }
+    .paint-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 12px; }
+    .paint-hint { font-size: 12.5px; color: var(--text-tertiary); font-family: var(--font-mono); }
+
+    /* 도구 카드 */
+    .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-top: 18px; }
+    .card {
+      background: var(--surface-overlay); border: 1px solid var(--border-hairline);
+      border-radius: var(--radius-lg); padding: 18px; text-decoration: none;
+      color: var(--text-primary); transition: transform 150ms ease, box-shadow 150ms ease;
+      display: flex; flex-direction: column; gap: 6px;
+    }
+    .card:hover { transform: translateY(-3px); box-shadow: 0 14px 34px rgba(34, 51, 31, 0.12); }
+    .card__title { font-family: var(--font-display); font-size: 17px; color: var(--accent-teal); }
+    .card__desc { font-size: 13.5px; color: var(--text-secondary); line-height: 1.6; }
+
+    footer { text-align: center; color: var(--text-tertiary); font-size: 12.5px; font-family: var(--font-mono); padding: 28px 0 40px; }
+  </style>
+</head>
+<body>
+
+  <div id="tda-nav" data-active="tour"></div>
+  <script src="./shared/nav.js" defer></script>
+
+  <main>
+    <!-- ── Hero ──────────────────────────────────────────────────────── -->
+    <header class="hero">
+      <span class="hero__sprout" aria-hidden="true">🌱</span>
+      <h1>음악의 모양을 찾아서,<br>그 모양으로 새 음악을 심다</h1>
+      <p class="hero__sub">
+        사카모토 류이치의 <b>hibari</b>(2009) — 영화 <b>괴물</b>(2023)에 흐르던 그 곡 —
+        를 위상수학으로 분석하면, 곡 안에 숨어 있던 <b>고리(cycle)</b> 구조가 드러납니다.
+        이 페이지는 그 구조를 <b>직접 그려서</b> 새 음악을 만드는 방법을 6단계로 안내합니다.
+      </p>
+      <span class="hero__down" aria-hidden="true">↓ 스크롤로 시작</span>
+    </header>
+
+    <!-- ── 1. 곡 ─────────────────────────────────────────────────────── -->
+    <section class="step" id="s1">
+      <span class="step__num">1</span>
+      <h2>한 곡은 23개의 음 조각으로 이루어진다</h2>
+      <p>
+        hibari의 모든 음표를 <b>(음높이, 길이)</b> 쌍으로 정리하면 고유한 조각은 단
+        <span class="pill">23개</span>뿐입니다. 9분짜리 곡 전체가 이 23개의 조각이
+        반복·조합되며 만들어집니다. 마치 23가지 색으로 그린 한 폭의 그림처럼요.
+      </p>
+      <div class="figure">
+        <canvas id="notesCanvas" width="720" height="120" aria-label="hibari 23개 고유 음 조각"></canvas>
+        <div class="figure__caption" id="notesCaption">notes_metadata 로드 중…</div>
+      </div>
+    </section>
+
+    <!-- ── 2. 거리 ───────────────────────────────────────────────────── -->
+    <section class="step" id="s2">
+      <span class="step__num">2</span>
+      <h2>음과 음 사이에는 "거리"가 있다</h2>
+      <p>
+        도와 솔은 가깝게, 도와 파♯은 멀게 들립니다. 이런 어울림을 좌표로 옮긴 것이
+        <b>Tonnetz</b>(음의 격자)입니다. 오른쪽으로 완전5도, 대각선으로 3도 —
+        화성적으로 가까운 음일수록 격자에서도 이웃합니다.
+        hibari가 실제로 사용하는 음들(진한 초록)은 격자 위에서 한 동네처럼 모여 삽니다.
+      </p>
+      <div class="figure">
+        <svg id="tonnetzSvg" viewBox="0 0 720 300" role="img" aria-label="Tonnetz 격자 위 hibari 음들"></svg>
+        <div class="figure__caption">Tonnetz 격자 — 진한 점 = hibari가 사용하는 pitch class (7개, deep scale 구조)</div>
+      </div>
+    </section>
+
+    <!-- ── 3. 고리 ───────────────────────────────────────────────────── -->
+    <section class="step" id="s3">
+      <span class="step__num">3</span>
+      <h2>가까운 음끼리 이어 보면, 고리가 나타난다</h2>
+      <p>
+        점(음)들을 가까운 순서대로 실로 이어 봅니다. 실이 점점 길어지다 보면 어느 순간
+        <b>둥글게 닫힌 길</b> — 고리(cycle)가 생깁니다. 이것이
+        <b>Persistent Homology</b>의 핵심 아이디어입니다. 오래 살아남는 고리일수록
+        곡의 단단한 뼈대입니다. hibari에서는 이런 고리가 <span class="pill">14개</span> 발견됩니다.
+      </p>
+      <div class="figure">
+        <canvas id="filtCanvas" width="720" height="280" aria-label="필트레이션 애니메이션 — 거리가 늘어나며 고리가 닫히는 과정"></canvas>
+        <div class="figure__caption">거리 ε이 자라며 연결이 늘어나고 — 고리가 닫히는 순간 초록으로 빛납니다 (자동 반복)</div>
+      </div>
+    </section>
+
+    <!-- ── 4. 중첩행렬 ───────────────────────────────────────────────── -->
+    <section class="step" id="s4">
+      <span class="step__num">4</span>
+      <h2>고리들의 일정표 — 중첩행렬</h2>
+      <p>
+        14개의 고리가 곡의 <b>어느 순간에 깨어 있는지</b>를 표로 적으면,
+        세로 14줄(고리) × 가로 1088칸(시간)의 <b>중첩행렬(Overlap Matrix)</b>이 됩니다.
+        초록 칸 = 그 고리가 활동 중. 이 행렬은 음표를 다 지우고 남긴
+        <b>곡의 구조 설계도</b>입니다.
+      </p>
+      <div class="figure">
+        <canvas id="omCanvas" width="720" height="160" aria-label="hibari 중첩행렬 — 14개 cycle × 1088 시점"></canvas>
+        <div class="figure__caption" id="omCaption">overlap_matrix_reference 로드 중…</div>
+      </div>
+    </section>
+
+    <!-- ── 5. 그려서 만드는 음악 ─────────────────────────────────────── -->
+    <section class="step" id="s5">
+      <span class="step__num">5</span>
+      <h2>설계도를 그리면, 음악이 자란다</h2>
+      <p>
+        생성은 이 과정을 거꾸로 뒤집는 일입니다. 중첩행렬을 <b>직접 그리면</b>,
+        알고리즘이 각 시점에 깨어 있는 고리들의 구성음 중에서 음을 뽑아 새 곡을 만듭니다.
+        구조(고리의 일정)는 hibari를 닮았지만, 음의 흐름은 새로운 —
+        <b>"비슷한 느낌의 다른 공간"</b>이 목표입니다.
+      </p>
+      <p>아래 미니 행렬을 칠하고 들어보세요. (세로 14줄이 실제 hibari의 고리들입니다)</p>
+      <div class="figure">
+        <canvas id="paintCanvas" width="720" height="240" aria-label="미니 중첩행렬 — 클릭·드래그로 칠하기"></canvas>
+        <div class="paint-toolbar">
+          <button class="btn" id="btnTourPlay" type="button">▶ 들어보기</button>
+          <button class="btn btn--ghost" id="btnTourSeed" type="button">hibari 첫 30초 불러오기</button>
+          <button class="btn btn--ghost" id="btnTourClear" type="button">지우기</button>
+          <span class="paint-hint" id="paintHint">클릭·드래그로 칠하기 — 각 줄은 실제 cycle의 구성음으로 울립니다</span>
+        </div>
+        <div class="figure__caption">
+          ※ 이 데모는 "활성 고리 → 구성음 화음"의 단순화 버전입니다.
+          실제 Algorithm 1(확률 샘플링)·Algorithm 2(신경망)는 OM Dashboard에서 체험할 수 있습니다.
+        </div>
+      </div>
+    </section>
+
+    <!-- ── 6. 평가 + 도구 ────────────────────────────────────────────── -->
+    <section class="step" id="s6">
+      <span class="step__num">6</span>
+      <h2>얼마나 hibari답고, 얼마나 새로운가</h2>
+      <p>
+        생성된 곡은 두 축으로 평가합니다 — <b>구조 보존</b>(고리의 일정을 얼마나 지켰나)과
+        <b>신선함</b>(음의 분포가 원곡과 얼마나 다른가, JS divergence).
+        목표는 오른쪽 위: <b>구조는 hibari, 소리는 새 곡</b>.
+        연구에서는 신경망(FC) 모델이 JS = 0.00035까지 도달했습니다.
+      </p>
+      <p>이제 직접 만들어 볼 차례입니다:</p>
+      <div class="cards">
+        <a class="card" href="./hibari_dashboard/public/">
+          <span class="card__title">🎛 OM Dashboard</span>
+          <span class="card__desc">중첩행렬을 그리고 · 변형하고 · 30초 단위로 생성. 라이브 모드, 품질 맵, 사진→OM까지.</span>
+        </a>
+        <a class="card" href="./tonnetz_demo/">
+          <span class="card__title">🔺 Tonnetz Demo</span>
+          <span class="card__desc">생성된 곡이 Tonnetz 격자 위에서 재생됩니다. 고리들이 빛나는 모습을 눈으로 확인.</span>
+        </a>
+        <a class="card" href="./filtration_viz/">
+          <span class="card__title">🧮 Filtration Viz</span>
+          <span class="card__desc">3단계의 필트레이션이 실제 hibari 음들 위에서 일어나는 과정을 3D로 재생.</span>
+        </a>
+      </div>
+      <div class="btnrow">
+        <a class="btn" href="./hibari_dashboard/public/">지금 그려보기 →</a>
+      </div>
+    </section>
+
+    <footer>
+      hibari TDA research · Persistent Homology 기반 음악 생성 파이프라인 · 🌱
+    </footer>
+  </main>
+
+  <script>
+  (function () {
+    'use strict';
+
+    // ── 스크롤 등장 ─────────────────────────────────────────────────
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach((e) => { if (e.isIntersecting) e.target.classList.add('is-visible'); });
+    }, { threshold: 0.12 });
+    document.querySelectorAll('section.step').forEach((s) => io.observe(s));
+
+    // ── 공용: 데이터 로드 ───────────────────────────────────────────
+    const DATA = './hibari_dashboard/data/';
+    const state = { notes: null, cycles: null, om: null };
+
+    function fetchJson(url) {
+      return fetch(url).then((r) => { if (!r.ok) throw new Error(url + ' ' + r.status); return r.json(); });
+    }
+
+    // ── 1. 음 조각 띠 ───────────────────────────────────────────────
+    function renderNotes() {
+      const cv = document.getElementById('notesCanvas');
+      const ctx = cv.getContext('2d');
+      const labels = state.notes.labels;
+      const W = cv.width, H = cv.height;
+      ctx.clearRect(0, 0, W, H);
+      const n = labels.length;
+      const gap = 6, w = (W - gap * (n + 1)) / n;
+      const minP = Math.min(...labels.map(l => l.pitch));
+      const maxP = Math.max(...labels.map(l => l.pitch));
+      labels.forEach((l, i) => {
+        const x = gap + i * (w + gap);
+        const frac = (l.pitch - minP) / Math.max(1, maxP - minP);
+        const h = 28 + frac * (H - 58);
+        const hue = 95 + 35 * frac;
+        ctx.fillStyle = `hsl(${hue}, 55%, ${62 - frac * 22}%)`;
+        ctx.beginPath();
+        ctx.roundRect(x, H - 24 - h, w, h, 3);
+        ctx.fill();
+      });
+      ctx.fillStyle = '#7a9070';
+      ctx.font = '11px "JetBrains Mono", monospace';
+      ctx.fillText('낮은 음 → 높은 음 (막대 높이 = 음높이, 23개 전부)', gap, H - 6);
+      document.getElementById('notesCaption').textContent =
+        `hibari 고유 note ${n}개 — (pitch, duration) 쌍, GCD 기반 8분음표 정규화`;
+    }
+
+    // ── 2. Tonnetz 격자 ────────────────────────────────────────────
+    function renderTonnetz() {
+      const svg = document.getElementById('tonnetzSvg');
+      const PC_NAME = ['C', 'C♯', 'D', 'E♭', 'E', 'F', 'F♯', 'G', 'A♭', 'A', 'B♭', 'B'];
+      const used = new Set(state.notes.labels.map(l => ((l.pc % 12) + 12) % 12));
+      const NS = 'http://www.w3.org/2000/svg';
+      const dx = 76, dy = 64;
+      let html = '';
+      const nodes = [];
+      for (let row = 0; row < 5; row++) {
+        for (let col = 0; col < 10; col++) {
+          const x = 40 + col * dx + (row % 2) * (dx / 2);
+          const y = 36 + row * dy;
+          // 오른쪽 +7(완전5도), 아래줄 지그재그 +4(장3도)
+          const pc = ((col * 7 + row * 4) % 12 + 12) % 12;
+          nodes.push({ x, y, pc, row, col });
+        }
+      }
+      // edges: 같은 줄 이웃 + 아랫줄 두 이웃 (삼각 격자)
+      const line = (a, b) =>
+        `<line x1="${a.x}" y1="${a.y}" x2="${b.x}" y2="${b.y}" stroke="rgba(58,143,61,0.18)" stroke-width="1"/>`;
+      for (const n of nodes) {
+        const right = nodes.find(m => m.row === n.row && m.col === n.col + 1);
+        if (right) html += line(n, right);
+        const below = nodes.filter(m => m.row === n.row + 1 &&
+          Math.abs(m.x - n.x) < dx * 0.75);
+        for (const b of below) html += line(n, b);
+      }
+      for (const n of nodes) {
+        const active = used.has(n.pc);
+        html += `<circle cx="${n.x}" cy="${n.y}" r="${active ? 15 : 11}"
+          fill="${active ? '#3a8f3d' : '#e9f1da'}"
+          stroke="${active ? '#2c6e2f' : '#b9cda3'}" stroke-width="1.5"/>`;
+        html += `<text x="${n.x}" y="${n.y + 4}" text-anchor="middle"
+          font-family="'JetBrains Mono', monospace" font-size="11"
+          fill="${active ? '#ffffff' : '#7a9070'}">${PC_NAME[n.pc]}</text>`;
+      }
+      svg.innerHTML = html;
+    }
+
+    // ── 3. 필트레이션 애니메이션 ───────────────────────────────────
+    function startFiltration() {
+      const cv = document.getElementById('filtCanvas');
+      const ctx = cv.getContext('2d');
+      const W = cv.width, H = cv.height;
+      // 고리를 이루는 6점 + 바깥 3점
+      const ring = [];
+      for (let i = 0; i < 6; i++) {
+        const a = (Math.PI * 2 * i) / 6 - Math.PI / 2;
+        ring.push({ x: W * 0.38 + Math.cos(a) * 86 + (i % 2) * 8, y: H * 0.5 + Math.sin(a) * 86 });
+      }
+      const extra = [
+        { x: W * 0.78, y: H * 0.3 }, { x: W * 0.88, y: H * 0.62 }, { x: W * 0.7, y: H * 0.78 },
+      ];
+      const pts = ring.concat(extra);
+      const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+      // 고리가 닫히는 ε: ring 이웃 최대 거리
+      let ringEps = 0;
+      for (let i = 0; i < 6; i++) ringEps = Math.max(ringEps, dist(ring[i], ring[(i + 1) % 6]));
+
+      let t0 = performance.now();
+      const PERIOD = 6000;
+      function frame(now) {
+        const phase = ((now - t0) % PERIOD) / PERIOD;          // 0→1
+        const eps = 30 + phase * 200;                           // ε 자람
+        ctx.clearRect(0, 0, W, H);
+        // edges
+        for (let i = 0; i < pts.length; i++) {
+          for (let j = i + 1; j < pts.length; j++) {
+            const d = dist(pts[i], pts[j]);
+            if (d <= eps) {
+              ctx.strokeStyle = 'rgba(58, 143, 61, 0.3)';
+              ctx.lineWidth = 1.5;
+              ctx.beginPath();
+              ctx.moveTo(pts[i].x, pts[i].y); ctx.lineTo(pts[j].x, pts[j].y);
+              ctx.stroke();
+            }
+          }
+        }
+        // 고리 닫힘 하이라이트
+        if (eps >= ringEps) {
+          ctx.beginPath();
+          ring.forEach((p, i) => { if (i === 0) ctx.moveTo(p.x, p.y); else ctx.lineTo(p.x, p.y); });
+          ctx.closePath();
+          ctx.fillStyle = 'rgba(108, 194, 74, 0.22)';
+          ctx.fill();
+          ctx.strokeStyle = '#3a8f3d';
+          ctx.lineWidth = 3;
+          ctx.stroke();
+          ctx.fillStyle = '#2c6e2f';
+          ctx.font = '13px "Gowun Dodum", sans-serif';
+          ctx.fillText('고리 발견! (H₁ cycle)', W * 0.3, H * 0.5);
+        }
+        // points
+        for (const p of pts) {
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, 6, 0, Math.PI * 2);
+          ctx.fillStyle = '#3a8f3d';
+          ctx.fill();
+        }
+        // ε 게이지
+        ctx.fillStyle = '#7a9070';
+        ctx.font = '11px "JetBrains Mono", monospace';
+        ctx.fillText('ε = ' + eps.toFixed(0), 14, 20);
+        ctx.strokeStyle = 'rgba(58,143,61,0.4)';
+        ctx.strokeRect(60, 12, 120, 8);
+        ctx.fillStyle = '#6cc24a';
+        ctx.fillRect(60, 12, 120 * phase, 8);
+        requestAnimationFrame(frame);
+      }
+      requestAnimationFrame(frame);
+    }
+
+    // ── 4. 실제 OM 렌더 ────────────────────────────────────────────
+    function renderOM() {
+      const cv = document.getElementById('omCanvas');
+      const ctx = cv.getContext('2d');
+      const { T, K, values } = state.om;
+      const W = cv.width, H = cv.height;
+      ctx.fillStyle = '#eef4e2';
+      ctx.fillRect(0, 0, W, H);
+      const cw = W / T, ch = H / K;
+      for (let t = 0; t < T; t++) {
+        for (let c = 0; c < K; c++) {
+          if (values[t * K + c]) {
+            ctx.fillStyle = '#58a83c';
+            ctx.fillRect(t * cw, c * ch, Math.ceil(cw), Math.ceil(ch) - 1);
+          }
+        }
+      }
+      document.getElementById('omCaption').textContent =
+        `hibari 실제 중첩행렬 — K=${K} cycles × T=${T} steps (약 9분), density ${(state.om.density * 100).toFixed(1)}%`;
+    }
+
+    // ── 5. 미니 페인트 + 소리 ──────────────────────────────────────
+    const paint = { T: 16, K: 14, grid: null, playing: false, ctx: null, cyclePitches: [] };
+
+    function paintInit() {
+      paint.grid = new Int8Array(paint.T * paint.K);
+      // cycle별 대표 pitch 집합 (traversal 앞 3개)
+      const labels = state.notes.labels;
+      const byIdx = new Map(labels.map(l => [l.label_idx, l]));
+      paint.cyclePitches = state.cycles.cycles.map(cy => {
+        const order = (cy.traversal_0idx && cy.traversal_0idx.length ? cy.traversal_0idx : cy.note_labels_0idx) || [];
+        return order.slice(0, 3).map(i => (byIdx.get(i) || {}).pitch).filter(Boolean);
+      });
+      const cv = document.getElementById('paintCanvas');
+      let drag = null;
+      const cellOf = (ev) => {
+        const r = cv.getBoundingClientRect();
+        const px = (ev.touches ? ev.touches[0].clientX : ev.clientX) - r.left;
+        const py = (ev.touches ? ev.touches[0].clientY : ev.clientY) - r.top;
+        const t = Math.floor(px / r.width * paint.T);
+        const c = Math.floor(py / r.height * paint.K);
+        if (t < 0 || t >= paint.T || c < 0 || c >= paint.K) return null;
+        return { t, c };
+      };
+      const apply = (cell, v) => {
+        if (!cell) return;
+        paint.grid[cell.t * paint.K + cell.c] = v;
+        paintRender();
+      };
+      cv.addEventListener('pointerdown', (ev) => {
+        const cell = cellOf(ev);
+        if (!cell) return;
+        drag = paint.grid[cell.t * paint.K + cell.c] ? 0 : 1;
+        apply(cell, drag);
+        cv.setPointerCapture(ev.pointerId);
+      });
+      cv.addEventListener('pointermove', (ev) => { if (drag != null) apply(cellOf(ev), drag); });
+      cv.addEventListener('pointerup', () => { drag = null; });
+      document.getElementById('btnTourClear').addEventListener('click', () => {
+        paint.grid.fill(0); paintRender();
+      });
+      document.getElementById('btnTourSeed').addEventListener('click', () => {
+        // hibari 첫 60 step을 16칸으로 다운샘플
+        const { K, values } = state.om;
+        for (let t = 0; t < paint.T; t++) {
+          const src = Math.floor(t * 60 / paint.T);
+          for (let c = 0; c < paint.K; c++) {
+            paint.grid[t * paint.K + c] = values[src * K + c] ? 1 : 0;
+          }
+        }
+        paintRender();
+      });
+      document.getElementById('btnTourPlay').addEventListener('click', paintPlay);
+      paintRender();
+    }
+
+    function paintRender(activeCol) {
+      const cv = document.getElementById('paintCanvas');
+      const ctx = cv.getContext('2d');
+      const W = cv.width, H = cv.height;
+      const cw = W / paint.T, ch = H / paint.K;
+      ctx.fillStyle = '#eef4e2';
+      ctx.fillRect(0, 0, W, H);
+      for (let t = 0; t < paint.T; t++) {
+        for (let c = 0; c < paint.K; c++) {
+          if (paint.grid[t * paint.K + c]) {
+            ctx.fillStyle = (t === activeCol) ? '#2c6e2f' : '#58a83c';
+            ctx.beginPath();
+            ctx.roundRect(t * cw + 2, c * ch + 2, cw - 4, ch - 4, 3);
+            ctx.fill();
+          }
+        }
+      }
+      ctx.strokeStyle = 'rgba(34,51,31,0.08)';
+      ctx.lineWidth = 1;
+      for (let t = 1; t < paint.T; t++) {
+        ctx.beginPath(); ctx.moveTo(t * cw + 0.5, 0); ctx.lineTo(t * cw + 0.5, H); ctx.stroke();
+      }
+      if (activeCol != null) {
+        ctx.strokeStyle = '#dba93f';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(activeCol * cw + 1, 1, cw - 2, H - 2);
+      }
+    }
+
+    function paintPlay() {
+      if (paint.playing) return;
+      paint.playing = true;
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!paint.ctx) paint.ctx = new AC();
+      if (paint.ctx.state === 'suspended') paint.ctx.resume();
+      const ctx = paint.ctx;
+      const stepSec = 0.3;
+      const t0 = ctx.currentTime + 0.06;
+      for (let t = 0; t < paint.T; t++) {
+        const pitches = [];
+        for (let c = 0; c < paint.K; c++) {
+          if (paint.grid[t * paint.K + c]) {
+            for (const p of paint.cyclePitches[c] || []) pitches.push(p);
+          }
+        }
+        const uniq = Array.from(new Set(pitches)).slice(0, 5);
+        for (const p of uniq) {
+          const osc = ctx.createOscillator();
+          osc.type = 'triangle';
+          osc.frequency.value = 440 * Math.pow(2, (p - 69) / 12);
+          const g = ctx.createGain();
+          const on = t0 + t * stepSec;
+          g.gain.setValueAtTime(0, on);
+          g.gain.linearRampToValueAtTime(0.14 / Math.max(1, uniq.length * 0.6), on + 0.015);
+          g.gain.exponentialRampToValueAtTime(0.001, on + stepSec * 1.6);
+          osc.connect(g).connect(ctx.destination);
+          osc.start(on);
+          osc.stop(on + stepSec * 1.8);
+        }
+      }
+      // 진행 표시
+      let col = 0;
+      const tick = setInterval(() => {
+        paintRender(col);
+        col++;
+        if (col >= paint.T) {
+          clearInterval(tick);
+          paintRender();
+          paint.playing = false;
+        }
+      }, stepSec * 1000);
+    }
+
+    // ── 부트 ───────────────────────────────────────────────────────
+    Promise.all([
+      fetchJson(DATA + 'notes_metadata.json'),
+      fetchJson(DATA + 'cycles_metadata.json'),
+      fetchJson(DATA + 'overlap_matrix_reference.json'),
+    ]).then(([notes, cycles, om]) => {
+      state.notes = notes;
+      state.cycles = cycles;
+      state.om = { T: om.T, K: om.K, values: new Int8Array(om.values), density: om.density };
+      renderNotes();
+      renderTonnetz();
+      renderOM();
+      paintInit();
+    }).catch((e) => {
+      console.error('[tour] 데이터 로드 실패:', e);
+      document.getElementById('notesCaption').textContent = '데이터 로드 실패 — ' + e.message;
+    });
+
+    startFiltration();
+  })();
+  </script>
+</body>
+</html>

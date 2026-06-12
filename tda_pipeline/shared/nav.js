@@ -5,6 +5,13 @@
 
   var TABS = [
     {
+      id: 'tour',
+      href: 'tour.html',
+      long: 'Guided Tour',
+      short: 'Tour',
+      title: '방법론 6단계 안내 — 처음이라면 여기부터'
+    },
+    {
       id: 'om',
       href: 'hibari_dashboard/public/',
       long: 'OM Dashboard',
