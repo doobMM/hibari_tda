@@ -15,8 +15,30 @@
   'use strict';
 
   const $ = (id) => document.getElementById(id);
-  const STORAGE_KEY = 'hibari_dashboard_edit_v2';
   const STORAGE_VERSION = 2;
+
+  // ── 곡 식별 (URL ?data 파라미터 기반) ────────────────────────────────
+  // data-loader.js 가 HibariData.manifest.song 을 채우기 전이라도
+  // URL 파라미터로 곡을 미리 판단해 localStorage 키를 분리한다.
+  function currentSongFromUrl() {
+    const p = new URLSearchParams(location.search).get('data') || '';
+    return p.includes('solari') ? 'solari' : 'hibari';
+  }
+
+  // 로드 후 manifest.song 이 있으면 그쪽 우선 (혹시 URL 과 다를 때)
+  function currentSong() {
+    if (UI.data && UI.data.manifest && UI.data.manifest.song) {
+      return UI.data.manifest.song;
+    }
+    return currentSongFromUrl();
+  }
+
+  // 곡별 localStorage 키 — T/K 불일치 깨짐 방지
+  function makeStorageKey(base) {
+    return `${base}_${currentSongFromUrl()}`;
+  }
+
+  const STORAGE_KEY = makeStorageKey('hibari_dashboard_edit_v2');
 
   // 외부에서 참조할 수 있도록 전역 핸들
   const UI = {
@@ -653,7 +675,8 @@
   // 첫 변형은 reference 입력 → 출력. 다음 변형은 이전 출력 → 다시 출력.
   // localStorage 에 stack 자체를 저장 (참조와 함께 deterministic 재생성 가능).
 
-  const STACK_STORAGE_KEY = 'hibari_dashboard_stack_v1';
+  // 곡 전환 시 T/K 불일치 방지: 스택도 곡별 키 사용
+  const STACK_STORAGE_KEY = makeStorageKey('hibari_dashboard_stack_v1');
 
   UI.stack = [];
   UI.stackNextId = 1;
@@ -1111,6 +1134,10 @@
     previewPlayer: null,    // cycle 미리듣기 전용 PianoPlayer (생성과 분리)
     previewTimer: null,
     bpm: 60,
+    fcGen: null,            // FCGenerator 인스턴스 (hibari)
+    fcLoaded: false,
+    transGen: null,         // TransformerGenerator 인스턴스 (solari)
+    transLoaded: false,
   };
 
   // ── Cycle 미리듣기 ─────────────────────────────────────────────────
@@ -1541,7 +1568,7 @@
 
   // ── 30초 세그먼트 (T=60 ≈ 30초 @ bpm 60) ──────────────────────────
   const SEGMENT_STEPS = 60;
-  const SEGMENT_KEY = 'hibari_dashboard_segment_v1';
+  const SEGMENT_KEY = makeStorageKey('hibari_dashboard_segment_v1');
   const segState = { mode: 'segment', m: 0 };   // mode: 'segment' | 'full'
 
   function segmentCount(T) { return Math.max(1, Math.floor(T / SEGMENT_STEPS)); }
@@ -2078,15 +2105,23 @@
     return res;
   }
 
-  // 알고리즘 2 (FC): overlap 하나 추론
+  // 알고리즘 2 — 곡에 따라 FC(hibari) 또는 Transformer(solari) 분기
   async function runAlgo2Once({ overlap, temperature, seed }) {
+    const song = currentSong();
+    if (song === 'solari') {
+      const res = await playState.transGen.generate({
+        overlap, seed, temperature, minOnsetGap: 0,
+      });
+      return res;
+    }
+    // 기본(hibari): FC
     const res = await playState.fcGen.generate({
       overlap, seed, temperature, minOnsetGap: 0,
     });
     return res;
   }
 
-  // FC 모델 지연 로드 (슬라이스 모드에서 매번 확인)
+  // FC 모델 지연 로드 (hibari 전용)
   async function ensureFcLoaded() {
     if (!window.FCGenerator) throw new Error('FCGenerator 모듈 미로드');
     if (!playState.fcGen) playState.fcGen = new window.FCGenerator();
@@ -2098,9 +2133,29 @@
     }
   }
 
+  // Transformer 모델 지연 로드 (solari 전용)
+  async function ensureTransformerLoaded() {
+    if (!window.TransformerGenerator) throw new Error('TransformerGenerator 모듈 미로드');
+    if (!playState.transGen) playState.transGen = new window.TransformerGenerator();
+    if (!playState.transGen.session) log('Transformer 모델 로드 중… (ONNX runtime + solari 모델 다운로드)');
+    await playState.transGen.load();
+    if (playState.transLoaded !== true) {
+      log(`Transformer 모델 로드 완료 (${playState.transGen.meta.architecture})`, 'OK');
+      playState.transLoaded = true;
+    }
+  }
+
+  // 곡에 따른 Algorithm 2 로드 헬퍼 선택
+  async function ensureAlgo2Loaded() {
+    if (currentSong() === 'solari') {
+      return ensureTransformerLoaded();
+    }
+    return ensureFcLoaded();
+  }
+
   // 생성 메인 — 기본은 30초 세그먼트(T=60), '전곡' 선택 시 전체.
   // opts.quiet — 라이브 모드 재생성 시 로그 최소화.
-  // genToken: 라이브 모드에서 async FC 추론 중 재편집 시 늦게 도착한
+  // genToken: 라이브 모드에서 async 추론 중 재편집 시 늦게 도착한
   // stale 결과가 최신 결과를 덮어쓰지 않도록 세대 가드.
   let genToken = 0;
   async function generateNow(opts = {}) {
@@ -2110,10 +2165,12 @@
     const algo = document.querySelector('input[name="algo"]:checked')?.value || 'algo1';
     const temperature = parseFloat($('sliderTemp').value) || 3.0;
     const seed = parseInt($('sliderSeed').value, 10) || 0;
+    const song = currentSong();
 
     const { buildHibariInstLen } = window.GenerationAlgo1;
     const K = UI.editEditor.K;
     const fullT = UI.editEditor.T;
+    // instLen 패턴: hibari 전용. solari 는 데이터 기반 T 에 맞춘 단순 fill=4
     const fullInstLen = buildHibariInstLen(fullT);
     const fullValues = UI.editEditor.getMatrix();
 
@@ -2134,7 +2191,9 @@
     }
 
     try {
-      const algoLabel = algo === 'algo2' ? 'Algorithm 2 (FC)' : 'Algorithm 1';
+      // Algorithm 2 라벨 동적화: solari → Transformer
+      const algo2Label = song === 'solari' ? 'Algorithm 2 (Transformer)' : 'Algorithm 2 (FC)';
+      const algoLabel = algo === 'algo2' ? algo2Label : 'Algorithm 1';
       if (!opts.quiet) {
         if (seg) {
           log(`${algoLabel} 30초 세그먼트 생성 (블록 ${seg.m}, step ${seg.start}–${seg.start + seg.len}, seed=${seed}, temp=${temperature.toFixed(1)})`);
@@ -2144,7 +2203,7 @@
         }
       }
       const myToken = ++genToken;
-      if (algo === 'algo2') await ensureFcLoaded();
+      if (algo === 'algo2') await ensureAlgo2Loaded();
 
       const t0 = performance.now();
       let res;
@@ -2356,12 +2415,57 @@
       playState.selectedCycleIdx = 0;
       renderCycleViz(0, null);
 
+      // ── 곡 전환 후 데이터 로드 완료 시 UI 갱신 ────────────────────────
+      const song = currentSong();
+
+      // 헤더 부제 동적화: 곡·차원·거리/모델 정보
+      const subEl = document.querySelector('.app-header__sub');
+      if (subEl) {
+        if (song === 'solari') {
+          subEl.textContent =
+            `solari · T=${T}·K=${K}·N=${data.notesMeta.num_notes} · voice_leading · Transformer`;
+        } else {
+          subEl.textContent =
+            `hibari · T=${T}·K=${K}·N=${data.notesMeta.num_notes} · DFT α=0.25 per-cycle τ · FC`;
+        }
+      }
+
+      // Algorithm 2 라디오 라벨 동적화 (텍스트 노드만 교체)
+      const algo2Labels = document.querySelectorAll('input[name="algo"][value="algo2"]');
+      algo2Labels.forEach(radio => {
+        const label = radio.closest('label');
+        if (!label) return;
+        // 텍스트 노드 찾아서 교체
+        for (const node of label.childNodes) {
+          if (node.nodeType === Node.TEXT_NODE && node.textContent.trim()) {
+            node.textContent = song === 'solari'
+              ? ' Algorithm 2 (Transformer)'
+              : ' Algorithm 2 (FC)';
+            break;
+          }
+        }
+      });
+
+      // VAE 패널 — hibari 전용 (60×14 학습; solari 60×25 비호환)
+      // hidden 만으로 패널 전체가 DOM 에서 숨겨져 슬라이더 조작 불가.
+      // <details> 는 disabled IDL 속성이 없으므로 hidden 토글로 충분.
+      const vaeGroup = $('vaeGroup');
+      if (vaeGroup) vaeGroup.hidden = (song === 'solari');
+
+      // 곡 전환 토글 버튼 active 상태 동기화
+      document.querySelectorAll('[data-song-toggle]').forEach(btn => {
+        const target = btn.dataset.songToggle;
+        btn.classList.toggle('is-active', target === song);
+        btn.setAttribute('aria-pressed', String(target === song));
+      });
+
       // 최초 로드 상태 메시지
+      const metricHint = song === 'solari' ? 'voice_leading · Transformer' : 'DFT α=0.25 per-cycle τ';
       setStatus(
-        `T=${T} · K=${K} · N=${data.notesMeta.num_notes} · DFT α=0.25 per-cycle τ`,
+        `${song} · T=${T} · K=${K} · N=${data.notesMeta.num_notes} · ${metricHint}`,
         'ok'
       );
-      log(`데이터 로드 완료 (manifest version ${data.manifest.version})`, 'OK');
+      log(`데이터 로드 완료 (곡: ${song}, manifest version ${data.manifest.version})`, 'OK');
       log(`overlap shape: T=${T}, K=${K}, density=${(data.overlapRef.density * 100).toFixed(2)}%`);
       log(`notes=${data.notesMeta.num_notes}, cycles=${data.cyclesMeta.num_cycles}`);
       if (restored) {
