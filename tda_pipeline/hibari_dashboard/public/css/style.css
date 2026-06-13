@@ -170,8 +170,8 @@ button { font-family: var(--font-ui); }
   background: var(--surface-hover, rgba(255,255,255,0.06));
 }
 .song-toggle__btn.is-active {
-  background: var(--accent-green);
-  color: var(--bg-base);
+  background: var(--accent-teal);
+  color: var(--surface-base);
   cursor: default;
 }
 
@@ -1003,6 +1003,17 @@ details[open] > .disclosure-summary::before {
   .panel--left  .control-group,
   .panel--right .control-group {
     flex: 1 1 200px;
+  }
+
+  /* 태블릿: 헤더 status 배지 텍스트가 길어 overflow 방지 */
+  .app-header {
+    overflow: hidden;
+  }
+  .app-status {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 240px;
+    white-space: nowrap;
   }
 }
 
@@ -1958,4 +1969,209 @@ details[open] > .disclosure-summary::before {
   display: flex;
   gap: var(--space-1);
   flex-wrap: wrap;
+}
+
+/* ==========================================================================
+   12. MOBILE RESPONSIVE — 추가 보강 (680px 보완 + 480px + 360px)
+   ========================================================================== */
+
+/* ── 기존 680px 블록 보완 ── */
+@media (max-width: 680px) {
+
+  /* OM 편집 캔버스: 브라우저 기본 스크롤이 Pointer Events를 방해하지 않도록 */
+  .matrix-card__canvas-wrap canvas {
+    touch-action: none;
+  }
+
+  /* 곡 전환 토글 — 44px 터치 타깃 */
+  .song-toggle {
+    align-self: stretch;
+    align-items: center;
+  }
+  .song-toggle__btn {
+    min-height: 44px;
+    padding: 0 var(--space-3);
+    display: inline-flex;
+    align-items: center;
+  }
+
+  /* 헤더 오른쪽 요소들이 좁은 폭에서 줄 바꿈되도록 */
+  .app-header__right {
+    flex-wrap: wrap;
+    gap: var(--space-2);
+  }
+
+  /* app-status 배지 — 작은 폭에서 숨기기 */
+  .app-status {
+    display: none;
+  }
+
+  /* segment-row: 좁은 폭에서 2행으로 */
+  .segment-row {
+    grid-template-columns: 36px 1fr;
+    grid-template-rows: auto auto;
+  }
+  .segment-row__select {
+    grid-column: 2 / 3;
+  }
+  .segment-row .btn--small {
+    grid-column: 1 / 3;
+    min-height: 40px;
+  }
+
+  /* radio-row 라벨 — 44px 터치 타깃 */
+  .radio-row label {
+    min-height: 44px;
+    padding: var(--space-1) 0;
+    display: flex;
+    align-items: center;
+  }
+  .radio-row input[type="radio"] {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+  }
+
+  /* check-row (라이브 모드 체크박스) — 44px 터치 타깃 */
+  .check-row {
+    display: flex;
+    min-height: 44px;
+    padding: var(--space-1) 0;
+    align-items: center;
+  }
+  .check-row input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+  }
+
+  /* mobile-workbench-tabs — 44px 터치 타깃 (기존 40px 수정) */
+  .mobile-workbench-tabs a {
+    min-height: 44px;
+  }
+
+  /* bottom-actionbar 버튼 — 44px 보장 */
+  .bottom-actionbar .btn {
+    min-height: 44px;
+  }
+
+  /* 품질 맵 캔버스 — 전폭 */
+  .quality-map__canvas-wrap {
+    width: 100%;
+  }
+
+  /* VAE 슬라이더 트랙 — 터치 여유 */
+  .slider-row__track {
+    height: 32px;
+  }
+
+  /* 매트릭스 상태바 — 가로 스크롤 허용(내부만), overflow 숨김 금지 */
+  .matrix-statusbar {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    /* 세로 스크롤은 막음 */
+    overflow-y: hidden;
+  }
+}
+
+/* ── 480px — 중간 스마트폰 (iPhone SE 세로, 갤럭시 A) ── */
+@media (max-width: 480px) {
+
+  /* 헤더 브랜드명 단축 — glyph만 표시하고 title 숨김 */
+  .app-header__title {
+    font-size: var(--text-md);
+  }
+
+  /* 워크플로우 스텝 번호만 보이도록 */
+  .workflow-strip {
+    padding: var(--space-2) var(--space-2);
+    gap: var(--space-2);
+  }
+
+  /* 컨트롤 그룹 패딩 축소 */
+  .control-group {
+    padding: var(--space-3);
+  }
+
+  /* 버튼 페어 — 2열 유지하되 글꼴 크기 조정 */
+  .btn-pair .btn {
+    font-size: var(--text-xs);
+    padding: var(--space-2) var(--space-2);
+  }
+
+  /* segment-row: 레이블 숨김 처리 */
+  .segment-row__label {
+    font-size: 10px;
+  }
+
+  /* 후보 탭 — 글꼴 축소 */
+  .candidate-tab {
+    font-size: var(--text-xs);
+  }
+
+  /* 패널 내부 슬라이더 행 */
+  .slider-row {
+    gap: var(--space-1);
+  }
+}
+
+/* ── 360px — iPhone SE(초대), Galaxy S 최소폭 ── */
+@media (max-width: 360px) {
+
+  /* 헤더 기호 숨김 */
+  .app-header__glyph {
+    display: none;
+  }
+
+  /* 헤더 타이틀 최소화 */
+  .app-header__title {
+    font-size: var(--text-sm);
+  }
+
+  /* 테마 토글 숨김 (공간 확보) */
+  .theme-toggle {
+    display: none;
+  }
+
+  /* 컨트롤 그룹 패딩 최소화 */
+  .control-group {
+    padding: var(--space-2);
+  }
+
+  /* OM 캔버스 최소 높이 축소 */
+  .matrix-card__canvas-wrap {
+    min-height: 180px;
+  }
+  .matrix-card--edit .matrix-card__canvas-wrap {
+    min-height: 260px;
+  }
+
+  /* radio-row 좁은 폭 대응 */
+  .radio-row {
+    gap: 2px;
+  }
+
+  /* bottom-actionbar 극소폭 대응 */
+  .bottom-actionbar {
+    grid-template-columns: 1fr;
+    gap: var(--space-1);
+    padding: var(--space-2);
+  }
+  .bottom-actionbar__summary {
+    display: none;
+  }
+  .bottom-actionbar__actions {
+    grid-template-columns: repeat(3, 1fr);
+    width: 100%;
+  }
+  .bottom-actionbar__actions .btn {
+    padding: var(--space-2) var(--space-1);
+    font-size: var(--text-xs);
+  }
+
+  /* mobile-workbench-tabs 아이콘 크기 축소 */
+  .mobile-workbench-tabs a {
+    font-size: var(--text-xs);
+    min-height: 44px;
+  }
 }
