@@ -107,12 +107,13 @@
           <button class="lang-tab" data-lang="en">ENG</button><button class="lang-tab" data-lang="ko">KOR</button>
         </div>
         <div id="metricPicker" style="margin-top:4px; display:flex; gap:4px;">
+          <!-- 활성: 달빛 그린, 비활성: 다크 포레스트 패널색 — JS에서도 같은 값 사용 -->
           <button class="metric-btn active" data-metric="tonnetz"
                   title="Tonnetz 거리 기반 사이클 (K=47)"
-                  style="font-size:11px; padding:2px 7px; border-radius:4px; border:1px solid #aaa; cursor:pointer; background:#4338CA; color:#fff;">Tonnetz</button>
+                  style="font-size:11px; padding:2px 7px; border-radius:4px; border:1px solid rgba(126,217,87,0.55); cursor:pointer; background:#7ed957; color:#0e1410;">Tonnetz</button>
           <button class="metric-btn" data-metric="dft"
                   title="DFT 거리 기반 사이클 (K=17) — hibari 최적"
-                  style="font-size:11px; padding:2px 7px; border-radius:4px; border:1px solid #aaa; cursor:pointer; background:#e5e7eb; color:#111;">DFT</button>
+                  style="font-size:11px; padding:2px 7px; border-radius:4px; border:1px solid #33493a; cursor:pointer; background:rgba(126,217,87,0.08); color:#b6c9ad;">DFT</button>
         </div>
       </div>
       <script>
@@ -120,10 +121,14 @@
           document.querySelectorAll('.metric-btn').forEach(function (btn) {
             btn.addEventListener('click', function () {
               var m = this.getAttribute('data-metric');
+              /* 비활성: 다크 포레스트 배경 */
               document.querySelectorAll('.metric-btn').forEach(function (b) {
-                b.style.background = '#e5e7eb'; b.style.color = '#111'; b.classList.remove('active');
+                b.style.background = 'rgba(126,217,87,0.08)'; b.style.color = '#b6c9ad';
+                b.style.borderColor = '#33493a'; b.classList.remove('active');
               });
-              this.style.background = '#4338CA'; this.style.color = '#fff'; this.classList.add('active');
+              /* 활성: 달빛 그린 — 밝은 배경에 어두운 글자 */
+              this.style.background = '#7ed957'; this.style.color = '#0e1410';
+              this.style.borderColor = 'rgba(126,217,87,0.55)'; this.classList.add('active');
               if (window.hibariData && window.hibariData.setMetric) window.hibariData.setMetric(m);
             });
           });
@@ -154,7 +159,7 @@
               </div>
               <!-- ── Preloaded songs ───────────────────────────────── -->
               <div id="preloadedSongs" style="margin-bottom:12px">
-                <div style="font-size:10px;color:#aaa;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:5px">
+                <div style="font-size:10px;color:#7c937a;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:5px">
                   <span class="en">hibari — TDA pipeline stages</span><span class="ko">hibari — TDA 파이프라인 단계별</span>
                 </div>
                 <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px">
@@ -166,7 +171,7 @@
                   <button class="btn btn-sm preload-btn btn-default" data-key="hibari_v5" title="Algorithm 2 · FC-cont — 본 연구 절대 최저 (JS 0.00035)">v5 <small style="opacity:0.7">Algo2·FC ★</small></button>
                   <button class="btn btn-sm preload-btn btn-default" data-key="hibari_v6" title="§6 블록 단위 생성 P3 (m=0)">v6 <small style="opacity:0.7">Block·P3</small></button>
                 </div>
-                <div style="font-size:10px;color:#aaa;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:5px">
+                <div style="font-size:10px;color:#7c937a;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:5px">
                   <span class="en">Public Domain references</span><span class="ko">공용 도메인 레퍼런스</span>
                 </div>
                 <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:4px">
@@ -175,10 +180,10 @@
                   <button class="btn btn-sm preload-btn btn-default" data-key="clair">Clair de Lune <small style="opacity:0.7">Debussy</small></button>
                 </div>
               </div>
-              <hr style="margin:10px 0;border-color:rgba(0,0,0,0.1)">
+              <hr style="margin:10px 0;border-color:#24352a">
               <!-- ── Custom MIDI file ──────────────────────────────── -->
               <div class="form-group" style="margin-bottom:6px">
-                <label for="midiFileInput" style="font-size:11px;color:#888">
+                <label for="midiFileInput" style="font-size:11px;color:#b6c9ad">
                   <span class="en">Your MIDI file <span class="text-muted">(e.g. Ryuichi Sakamoto, etc.)</span></span>
                   <span class="ko">직접 MIDI 파일 열기 <span class="text-muted">(예: 사카모토 류이치 등)</span></span>
                 </label>
@@ -504,7 +509,7 @@
                 inter-chord connections strengthen and H₁ cycles appear / vanish.
                 The Tonnetz overlays scale in opacity to reflect each cycle's total persistence.
               </p>
-              <p class="help-block" style="margin-bottom:6px;font-size:11px;color:#888">
+              <p class="help-block" style="margin-bottom:6px;font-size:11px;color:#b6c9ad">
                 <strong>% 계산:</strong>
                 현재 rate에서 해당 사이클과 겹치는 H₁ 구간들의
                 <code>Σ(death − birth)</code>를 rate 0–1.5 전체 최댓값으로 나눈 비율.
@@ -552,7 +557,7 @@
                 <canvas id="overlapCanvas"
                         style="width:240px;height:380px;background:#111;border-radius:4px;flex-shrink:0">
                 </canvas>
-                <div style="font-size:10px;color:#999;line-height:1.6">
+                <div style="font-size:10px;color:#b6c9ad;line-height:1.6">
                   <p>Columns (left→right):<br>top 10 cycles ordered by activity density.</p>
                   <p>Colors:<br>
                     <span style="color:#64dc64">■</span> 1st &nbsp;
@@ -653,7 +658,7 @@
                     <tr><td><strong>H</strong></td><td>L → P → L</td><td>C maj → A♭ maj</td><td>Hexatonic pole — tritone-related triad, same quality</td></tr>
                   </tbody>
                 </table>
-                <p style="font-size:11px;color:#888">
+                <p style="font-size:11px;color:#b6c9ad">
                   <strong>In the demo:</strong> press any button while notes are lit (or during playback).
                   The current chord is identified as the best-matching major/minor triad, the
                   operation is applied, and the result flashes for 2.5 s. The label (e.g. <em>L → E min</em>) fades in the overlay.
@@ -684,7 +689,7 @@
                     <tr><td><strong>H</strong></td><td>L → P → L</td><td>C장조 → A♭장조</td><td>헥사토닉 극점 — 3온음 위치 화음, 장단 동일</td></tr>
                   </tbody>
                 </table>
-                <p style="font-size:11px;color:#888">
+                <p style="font-size:11px;color:#b6c9ad">
                   <strong>데모에서:</strong> 음이 켜진 상태(재생 중 포함)에서 버튼을 누릅니다.
                   현재 화음을 장/단 삼화음으로 인식한 후 연산을 적용하며, 결과가 2.5초 flash됩니다.
                   오버레이에 결과 이름(예: <em>L → E단조</em>)이 잠시 표시됩니다.
@@ -710,7 +715,7 @@
                   <li><strong>±12</strong> — octave; pitch classes unchanged visually (audio shifts one octave)</li>
                 </ul>
                 <p><strong>Continuous effect:</strong> unlike the one-shot PLR operations, the transposition offset persists. Use the <strong>0</strong> (reset) button to return to the original key.</p>
-                <p style="font-size:11px;color:#888"><em>Example:</em> hibari is in G major. T<sub>+5</sub> transposes it to C major. The lit pattern shifts five steps left on the Tonnetz.</p>
+                <p style="font-size:11px;color:#b6c9ad"><em>Example:</em> hibari is in G major. T<sub>+5</sub> transposes it to C major. The lit pattern shifts five steps left on the Tonnetz.</p>
               </div>
               <div class="ko">
                 <p>이조 T<sub>n</sub>은 모든 음높이 클래스를 <em>n</em> 반음만큼 이동시킵니다 (mod 12) — 가장 기본적이고 친숙한 음악적 변환입니다.</p>
@@ -722,7 +727,7 @@
                   <li><strong>±12</strong> — 옥타브; 음높이 클래스 시각적으로 동일 (오디오만 한 옥타브 이동)</li>
                 </ul>
                 <p><strong>연속 효과:</strong> PLR의 일회성 연산과 달리, 이조 오프셋은 지속됩니다. <strong>0</strong> (초기화) 버튼으로 원래 조성으로 돌아옵니다.</p>
-                <p style="font-size:11px;color:#888"><em>예시:</em> hibari는 G장조입니다. T<sub>+5</sub>를 적용하면 C장조로 이조됩니다. Tonnetz 위 점등 패턴이 왼쪽으로 다섯 칸 이동합니다.</p>
+                <p style="font-size:11px;color:#b6c9ad"><em>예시:</em> hibari는 G장조입니다. T<sub>+5</sub>를 적용하면 C장조로 이조됩니다. Tonnetz 위 점등 패턴이 왼쪽으로 다섯 칸 이동합니다.</p>
               </div>
             </div>
           </div>
@@ -751,8 +756,8 @@
                     <tr><td>I<sub>11</sub> (B)</td><td>{B, G, E} = E min</td><td>= L (Leading-tone)</td></tr>
                   </tbody>
                 </table>
-                <p style="font-size:11px;color:#888">Notice: I<sub>4</sub> = R, I<sub>7</sub> = P, I<sub>11</sub> = L when applied to major triads. The Neo-Riemannian operations are <em>special cases</em> of pitch-class inversion. On the Tonnetz, inversion corresponds to a <strong>global reflection</strong> of the grid rather than a local edge-flip.</p>
-                <p style="font-size:11px;color:#888"><strong>In the demo:</strong> toggle ON and click an axis note. All subsequent MIDI events are remapped by I<sub>n</sub>. Combine with transpose to reach any inversion in the standard TI-group.</p>
+                <p style="font-size:11px;color:#b6c9ad">Notice: I<sub>4</sub> = R, I<sub>7</sub> = P, I<sub>11</sub> = L when applied to major triads. The Neo-Riemannian operations are <em>special cases</em> of pitch-class inversion. On the Tonnetz, inversion corresponds to a <strong>global reflection</strong> of the grid rather than a local edge-flip.</p>
+                <p style="font-size:11px;color:#b6c9ad"><strong>In the demo:</strong> toggle ON and click an axis note. All subsequent MIDI events are remapped by I<sub>n</sub>. Combine with transpose to reach any inversion in the standard TI-group.</p>
               </div>
               <div class="ko">
                 <p>반전 I<sub>n</sub>은 모든 음높이 클래스를 축 n을 중심으로 반사시킵니다 — 이조와 음높이 클래스 원의 거울 뒤집기를 결합한 변환입니다.</p>
@@ -771,8 +776,8 @@
                     <tr><td>I<sub>11</sub> (B)</td><td>{B, G, E} = E단조</td><td>= L (이끔음 교환)</td></tr>
                   </tbody>
                 </table>
-                <p style="font-size:11px;color:#888">핵심: I<sub>4</sub> = R, I<sub>7</sub> = P, I<sub>11</sub> = L (장화음에 적용 시). 네오리만 연산 P/L/R은 사실 음높이 클래스 반전의 <em>특수한 경우</em>입니다. Tonnetz 위에서 반전은 국소적 변 뒤집기가 아닌 <strong>격자 전체의 반사</strong>에 해당합니다.</p>
-                <p style="font-size:11px;color:#888"><strong>데모에서:</strong> ON 토글 후 축 음이름을 클릭합니다. 이후 모든 MIDI 이벤트에 I<sub>n</sub>이 적용됩니다. 이조 오프셋과 조합하면 표준 TI-군의 모든 반전에 도달할 수 있습니다.</p>
+                <p style="font-size:11px;color:#b6c9ad">핵심: I<sub>4</sub> = R, I<sub>7</sub> = P, I<sub>11</sub> = L (장화음에 적용 시). 네오리만 연산 P/L/R은 사실 음높이 클래스 반전의 <em>특수한 경우</em>입니다. Tonnetz 위에서 반전은 국소적 변 뒤집기가 아닌 <strong>격자 전체의 반사</strong>에 해당합니다.</p>
+                <p style="font-size:11px;color:#b6c9ad"><strong>데모에서:</strong> ON 토글 후 축 음이름을 클릭합니다. 이후 모든 MIDI 이벤트에 I<sub>n</sub>이 적용됩니다. 이조 오프셋과 조합하면 표준 TI-군의 모든 반전에 도달할 수 있습니다.</p>
               </div>
             </div>
           </div>

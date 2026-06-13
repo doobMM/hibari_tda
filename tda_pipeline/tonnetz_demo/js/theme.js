@@ -9,7 +9,7 @@
 
   /* Maps UI theme name → colorscheme name registered in color-schemes/*.js */
   var SCHEME_MAP = {
-    'default': 'tonnetz-dark',
+    'default': 'greenonblack',   /* 괴물 그린 — 어둠 속 새싹 빛 */
     'zinc':    'tonnetz-zinc',
     'carbon':  'tonnetz-carbon'
   };

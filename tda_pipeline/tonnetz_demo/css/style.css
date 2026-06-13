@@ -34,37 +34,45 @@ a:link.external:after {
   margin-left: 10px;
 }
 
-/* ── Design tokens (Music Streaming palette — UI Pro Max) ───────── */
+/* ── 디자인 토큰 — 다크 포레스트("밤의 숲") 팔레트 (기본값) ───────── */
 :root {
-  --tz-bg-deep:           #0F0F23;
-  --tz-bg-panel:          rgba(15, 15, 40, 0.93);
-  --tz-bg-heading:        rgba(30, 27, 75, 0.96);
-  --tz-border:            rgba(67, 56, 202, 0.28);
-  --tz-accent:            #4338CA;
-  --tz-cta:               #22C55E;
-  --tz-text:              #d8d8ee;
-  --tz-text-muted:        #7878aa;
-  --tz-progress-start:    #4338CA;
-  --tz-progress-end:      #22C55E;
-  /* overlay surfaces (always-visible panels) */
-  --tz-overlay-bg:        rgba(8, 8, 20, 0.82);
-  --tz-overlay-border:    rgba(67, 56, 202, 0.22);
-  /* button active/selected state */
-  --tz-btn-active-bg:     rgba(67, 56, 202, 0.38);
-  --tz-btn-active-border: rgba(67, 56, 202, 0.70);
+  /* 배경 / 패널 — 숲 깊은 어둠 */
+  --tz-bg-deep:           #0e1410;
+  --tz-bg-panel:          rgba(21, 32, 23, 0.95);
+  --tz-bg-heading:        rgba(29, 43, 32, 0.98);
+  /* 테두리 */
+  --tz-border:            #33493a;
+  --tz-border-hairline:   #24352a;
+  /* 텍스트 */
+  --tz-text:              #eef5e9;
+  --tz-text-muted:        #b6c9ad;
+  /* 액센트: 달빛 그린 */
+  --tz-accent:            #7ed957;
+  /* CTA: 달빛 그린 */
+  --tz-cta:               #7ed957;
+  /* 진행 바 그라데이션 */
+  --tz-progress-start:    #5fbf49;
+  --tz-progress-end:      #e8c25a;
+  /* 오버레이 패널 (항상 표시되는 플로팅 패널) */
+  --tz-overlay-bg:        rgba(21, 32, 23, 0.92);
+  --tz-overlay-border:    #33493a;
+  /* 버튼 활성 상태 */
+  --tz-btn-active-bg:     rgba(126, 217, 87, 0.16);
+  --tz-btn-active-border: rgba(126, 217, 87, 0.55);
 }
 
-/* ── OM → generation → Tonnetz workflow strip ───────────────────── */
+/* ── OM → generation → Tonnetz 워크플로 스트립 ─────────────────── */
 .tda-workflow {
   display: flex;
   align-items: center;
   gap: 10px;
   min-height: 42px;
   padding: 7px 14px;
-  background: rgba(8, 8, 20, 0.94);
+  /* 공유 nav와 시각적으로 이어지도록 어두운 숲 배경 사용 */
+  background: rgba(21, 32, 23, 0.97);
   border-bottom: 1px solid var(--tz-border);
   color: var(--tz-text-muted);
-  font-family: 'Fira Sans', system-ui, sans-serif;
+  font-family: 'Noto Sans KR', system-ui, sans-serif;
 }
 
 .tda-workflow__step {
@@ -83,7 +91,7 @@ a:link.external:after {
   height: 22px;
   border: 1px solid var(--tz-border);
   border-radius: 999px;
-  font-family: 'Fira Code', monospace;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
   font-size: 11px;
 }
 
@@ -97,7 +105,8 @@ a:link.external:after {
 
 .tda-workflow__step.is-active .tda-workflow__num {
   border-color: var(--tz-cta);
-  background: rgba(34, 197, 94, 0.18);
+  /* 다크 포레스트: 달빛 그린 틴트 배경 */
+  background: rgba(126, 217, 87, 0.14);
   color: var(--tz-cta);
 }
 
@@ -105,7 +114,7 @@ a:link.external:after {
   margin-left: auto;
   overflow: hidden;
   color: var(--tz-text-muted);
-  font-family: 'Fira Code', monospace;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
   font-size: 11px;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -141,43 +150,64 @@ a:link.external:after {
   }
 }
 
-/* ── Theme: Zinc / Pink ─────────────────────────────────────────── */
+/* ── 다크 테마: 밤의 숲 ─────────────────────────────────────────── */
+body.theme-dark {
+  --tz-bg-deep:           #0e1410;
+  --tz-bg-panel:          rgba(21, 32, 23, 0.95);
+  --tz-bg-heading:        rgba(29, 43, 32, 0.98);
+  --tz-border:            #33493a;
+  --tz-border-hairline:   #24352a;
+  --tz-text:              #eef5e9;
+  --tz-text-muted:        #b6c9ad;
+  --tz-accent:            #7ed957;
+  --tz-cta:               #7ed957;
+  --tz-progress-start:    #5fbf49;
+  --tz-progress-end:      #e8c25a;
+  --tz-overlay-bg:        rgba(14, 20, 16, 0.92);
+  --tz-overlay-border:    #33493a;
+  --tz-btn-active-bg:     rgba(126, 217, 87, 0.18);
+  --tz-btn-active-border: rgba(126, 217, 87, 0.60);
+}
+
+/* ── 징크 / 솔잎 테마 ───────────────────────────────────────────── */
 body.theme-zinc {
-  --tz-bg-deep:           #18181B;
-  --tz-bg-panel:          rgba(24, 24, 27, 0.93);
-  --tz-bg-heading:        rgba(39, 39, 42, 0.98);
-  --tz-border:            rgba(236, 72, 153, 0.22);
-  --tz-accent:            #EC4899;
-  --tz-cta:               #EC4899;
-  --tz-text:              #d4d4d8;
-  --tz-text-muted:        #71717a;
-  --tz-progress-start:    #7C3AED;
-  --tz-progress-end:      #EC4899;
-  --tz-overlay-bg:        rgba(12, 10, 12, 0.85);
-  --tz-overlay-border:    rgba(236, 72, 153, 0.18);
-  --tz-btn-active-bg:     rgba(236, 72, 153, 0.35);
-  --tz-btn-active-border: rgba(236, 72, 153, 0.70);
+  /* 中간 밝기 그린 (솔잎 계열) */
+  --tz-bg-deep:           #1a211a;
+  --tz-bg-panel:          rgba(26, 33, 26, 0.95);
+  --tz-bg-heading:        rgba(34, 44, 34, 0.98);
+  --tz-border:            rgba(126, 217, 87, 0.22);
+  --tz-accent:            #7ed957;
+  --tz-cta:               #7ed957;
+  --tz-text:              #d4e8ce;
+  --tz-text-muted:        #7a9a74;
+  --tz-progress-start:    #5fbf49;
+  --tz-progress-end:      #e8c25a;
+  --tz-overlay-bg:        rgba(12, 16, 12, 0.88);
+  --tz-overlay-border:    rgba(126, 217, 87, 0.18);
+  --tz-btn-active-bg:     rgba(126, 217, 87, 0.22);
+  --tz-btn-active-border: rgba(126, 217, 87, 0.65);
 }
 
-/* ── Theme: Carbon / Gold ───────────────────────────────────────── */
+/* ── 카본 / 이끼 테마 ───────────────────────────────────────────── */
 body.theme-carbon {
-  --tz-bg-deep:           #171717;
-  --tz-bg-panel:          rgba(23, 23, 23, 0.93);
-  --tz-bg-heading:        rgba(30, 30, 30, 0.99);
-  --tz-border:            rgba(212, 175, 55, 0.20);
-  --tz-accent:            #D4AF37;
-  --tz-cta:               #D4AF37;
-  --tz-text:              #d4d4d4;
-  --tz-text-muted:        #737373;
-  --tz-progress-start:    #92400E;
-  --tz-progress-end:      #D4AF37;
-  --tz-overlay-bg:        rgba(5, 5, 5, 0.87);
-  --tz-overlay-border:    rgba(212, 175, 55, 0.16);
-  --tz-btn-active-bg:     rgba(212, 175, 55, 0.28);
-  --tz-btn-active-border: rgba(212, 175, 55, 0.70);
+  /* 어두운 이끼 + 저녁 햇살 황금 */
+  --tz-bg-deep:           #111714;
+  --tz-bg-panel:          rgba(18, 24, 20, 0.95);
+  --tz-bg-heading:        rgba(24, 32, 26, 0.99);
+  --tz-border:            rgba(232, 194, 90, 0.20);
+  --tz-accent:            #e8c25a;
+  --tz-cta:               #e8c25a;
+  --tz-text:              #dde8d5;
+  --tz-text-muted:        #7a8f72;
+  --tz-progress-start:    #5fbf49;
+  --tz-progress-end:      #e8c25a;
+  --tz-overlay-bg:        rgba(8, 11, 8, 0.90);
+  --tz-overlay-border:    rgba(232, 194, 90, 0.16);
+  --tz-btn-active-bg:     rgba(232, 194, 90, 0.20);
+  --tz-btn-active-border: rgba(232, 194, 90, 0.65);
 }
 
-/* ── Dark glassmorphism tab container ───────────────────────────── */
+/* ── 탭 컨테이너 — 라이트 글라스 ───────────────────────────────── */
 #tabs {
   background: var(--tz-bg-panel);
   border: 1px solid var(--tz-border);
@@ -185,7 +215,7 @@ body.theme-carbon {
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   color: var(--tz-text);
-  font-family: 'Fira Sans', system-ui, sans-serif;
+  font-family: 'Noto Sans KR', system-ui, sans-serif;
 }
 
 #tabs .tab-pane {
@@ -193,21 +223,29 @@ body.theme-carbon {
   padding-top: 20px;
 }
 
-/* ── Dark panels ────────────────────────────────────────────────── */
+/* ── 패널 ────────────────────────────────────────────────────────── */
+/* 기본(다크 포레스트) + 다크 테마: 반투명 어두운 패널 */
 #tabs .panel-default {
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(255, 255, 255, 0.04);
   border: 1px solid var(--tz-border);
   box-shadow: none;
+}
+
+/* 다크 테마에서는 반투명 어두운 패널 */
+body.theme-dark #tabs .panel-default,
+body.theme-zinc #tabs .panel-default,
+body.theme-carbon #tabs .panel-default {
+  background: rgba(255, 255, 255, 0.04);
 }
 
 #tabs .panel-default > .panel-heading {
   background: var(--tz-bg-heading);
   border-bottom: 1px solid var(--tz-border);
-  color: #b8b8d8;
+  color: var(--tz-text-muted);
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.8px;
-  font-family: 'Fira Sans', sans-serif;
+  font-family: 'Noto Sans KR', sans-serif;
   padding: 7px 12px;
 }
 
@@ -215,20 +253,32 @@ body.theme-carbon {
   color: var(--tz-text);
 }
 
-/* Override Bootstrap text colours inside dark panels */
+/* Bootstrap 텍스트 색상 재지정 */
 #tabs label,
 #tabs .help-block,
 #tabs .checkbox label {
   color: var(--tz-text-muted);
 }
+/* 기본(다크 포레스트): 어두운 입력 배경 */
 #tabs .form-control {
   background: rgba(255, 255, 255, 0.07);
   border: 1px solid var(--tz-border);
   color: var(--tz-text);
 }
+/* 다크/징크/카본 테마 form-control */
+body.theme-dark #tabs .form-control,
+body.theme-zinc #tabs .form-control,
+body.theme-carbon #tabs .form-control {
+  background: rgba(255, 255, 255, 0.07);
+}
 #tabs .form-control:focus {
   border-color: var(--tz-accent);
-  box-shadow: 0 0 0 2px rgba(67, 56, 202, 0.25);
+  /* 기본 다크 포레스트: 달빛 그린 포커스 링 */
+  box-shadow: 0 0 0 2px rgba(126, 217, 87, 0.22);
+}
+body.theme-dark #tabs .form-control:focus,
+body.theme-zinc #tabs .form-control:focus {
+  box-shadow: 0 0 0 2px rgba(126, 217, 87, 0.22);
 }
 #tabs .table {
   color: var(--tz-text);
@@ -238,18 +288,39 @@ body.theme-carbon {
   color: var(--tz-text-muted);
 }
 #tabs .table > tbody > tr > td {
-  border-top-color: rgba(255,255,255,0.07);
+  border-top-color: var(--tz-border-hairline);
 }
 #tabs h3, #tabs h4 {
-  color: #c8c8ee;
+  color: var(--tz-text);
 }
+/* 기본 다크 포레스트: 코드 블록 달빛 그린 틴트 */
 #tabs code {
-  background: rgba(67, 56, 202, 0.2);
-  color: #a8b8ff;
+  background: rgba(126, 217, 87, 0.14);
+  color: #a8e090;
   border: none;
 }
-#tabs a { color: #818cf8; }
-#tabs a:hover { color: #a5b4fc; }
+body.theme-dark #tabs code,
+body.theme-zinc #tabs code {
+  background: rgba(126, 217, 87, 0.14);
+  color: #a8e090;
+}
+body.theme-carbon #tabs code {
+  background: rgba(232, 194, 90, 0.14);
+  color: #e8d090;
+}
+#tabs a { color: var(--tz-accent); }
+#tabs a:hover { color: var(--tz-cta); filter: brightness(1.12); }
+
+/* Transposition/Inversion 페이지 내 인용 블록 — 기본 다크 포레스트 */
+#tabs p[style*="background:#f8f8f8"] {
+  background: rgba(21, 32, 23, 0.80) !important;
+  border-left-color: var(--tz-border) !important;
+}
+body.theme-dark #tabs p[style*="background:#f8f8f8"],
+body.theme-zinc #tabs p[style*="background:#f8f8f8"],
+body.theme-carbon #tabs p[style*="background:#f8f8f8"] {
+  background: rgba(21, 32, 23, 0.80) !important;
+}
 
 
 .keyboard .key {
@@ -327,7 +398,7 @@ body.theme-carbon {
 }
 
 #scheme-editor-holder textarea {
-  font-family: monospace;
+  font-family: 'JetBrains Mono', monospace;
 }
 
 
@@ -341,8 +412,14 @@ body.theme-carbon {
   margin: 0;
   padding: 0;
   overflow: hidden;
-  touch-action: none;   /* prevent scroll/zoom on canvas */
-  cursor: crosshair;    /* hint: canvas is interactive */
+  touch-action: none;   /* 캔버스 위 스크롤/줌 방지 */
+  cursor: crosshair;    /* 힌트: 캔버스 인터랙티브 */
+}
+
+/* 캔버스 배경 — 기본: 밤의 숲 어둠 그라데이션 (greenonblack 스킴이 덮어씀) */
+body:not(.theme-zinc):not(.theme-carbon) #tonnetz {
+  background: radial-gradient(ellipse at 50% 0%, rgba(21,32,23,0.55) 0%, #0b110d 100%),
+              linear-gradient(180deg, #0e1410 0%, #0b110d 100%);
 }
 
 
@@ -369,12 +446,35 @@ body.theme-carbon {
   color: #ffffff;
 }
 
+/* Bootstrap navbar-inverse 재색상 (다크 네브 유지 — nav.css와 이어지도록) */
+.navbar-inverse {
+  background-color: #182e1c;
+  border-color: #1e3b22;
+}
+.navbar-inverse .navbar-nav > li > a {
+  color: #b6c9ad;
+}
+.navbar-inverse .navbar-nav > li > a:hover,
+.navbar-inverse .navbar-nav > li > a:focus {
+  color: #eef5e9;
+  background-color: rgba(126, 217, 87, 0.12);
+}
+.navbar-inverse .navbar-nav > .active > a,
+.navbar-inverse .navbar-nav > .active > a:hover,
+.navbar-inverse .navbar-nav > .active > a:focus {
+  color: #eef5e9;
+  background-color: rgba(126, 217, 87, 0.20);
+}
+.navbar-inverse .navbar-brand {
+  color: #eef5e9;
+}
+
 .fa-ul li {
   margin-bottom: 0.25em;
 }
 
 
-/* ── Transform overlay (bottom-left, always visible) ────────────── */
+/* ── 변환 오버레이 (좌하단, 항상 표시) ─────────────────────────── */
 #transform-overlay {
   position: fixed;
   bottom: 20px;
@@ -390,13 +490,19 @@ body.theme-carbon {
   transition: background 0.25s, border-color 0.25s;
 }
 
+/* 기본 다크 포레스트: 패널에 은은한 어두운 숲 그림자 */
+body:not(.theme-zinc):not(.theme-carbon) #transform-overlay {
+  background: rgba(21, 32, 23, 0.92);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.35);
+}
+
 .tx-group {
   margin-bottom: 9px;
 }
 .tx-group:last-child { margin-bottom: 0; }
 
 .tx-label {
-  color: #888;
+  color: var(--tz-text-muted);
   font-size: 9px;
   text-transform: uppercase;
   letter-spacing: 0.7px;
@@ -404,13 +510,14 @@ body.theme-carbon {
 }
 
 .tx-sublabel {
-  color: #666;
+  color: var(--tz-text-muted);
   font-size: 9px;
+  opacity: 0.7;
 }
 
 .tx-value {
-  font-family: monospace;
-  color: #aaa;
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--tz-text-muted);
   font-size: 10px;
   font-style: normal;
   text-transform: none;
@@ -418,8 +525,8 @@ body.theme-carbon {
 }
 
 .tx-result {
-  font-family: monospace;
-  color: #8cf;
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--tz-cta);
   font-size: 10px;
   text-transform: none;
   letter-spacing: 0;
@@ -434,72 +541,143 @@ body.theme-carbon {
   flex-wrap: wrap;
 }
 
+/* 기본 다크 포레스트: 버튼 비활성 배경 */
 .tx-btn {
-  background: rgba(255, 255, 255, 0.08);
-  color: #bbb;
-  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(126, 217, 87, 0.08);
+  color: var(--tz-text-muted);
+  border: 1px solid var(--tz-border);
   border-radius: 4px;
   font-size: 10px;
   padding: 3px 7px;
   cursor: pointer;
-  font-family: monospace;
+  font-family: 'JetBrains Mono', monospace;
   transition: background 0.10s, color 0.10s;
   min-width: 26px;
   text-align: center;
   line-height: 1.4;
 }
 .tx-btn:hover {
-  background: rgba(255, 255, 255, 0.20);
-  color: #fff;
+  /* 기본 다크: 달빛 그린 호버 */
+  background: rgba(126, 217, 87, 0.18);
+  color: var(--tz-text);
+}
+/* 다크/징크/카본 테마 버튼 기본 배경 */
+body.theme-dark .tx-btn,
+body.theme-zinc .tx-btn,
+body.theme-carbon .tx-btn {
+  background: rgba(255, 255, 255, 0.06);
+  color: #b6c9ad;
+  border-color: var(--tz-border);
+}
+body.theme-dark .tx-btn:hover,
+body.theme-zinc .tx-btn:hover,
+body.theme-carbon .tx-btn:hover {
+  background: rgba(255, 255, 255, 0.16);
+  color: #eef5e9;
 }
 .tx-btn.active, .tx-btn.btn-primary {
   background: var(--tz-btn-active-bg);
-  color: #fff;
+  color: var(--tz-text);
   border-color: var(--tz-btn-active-border);
 }
+body.theme-dark .tx-btn.active,
+body.theme-dark .tx-btn.btn-primary,
+body.theme-zinc .tx-btn.active,
+body.theme-zinc .tx-btn.btn-primary,
+body.theme-carbon .tx-btn.active,
+body.theme-carbon .tx-btn.btn-primary {
+  color: #eef5e9;
+}
+/* btn-info: 기본 다크 포레스트 — 달빛 그린 활성 */
 .tx-btn.btn-info {
-  background: rgba(60, 180, 200, 0.35);
-  color: #fff;
-  border-color: rgba(60, 180, 200, 0.6);
+  background: rgba(126, 217, 87, 0.22);
+  color: #eef5e9;
+  border-color: rgba(126, 217, 87, 0.55);
+}
+body.theme-dark .tx-btn.btn-info,
+body.theme-zinc .tx-btn.btn-info {
+  background: rgba(126, 217, 87, 0.22);
+  color: #eef5e9;
+  border-color: rgba(126, 217, 87, 0.55);
+}
+body.theme-carbon .tx-btn.btn-info {
+  background: rgba(232, 194, 90, 0.22);
+  color: #eef5e9;
+  border-color: rgba(232, 194, 90, 0.55);
 }
 
-/* Composite ops (N/S/H) slightly dimmer to distinguish from primary P/L/R */
+/* 합성 연산 (N/S/H) 약간 흐림 */
 .tx-composite {
   opacity: 0.7;
 }
 .tx-composite:hover { opacity: 1; }
 
 .tx-reset {
-  color: #f99;
-  border-color: rgba(255, 120, 120, 0.35);
+  color: #cf5f3e;
+  border-color: rgba(207, 95, 62, 0.40);
 }
 .tx-reset:hover {
-  background: rgba(255, 80, 80, 0.22);
-  color: #fcc;
+  background: rgba(207, 95, 62, 0.18);
+  color: #cf5f3e;
+}
+body.theme-dark .tx-reset,
+body.theme-zinc .tx-reset,
+body.theme-carbon .tx-reset {
+  color: #e07856;
+  border-color: rgba(224, 120, 86, 0.40);
+}
+body.theme-dark .tx-reset:hover,
+body.theme-zinc .tx-reset:hover,
+body.theme-carbon .tx-reset:hover {
+  background: rgba(224, 120, 86, 0.22);
+  color: #f4a080;
 }
 
-/* Invert toggle — shares tx-btn base */
+/* 반전 토글 — tx-btn 기반 공유 */
+/* txInvToggle: 기본 다크 포레스트 */
 #txInvToggle {
   font-size: 9px;
   padding: 1px 6px;
   border-radius: 3px;
   cursor: pointer;
-  background: rgba(255, 255, 255, 0.08);
-  color: #bbb;
-  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(126, 217, 87, 0.08);
+  color: var(--tz-text-muted);
+  border: 1px solid var(--tz-border);
   transition: background 0.10s;
-  font-family: monospace;
+  font-family: 'JetBrains Mono', monospace;
 }
 #txInvToggle.btn-info {
-  background: rgba(60, 180, 200, 0.35);
-  color: #fff;
-  border-color: rgba(60, 180, 200, 0.6);
+  background: rgba(126, 217, 87, 0.22);
+  color: #eef5e9;
+  border-color: rgba(126, 217, 87, 0.55);
+}
+body.theme-dark #txInvToggle,
+body.theme-zinc #txInvToggle {
+  background: rgba(255, 255, 255, 0.06);
+  color: #b6c9ad;
+  border-color: var(--tz-border);
+}
+body.theme-dark #txInvToggle.btn-info,
+body.theme-zinc #txInvToggle.btn-info {
+  background: rgba(126, 217, 87, 0.22);
+  color: #eef5e9;
+  border-color: rgba(126, 217, 87, 0.55);
+}
+body.theme-carbon #txInvToggle {
+  background: rgba(255, 255, 255, 0.06);
+  color: #b6c9ad;
+  border-color: var(--tz-border);
+}
+body.theme-carbon #txInvToggle.btn-info {
+  background: rgba(232, 194, 90, 0.22);
+  color: #eef5e9;
+  border-color: rgba(232, 194, 90, 0.55);
 }
 
-/* ── Interval preset overlay (always visible on Tonnetz canvas) ── */
+/* ── 인터벌 프리셋 오버레이 (우측, 항상 표시) ───────────────────── */
 #interval-overlay {
   position: fixed;
-  top: 42px;          /* sit just below the navbar */
+  top: 42px;          /* 네브바 바로 아래 */
   right: 0;
   z-index: 500;
   width: 228px;
@@ -514,14 +692,20 @@ body.theme-carbon {
   transition: background 0.25s, border-color 0.25s;
 }
 
+/* 기본 다크 포레스트: 인터벌 패널 어두운 숲 그림자 */
+body:not(.theme-zinc):not(.theme-carbon) #interval-overlay {
+  background: rgba(21, 32, 23, 0.92);
+  box-shadow: -2px 2px 12px rgba(0, 0, 0, 0.35);
+}
+
 #interval-overlay .int-title {
-  color: #777;
+  color: var(--tz-text-muted);
   font-size: 9px;
   text-align: center;
   letter-spacing: 0.7px;
   text-transform: uppercase;
   padding: 6px 10px 5px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  border-bottom: 1px solid var(--tz-border-hairline);
 }
 
 #interval-overlay .int-btn {
@@ -531,12 +715,12 @@ body.theme-carbon {
   width: 100%;
   background: transparent;
   border: none;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid var(--tz-border-hairline);
   padding: 5px 10px 4px;
   cursor: pointer;
   text-align: left;
   transition: background 0.12s;
-  color: #bbb;
+  color: var(--tz-text-muted);
   line-height: 1.35;
 }
 
@@ -544,29 +728,44 @@ body.theme-carbon {
   border-bottom: none;
 }
 
+/* 기본 다크 포레스트: 인터벌 버튼 호버 */
 #interval-overlay .int-btn:hover {
-  background: rgba(255, 255, 255, 0.09);
-  color: #fff;
+  background: rgba(126, 217, 87, 0.10);
+  color: #eef5e9;
+}
+body.theme-dark #interval-overlay .int-btn:hover,
+body.theme-zinc #interval-overlay .int-btn:hover {
+  background: rgba(126, 217, 87, 0.10);
+  color: #eef5e9;
+}
+body.theme-carbon #interval-overlay .int-btn:hover {
+  background: rgba(232, 194, 90, 0.10);
+  color: #eef5e9;
 }
 
 #interval-overlay .int-btn.active {
   background: var(--tz-btn-active-bg);
-  color: #fff;
+  color: var(--tz-text);
   border-left: 3px solid var(--tz-btn-active-border);
   padding-left: 7px;
 }
+body.theme-dark #interval-overlay .int-btn.active,
+body.theme-zinc #interval-overlay .int-btn.active,
+body.theme-carbon #interval-overlay .int-btn.active {
+  color: #eef5e9;
+}
 
 #interval-overlay .int-nums {
-  font-family: monospace;
+  font-family: 'JetBrains Mono', monospace;
   font-size: 10px;
-  color: #888;
+  color: var(--tz-text-muted);
   min-width: 56px;
   flex-shrink: 0;
   margin-right: 5px;
 }
 
 #interval-overlay .int-btn.active .int-nums {
-  color: #99beff;
+  color: var(--tz-accent);
 }
 
 #interval-overlay .int-name {
@@ -577,30 +776,38 @@ body.theme-carbon {
   margin-right: 4px;
 }
 
+/* 기본 다크 포레스트: 저녁 햇살 노란색 */
 #interval-overlay .int-default {
   font-weight: normal;
   font-size: 9px;
-  color: #f0c040;
+  color: #e8c25a;
   margin-left: 2px;
+}
+body.theme-dark #interval-overlay .int-default,
+body.theme-zinc #interval-overlay .int-default,
+body.theme-carbon #interval-overlay .int-default {
+  color: #e8c25a;
 }
 
 #interval-overlay .int-ivals {
   font-size: 9px;
-  color: #666;
+  color: var(--tz-text-muted);
+  opacity: 0.7;
   white-space: nowrap;
 }
 
 #interval-overlay .int-btn.active .int-ivals {
-  color: #99a;
+  color: var(--tz-text-muted);
+  opacity: 1;
 }
 
-/* ── Language toggle ────────────────────────────────────────────── */
+/* ── 언어 토글 ──────────────────────────────────────────────────── */
 .ko { display: none; }
 
 body.lang-ko .ko { display: revert; }
 body.lang-ko .en { display: none; }
 
-/* ── Top-right controls container (theme picker + lang tabs) ─────── */
+/* ── 우상단 컨트롤 컨테이너 (테마 스워치 + 언어 탭) ────────────── */
 #top-right-controls {
   position: fixed;
   top: 7px;
@@ -611,48 +818,85 @@ body.lang-ko .en { display: none; }
   gap: 8px;
 }
 
-/* Two-tab segmented language switcher */
+/* 세분화된 언어 전환 탭 */
 #langTabs {
   display: flex;
-  border: 1px solid rgba(255, 255, 255, 0.28);
+  border: 1px solid var(--tz-border);
   border-radius: 4px;
   overflow: hidden;
 }
 
+/* 기본 다크 포레스트: 언어 탭 비활성 */
 .lang-tab {
-  background: rgba(255, 255, 255, 0.08);
-  color: #999;
+  background: rgba(126, 217, 87, 0.08);
+  color: var(--tz-text-muted);
   border: none;
   font-size: 11px;
   padding: 3px 9px;
   cursor: pointer;
   transition: background 0.15s, color 0.15s;
   white-space: nowrap;
-  font-family: inherit;
+  font-family: 'Noto Sans KR', system-ui, inherit;
   line-height: 1.4;
 }
 .lang-tab:first-child {
-  border-right: 1px solid rgba(255, 255, 255, 0.18);
+  border-right: 1px solid var(--tz-border);
 }
 .lang-tab:hover {
-  background: rgba(255, 255, 255, 0.22);
-  color: #fff;
+  background: rgba(126, 217, 87, 0.20);
+  color: #eef5e9;
 }
-/* Active state: driven by body.lang-ko */
+body.theme-dark .lang-tab,
+body.theme-zinc .lang-tab {
+  background: rgba(255, 255, 255, 0.07);
+  color: #b6c9ad;
+}
+body.theme-dark .lang-tab:hover,
+body.theme-zinc .lang-tab:hover {
+  background: rgba(126, 217, 87, 0.18);
+  color: #eef5e9;
+}
+body.theme-carbon .lang-tab {
+  background: rgba(255, 255, 255, 0.07);
+  color: #b6c9ad;
+}
+body.theme-carbon .lang-tab:hover {
+  background: rgba(232, 194, 90, 0.18);
+  color: #eef5e9;
+}
+
+/* 활성 상태: body.lang-ko 기반 — 기본 다크 포레스트 */
 .lang-tab[data-lang="en"] {
   background: var(--tz-btn-active-bg);
-  color: #fff;
+  color: #eef5e9;
 }
 body.lang-ko .lang-tab[data-lang="en"] {
-  background: rgba(255, 255, 255, 0.08);
-  color: #999;
+  background: rgba(126, 217, 87, 0.08);
+  color: var(--tz-text-muted);
 }
 body.lang-ko .lang-tab[data-lang="ko"] {
   background: var(--tz-btn-active-bg);
-  color: #fff;
+  color: #eef5e9;
+}
+/* 다크 테마 lang-tab 활성 상태 */
+body.theme-dark .lang-tab[data-lang="en"],
+body.theme-zinc .lang-tab[data-lang="en"] {
+  background: var(--tz-btn-active-bg);
+  color: #eef5e9;
+}
+body.theme-dark.lang-ko .lang-tab[data-lang="en"],
+body.theme-zinc.lang-ko .lang-tab[data-lang="en"] {
+  background: rgba(255, 255, 255, 0.07);
+  color: #b6c9ad;
+}
+body.theme-dark.lang-ko .lang-tab[data-lang="ko"],
+body.theme-zinc.lang-ko .lang-tab[data-lang="ko"] {
+  background: var(--tz-btn-active-bg);
+  color: #eef5e9;
 }
 
-/* ── MIDI progress bar ──────────────────────────────────────────── */
+/* ── MIDI 진행 바 ────────────────────────────────────────────────── */
+/* 기본 다크 포레스트: 진행 바 배경 */
 #midiProgress {
   height: 4px;
   background: rgba(255, 255, 255, 0.10);
@@ -661,7 +905,17 @@ body.lang-ko .lang-tab[data-lang="ko"] {
   cursor: pointer;
   position: relative;
 }
+body.theme-dark #midiProgress,
+body.theme-zinc #midiProgress,
+body.theme-carbon #midiProgress {
+  background: rgba(255, 255, 255, 0.10);
+}
 #midiProgress:hover { background: rgba(255, 255, 255, 0.18); }
+body.theme-dark #midiProgress:hover,
+body.theme-zinc #midiProgress:hover,
+body.theme-carbon #midiProgress:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
 #midiProgressFill {
   height: 100%;
   width: 0%;
@@ -671,7 +925,7 @@ body.lang-ko .lang-tab[data-lang="ko"] {
   pointer-events: none;
 }
 
-/* ── Overlay header + collapse button ───────────────────────────── */
+/* ── 오버레이 헤더 + 접기 버튼 ─────────────────────────────────── */
 .overlay-header {
   display: flex;
   justify-content: space-between;
@@ -679,26 +933,27 @@ body.lang-ko .lang-tab[data-lang="ko"] {
   margin-bottom: 7px;
 }
 .overlay-header .overlay-title-text {
-  color: #777;
+  color: var(--tz-text-muted);
   font-size: 9px;
   text-transform: uppercase;
   letter-spacing: 0.8px;
-  font-family: 'Fira Sans', monospace;
+  font-family: 'Noto Sans KR', system-ui, sans-serif;
 }
 .overlay-collapse-btn {
   background: none;
   border: none;
-  color: #555;
+  color: var(--tz-text-muted);
   font-size: 13px;
   line-height: 1;
   cursor: pointer;
   padding: 0 2px;
   transition: color 0.15s;
-  font-family: monospace;
+  font-family: 'JetBrains Mono', monospace;
+  opacity: 0.6;
 }
-.overlay-collapse-btn:hover { color: #aaa; }
+.overlay-collapse-btn:hover { opacity: 1; }
 
-/* Collapsed state */
+/* 접힌 상태 */
 #transform-overlay.tz-collapsed .tx-group { display: none; }
 #transform-overlay.tz-collapsed { padding-bottom: 6px; }
 #transform-overlay .overlay-header { margin-bottom: 0; }
@@ -707,41 +962,59 @@ body.lang-ko .lang-tab[data-lang="ko"] {
 #interval-overlay.tz-collapsed .int-btn { display: none; }
 #interval-overlay.tz-collapsed .int-title { border-bottom: none; }
 
-/* ── Theme swatch picker (inside #top-right-controls) ───────────── */
+/* ── 테마 스워치 피커 ────────────────────────────────────────────── */
 #themePicker {
   display: flex;
   align-items: center;
   gap: 5px;
 }
 
+/* 기본 다크 포레스트: 스워치 테두리 */
 .theme-swatch {
   width: 16px;
   height: 16px;
   border-radius: 50%;
-  border: 2px solid rgba(255, 255, 255, 0.20);
+  border: 2px solid rgba(255, 255, 255, 0.22);
   cursor: pointer;
   padding: 0;
   transition: border-color 0.15s, transform 0.15s;
   flex-shrink: 0;
 }
 .theme-swatch:hover {
-  border-color: rgba(255, 255, 255, 0.65);
+  border-color: var(--tz-accent);
   transform: scale(1.18);
 }
+/* 기본 다크 포레스트: 활성 스워치 달빛 그린 글로우 */
 .theme-swatch.active {
-  border-color: #fff;
-  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.30);
+  border-color: var(--tz-accent);
+  box-shadow: 0 0 0 2px rgba(126, 217, 87, 0.28);
   transform: scale(1.15);
+}
+body.theme-dark .theme-swatch,
+body.theme-zinc .theme-swatch,
+body.theme-carbon .theme-swatch {
+  border-color: rgba(255, 255, 255, 0.22);
+}
+body.theme-dark .theme-swatch:hover,
+body.theme-zinc .theme-swatch:hover,
+body.theme-carbon .theme-swatch:hover {
+  border-color: rgba(255, 255, 255, 0.65);
+}
+body.theme-dark .theme-swatch.active,
+body.theme-zinc .theme-swatch.active,
+body.theme-carbon .theme-swatch.active {
+  border-color: #fff;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.28);
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   Mobile overlay layout  (≤ 599 px)
-   Both overlays start collapsed on mobile (set via JS in main.js).
-   When expanded they take the full screen width as a sheet.
+   모바일 오버레이 레이아웃 (≤ 599 px)
+   양쪽 오버레이는 모바일에서 접힌 채로 시작 (main.js에서 JS로 설정).
+   펼쳤을 때 전체 너비의 시트로 전환.
    ═══════════════════════════════════════════════════════════════ */
 @media (max-width: 599px) {
 
-  /* ── Transform overlay: bottom sheet when expanded ── */
+  /* ── 변환 오버레이: 펼쳤을 때 바텀 시트 ── */
   #transform-overlay:not(.tz-collapsed) {
     left: 0;
     right: 0;
@@ -754,7 +1027,7 @@ body.lang-ko .lang-tab[data-lang="ko"] {
     padding: 4px 16px calc(16px + env(safe-area-inset-bottom, 0px));
   }
 
-  /* Drag-handle hint on the expanded sheet */
+  /* 드래그 핸들 힌트 — 기본 다크 포레스트 */
   #transform-overlay:not(.tz-collapsed)::before {
     content: '';
     display: block;
@@ -764,15 +1037,20 @@ body.lang-ko .lang-tab[data-lang="ko"] {
     background: rgba(255, 255, 255, 0.16);
     margin: 6px auto 8px;
   }
+  body.theme-dark #transform-overlay:not(.tz-collapsed)::before,
+  body.theme-zinc #transform-overlay:not(.tz-collapsed)::before,
+  body.theme-carbon #transform-overlay:not(.tz-collapsed)::before {
+    background: rgba(255, 255, 255, 0.16);
+  }
 
-  /* ── Transform overlay: float pill when collapsed ── */
+  /* ── 변환 오버레이: 접혔을 때 플로팅 필 ── */
   #transform-overlay.tz-collapsed {
     bottom: calc(12px + env(safe-area-inset-bottom, 0px));
-    /* left: 14px inherited from base */
+    /* left: 14px는 base에서 상속 */
     min-width: 0;
   }
 
-  /* ── Interval overlay: full-width drop-down when expanded ── */
+  /* ── 인터벌 오버레이: 펼쳤을 때 전체 너비 드롭다운 ── */
   #interval-overlay:not(.tz-collapsed) {
     left: 0;
     right: 0;
@@ -783,12 +1061,12 @@ body.lang-ko .lang-tab[data-lang="ko"] {
     max-height: 42vh;
   }
 
-  /* ── Interval overlay: compact tab when collapsed ── */
+  /* ── 인터벌 오버레이: 접혔을 때 컴팩트 탭 ── */
   #interval-overlay.tz-collapsed {
     width: 110px;
   }
 
-  /* Larger touch targets for all overlay buttons */
+  /* 오버레이 버튼 터치 타깃 확대 */
   .tx-btn {
     min-height: 36px;
     min-width: 34px;
@@ -806,7 +1084,7 @@ body.lang-ko .lang-tab[data-lang="ko"] {
     padding: 10px 14px 9px;
   }
 
-  /* Wrap axis buttons in 2 rows comfortably */
+  /* 축 버튼 2행 배치 */
   #txAxisRow {
     gap: 4px;
   }

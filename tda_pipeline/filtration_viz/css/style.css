@@ -1,25 +1,37 @@
+/* ── 디자인 토큰 — 다크 포레스트("밤의 숲") 팔레트 (기본값) ── */
 :root {
-  --bg: #0e0f13;
-  --panel: #15171d;
-  --border: #262833;
-  --fg: #e8e8ef;
-  --fg-dim: #9aa0ad;
-  --accent: #7ea5ff;
-  --accent-warm: #ffb36b;
-  --cycle-on: rgba(255, 210, 96, 0.75);
-  --edge: rgba(180, 200, 240, 0.85);
-  --triangle: rgba(126, 165, 255, 0.18);
-  --vertex-on: #ffffff;
-  --vertex-off: #39404e;
+  /* 배경 / 패널 — 숲 깊은 어둠 */
+  --bg:              #0e1410;
+  --panel:           #152017;
+  --border:          #33493a;
+  --border-hairline: #24352a;
+  /* 텍스트 */
+  --fg:              #eef5e9;
+  --fg-dim:          #b6c9ad;
+  /* 액센트 — 달빛 그린 / 저녁 햇살 */
+  --accent:          #7ed957;
+  --accent-warm:     #e8c25a;
+  /* 캔버스 내 콘텐츠 색상 — 3D simplex 발광 (건드리지 않음) */
+  --cycle-on:        rgba(255, 210, 96, 0.75);
+  --edge:            rgba(58, 143, 61, 0.80);
+  --triangle:        rgba(58, 143, 61, 0.14);
+  --vertex-on:       #eef5e9;
+  --vertex-off:      #7c937a;
+  /* 캔버스 배경 — 어두운 심층 (3D simplex 콘텐츠가 그림) */
+  --canvas-bg:       #0f1812;
 }
 
 * { box-sizing: border-box; }
 
 html, body {
   margin: 0; padding: 0;
-  background: var(--bg);
+  /* 밤의 숲 그라데이션 배경 — 위쪽 달빛 그린 은은한 빛 */
+  background: radial-gradient(ellipse at 50% 0%, rgba(21,32,23,0.7) 0%, #0b110d 60%),
+              linear-gradient(180deg, #0e1410 0%, #0b110d 100%);
+  background-attachment: fixed;
   color: var(--fg);
-  font-family: 'Fira Sans', 'Noto Sans KR', system-ui, sans-serif;
+  /* 타이포그래피 규칙: Noto Sans KR UI / JetBrains Mono 데이터 */
+  font-family: 'Noto Sans KR', system-ui, sans-serif;
   font-size: 14px;
   line-height: 1.5;
 }
@@ -27,12 +39,15 @@ html, body {
 .hdr {
   padding: 18px 24px 8px;
   border-bottom: 1px solid var(--border);
+  /* nav와 이어지도록 어두운 숲 패널 헤더 */
+  background: rgba(21, 32, 23, 0.97);
 }
 .hdr h1 {
   margin: 0 0 4px;
   font-size: 18px;
   font-weight: 600;
   letter-spacing: -0.01em;
+  color: var(--fg);
 }
 .hdr .sub {
   margin: 0;
@@ -59,6 +74,8 @@ main {
   border-radius: 8px;
   padding: 12px;
   position: relative;
+  /* 밤의 숲 깊이감 그림자 */
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.30);
 }
 
 #canvas {
@@ -66,15 +83,18 @@ main {
   width: 100%;
   height: auto;
   max-height: 75vh;
-  background: #0a0b10;
+  /* 캔버스 배경: 들판 연두 */
+  background: var(--canvas-bg);
   border-radius: 6px;
+  border: 1px solid var(--border-hairline);
 }
 
+/* legend: 다크 포레스트 반투명 패널 */
 .legend {
   position: absolute;
   right: 16px;
   top: 16px;
-  background: rgba(15, 16, 22, 0.85);
+  background: rgba(21, 32, 23, 0.92);
   border: 1px solid var(--border);
   border-radius: 6px;
   padding: 8px 10px;
@@ -83,6 +103,7 @@ main {
   font-size: 12px;
   min-width: 140px;
   pointer-events: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
 }
 .legend .title {
   font-weight: 600;
@@ -98,13 +119,15 @@ main {
   transition: opacity 0.12s;
 }
 .legend .row.on { opacity: 1; }
+/* legend swatch: 다크 포레스트 테두리 */
 .legend .sw {
   display: inline-block;
   width: 12px; height: 12px;
   border-radius: 3px;
-  border: 1px solid rgba(255,255,255,0.15);
+  border: 1px solid rgba(255, 255, 255, 0.15);
 }
 
+/* controls: 다크 포레스트 패널 */
 .controls {
   background: var(--panel);
   border: 1px solid var(--border);
@@ -114,6 +137,7 @@ main {
   flex-direction: column;
   gap: 14px;
   grid-column: 1 / -1;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
 }
 .controls .row {
   display: flex;
@@ -129,6 +153,7 @@ main {
 }
 .controls output {
   color: var(--fg);
+  font-family: 'JetBrains Mono', monospace;
   font-variant-numeric: tabular-nums;
   min-width: 40px;
 }
@@ -141,16 +166,21 @@ main {
   font-size: 12px;
 }
 
+/* button: 다크 포레스트 비활성 */
 button {
-  background: #1f232d;
+  background: rgba(126, 217, 87, 0.08);
   color: var(--fg);
   border: 1px solid var(--border);
   padding: 6px 14px;
   border-radius: 5px;
   cursor: pointer;
   font: inherit;
+  transition: background 0.15s, border-color 0.15s;
 }
-button:hover:not([disabled]) { background: #2a2f3c; border-color: var(--accent); }
+button:hover:not([disabled]) {
+  background: rgba(126, 217, 87, 0.20);
+  border-color: var(--accent);
+}
 button[disabled] { opacity: 0.4; cursor: not-allowed; }
 
 input[type="range"] {
@@ -161,9 +191,27 @@ input[type="range"] {
 }
 input[type="checkbox"] { accent-color: var(--accent); }
 
+/* select 드롭다운 — 다크 포레스트 */
+select {
+  background: rgba(21, 32, 23, 0.90);
+  color: var(--fg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 3px 8px;
+  font: inherit;
+  font-size: 13px;
+}
+select:focus {
+  outline: none;
+  border-color: var(--accent);
+  /* 달빛 그린 포커스 링 */
+  box-shadow: 0 0 0 2px rgba(126, 217, 87, 0.18);
+}
+
 .meta {
   font-size: 12px;
   color: var(--fg-dim);
+  font-family: 'JetBrains Mono', monospace;
   font-variant-numeric: tabular-nums;
   gap: 18px;
 }

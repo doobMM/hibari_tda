@@ -8,7 +8,7 @@ $(function(){
   $(triadLabels).hide();
 
   storage.init();
-  colorscheme.init('tonnetz-dark');   /* dark canvas as default */
+  colorscheme.init('greenonblack');   /* 괴물(2023) 그린 — 어둠 속 새싹 빛 (기본) */
   audio.init();
   tonnetz.init();
   midi.init();
