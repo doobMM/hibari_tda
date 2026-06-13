@@ -1,0 +1,27 @@
+{
+  "version": "2.0",
+  "song": "solari",
+  "generated_at": "2026-06-13T11:47:17.940711",
+  "optimal_config": {
+    "metric": "voice_leading",
+    "alpha": 0.5,
+    "search_type": "timeflow",
+    "lag_mode": "lag_1",
+    "max_lag": 1,
+    "min_onset_gap": 0,
+    "threshold": 0.35,
+    "description": "solari 최적: voice_leading 거리 (chromatic 12 PC, 선율적 진행)"
+  },
+  "shape": {
+    "T": 224,
+    "K": 25
+  },
+  "files": [
+    "overlap_matrix_reference.json",
+    "overlap_matrix_continuous.json",
+    "notes_metadata.json",
+    "cycles_metadata.json",
+    "original_solari.mid"
+  ],
+  "notes": "solari 최적 설정: voice_leading 거리 + Transformer 모델. N=34 notes (tie 정규화), K=25 cycles, T=224 time steps. Algo2 모델: transformer_solari.onnx (public/models/)."
+}
