@@ -1,6 +1,24 @@
 # hibari-TDA
 
-사카모토 류이치의 **hibari** (out of noise, 2009)를 **Topological Data Analysis (Persistent Homology)** 로 분석하여, 원곡과 위상수학적으로 유사한 구조를 가진 음악을 생성하는 연구 파이프라인.
+사카모토 류이치의 **hibari** (out of noise, 2009 · 영화 *괴물* 2023 OST)를 **Topological Data Analysis (Persistent Homology)** 로 분석하여, 원곡과 위상수학적으로 유사한 구조를 가진 음악을 생성하는 연구 파이프라인.
+
+---
+
+## 🌱 라이브 인터랙티브 데모
+
+**설치 없이 브라우저에서** 방법론을 체험하고 직접 음악을 생성할 수 있습니다 (전 과정 client-side, ONNX 신경망 추론 포함).
+
+> **▶ [https://doobmm.github.io/hibari_tda/](https://doobmm.github.io/hibari_tda/)** ← 처음이라면 **Guided Tour** 부터
+
+| | |
+|---|---|
+| **Guided Tour** | 음 → Tonnetz 거리 → $H_1$ cycle 발견 → 중첩행렬 → 생성까지 방법론을 6단계로 시각화 (비전공자 진입점) |
+| **OM 대시보드** | 중첩행렬을 직접 그려 30초 음악 즉석 생성·재생·MIDI 저장. Algorithm 1(샘플링) · 2(신경망) 모두 브라우저 내 실행. **라이브 모드** = 그리면 음악이 따라옴 |
+| **구조 탐험 (VAE)** | hibari 구조를 학습한 VAE 잠재공간을 슬라이더로 보간 — "hibari다움" 연속 조절 |
+| **곡 전환** | 핵심 발견 *"곡의 성격이 최적 도구를 결정한다"* (hibari: DFT·FC / solari: voice leading·**Transformer**) 를 토글로 대조 |
+| **Tonnetz · Filtration** | 생성 시퀀스를 Tonnetz 격자·filtration 진행 위에서 재생 |
+
+모바일(320/375/768) 반응형. 데스크톱·폰 모두 지원.
 
 ---
 
