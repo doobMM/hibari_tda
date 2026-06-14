@@ -58,7 +58,7 @@
 |---|---|---|---|---|
 | hibari | 7 (diatonic) | DFT | FC | 스펙트럼 구조 포착, entropy 0.974 |
 | solari | 12 (chromatic) | voice_leading | Transformer | 선율적 진행 |
-| aqua | 12 (chromatic) | Tonnetz | (미실행) | Tonnetz +26.3% |
+| aqua | 12 (chromatic) | Tonnetz | Transformer | Tonnetz +26.3%. 대시보드 곡전환 구현 (T=539·K=82·N=51, 2026-06-14) |
 | Bach Fugue | 12 (chromatic) | Tonnetz | — | 대위법인데 Tonnetz 최적 (-54.8%) |
 | Ravel Pavane | 12 (N=49) | frequency | FC | 풍부한 분포 → 빈도 가중 유리 |
 
