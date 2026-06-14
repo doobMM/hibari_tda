@@ -1800,9 +1800,40 @@
     return jsDivergence(normalizeDist(p), normalizeDist(q));
   }
 
+  // 협화도 — 각 시점 동시발음의 협화 interval class {0,3,4,5} 비율.
+  // 실험(experiments/run_aesthetic_rerank.py)에서 calibration 유효 확인된 유일한 미적 성분.
+  // (성부진행·도약은 hibari 2성부 음역분리를 페널티해 무효 → 표시하지 않음)
+  function consonanceScore(notes) {
+    const CONSONANT = new Set([0, 3, 4, 5]);
+    const timeToPitches = new Map();
+    for (const n of notes) {
+      const s = n[0] | 0, p = n[1] | 0, e = n[2] | 0;
+      for (let t = s; t < e; t++) {
+        if (!timeToPitches.has(t)) timeToPitches.set(t, []);
+        timeToPitches.get(t).push(p);
+      }
+    }
+    let ratioSum = 0, chordCount = 0;
+    for (const pitches of timeToPitches.values()) {
+      if (pitches.length < 2) continue;
+      let total = 0, cons = 0;
+      for (let i = 0; i < pitches.length; i++) {
+        for (let j = i + 1; j < pitches.length; j++) {
+          let ic = Math.abs(pitches[i] - pitches[j]) % 12;
+          ic = Math.min(ic, 12 - ic);
+          total++;
+          if (CONSONANT.has(ic)) cons++;
+        }
+      }
+      if (total > 0) { ratioSum += cons / total; chordCount++; }
+    }
+    return chordCount > 0 ? ratioSum / chordCount : 1;
+  }
+
   function updateQualityMap(res, seg, info) {
     const S = computeStructureScore(seg);
     const F = computeFreshnessScore(res.notes);
+    const Cons = consonanceScore(res.notes);
     qualityState.points.push({
       S, F,
       algo: info.algo,
@@ -1816,7 +1847,7 @@
     const meta = $('qualityMapMeta');
     if (meta) {
       meta.textContent =
-        `구조 보존 ${(S * 100).toFixed(0)}% · 신선함 JS=${F.toFixed(3)} · ${info.algoLabel} seed ${info.seed}`;
+        `구조 보존 ${(S * 100).toFixed(0)}% · 신선함 JS=${F.toFixed(3)} · 협화도 ${(Cons * 100).toFixed(0)}% · ${info.algoLabel} seed ${info.seed}`;
     }
     renderQualityMap();
   }
