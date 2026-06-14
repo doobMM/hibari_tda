@@ -1,0 +1,27 @@
+{
+  "version": "2.0",
+  "song": "aqua",
+  "generated_at": "2026-06-14T09:51:39.301448",
+  "optimal_config": {
+    "metric": "tonnetz",
+    "alpha": 0.5,
+    "search_type": "timeflow",
+    "lag_mode": "lag_1",
+    "max_lag": 1,
+    "min_onset_gap": 0,
+    "threshold": 0.35,
+    "description": "aqua 최적: tonnetz 거리 (chromatic 12 PC, 선율적 진행)"
+  },
+  "shape": {
+    "T": 539,
+    "K": 82
+  },
+  "files": [
+    "overlap_matrix_reference.json",
+    "overlap_matrix_continuous.json",
+    "notes_metadata.json",
+    "cycles_metadata.json",
+    "original_aqua.mid"
+  ],
+  "notes": "aqua 최적 설정: tonnetz 거리 + Transformer 모델. N=51 notes (tie 정규화), K=82 cycles, T=539 time steps. Algo2 모델: transformer_aqua.onnx (public/models/)."
+}

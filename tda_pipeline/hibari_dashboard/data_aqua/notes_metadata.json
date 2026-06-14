@@ -1,0 +1,416 @@
+{
+  "num_notes": 51,
+  "total_count_per_module": 657,
+  "num_modules_reference": 65,
+  "labels": [
+    {
+      "label": 1,
+      "label_idx": 0,
+      "pitch": 32,
+      "dur": 1,
+      "count": 1,
+      "pc": 8
+    },
+    {
+      "label": 2,
+      "label_idx": 1,
+      "pitch": 33,
+      "dur": 1,
+      "count": 2,
+      "pc": 9
+    },
+    {
+      "label": 3,
+      "label_idx": 2,
+      "pitch": 34,
+      "dur": 1,
+      "count": 1,
+      "pc": 10
+    },
+    {
+      "label": 4,
+      "label_idx": 3,
+      "pitch": 35,
+      "dur": 1,
+      "count": 4,
+      "pc": 11
+    },
+    {
+      "label": 5,
+      "label_idx": 4,
+      "pitch": 36,
+      "dur": 1,
+      "count": 9,
+      "pc": 0
+    },
+    {
+      "label": 6,
+      "label_idx": 5,
+      "pitch": 37,
+      "dur": 1,
+      "count": 5,
+      "pc": 1
+    },
+    {
+      "label": 7,
+      "label_idx": 6,
+      "pitch": 38,
+      "dur": 1,
+      "count": 8,
+      "pc": 2
+    },
+    {
+      "label": 8,
+      "label_idx": 7,
+      "pitch": 39,
+      "dur": 1,
+      "count": 4,
+      "pc": 3
+    },
+    {
+      "label": 9,
+      "label_idx": 8,
+      "pitch": 40,
+      "dur": 1,
+      "count": 6,
+      "pc": 4
+    },
+    {
+      "label": 10,
+      "label_idx": 9,
+      "pitch": 41,
+      "dur": 1,
+      "count": 6,
+      "pc": 5
+    },
+    {
+      "label": 11,
+      "label_idx": 10,
+      "pitch": 42,
+      "dur": 1,
+      "count": 3,
+      "pc": 6
+    },
+    {
+      "label": 12,
+      "label_idx": 11,
+      "pitch": 43,
+      "dur": 1,
+      "count": 14,
+      "pc": 7
+    },
+    {
+      "label": 13,
+      "label_idx": 12,
+      "pitch": 44,
+      "dur": 1,
+      "count": 10,
+      "pc": 8
+    },
+    {
+      "label": 14,
+      "label_idx": 13,
+      "pitch": 45,
+      "dur": 1,
+      "count": 2,
+      "pc": 9
+    },
+    {
+      "label": 15,
+      "label_idx": 14,
+      "pitch": 46,
+      "dur": 1,
+      "count": 3,
+      "pc": 10
+    },
+    {
+      "label": 16,
+      "label_idx": 15,
+      "pitch": 47,
+      "dur": 1,
+      "count": 4,
+      "pc": 11
+    },
+    {
+      "label": 17,
+      "label_idx": 16,
+      "pitch": 48,
+      "dur": 1,
+      "count": 34,
+      "pc": 0
+    },
+    {
+      "label": 18,
+      "label_idx": 17,
+      "pitch": 49,
+      "dur": 1,
+      "count": 3,
+      "pc": 1
+    },
+    {
+      "label": 19,
+      "label_idx": 18,
+      "pitch": 50,
+      "dur": 1,
+      "count": 26,
+      "pc": 2
+    },
+    {
+      "label": 20,
+      "label_idx": 19,
+      "pitch": 51,
+      "dur": 1,
+      "count": 10,
+      "pc": 3
+    },
+    {
+      "label": 21,
+      "label_idx": 20,
+      "pitch": 52,
+      "dur": 1,
+      "count": 20,
+      "pc": 4
+    },
+    {
+      "label": 22,
+      "label_idx": 21,
+      "pitch": 53,
+      "dur": 1,
+      "count": 2,
+      "pc": 5
+    },
+    {
+      "label": 23,
+      "label_idx": 22,
+      "pitch": 54,
+      "dur": 1,
+      "count": 11,
+      "pc": 6
+    },
+    {
+      "label": 24,
+      "label_idx": 23,
+      "pitch": 55,
+      "dur": 1,
+      "count": 58,
+      "pc": 7
+    },
+    {
+      "label": 25,
+      "label_idx": 24,
+      "pitch": 56,
+      "dur": 1,
+      "count": 8,
+      "pc": 8
+    },
+    {
+      "label": 26,
+      "label_idx": 25,
+      "pitch": 57,
+      "dur": 1,
+      "count": 14,
+      "pc": 9
+    },
+    {
+      "label": 27,
+      "label_idx": 26,
+      "pitch": 59,
+      "dur": 1,
+      "count": 54,
+      "pc": 11
+    },
+    {
+      "label": 28,
+      "label_idx": 27,
+      "pitch": 60,
+      "dur": 1,
+      "count": 21,
+      "pc": 0
+    },
+    {
+      "label": 29,
+      "label_idx": 28,
+      "pitch": 61,
+      "dur": 1,
+      "count": 3,
+      "pc": 1
+    },
+    {
+      "label": 30,
+      "label_idx": 29,
+      "pitch": 62,
+      "dur": 1,
+      "count": 57,
+      "pc": 2
+    },
+    {
+      "label": 31,
+      "label_idx": 30,
+      "pitch": 63,
+      "dur": 1,
+      "count": 3,
+      "pc": 3
+    },
+    {
+      "label": 32,
+      "label_idx": 31,
+      "pitch": 64,
+      "dur": 1,
+      "count": 21,
+      "pc": 4
+    },
+    {
+      "label": 33,
+      "label_idx": 32,
+      "pitch": 66,
+      "dur": 1,
+      "count": 9,
+      "pc": 6
+    },
+    {
+      "label": 34,
+      "label_idx": 33,
+      "pitch": 67,
+      "dur": 1,
+      "count": 34,
+      "pc": 7
+    },
+    {
+      "label": 35,
+      "label_idx": 34,
+      "pitch": 68,
+      "dur": 1,
+      "count": 4,
+      "pc": 8
+    },
+    {
+      "label": 36,
+      "label_idx": 35,
+      "pitch": 69,
+      "dur": 1,
+      "count": 12,
+      "pc": 9
+    },
+    {
+      "label": 37,
+      "label_idx": 36,
+      "pitch": 71,
+      "dur": 1,
+      "count": 15,
+      "pc": 11
+    },
+    {
+      "label": 38,
+      "label_idx": 37,
+      "pitch": 72,
+      "dur": 1,
+      "count": 11,
+      "pc": 0
+    },
+    {
+      "label": 39,
+      "label_idx": 38,
+      "pitch": 73,
+      "dur": 1,
+      "count": 1,
+      "pc": 1
+    },
+    {
+      "label": 40,
+      "label_idx": 39,
+      "pitch": 74,
+      "dur": 1,
+      "count": 24,
+      "pc": 2
+    },
+    {
+      "label": 41,
+      "label_idx": 40,
+      "pitch": 75,
+      "dur": 1,
+      "count": 13,
+      "pc": 3
+    },
+    {
+      "label": 42,
+      "label_idx": 41,
+      "pitch": 76,
+      "dur": 1,
+      "count": 12,
+      "pc": 4
+    },
+    {
+      "label": 43,
+      "label_idx": 42,
+      "pitch": 77,
+      "dur": 1,
+      "count": 6,
+      "pc": 5
+    },
+    {
+      "label": 44,
+      "label_idx": 43,
+      "pitch": 78,
+      "dur": 1,
+      "count": 7,
+      "pc": 6
+    },
+    {
+      "label": 45,
+      "label_idx": 44,
+      "pitch": 79,
+      "dur": 1,
+      "count": 26,
+      "pc": 7
+    },
+    {
+      "label": 46,
+      "label_idx": 45,
+      "pitch": 80,
+      "dur": 1,
+      "count": 15,
+      "pc": 8
+    },
+    {
+      "label": 47,
+      "label_idx": 46,
+      "pitch": 81,
+      "dur": 1,
+      "count": 10,
+      "pc": 9
+    },
+    {
+      "label": 48,
+      "label_idx": 47,
+      "pitch": 82,
+      "dur": 1,
+      "count": 10,
+      "pc": 10
+    },
+    {
+      "label": 49,
+      "label_idx": 48,
+      "pitch": 83,
+      "dur": 1,
+      "count": 9,
+      "pc": 11
+    },
+    {
+      "label": 50,
+      "label_idx": 49,
+      "pitch": 84,
+      "dur": 1,
+      "count": 10,
+      "pc": 0
+    },
+    {
+      "label": 51,
+      "label_idx": 50,
+      "pitch": 85,
+      "dur": 1,
+      "count": 2,
+      "pc": 1
+    }
+  ],
+  "description": "aqua note 메타데이터. 각 note는 (pitch, dur) 튜플 고유. label은 1-indexed. JS 포팅 시 label_idx (0-indexed) 사용 권장. count는 한 모듈 내 빈도."
+}

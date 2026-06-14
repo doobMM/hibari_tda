@@ -1,0 +1,3946 @@
+{
+  "num_cycles": 82,
+  "source": "tonnetz timeflow PH (α=0.5, threshold=0.35)",
+  "cycles": [
+    {
+      "cycle_idx": 0,
+      "vertices_0idx": [
+        0,
+        3,
+        4,
+        5,
+        6,
+        7,
+        9,
+        12,
+        13,
+        14,
+        15,
+        16,
+        18,
+        25,
+        34,
+        35
+      ],
+      "note_labels_1idx": [
+        1,
+        4,
+        5,
+        6,
+        7,
+        8,
+        10,
+        13,
+        14,
+        15,
+        16,
+        17,
+        19,
+        26,
+        35,
+        36
+      ],
+      "note_labels_0idx": [
+        0,
+        3,
+        4,
+        5,
+        6,
+        7,
+        9,
+        12,
+        13,
+        14,
+        15,
+        16,
+        18,
+        25,
+        34,
+        35
+      ],
+      "size": 16,
+      "tau": 0.35,
+      "traversal_0idx": [
+        0,
+        3,
+        4,
+        5,
+        6,
+        7,
+        9,
+        12,
+        13,
+        14,
+        15,
+        16,
+        18,
+        25,
+        34,
+        35
+      ],
+      "traversal_1idx": [
+        1,
+        4,
+        5,
+        6,
+        7,
+        8,
+        10,
+        13,
+        14,
+        15,
+        16,
+        17,
+        19,
+        26,
+        35,
+        36
+      ],
+      "persistence_entries": [],
+      "max_persistence": 0.0
+    },
+    {
+      "cycle_idx": 1,
+      "vertices_0idx": [
+        0,
+        3,
+        7,
+        11,
+        12,
+        15,
+        18,
+        19
+      ],
+      "note_labels_1idx": [
+        1,
+        4,
+        8,
+        12,
+        13,
+        16,
+        19,
+        20
+      ],
+      "note_labels_0idx": [
+        0,
+        3,
+        7,
+        11,
+        12,
+        15,
+        18,
+        19
+      ],
+      "size": 8,
+      "tau": 0.35,
+      "traversal_0idx": [
+        0,
+        3,
+        15,
+        18,
+        11,
+        19,
+        7,
+        12
+      ],
+      "traversal_1idx": [
+        1,
+        4,
+        16,
+        19,
+        12,
+        20,
+        8,
+        13
+      ],
+      "persistence_entries": [],
+      "max_persistence": 0.0
+    },
+    {
+      "cycle_idx": 2,
+      "vertices_0idx": [
+        1,
+        13,
+        20,
+        25,
+        33
+      ],
+      "note_labels_1idx": [
+        2,
+        14,
+        21,
+        26,
+        34
+      ],
+      "note_labels_0idx": [
+        1,
+        13,
+        20,
+        25,
+        33
+      ],
+      "size": 5,
+      "tau": 0.35,
+      "traversal_0idx": [
+        1,
+        33,
+        25,
+        20,
+        13
+      ],
+      "traversal_1idx": [
+        2,
+        34,
+        26,
+        21,
+        14
+      ],
+      "persistence_entries": [],
+      "max_persistence": 0.0
+    },
+    {
+      "cycle_idx": 3,
+      "vertices_0idx": [
+        11,
+        12,
+        16,
+        17,
+        18,
+        19,
+        20,
+        22,
+        24,
+        25,
+        28,
+        32,
+        37,
+        38,
+        39,
+        40,
+        41,
+        43,
+        45,
+        46
+      ],
+      "note_labels_1idx": [
+        12,
+        13,
+        17,
+        18,
+        19,
+        20,
+        21,
+        23,
+        25,
+        26,
+        29,
+        33,
+        38,
+        39,
+        40,
+        41,
+        42,
+        44,
+        46,
+        47
+      ],
+      "note_labels_0idx": [
+        11,
+        12,
+        16,
+        17,
+        18,
+        19,
+        20,
+        22,
+        24,
+        25,
+        28,
+        32,
+        37,
+        38,
+        39,
+        40,
+        41,
+        43,
+        45,
+        46
+      ],
+      "size": 20,
+      "tau": 0.35,
+      "traversal_0idx": [
+        11,
+        16,
+        18,
+        20,
+        25,
+        22,
+        32,
+        43,
+        46,
+        41,
+        39,
+        37,
+        40,
+        45,
+        38,
+        28,
+        17,
+        12,
+        24,
+        19
+      ],
+      "traversal_1idx": [
+        12,
+        17,
+        19,
+        21,
+        26,
+        23,
+        33,
+        44,
+        47,
+        42,
+        40,
+        38,
+        41,
+        46,
+        39,
+        29,
+        18,
+        13,
+        25,
+        20
+      ],
+      "persistence_entries": [],
+      "max_persistence": 0.0
+    },
+    {
+      "cycle_idx": 4,
+      "vertices_0idx": [
+        11,
+        13,
+        15,
+        16,
+        18,
+        20,
+        25,
+        27,
+        35,
+        37,
+        39,
+        41,
+        46
+      ],
+      "note_labels_1idx": [
+        12,
+        14,
+        16,
+        17,
+        19,
+        21,
+        26,
+        28,
+        36,
+        38,
+        40,
+        42,
+        47
+      ],
+      "note_labels_0idx": [
+        11,
+        13,
+        15,
+        16,
+        18,
+        20,
+        25,
+        27,
+        35,
+        37,
+        39,
+        41,
+        46
+      ],
+      "size": 13,
+      "tau": 0.35,
+      "traversal_0idx": [
+        11,
+        16,
+        27,
+        37,
+        39,
+        41,
+        46,
+        35,
+        25,
+        13,
+        20,
+        15,
+        18
+      ],
+      "traversal_1idx": [
+        12,
+        17,
+        28,
+        38,
+        40,
+        42,
+        47,
+        36,
+        26,
+        14,
+        21,
+        16,
+        19
+      ],
+      "persistence_entries": [],
+      "max_persistence": 0.0
+    },
+    {
+      "cycle_idx": 5,
+      "vertices_0idx": [
+        11,
+        15,
+        16,
+        18,
+        20,
+        27,
+        31,
+        37,
+        39,
+        41
+      ],
+      "note_labels_1idx": [
+        12,
+        16,
+        17,
+        19,
+        21,
+        28,
+        32,
+        38,
+        40,
+        42
+      ],
+      "note_labels_0idx": [
+        11,
+        15,
+        16,
+        18,
+        20,
+        27,
+        31,
+        37,
+        39,
+        41
+      ],
+      "size": 10,
+      "tau": 0.35,
+      "traversal_0idx": [
+        11,
+        16,
+        27,
+        37,
+        39,
+        41,
+        31,
+        20,
+        15,
+        18
+      ],
+      "traversal_1idx": [
+        12,
+        17,
+        28,
+        38,
+        40,
+        42,
+        32,
+        21,
+        16,
+        19
+      ],
+      "persistence_entries": [],
+      "max_persistence": 0.0
+    },
+    {
+      "cycle_idx": 6,
+      "vertices_0idx": [
+        11,
+        16,
+        18,
+        23
+      ],
+      "note_labels_1idx": [
+        12,
+        17,
+        19,
+        24
+      ],
+      "note_labels_0idx": [
+        11,
+        16,
+        18,
+        23
+      ],
+      "size": 4,
+      "tau": 0.35,
+      "traversal_0idx": [
+        11,
+        16,
+        23,
+        18
+      ],
+      "traversal_1idx": [
+        12,
+        17,
+        24,
+        19
+      ],
+      "persistence_entries": [],
+      "max_persistence": 0.0
+    },
+    {
+      "cycle_idx": 7,
+      "vertices_0idx": [
+        11,
+        16,
+        18,
+        27,
+        32
+      ],
+      "note_labels_1idx": [
+        12,
+        17,
+        19,
+        28,
+        33
+      ],
+      "note_labels_0idx": [
+        11,
+        16,
+        18,
+        27,
+        32
+      ],
+      "size": 5,
+      "tau": 0.35,
+      "traversal_0idx": [
+        11,
+        16,
+        27,
+        32,
+        18
+      ],
+      "traversal_1idx": [
+        12,
+        17,
+        28,
+        33,
+        19
+      ],
+      "persistence_entries": [],
+      "max_persistence": 0.0
+    },
+    {
+      "cycle_idx": 8,
+      "vertices_0idx": [
+        11,
+        16,
+        19,
+        23,
+        24,
+        26,
+        27,
+        33,
+        34,
+        37,
+        40,
+        44,
+        45
+      ],
+      "note_labels_1idx": [
+        12,
+        17,
+        20,
+        24,
+        25,
+        27,
+        28,
+        34,
+        35,
+        38,
+        41,
+        45,
+        46
+      ],
+      "note_labels_0idx": [
+        11,
+        16,
+        19,
+        23,
+        24,
+        26,
+        27,
+        33,
+        34,
+        37,
+        40,
+        44,
+        45
+      ],
+      "size": 13,
+      "tau": 0.35,
+      "traversal_0idx": [
+        11,
+        16,
+        27,
+        23,
+        26,
+        33,
+        44,
+        37,
+        40,
+        45,
+        34,
+        24,
+        19
+      ],
+      "traversal_1idx": [
+        12,
+        17,
+        28,
+        24,
+        27,
+        34,
+        45,
+        38,
+        41,
+        46,
+        35,
+        25,
+        20
+      ],
+      "persistence_entries": [],
+      "max_persistence": 0.0
+    },
+    {
+      "cycle_idx": 9,
+      "vertices_0idx": [
+        11,
+        16,
+        19,
+        24,
+        27
+      ],
+      "note_labels_1idx": [
+        12,
+        17,
+        20,
+        25,
+        28
+      ],
+      "note_labels_0idx": [
+        11,
+        16,
+        19,
+        24,
+        27
+      ],
+      "size": 5,
+      "tau": 0.35,
+      "traversal_0idx": [
+        11,
+        16,
+        27,
+        24,
+        19
+      ],
+      "traversal_1idx": [
+        12,
+        17,
+        28,
+        25,
+        20
+      ],
+      "persistence_entries": [],
+      "max_persistence": 0.0
+    },
+    {
+      "cycle_idx": 10,
+      "vertices_0idx": [
+        11,
+        16,
+        19,
+        24,
+        27,
+        30,
+        34,
+        37,
+        40
+      ],
+      "note_labels_1idx": [
+        12,
+        17,
+        20,
+        25,
+        28,
+        31,
+        35,
+        38,
+        41
+      ],
+      "note_labels_0idx": [
+        11,
+        16,
+        19,
+        24,
+        27,
+        30,
+        34,
+        37,
+        40
+      ],
+      "size": 9,
+      "tau": 0.35,
+      "traversal_0idx": [
+        11,
+        16,
+        27,
+        37,
+        40,
+        34,
+        24,
+        30,
+        19
+      ],
+      "traversal_1idx": [
+        12,
+        17,
+        28,
+        38,
+        41,
+        35,
+        25,
+        31,
+        20
+      ],
+      "persistence_entries": [],
+      "max_persistence": 0.0
+    },
+    {
+      "cycle_idx": 11,
+      "vertices_0idx": [
+        11,
+        16,
+        19,
+        27,
+        30,
+        37,
+        40,
+        47,
+        49
+      ],
+      "note_labels_1idx": [
+        12,
+        17,
+        20,
+        28,
+        31,
+        38,
+        41,
+        48,
+        50
+      ],
+      "note_labels_0idx": [
+        11,
+        16,
+        19,
+        27,
+        30,
+        37,
+        40,
+        47,
+        49
+      ],
+      "size": 9,
+      "tau": 0.35,
+      "traversal_0idx": [
+        11,
+        16,
+        27,
+        37,
+        49,
+        47,
+        40,
+        30,
+        19
+      ],
+      "traversal_1idx": [
+        12,
+        17,
+        28,
+        38,
+        50,
+        48,
+        41,
+        31,
+        20
+      ],
+      "persistence_entries": [],
+      "max_persistence": 0.0
+    },
+    {
+      "cycle_idx": 12,
+      "vertices_0idx": [
+        11,
+        18,
+        23,
+        29,
+        31,
+        33,
+        35
+      ],
+      "note_labels_1idx": [
+        12,
+        19,
+        24,
+        30,
+        32,
+        34,
+        36
+      ],
+      "note_labels_0idx": [
+        11,
+        18,
+        23,
+        29,
+        31,
+        33,
+        35
+      ],
+      "size": 7,
+      "tau": 0.35,
+      "traversal_0idx": [
+        11,
+        33,
+        31,
+        35,
+        29,
+        18,
+        23
+      ],
+      "traversal_1idx": [
+        12,
+        34,
+        32,
+        36,
+        30,
+        19,
+        24
+      ],
+      "persistence_entries": [],
+      "max_persistence": 0.0
+    },
+    {
+      "cycle_idx": 13,
+      "vertices_0idx": [
+        11,
+        18,
+        23,
+        33,
+        39,
+        44
+      ],
+      "note_labels_1idx": [
+        12,
+        19,
+        24,
+        34,
+        40,
+        45
+      ],
+      "note_labels_0idx": [
+        11,
+        18,
+        23,
+        33,
+        39,
+        44
+      ],
+      "size": 6,
+      "tau": 0.35,
+      "traversal_0idx": [
+        11,
+        33,
+        44,
+        39,
+        18,
+        23
+      ],
+      "traversal_1idx": [
+        12,
+        34,
+        45,
+        40,
+        19,
+        24
+      ],
+      "persistence_entries": [],
+      "max_persistence": 0.0
+    },
+    {
+      "cycle_idx": 14,
+      "vertices_0idx": [
+        11,
+        18,
+        29,
+        31,
+        33,
+        35
+      ],
+      "note_labels_1idx": [
+        12,
+        19,
+        30,
+        32,
+        34,
+        36
+      ],
+      "note_labels_0idx": [
+        11,
+        18,
+        29,
+        31,
+        33,
+        35
+      ],
+      "size": 6,
+      "tau": 0.35,
+      "traversal_0idx": [
+        11,
+        33,
+        31,
+        35,
+        29,
+        18
+      ],
+      "traversal_1idx": [
+        12,
+        34,
+        32,
+        36,
+        30,
+        19
+      ],
+      "persistence_entries": [],
+      "max_persistence": 0.0
+    },
+    {
+      "cycle_idx": 15,
+      "vertices_0idx": [
+        12,
+        17,
+        28,
+        38,
+        50
+      ],
+      "note_labels_1idx": [
+        13,
+        18,
+        29,
+        39,
+        51
+      ],
+      "note_labels_0idx": [
+        12,
+        17,
+        28,
+        38,
+        50
+      ],
+      "size": 5,
+      "tau": 0.35,
+      "traversal_0idx": [
+        12,
+        17,
+        28,
+        38,
+        50
+      ],
+      "traversal_1idx": [
+        13,
+        18,
+        29,
+        39,
+        51
+      ],
+      "persistence_entries": [],
+      "max_persistence": 0.0
+    },
+    {
+      "cycle_idx": 16,
+      "vertices_0idx": [
+        13,
+        20,
+        31,
+        35
+      ],
+      "note_labels_1idx": [
+        14,
+        21,
+        32,
+        36
+      ],
+      "note_labels_0idx": [
+        13,
+        20,
+        31,
+        35
+      ],
+      "size": 4,
+      "tau": 0.35,
+      "traversal_0idx": [
+        13,
+        35,
+        31,
+        20
+      ],
+      "traversal_1idx": [
+        14,
+        36,
+        32,
+        21
+      ],
+      "persistence_entries": [],
+      "max_persistence": 0.0
+    },
+    {
+      "cycle_idx": 17,
+      "vertices_0idx": [
+        15,
+        18,
+        20,
+        29,
+        34,
+        45
+      ],
+      "note_labels_1idx": [
+        16,
+        19,
+        21,
+        30,
+        35,
+        46
+      ],
+      "note_labels_0idx": [
+        15,
+        18,
+        20,
+        29,
+        34,
+        45
+      ],
+      "size": 6,
+      "tau": 0.35,
+      "traversal_0idx": [
+        15,
+        18,
+        29,
+        34,
+        45,
+        20
+      ],
+      "traversal_1idx": [
+        16,
+        19,
+        30,
+        35,
+        46,
+        21
+      ],
+      "persistence_entries": [],
+      "max_persistence": 0.0
+    },
+    {
+      "cycle_idx": 18,
+      "vertices_0idx": [
+        15,
+        18,
+        26,
+        48
+      ],
+      "note_labels_1idx": [
+        16,
+        19,
+        27,
+        49
+      ],
+      "note_labels_0idx": [
+        15,
+        18,
+        26,
+        48
+      ],
+      "size": 4,
+      "tau": 0.35,
+      "traversal_0idx": [
+        15,
+        48,
+        26,
+        18
+      ],
+      "traversal_1idx": [
+        16,
+        49,
+        27,
+        19
+      ],
+      "persistence_entries": [],
+      "max_persistence": 0.0
+    },
+    {
+      "cycle_idx": 19,
+      "vertices_0idx": [
+        16,
+        18,
+        27,
+        32
+      ],
+      "note_labels_1idx": [
+        17,
+        19,
+        28,
+        33
+      ],
+      "note_labels_0idx": [
+        16,
+        18,
+        27,
+        32
+      ],
+      "size": 4,
+      "tau": 0.35,
+      "traversal_0idx": [
+        16,
+        18,
+        32,
+        27
+      ],
+      "traversal_1idx": [
+        17,
+        19,
+        33,
+        28
+      ],
+      "persistence_entries": [],
+      "max_persistence": 0.0
+    },
+    {
+      "cycle_idx": 20,
+      "vertices_0idx": [
+        16,
+        23,
+        24,
+        27,
+        37,
+        40,
+        45
+      ],
+      "note_labels_1idx": [
+        17,
+        24,
+        25,
+        28,
+        38,
+        41,
+        46
+      ],
+      "note_labels_0idx": [
+        16,
+        23,
+        24,
+        27,
+        37,
+        40,
+        45
+      ],
+      "size": 7,
+      "tau": 0.35,
+      "traversal_0idx": [
+        16,
+        37,
+        40,
+        45,
+        24,
+        27,
+        23
+      ],
+      "traversal_1idx": [
+        17,
+        38,
+        41,
+        46,
+        25,
+        28,
+        24
+      ],
+      "persistence_entries": [],
+      "max_persistence": 0.0
+    },
+    {
+      "cycle_idx": 21,
+      "vertices_0idx": [
+        16,
+        23,
+        37,
+        40,
+        44,
+        47
+      ],
+      "note_labels_1idx": [
+        17,
+        24,
+        38,
+        41,
+        45,
+        48
+      ],
+      "note_labels_0idx": [
+        16,
+        23,
+        37,
+        40,
+        44,
+        47
+      ],
+      "size": 6,
+      "tau": 0.35,
+      "traversal_0idx": [
+        16,
+        37,
+        40,
+        47,
+        44,
+        23
+      ],
+      "traversal_1idx": [
+        17,
+        38,
+        41,
+        48,
+        45,
+        24
+      ],
+      "persistence_entries": [],
+      "max_persistence": 0.0
+    },
+    {
+      "cycle_idx": 22,
+      "vertices_0idx": [
+        16,
+        23,
+        37,
+        44
+      ],
+      "note_labels_1idx": [
+        17,
+        24,
+        38,
+        45
+      ],
+      "note_labels_0idx": [
+        16,
+        23,
+        37,
+        44
+      ],
+      "size": 4,
+      "tau": 0.35,
+      "traversal_0idx": [
+        16,
+        37,
+        44,
+        23
+      ],
+      "traversal_1idx": [
+        17,
+        38,
+        45,
+        24
+      ],
+      "persistence_entries": [],
+      "max_persistence": 0.0
+    },
+    {
+      "cycle_idx": 23,
+      "vertices_0idx": [
+        16,
+        24,
+        27,
+        45
+      ],
+      "note_labels_1idx": [
+        17,
+        25,
+        28,
+        46
+      ],
+      "note_labels_0idx": [
+        16,
+        24,
+        27,
+        45
+      ],
+      "size": 4,
+      "tau": 0.35,
+      "traversal_0idx": [
+        16,
+        24,
+        45,
+        27
+      ],
+      "traversal_1idx": [
+        17,
+        25,
+        46,
+        28
+      ],
+      "persistence_entries": [],
+      "max_persistence": 0.0
+    },
+    {
+      "cycle_idx": 24,
+      "vertices_0idx": [
+        16,
+        24,
+        31,
+        45
+      ],
+      "note_labels_1idx": [
+        17,
+        25,
+        32,
+        46
+      ],
+      "note_labels_0idx": [
+        16,
+        24,
+        31,
+        45
+      ],
+      "size": 4,
+      "tau": 0.35,
+      "traversal_0idx": [
+        16,
+        24,
+        45,
+        31
+      ],
+      "traversal_1idx": [
+        17,
+        25,
+        46,
+        32
+      ],
+      "persistence_entries": [],
+      "max_persistence": 0.0
+    },
+    {
+      "cycle_idx": 25,
+      "vertices_0idx": [
+        16,
+        24,
+        37,
+        40,
+        45
+      ],
+      "note_labels_1idx": [
+        17,
+        25,
+        38,
+        41,
+        46
+      ],
+      "note_labels_0idx": [
+        16,
+        24,
+        37,
+        40,
+        45
+      ],
+      "size": 5,
+      "tau": 0.35,
+      "traversal_0idx": [
+        16,
+        24,
+        45,
+        40,
+        37
+      ],
+      "traversal_1idx": [
+        17,
+        25,
+        46,
+        41,
+        38
+      ],
+      "persistence_entries": [],
+      "max_persistence": 0.0
+    },
+    {
+      "cycle_idx": 26,
+      "vertices_0idx": [
+        17,
+        21,
+        24,
+        28
+      ],
+      "note_labels_1idx": [
+        18,
+        22,
+        25,
+        29
+      ],
+      "note_labels_0idx": [
+        17,
+        21,
+        24,
+        28
+      ],
+      "size": 4,
+      "tau": 0.35,
+      "traversal_0idx": [
+        17,
+        24,
+        21,
+        28
+      ],
+      "traversal_1idx": [
+        18,
+        25,
+        22,
+        29
+      ],
+      "persistence_entries": [],
+      "max_persistence": 0.0
+    },
+    {
+      "cycle_idx": 27,
+      "vertices_0idx": [
+        17,
+        28,
+        38,
+        45
+      ],
+      "note_labels_1idx": [
+        18,
+        29,
+        39,
+        46
+      ],
+      "note_labels_0idx": [
+        17,
+        28,
+        38,
+        45
+      ],
+      "size": 4,
+      "tau": 0.35,
+      "traversal_0idx": [
+        17,
+        28,
+        38,
+        45
+      ],
+      "traversal_1idx": [
+        18,
+        29,
+        39,
+        46
+      ],
+      "persistence_entries": [],
+      "max_persistence": 0.0
+    },
+    {
+      "cycle_idx": 28,
+      "vertices_0idx": [
+        17,
+        40,
+        45,
+        47
+      ],
+      "note_labels_1idx": [
+        18,
+        41,
+        46,
+        48
+      ],
+      "note_labels_0idx": [
+        17,
+        40,
+        45,
+        47
+      ],
+      "size": 4,
+      "tau": 0.35,
+      "traversal_0idx": [
+        17,
+        45,
+        40,
+        47
+      ],
+      "traversal_1idx": [
+        18,
+        46,
+        41,
+        48
+      ],
+      "persistence_entries": [],
+      "max_persistence": 0.0
+    },
+    {
+      "cycle_idx": 29,
+      "vertices_0idx": [
+        18,
+        20,
+        23,
+        25
+      ],
+      "note_labels_1idx": [
+        19,
+        21,
+        24,
+        26
+      ],
+      "note_labels_0idx": [
+        18,
+        20,
+        23,
+        25
+      ],
+      "size": 4,
+      "tau": 0.35,
+      "traversal_0idx": [
+        18,
+        25,
+        20,
+        23
+      ],
+      "traversal_1idx": [
+        19,
+        26,
+        21,
+        24
+      ],
+      "persistence_entries": [],
+      "max_persistence": 0.0
+    },
+    {
+      "cycle_idx": 30,
+      "vertices_0idx": [
+        18,
+        20,
+        23,
+        26,
+        41,
+        48
+      ],
+      "note_labels_1idx": [
+        19,
+        21,
+        24,
+        27,
+        42,
+        49
+      ],
+      "note_labels_0idx": [
+        18,
+        20,
+        23,
+        26,
+        41,
+        48
+      ],
+      "size": 6,
+      "tau": 0.35,
+      "traversal_0idx": [
+        18,
+        26,
+        48,
+        41,
+        20,
+        23
+      ],
+      "traversal_1idx": [
+        19,
+        27,
+        49,
+        42,
+        21,
+        24
+      ],
+      "persistence_entries": [],
+      "max_persistence": 0.0
+    },
+    {
+      "cycle_idx": 31,
+      "vertices_0idx": [
+        18,
+        20,
+        29,
+        34,
+        45
+      ],
+      "note_labels_1idx": [
+        19,
+        21,
+        30,
+        35,
+        46
+      ],
+      "note_labels_0idx": [
+        18,
+        20,
+        29,
+        34,
+        45
+      ],
+      "size": 5,
+      "tau": 0.35,
+      "traversal_0idx": [
+        18,
+        20,
+        45,
+        34,
+        29
+      ],
+      "traversal_1idx": [
+        19,
+        21,
+        46,
+        35,
+        30
+      ],
+      "persistence_entries": [],
+      "max_persistence": 0.0
+    },
+    {
+      "cycle_idx": 32,
+      "vertices_0idx": [
+        18,
+        22,
+        25,
+        26
+      ],
+      "note_labels_1idx": [
+        19,
+        23,
+        26,
+        27
+      ],
+      "note_labels_0idx": [
+        18,
+        22,
+        25,
+        26
+      ],
+      "size": 4,
+      "tau": 0.35,
+      "traversal_0idx": [
+        18,
+        25,
+        22,
+        26
+      ],
+      "traversal_1idx": [
+        19,
+        26,
+        23,
+        27
+      ],
+      "persistence_entries": [],
+      "max_persistence": 0.0
+    },
+    {
+      "cycle_idx": 33,
+      "vertices_0idx": [
+        18,
+        22,
+        26,
+        39
+      ],
+      "note_labels_1idx": [
+        19,
+        23,
+        27,
+        40
+      ],
+      "note_labels_0idx": [
+        18,
+        22,
+        26,
+        39
+      ],
+      "size": 4,
+      "tau": 0.35,
+      "traversal_0idx": [
+        18,
+        26,
+        22,
+        39
+      ],
+      "traversal_1idx": [
+        19,
+        27,
+        23,
+        40
+      ],
+      "persistence_entries": [],
+      "max_persistence": 0.0
+    },
+    {
+      "cycle_idx": 34,
+      "vertices_0idx": [
+        18,
+        22,
+        35,
+        46
+      ],
+      "note_labels_1idx": [
+        19,
+        23,
+        36,
+        47
+      ],
+      "note_labels_0idx": [
+        18,
+        22,
+        35,
+        46
+      ],
+      "size": 4,
+      "tau": 0.35,
+      "traversal_0idx": [
+        18,
+        35,
+        22,
+        46
+      ],
+      "traversal_1idx": [
+        19,
+        36,
+        23,
+        47
+      ],
+      "persistence_entries": [],
+      "max_persistence": 0.0
+    },
+    {
+      "cycle_idx": 35,
+      "vertices_0idx": [
+        18,
+        23,
+        27,
+        43,
+        44,
+        46
+      ],
+      "note_labels_1idx": [
+        19,
+        24,
+        28,
+        44,
+        45,
+        47
+      ],
+      "note_labels_0idx": [
+        18,
+        23,
+        27,
+        43,
+        44,
+        46
+      ],
+      "size": 6,
+      "tau": 0.35,
+      "traversal_0idx": [
+        18,
+        43,
+        46,
+        27,
+        44,
+        23
+      ],
+      "traversal_1idx": [
+        19,
+        44,
+        47,
+        28,
+        45,
+        24
+      ],
+      "persistence_entries": [],
+      "max_persistence": 0.0
+    },
+    {
+      "cycle_idx": 36,
+      "vertices_0idx": [
+        18,
+        23,
+        29,
+        31,
+        33,
+        35
+      ],
+      "note_labels_1idx": [
+        19,
+        24,
+        30,
+        32,
+        34,
+        36
+      ],
+      "note_labels_0idx": [
+        18,
+        23,
+        29,
+        31,
+        33,
+        35
+      ],
+      "size": 6,
+      "tau": 0.35,
+      "traversal_0idx": [
+        18,
+        29,
+        35,
+        31,
+        33,
+        23
+      ],
+      "traversal_1idx": [
+        19,
+        30,
+        36,
+        32,
+        34,
+        24
+      ],
+      "persistence_entries": [],
+      "max_persistence": 0.0
+    },
+    {
+      "cycle_idx": 37,
+      "vertices_0idx": [
+        18,
+        23,
+        29,
+        33
+      ],
+      "note_labels_1idx": [
+        19,
+        24,
+        30,
+        34
+      ],
+      "note_labels_0idx": [
+        18,
+        23,
+        29,
+        33
+      ],
+      "size": 4,
+      "tau": 0.35,
+      "traversal_0idx": [
+        18,
+        29,
+        33,
+        23
+      ],
+      "traversal_1idx": [
+        19,
+        30,
+        34,
+        24
+      ],
+      "persistence_entries": [],
+      "max_persistence": 0.0
+    },
+    {
+      "cycle_idx": 38,
+      "vertices_0idx": [
+        18,
+        23,
+        33,
+        39,
+        44
+      ],
+      "note_labels_1idx": [
+        19,
+        24,
+        34,
+        40,
+        45
+      ],
+      "note_labels_0idx": [
+        18,
+        23,
+        33,
+        39,
+        44
+      ],
+      "size": 5,
+      "tau": 0.35,
+      "traversal_0idx": [
+        18,
+        39,
+        44,
+        33,
+        23
+      ],
+      "traversal_1idx": [
+        19,
+        40,
+        45,
+        34,
+        24
+      ],
+      "persistence_entries": [],
+      "max_persistence": 0.0
+    },
+    {
+      "cycle_idx": 39,
+      "vertices_0idx": [
+        20,
+        23,
+        26,
+        31,
+        33
+      ],
+      "note_labels_1idx": [
+        21,
+        24,
+        27,
+        32,
+        34
+      ],
+      "note_labels_0idx": [
+        20,
+        23,
+        26,
+        31,
+        33
+      ],
+      "size": 5,
+      "tau": 0.35,
+      "traversal_0idx": [
+        20,
+        26,
+        23,
+        33,
+        31
+      ],
+      "traversal_1idx": [
+        21,
+        27,
+        24,
+        34,
+        32
+      ],
+      "persistence_entries": [],
+      "max_persistence": 0.0
+    },
+    {
+      "cycle_idx": 40,
+      "vertices_0idx": [
+        20,
+        23,
+        41,
+        44
+      ],
+      "note_labels_1idx": [
+        21,
+        24,
+        42,
+        45
+      ],
+      "note_labels_0idx": [
+        20,
+        23,
+        41,
+        44
+      ],
+      "size": 4,
+      "tau": 0.35,
+      "traversal_0idx": [
+        20,
+        41,
+        44,
+        23
+      ],
+      "traversal_1idx": [
+        21,
+        42,
+        45,
+        24
+      ],
+      "persistence_entries": [],
+      "max_persistence": 0.0
+    },
+    {
+      "cycle_idx": 41,
+      "vertices_0idx": [
+        20,
+        26,
+        31,
+        36
+      ],
+      "note_labels_1idx": [
+        21,
+        27,
+        32,
+        37
+      ],
+      "note_labels_0idx": [
+        20,
+        26,
+        31,
+        36
+      ],
+      "size": 4,
+      "tau": 0.35,
+      "traversal_0idx": [
+        20,
+        26,
+        36,
+        31
+      ],
+      "traversal_1idx": [
+        21,
+        27,
+        37,
+        32
+      ],
+      "persistence_entries": [],
+      "max_persistence": 0.0
+    },
+    {
+      "cycle_idx": 42,
+      "vertices_0idx": [
+        22,
+        29,
+        32,
+        33
+      ],
+      "note_labels_1idx": [
+        23,
+        30,
+        33,
+        34
+      ],
+      "note_labels_0idx": [
+        22,
+        29,
+        32,
+        33
+      ],
+      "size": 4,
+      "tau": 0.35,
+      "traversal_0idx": [
+        22,
+        32,
+        33,
+        29
+      ],
+      "traversal_1idx": [
+        23,
+        33,
+        34,
+        30
+      ],
+      "persistence_entries": [],
+      "max_persistence": 0.0
+    },
+    {
+      "cycle_idx": 43,
+      "vertices_0idx": [
+        23,
+        26,
+        31,
+        33,
+        36
+      ],
+      "note_labels_1idx": [
+        24,
+        27,
+        32,
+        34,
+        37
+      ],
+      "note_labels_0idx": [
+        23,
+        26,
+        31,
+        33,
+        36
+      ],
+      "size": 5,
+      "tau": 0.35,
+      "traversal_0idx": [
+        23,
+        33,
+        31,
+        36,
+        26
+      ],
+      "traversal_1idx": [
+        24,
+        34,
+        32,
+        37,
+        27
+      ],
+      "persistence_entries": [],
+      "max_persistence": 0.0
+    },
+    {
+      "cycle_idx": 44,
+      "vertices_0idx": [
+        23,
+        26,
+        33,
+        36
+      ],
+      "note_labels_1idx": [
+        24,
+        27,
+        34,
+        37
+      ],
+      "note_labels_0idx": [
+        23,
+        26,
+        33,
+        36
+      ],
+      "size": 4,
+      "tau": 0.35,
+      "traversal_0idx": [
+        23,
+        26,
+        33,
+        36
+      ],
+      "traversal_1idx": [
+        24,
+        27,
+        34,
+        37
+      ],
+      "persistence_entries": [],
+      "max_persistence": 0.0
+    },
+    {
+      "cycle_idx": 45,
+      "vertices_0idx": [
+        23,
+        27,
+        29,
+        42,
+        45
+      ],
+      "note_labels_1idx": [
+        24,
+        28,
+        30,
+        43,
+        46
+      ],
+      "note_labels_0idx": [
+        23,
+        27,
+        29,
+        42,
+        45
+      ],
+      "size": 5,
+      "tau": 0.35,
+      "traversal_0idx": [
+        23,
+        27,
+        45,
+        42,
+        29
+      ],
+      "traversal_1idx": [
+        24,
+        28,
+        46,
+        43,
+        30
+      ],
+      "persistence_entries": [],
+      "max_persistence": 0.0
+    },
+    {
+      "cycle_idx": 46,
+      "vertices_0idx": [
+        23,
+        27,
+        31,
+        44,
+        46
+      ],
+      "note_labels_1idx": [
+        24,
+        28,
+        32,
+        45,
+        47
+      ],
+      "note_labels_0idx": [
+        23,
+        27,
+        31,
+        44,
+        46
+      ],
+      "size": 5,
+      "tau": 0.35,
+      "traversal_0idx": [
+        23,
+        44,
+        27,
+        46,
+        31
+      ],
+      "traversal_1idx": [
+        24,
+        45,
+        28,
+        47,
+        32
+      ],
+      "persistence_entries": [],
+      "max_persistence": 0.0
+    },
+    {
+      "cycle_idx": 47,
+      "vertices_0idx": [
+        24,
+        30,
+        34,
+        40
+      ],
+      "note_labels_1idx": [
+        25,
+        31,
+        35,
+        41
+      ],
+      "note_labels_0idx": [
+        24,
+        30,
+        34,
+        40
+      ],
+      "size": 4,
+      "tau": 0.35,
+      "traversal_0idx": [
+        24,
+        34,
+        40,
+        30
+      ],
+      "traversal_1idx": [
+        25,
+        35,
+        41,
+        31
+      ],
+      "persistence_entries": [],
+      "max_persistence": 0.0
+    },
+    {
+      "cycle_idx": 48,
+      "vertices_0idx": [
+        25,
+        26,
+        27,
+        29,
+        31,
+        35
+      ],
+      "note_labels_1idx": [
+        26,
+        27,
+        28,
+        30,
+        32,
+        36
+      ],
+      "note_labels_0idx": [
+        25,
+        26,
+        27,
+        29,
+        31,
+        35
+      ],
+      "size": 6,
+      "tau": 0.35,
+      "traversal_0idx": [
+        25,
+        35,
+        31,
+        26,
+        27,
+        29
+      ],
+      "traversal_1idx": [
+        26,
+        36,
+        32,
+        27,
+        28,
+        30
+      ],
+      "persistence_entries": [],
+      "max_persistence": 0.0
+    },
+    {
+      "cycle_idx": 49,
+      "vertices_0idx": [
+        26,
+        29,
+        31,
+        33
+      ],
+      "note_labels_1idx": [
+        27,
+        30,
+        32,
+        34
+      ],
+      "note_labels_0idx": [
+        26,
+        29,
+        31,
+        33
+      ],
+      "size": 4,
+      "tau": 0.35,
+      "traversal_0idx": [
+        26,
+        29,
+        33,
+        31
+      ],
+      "traversal_1idx": [
+        27,
+        30,
+        34,
+        32
+      ],
+      "persistence_entries": [],
+      "max_persistence": 0.0
+    },
+    {
+      "cycle_idx": 50,
+      "vertices_0idx": [
+        27,
+        41,
+        44,
+        46
+      ],
+      "note_labels_1idx": [
+        28,
+        42,
+        45,
+        47
+      ],
+      "note_labels_0idx": [
+        27,
+        41,
+        44,
+        46
+      ],
+      "size": 4,
+      "tau": 0.35,
+      "traversal_0idx": [
+        27,
+        44,
+        41,
+        46
+      ],
+      "traversal_1idx": [
+        28,
+        45,
+        42,
+        47
+      ],
+      "persistence_entries": [],
+      "max_persistence": 0.0
+    },
+    {
+      "cycle_idx": 51,
+      "vertices_0idx": [
+        3,
+        6,
+        26,
+        32,
+        33
+      ],
+      "note_labels_1idx": [
+        4,
+        7,
+        27,
+        33,
+        34
+      ],
+      "note_labels_0idx": [
+        3,
+        6,
+        26,
+        32,
+        33
+      ],
+      "size": 5,
+      "tau": 0.35,
+      "traversal_0idx": [
+        3,
+        32,
+        6,
+        33,
+        26
+      ],
+      "traversal_1idx": [
+        4,
+        33,
+        7,
+        34,
+        27
+      ],
+      "persistence_entries": [],
+      "max_persistence": 0.0
+    },
+    {
+      "cycle_idx": 52,
+      "vertices_0idx": [
+        36,
+        39,
+        41,
+        48
+      ],
+      "note_labels_1idx": [
+        37,
+        40,
+        42,
+        49
+      ],
+      "note_labels_0idx": [
+        36,
+        39,
+        41,
+        48
+      ],
+      "size": 4,
+      "tau": 0.35,
+      "traversal_0idx": [
+        36,
+        48,
+        41,
+        39
+      ],
+      "traversal_1idx": [
+        37,
+        49,
+        42,
+        40
+      ],
+      "persistence_entries": [],
+      "max_persistence": 0.0
+    },
+    {
+      "cycle_idx": 53,
+      "vertices_0idx": [
+        37,
+        38,
+        39,
+        40,
+        41,
+        43,
+        44,
+        45,
+        46,
+        47,
+        48,
+        49
+      ],
+      "note_labels_1idx": [
+        38,
+        39,
+        40,
+        41,
+        42,
+        44,
+        45,
+        46,
+        47,
+        48,
+        49,
+        50
+      ],
+      "note_labels_0idx": [
+        37,
+        38,
+        39,
+        40,
+        41,
+        43,
+        44,
+        45,
+        46,
+        47,
+        48,
+        49
+      ],
+      "size": 12,
+      "tau": 0.35,
+      "traversal_0idx": [
+        37,
+        38,
+        39,
+        40,
+        41,
+        43,
+        44,
+        45,
+        46,
+        47,
+        48,
+        49
+      ],
+      "traversal_1idx": [
+        38,
+        39,
+        40,
+        41,
+        42,
+        44,
+        45,
+        46,
+        47,
+        48,
+        49,
+        50
+      ],
+      "persistence_entries": [],
+      "max_persistence": 0.0
+    },
+    {
+      "cycle_idx": 54,
+      "vertices_0idx": [
+        37,
+        40,
+        44,
+        47
+      ],
+      "note_labels_1idx": [
+        38,
+        41,
+        45,
+        48
+      ],
+      "note_labels_0idx": [
+        37,
+        40,
+        44,
+        47
+      ],
+      "size": 4,
+      "tau": 0.35,
+      "traversal_0idx": [
+        37,
+        40,
+        47,
+        44
+      ],
+      "traversal_1idx": [
+        38,
+        41,
+        48,
+        45
+      ],
+      "persistence_entries": [],
+      "max_persistence": 0.0
+    },
+    {
+      "cycle_idx": 55,
+      "vertices_0idx": [
+        4,
+        10,
+        18,
+        22,
+        32
+      ],
+      "note_labels_1idx": [
+        5,
+        11,
+        19,
+        23,
+        33
+      ],
+      "note_labels_0idx": [
+        4,
+        10,
+        18,
+        22,
+        32
+      ],
+      "size": 5,
+      "tau": 0.35,
+      "traversal_0idx": [
+        4,
+        32,
+        18,
+        10,
+        22
+      ],
+      "traversal_1idx": [
+        5,
+        33,
+        19,
+        11,
+        23
+      ],
+      "persistence_entries": [],
+      "max_persistence": 0.0
+    },
+    {
+      "cycle_idx": 56,
+      "vertices_0idx": [
+        4,
+        16,
+        23,
+        32
+      ],
+      "note_labels_1idx": [
+        5,
+        17,
+        24,
+        33
+      ],
+      "note_labels_0idx": [
+        4,
+        16,
+        23,
+        32
+      ],
+      "size": 4,
+      "tau": 0.35,
+      "traversal_0idx": [
+        4,
+        32,
+        16,
+        23
+      ],
+      "traversal_1idx": [
+        5,
+        33,
+        17,
+        24
+      ],
+      "persistence_entries": [],
+      "max_persistence": 0.0
+    },
+    {
+      "cycle_idx": 57,
+      "vertices_0idx": [
+        4,
+        22,
+        23,
+        25,
+        26
+      ],
+      "note_labels_1idx": [
+        5,
+        23,
+        24,
+        26,
+        27
+      ],
+      "note_labels_0idx": [
+        4,
+        22,
+        23,
+        25,
+        26
+      ],
+      "size": 5,
+      "tau": 0.35,
+      "traversal_0idx": [
+        4,
+        25,
+        22,
+        26,
+        23
+      ],
+      "traversal_1idx": [
+        5,
+        26,
+        23,
+        27,
+        24
+      ],
+      "persistence_entries": [],
+      "max_persistence": 0.0
+    },
+    {
+      "cycle_idx": 58,
+      "vertices_0idx": [
+        4,
+        9,
+        16,
+        21,
+        27,
+        37,
+        40,
+        42
+      ],
+      "note_labels_1idx": [
+        5,
+        10,
+        17,
+        22,
+        28,
+        38,
+        41,
+        43
+      ],
+      "note_labels_0idx": [
+        4,
+        9,
+        16,
+        21,
+        27,
+        37,
+        40,
+        42
+      ],
+      "size": 8,
+      "tau": 0.35,
+      "traversal_0idx": [
+        4,
+        16,
+        9,
+        21,
+        42,
+        40,
+        37,
+        27
+      ],
+      "traversal_1idx": [
+        5,
+        17,
+        10,
+        22,
+        43,
+        41,
+        38,
+        28
+      ],
+      "persistence_entries": [],
+      "max_persistence": 0.0
+    },
+    {
+      "cycle_idx": 59,
+      "vertices_0idx": [
+        40,
+        42,
+        45,
+        47
+      ],
+      "note_labels_1idx": [
+        41,
+        43,
+        46,
+        48
+      ],
+      "note_labels_0idx": [
+        40,
+        42,
+        45,
+        47
+      ],
+      "size": 4,
+      "tau": 0.35,
+      "traversal_0idx": [
+        40,
+        45,
+        42,
+        47
+      ],
+      "traversal_1idx": [
+        41,
+        46,
+        43,
+        48
+      ],
+      "persistence_entries": [],
+      "max_persistence": 0.0
+    },
+    {
+      "cycle_idx": 60,
+      "vertices_0idx": [
+        5,
+        10,
+        11,
+        12,
+        16,
+        17,
+        18,
+        19,
+        20,
+        22,
+        24,
+        25
+      ],
+      "note_labels_1idx": [
+        6,
+        11,
+        12,
+        13,
+        17,
+        18,
+        19,
+        20,
+        21,
+        23,
+        25,
+        26
+      ],
+      "note_labels_0idx": [
+        5,
+        10,
+        11,
+        12,
+        16,
+        17,
+        18,
+        19,
+        20,
+        22,
+        24,
+        25
+      ],
+      "size": 12,
+      "tau": 0.35,
+      "traversal_0idx": [
+        5,
+        17,
+        12,
+        24,
+        19,
+        11,
+        16,
+        18,
+        20,
+        25,
+        22,
+        10
+      ],
+      "traversal_1idx": [
+        6,
+        18,
+        13,
+        25,
+        20,
+        12,
+        17,
+        19,
+        21,
+        26,
+        23,
+        11
+      ],
+      "persistence_entries": [],
+      "max_persistence": 0.0
+    },
+    {
+      "cycle_idx": 61,
+      "vertices_0idx": [
+        5,
+        12,
+        14,
+        28,
+        38,
+        40,
+        47
+      ],
+      "note_labels_1idx": [
+        6,
+        13,
+        15,
+        29,
+        39,
+        41,
+        48
+      ],
+      "note_labels_0idx": [
+        5,
+        12,
+        14,
+        28,
+        38,
+        40,
+        47
+      ],
+      "size": 7,
+      "tau": 0.35,
+      "traversal_0idx": [
+        5,
+        28,
+        38,
+        40,
+        47,
+        14,
+        12
+      ],
+      "traversal_1idx": [
+        6,
+        29,
+        39,
+        41,
+        48,
+        15,
+        13
+      ],
+      "persistence_entries": [],
+      "max_persistence": 0.0
+    },
+    {
+      "cycle_idx": 62,
+      "vertices_0idx": [
+        5,
+        12,
+        17,
+        24
+      ],
+      "note_labels_1idx": [
+        6,
+        13,
+        18,
+        25
+      ],
+      "note_labels_0idx": [
+        5,
+        12,
+        17,
+        24
+      ],
+      "size": 4,
+      "tau": 0.35,
+      "traversal_0idx": [
+        5,
+        17,
+        24,
+        12
+      ],
+      "traversal_1idx": [
+        6,
+        18,
+        25,
+        13
+      ],
+      "persistence_entries": [],
+      "max_persistence": 0.0
+    },
+    {
+      "cycle_idx": 63,
+      "vertices_0idx": [
+        5,
+        12,
+        17,
+        28,
+        30
+      ],
+      "note_labels_1idx": [
+        6,
+        13,
+        18,
+        29,
+        31
+      ],
+      "note_labels_0idx": [
+        5,
+        12,
+        17,
+        28,
+        30
+      ],
+      "size": 5,
+      "tau": 0.35,
+      "traversal_0idx": [
+        5,
+        17,
+        28,
+        30,
+        12
+      ],
+      "traversal_1idx": [
+        6,
+        18,
+        29,
+        31,
+        13
+      ],
+      "persistence_entries": [],
+      "max_persistence": 0.0
+    },
+    {
+      "cycle_idx": 64,
+      "vertices_0idx": [
+        5,
+        17,
+        24,
+        34,
+        45
+      ],
+      "note_labels_1idx": [
+        6,
+        18,
+        25,
+        35,
+        46
+      ],
+      "note_labels_0idx": [
+        5,
+        17,
+        24,
+        34,
+        45
+      ],
+      "size": 5,
+      "tau": 0.35,
+      "traversal_0idx": [
+        5,
+        17,
+        24,
+        45,
+        34
+      ],
+      "traversal_1idx": [
+        6,
+        18,
+        25,
+        46,
+        35
+      ],
+      "persistence_entries": [],
+      "max_persistence": 0.0
+    },
+    {
+      "cycle_idx": 65,
+      "vertices_0idx": [
+        5,
+        7,
+        11,
+        12,
+        15,
+        17,
+        18,
+        19,
+        20,
+        24,
+        26,
+        27,
+        28,
+        30
+      ],
+      "note_labels_1idx": [
+        6,
+        8,
+        12,
+        13,
+        16,
+        18,
+        19,
+        20,
+        21,
+        25,
+        27,
+        28,
+        29,
+        31
+      ],
+      "note_labels_0idx": [
+        5,
+        7,
+        11,
+        12,
+        15,
+        17,
+        18,
+        19,
+        20,
+        24,
+        26,
+        27,
+        28,
+        30
+      ],
+      "size": 14,
+      "tau": 0.35,
+      "traversal_0idx": [
+        5,
+        17,
+        28,
+        30,
+        24,
+        27,
+        26,
+        20,
+        15,
+        18,
+        11,
+        19,
+        7,
+        12
+      ],
+      "traversal_1idx": [
+        6,
+        18,
+        29,
+        31,
+        25,
+        28,
+        27,
+        21,
+        16,
+        19,
+        12,
+        20,
+        8,
+        13
+      ],
+      "persistence_entries": [],
+      "max_persistence": 0.0
+    },
+    {
+      "cycle_idx": 66,
+      "vertices_0idx": [
+        5,
+        7,
+        11,
+        12,
+        16,
+        17,
+        19,
+        27,
+        28,
+        37,
+        38,
+        40,
+        45
+      ],
+      "note_labels_1idx": [
+        6,
+        8,
+        12,
+        13,
+        17,
+        18,
+        20,
+        28,
+        29,
+        38,
+        39,
+        41,
+        46
+      ],
+      "note_labels_0idx": [
+        5,
+        7,
+        11,
+        12,
+        16,
+        17,
+        19,
+        27,
+        28,
+        37,
+        38,
+        40,
+        45
+      ],
+      "size": 13,
+      "tau": 0.35,
+      "traversal_0idx": [
+        5,
+        17,
+        28,
+        38,
+        45,
+        40,
+        37,
+        27,
+        16,
+        11,
+        19,
+        7,
+        12
+      ],
+      "traversal_1idx": [
+        6,
+        18,
+        29,
+        39,
+        46,
+        41,
+        38,
+        28,
+        17,
+        12,
+        20,
+        8,
+        13
+      ],
+      "persistence_entries": [],
+      "max_persistence": 0.0
+    },
+    {
+      "cycle_idx": 67,
+      "vertices_0idx": [
+        5,
+        7,
+        11,
+        12,
+        16,
+        17,
+        19,
+        27,
+        28,
+        37,
+        38,
+        49,
+        50
+      ],
+      "note_labels_1idx": [
+        6,
+        8,
+        12,
+        13,
+        17,
+        18,
+        20,
+        28,
+        29,
+        38,
+        39,
+        50,
+        51
+      ],
+      "note_labels_0idx": [
+        5,
+        7,
+        11,
+        12,
+        16,
+        17,
+        19,
+        27,
+        28,
+        37,
+        38,
+        49,
+        50
+      ],
+      "size": 13,
+      "tau": 0.35,
+      "traversal_0idx": [
+        5,
+        17,
+        28,
+        38,
+        50,
+        49,
+        37,
+        27,
+        16,
+        11,
+        19,
+        7,
+        12
+      ],
+      "traversal_1idx": [
+        6,
+        18,
+        29,
+        39,
+        51,
+        50,
+        38,
+        28,
+        17,
+        12,
+        20,
+        8,
+        13
+      ],
+      "persistence_entries": [],
+      "max_persistence": 0.0
+    },
+    {
+      "cycle_idx": 68,
+      "vertices_0idx": [
+        5,
+        7,
+        12,
+        17,
+        24,
+        40,
+        45
+      ],
+      "note_labels_1idx": [
+        6,
+        8,
+        13,
+        18,
+        25,
+        41,
+        46
+      ],
+      "note_labels_0idx": [
+        5,
+        7,
+        12,
+        17,
+        24,
+        40,
+        45
+      ],
+      "size": 7,
+      "tau": 0.35,
+      "traversal_0idx": [
+        5,
+        17,
+        24,
+        45,
+        40,
+        7,
+        12
+      ],
+      "traversal_1idx": [
+        6,
+        18,
+        25,
+        46,
+        41,
+        8,
+        13
+      ],
+      "persistence_entries": [],
+      "max_persistence": 0.0
+    },
+    {
+      "cycle_idx": 69,
+      "vertices_0idx": [
+        7,
+        11,
+        12,
+        16,
+        19,
+        23,
+        24,
+        27,
+        40,
+        45
+      ],
+      "note_labels_1idx": [
+        8,
+        12,
+        13,
+        17,
+        20,
+        24,
+        25,
+        28,
+        41,
+        46
+      ],
+      "note_labels_0idx": [
+        7,
+        11,
+        12,
+        16,
+        19,
+        23,
+        24,
+        27,
+        40,
+        45
+      ],
+      "size": 10,
+      "tau": 0.35,
+      "traversal_0idx": [
+        7,
+        11,
+        12,
+        16,
+        19,
+        23,
+        24,
+        27,
+        40,
+        45
+      ],
+      "traversal_1idx": [
+        8,
+        12,
+        13,
+        17,
+        20,
+        24,
+        25,
+        28,
+        41,
+        46
+      ],
+      "persistence_entries": [],
+      "max_persistence": 0.0
+    },
+    {
+      "cycle_idx": 70,
+      "vertices_0idx": [
+        7,
+        11,
+        12,
+        16,
+        19,
+        37,
+        40
+      ],
+      "note_labels_1idx": [
+        8,
+        12,
+        13,
+        17,
+        20,
+        38,
+        41
+      ],
+      "note_labels_0idx": [
+        7,
+        11,
+        12,
+        16,
+        19,
+        37,
+        40
+      ],
+      "size": 7,
+      "tau": 0.35,
+      "traversal_0idx": [
+        7,
+        40,
+        37,
+        16,
+        11,
+        19,
+        12
+      ],
+      "traversal_1idx": [
+        8,
+        41,
+        38,
+        17,
+        12,
+        20,
+        13
+      ],
+      "persistence_entries": [],
+      "max_persistence": 0.0
+    },
+    {
+      "cycle_idx": 71,
+      "vertices_0idx": [
+        7,
+        12,
+        14,
+        19
+      ],
+      "note_labels_1idx": [
+        8,
+        13,
+        15,
+        20
+      ],
+      "note_labels_0idx": [
+        7,
+        12,
+        14,
+        19
+      ],
+      "size": 4,
+      "tau": 0.35,
+      "traversal_0idx": [
+        7,
+        12,
+        19,
+        14
+      ],
+      "traversal_1idx": [
+        8,
+        13,
+        20,
+        15
+      ],
+      "persistence_entries": [],
+      "max_persistence": 0.0
+    },
+    {
+      "cycle_idx": 72,
+      "vertices_0idx": [
+        7,
+        12,
+        19,
+        23,
+        27,
+        40,
+        47,
+        49
+      ],
+      "note_labels_1idx": [
+        8,
+        13,
+        20,
+        24,
+        28,
+        41,
+        48,
+        50
+      ],
+      "note_labels_0idx": [
+        7,
+        12,
+        19,
+        23,
+        27,
+        40,
+        47,
+        49
+      ],
+      "size": 8,
+      "tau": 0.35,
+      "traversal_0idx": [
+        7,
+        40,
+        47,
+        23,
+        27,
+        49,
+        19,
+        12
+      ],
+      "traversal_1idx": [
+        8,
+        41,
+        48,
+        24,
+        28,
+        50,
+        20,
+        13
+      ],
+      "persistence_entries": [],
+      "max_persistence": 0.0
+    },
+    {
+      "cycle_idx": 73,
+      "vertices_0idx": [
+        7,
+        12,
+        19,
+        28,
+        30
+      ],
+      "note_labels_1idx": [
+        8,
+        13,
+        20,
+        29,
+        31
+      ],
+      "note_labels_0idx": [
+        7,
+        12,
+        19,
+        28,
+        30
+      ],
+      "size": 5,
+      "tau": 0.35,
+      "traversal_0idx": [
+        7,
+        12,
+        19,
+        28,
+        30
+      ],
+      "traversal_1idx": [
+        8,
+        13,
+        20,
+        29,
+        31
+      ],
+      "persistence_entries": [],
+      "max_persistence": 0.0
+    },
+    {
+      "cycle_idx": 74,
+      "vertices_0idx": [
+        7,
+        12,
+        24,
+        30
+      ],
+      "note_labels_1idx": [
+        8,
+        13,
+        25,
+        31
+      ],
+      "note_labels_0idx": [
+        7,
+        12,
+        24,
+        30
+      ],
+      "size": 4,
+      "tau": 0.35,
+      "traversal_0idx": [
+        7,
+        12,
+        24,
+        30
+      ],
+      "traversal_1idx": [
+        8,
+        13,
+        25,
+        31
+      ],
+      "persistence_entries": [],
+      "max_persistence": 0.0
+    },
+    {
+      "cycle_idx": 75,
+      "vertices_0idx": [
+        7,
+        12,
+        24,
+        40,
+        45
+      ],
+      "note_labels_1idx": [
+        8,
+        13,
+        25,
+        41,
+        46
+      ],
+      "note_labels_0idx": [
+        7,
+        12,
+        24,
+        40,
+        45
+      ],
+      "size": 5,
+      "tau": 0.35,
+      "traversal_0idx": [
+        7,
+        40,
+        45,
+        24,
+        12
+      ],
+      "traversal_1idx": [
+        8,
+        41,
+        46,
+        25,
+        13
+      ],
+      "persistence_entries": [],
+      "max_persistence": 0.0
+    },
+    {
+      "cycle_idx": 76,
+      "vertices_0idx": [
+        7,
+        16,
+        40,
+        44,
+        45
+      ],
+      "note_labels_1idx": [
+        8,
+        17,
+        41,
+        45,
+        46
+      ],
+      "note_labels_0idx": [
+        7,
+        16,
+        40,
+        44,
+        45
+      ],
+      "size": 5,
+      "tau": 0.35,
+      "traversal_0idx": [
+        7,
+        40,
+        45,
+        16,
+        44
+      ],
+      "traversal_1idx": [
+        8,
+        41,
+        46,
+        17,
+        45
+      ],
+      "persistence_entries": [],
+      "max_persistence": 0.0
+    },
+    {
+      "cycle_idx": 77,
+      "vertices_0idx": [
+        7,
+        40,
+        44,
+        45
+      ],
+      "note_labels_1idx": [
+        8,
+        41,
+        45,
+        46
+      ],
+      "note_labels_0idx": [
+        7,
+        40,
+        44,
+        45
+      ],
+      "size": 4,
+      "tau": 0.35,
+      "traversal_0idx": [
+        7,
+        40,
+        45,
+        44
+      ],
+      "traversal_1idx": [
+        8,
+        41,
+        46,
+        45
+      ],
+      "persistence_entries": [],
+      "max_persistence": 0.0
+    },
+    {
+      "cycle_idx": 78,
+      "vertices_0idx": [
+        7,
+        40,
+        44,
+        47
+      ],
+      "note_labels_1idx": [
+        8,
+        41,
+        45,
+        48
+      ],
+      "note_labels_0idx": [
+        7,
+        40,
+        44,
+        47
+      ],
+      "size": 4,
+      "tau": 0.35,
+      "traversal_0idx": [
+        7,
+        40,
+        47,
+        44
+      ],
+      "traversal_1idx": [
+        8,
+        41,
+        48,
+        45
+      ],
+      "persistence_entries": [],
+      "max_persistence": 0.0
+    },
+    {
+      "cycle_idx": 79,
+      "vertices_0idx": [
+        9,
+        16,
+        18,
+        23,
+        37,
+        49
+      ],
+      "note_labels_1idx": [
+        10,
+        17,
+        19,
+        24,
+        38,
+        50
+      ],
+      "note_labels_0idx": [
+        9,
+        16,
+        18,
+        23,
+        37,
+        49
+      ],
+      "size": 6,
+      "tau": 0.35,
+      "traversal_0idx": [
+        9,
+        49,
+        23,
+        18,
+        16,
+        37
+      ],
+      "traversal_1idx": [
+        10,
+        50,
+        24,
+        19,
+        17,
+        38
+      ],
+      "persistence_entries": [],
+      "max_persistence": 0.0
+    },
+    {
+      "cycle_idx": 80,
+      "vertices_0idx": [
+        9,
+        16,
+        23,
+        27,
+        37,
+        40,
+        42,
+        45
+      ],
+      "note_labels_1idx": [
+        10,
+        17,
+        24,
+        28,
+        38,
+        41,
+        43,
+        46
+      ],
+      "note_labels_0idx": [
+        9,
+        16,
+        23,
+        27,
+        37,
+        40,
+        42,
+        45
+      ],
+      "size": 8,
+      "tau": 0.35,
+      "traversal_0idx": [
+        9,
+        16,
+        23,
+        27,
+        37,
+        40,
+        42,
+        45
+      ],
+      "traversal_1idx": [
+        10,
+        17,
+        24,
+        28,
+        38,
+        41,
+        43,
+        46
+      ],
+      "persistence_entries": [],
+      "max_persistence": 0.0
+    },
+    {
+      "cycle_idx": 81,
+      "vertices_0idx": [
+        9,
+        16,
+        24,
+        42,
+        45
+      ],
+      "note_labels_1idx": [
+        10,
+        17,
+        25,
+        43,
+        46
+      ],
+      "note_labels_0idx": [
+        9,
+        16,
+        24,
+        42,
+        45
+      ],
+      "size": 5,
+      "tau": 0.35,
+      "traversal_0idx": [
+        9,
+        16,
+        24,
+        45,
+        42
+      ],
+      "traversal_1idx": [
+        10,
+        17,
+        25,
+        46,
+        43
+      ],
+      "persistence_entries": [],
+      "max_persistence": 0.0
+    }
+  ],
+  "description": "각 cycle은 note 정점들의 순환 구조. vertices_0idx는 내부 행렬 접근용, note_labels_1idx는 notes_metadata의 label과 매칭. tau는 균일 이진화 임계값 (0.35). traversal_0idx/traversal_1idx는 cycle edge를 따라 연결된 재생 순서 (단순 cycle 가정; 미발견 시 정렬 순서 fallback)."
+}

@@ -80,7 +80,9 @@
   }
 
   class TransformerGenerator {
-    constructor() {
+    // song: 'solari' | 'aqua' 등. transformer_<song>.onnx 를 로드.
+    constructor(song) {
+      this.song = song || 'solari';
       this.session = null;
       this.meta = null;
       this._loading = null;
@@ -89,6 +91,7 @@
     async load() {
       if (this.session && this.meta) return;
       if (this._loading) return this._loading;
+      const stem = 'transformer_' + this.song;
       this._loading = (async () => {
         // 1) onnxruntime-web 스크립트 (이미 로드됐으면 no-op)
         await loadScriptOnce(ORT_CDN_URL);
@@ -98,12 +101,12 @@
           'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.17.0/dist/';
 
         // 2) 메타 로드 (경로 고정: ./models/)
-        const metaRes = await fetch(MODEL_BASE + 'transformer_solari_meta.json', { cache: 'no-cache' });
+        const metaRes = await fetch(MODEL_BASE + stem + '_meta.json', { cache: 'no-cache' });
         if (!metaRes.ok) throw new Error(`Transformer meta 로드 실패: ${metaRes.status}`);
         this.meta = await metaRes.json();
 
         // 3) ONNX 로드
-        const modelRes = await fetch(MODEL_BASE + 'transformer_solari.onnx', { cache: 'no-cache' });
+        const modelRes = await fetch(MODEL_BASE + stem + '.onnx', { cache: 'no-cache' });
         if (!modelRes.ok) throw new Error(`Transformer onnx 로드 실패: ${modelRes.status}`);
         const bytes = await modelRes.arrayBuffer();
         this.session = await global.ort.InferenceSession.create(

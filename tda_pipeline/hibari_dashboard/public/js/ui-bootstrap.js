@@ -22,7 +22,9 @@
   // URL 파라미터로 곡을 미리 판단해 localStorage 키를 분리한다.
   function currentSongFromUrl() {
     const p = new URLSearchParams(location.search).get('data') || '';
-    return p.includes('solari') ? 'solari' : 'hibari';
+    if (p.includes('aqua')) return 'aqua';
+    if (p.includes('solari')) return 'solari';
+    return 'hibari';
   }
 
   // 로드 후 manifest.song 이 있으면 그쪽 우선 (혹시 URL 과 다를 때)
@@ -2136,10 +2138,10 @@
     return res;
   }
 
-  // 알고리즘 2 — 곡에 따라 FC(hibari) 또는 Transformer(solari) 분기
+  // 알고리즘 2 — hibari=FC, 비-hibari(solari/aqua)=Transformer 분기
   async function runAlgo2Once({ overlap, temperature, seed }) {
     const song = currentSong();
-    if (song === 'solari') {
+    if (song !== 'hibari') {
       const res = await playState.transGen.generate({
         overlap, seed, temperature, minOnsetGap: 0,
       });
@@ -2164,11 +2166,15 @@
     }
   }
 
-  // Transformer 모델 지연 로드 (solari 전용)
+  // Transformer 모델 지연 로드 (비-hibari: solari/aqua). 곡별 transformer_<song>.onnx
   async function ensureTransformerLoaded() {
     if (!window.TransformerGenerator) throw new Error('TransformerGenerator 모듈 미로드');
-    if (!playState.transGen) playState.transGen = new window.TransformerGenerator();
-    if (!playState.transGen.session) log('Transformer 모델 로드 중… (ONNX runtime + solari 모델 다운로드)');
+    const song = currentSong();
+    if (!playState.transGen || playState.transGen.song !== song) {
+      playState.transGen = new window.TransformerGenerator(song);
+      playState.transLoaded = false;
+    }
+    if (!playState.transGen.session) log(`Transformer 모델 로드 중… (ONNX runtime + ${song} 모델 다운로드)`);
     await playState.transGen.load();
     if (playState.transLoaded !== true) {
       log(`Transformer 모델 로드 완료 (${playState.transGen.meta.architecture})`, 'OK');
@@ -2178,7 +2184,7 @@
 
   // 곡에 따른 Algorithm 2 로드 헬퍼 선택
   async function ensureAlgo2Loaded() {
-    if (currentSong() === 'solari') {
+    if (currentSong() !== 'hibari') {
       return ensureTransformerLoaded();
     }
     return ensureFcLoaded();
@@ -2222,8 +2228,8 @@
     }
 
     try {
-      // Algorithm 2 라벨 동적화: solari → Transformer
-      const algo2Label = song === 'solari' ? 'Algorithm 2 (Transformer)' : 'Algorithm 2 (FC)';
+      // Algorithm 2 라벨 동적화: 비-hibari → Transformer
+      const algo2Label = song !== 'hibari' ? 'Algorithm 2 (Transformer)' : 'Algorithm 2 (FC)';
       const algoLabel = algo === 'algo2' ? algo2Label : 'Algorithm 1';
       if (!opts.quiet) {
         if (seg) {
@@ -2452,13 +2458,13 @@
       // 헤더 부제 동적화: 곡·차원·거리/모델 정보
       const subEl = document.querySelector('.app-header__sub');
       if (subEl) {
-        if (song === 'solari') {
-          subEl.textContent =
-            `solari · T=${T}·K=${K}·N=${data.notesMeta.num_notes} · voice_leading · Transformer`;
-        } else {
-          subEl.textContent =
-            `hibari · T=${T}·K=${K}·N=${data.notesMeta.num_notes} · DFT α=0.25 per-cycle τ · FC`;
-        }
+        const N = data.notesMeta.num_notes;
+        const SONG_DESC = {
+          hibari: `hibari · T=${T}·K=${K}·N=${N} · DFT α=0.25 per-cycle τ · FC`,
+          solari: `solari · T=${T}·K=${K}·N=${N} · voice_leading · Transformer`,
+          aqua:   `aqua · T=${T}·K=${K}·N=${N} · Tonnetz · Transformer`,
+        };
+        subEl.textContent = SONG_DESC[song] || SONG_DESC.hibari;
       }
 
       // Algorithm 2 라디오 라벨 동적화 (텍스트 노드만 교체)
@@ -2469,7 +2475,7 @@
         // 텍스트 노드 찾아서 교체
         for (const node of label.childNodes) {
           if (node.nodeType === Node.TEXT_NODE && node.textContent.trim()) {
-            node.textContent = song === 'solari'
+            node.textContent = song !== 'hibari'
               ? ' Algorithm 2 (Transformer)'
               : ' Algorithm 2 (FC)';
             break;
@@ -2477,11 +2483,11 @@
         }
       });
 
-      // VAE 패널 — hibari 전용 (60×14 학습; solari 60×25 비호환)
+      // VAE 패널 — hibari 전용 (60×14 학습; solari/aqua 차원 비호환)
       // hidden 만으로 패널 전체가 DOM 에서 숨겨져 슬라이더 조작 불가.
       // <details> 는 disabled IDL 속성이 없으므로 hidden 토글로 충분.
       const vaeGroup = $('vaeGroup');
-      if (vaeGroup) vaeGroup.hidden = (song === 'solari');
+      if (vaeGroup) vaeGroup.hidden = (song !== 'hibari');
 
       // 곡 전환 토글 버튼 active 상태 동기화
       document.querySelectorAll('[data-song-toggle]').forEach(btn => {
@@ -2491,7 +2497,12 @@
       });
 
       // 최초 로드 상태 메시지
-      const metricHint = song === 'solari' ? 'voice_leading · Transformer' : 'DFT α=0.25 per-cycle τ';
+      const METRIC_HINT = {
+        hibari: 'DFT α=0.25 per-cycle τ · FC',
+        solari: 'voice_leading · Transformer',
+        aqua:   'Tonnetz · Transformer',
+      };
+      const metricHint = METRIC_HINT[song] || METRIC_HINT.hibari;
       setStatus(
         `${song} · T=${T} · K=${K} · N=${data.notesMeta.num_notes} · ${metricHint}`,
         'ok'
