@@ -282,7 +282,7 @@ best-practice 도입 커밋 시리즈(316e125 / 9c781ff / 1ca08d4) 이후 병렬
 | R1 | 별도 | OM 대시보드 post-bugfix 업데이트 (30초 세그먼트 한정) | **완료 (2026-06-12)** | T=60 블록 m=0..17 UI + 라이브 모드 + 품질 맵. `memory/project_dashboard_upgrade_0612.md` 참조. main 머지·배포는 사용자 승인 대기 |
 | R2 | 별도 | 코드 위계 시각화 (사용자 병목 완화) | 진행 중 | `/map` + code-map skill 활용. depth 3, 최근 30일 수정 배지 |
 | R3 | 별도 | UI 폴리싱 (데스크톱) | **완료 (2026-06-12)** | 괴물(2023) 그린 리스킨 + Guided Tour(`tour.html`) 신설. tonnetz_demo/filtration_viz 내부 팔레트는 후속 후보 |
-| R4 | — | 모바일 responsive 포팅 | R1 완료 후 | 320~768px 뷰포트, 터치 44×44px, WebWorker ONNX. 30초 기준 |
+| R4 | — | 모바일 responsive 포팅 | **완료 (2026-06-13)** | 대시보드·랜딩 320/375/768 반응형. 3컬럼→1컬럼, 터치 44px, OM 캔버스 touch-action:none(Pointer Events 터치편집). bc3719a. 곡 토글 active 색 버그(--accent-green 부재) 동시 수정 |
 | **R5-a** | **E** | **Tilt Sphere (기울기 → 구 굴림 → 음악)** | **내일 기한** | DeviceOrientation(iOS 권한 플로우), 30초 세그먼트, tonnetz 격자 위 구. 신규 폴더 `tda_pipeline/mobile_tonnetz/` 권장 |
 | **R5-c** | **E** | **Shake (흔들림 피크 → Algo1 re-seed)** | **내일 기한** | DeviceMotion 피크 감지, 30초 생성 |
 | **R5-f** | **E** | **Camera Color (비디오 색조 → 스케일 매핑)** | **내일 기한** | video + canvas hue 추출 → scale_major / minor 매핑 |
