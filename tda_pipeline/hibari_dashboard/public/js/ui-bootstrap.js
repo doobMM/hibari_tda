@@ -389,10 +389,10 @@
     const baseMean = photoState.baseOM ? meanOf(photoState.baseOM) : 0;
     const finalArr = photoState.baseOM ? applyGammaArray(photoState.baseOM, photoState.lastGamma) : null;
     const finalMean = finalArr ? meanOf(finalArr) : 0;
-    const hibariMean = photoState.targetMean || 0;
+    const refMean = photoState.targetMean || 0;
     st.textContent =
       `원 사진 평균 ${baseMean.toFixed(3)} · γ 적용 후 ${finalMean.toFixed(3)}` +
-      (hibariMean ? ` · hibari ${hibariMean.toFixed(3)}` : '');
+      (refMean ? ` · 원곡 ${refMean.toFixed(3)}` : '');
   }
 
   // UI.data.overlapCont 를 교체하고 스택을 재적용
@@ -1138,7 +1138,7 @@
     bpm: 60,
     fcGen: null,            // FCGenerator 인스턴스 (hibari)
     fcLoaded: false,
-    transGen: null,         // TransformerGenerator 인스턴스 (solari)
+    transGen: null,         // TransformerGenerator 인스턴스 (solari/aqua)
     transLoaded: false,
   };
 
@@ -2207,8 +2207,11 @@
     const { buildHibariInstLen } = window.GenerationAlgo1;
     const K = UI.editEditor.K;
     const fullT = UI.editEditor.T;
-    // instLen 패턴: hibari 전용. solari 는 데이터 기반 T 에 맞춘 단순 fill=4
-    const fullInstLen = buildHibariInstLen(fullT);
+    // instLen 패턴: hibari 모듈 리듬(3/4 교대)은 hibari 전용. solari/aqua 는
+    // 그 패턴이 의미 없으므로 시점별 동시음 수를 일정값(4)으로 채운다.
+    const fullInstLen = song === 'hibari'
+      ? buildHibariInstLen(fullT)
+      : new Int32Array(fullT).fill(4);
     const fullValues = UI.editEditor.getMatrix();
 
     // 세그먼트 슬라이스 — 선택 구간만 생성 (메모: T=60 ≈ 30초)
@@ -2292,7 +2295,7 @@
       });
       const seed = parseInt($('sliderSeed').value, 10) || 0;
       const segTag = cur.segment ? `m${cur.segment.m}` : 'full';
-      const fname = `hibari_dash_seed${seed}_${segTag}.mid`;
+      const fname = `${currentSong()}_dash_seed${seed}_${segTag}.mid`;
       window.MidiIO.downloadBytes(bytes, fname);
       log(`MIDI 다운로드: ${fname} (${(bytes.length / 1024).toFixed(1)} KB)`, 'OK');
     } catch (e) {

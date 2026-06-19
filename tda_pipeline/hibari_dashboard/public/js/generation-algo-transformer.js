@@ -1,16 +1,16 @@
 /* ============================================================================
  * generation-algo-transformer.js — Algorithm 2 (Transformer) ONNX 추론
  *
- * 대응 Python: generation.py (DynTransformerModel)
- * 곡: solari (K=25, N=34, T 동적)
+ * 대응 Python: export_<song>_data_and_train.py (DynTransformerModel)
+ * 곡: 비-hibari 다곡 지원 — constructor 인자 song 으로 결정 (solari/aqua 등, T 동적)
  *
  * 외부 의존:
  *   - onnxruntime-web (CDN) — window.ort (generation-algo2.js 가 먼저 로드하면 공유)
- *   - transformer_solari.onnx      : public/models/transformer_solari.onnx
- *   - transformer_solari_meta.json : public/models/transformer_solari_meta.json
+ *   - transformer_<song>.onnx      : public/models/transformer_<song>.onnx
+ *   - transformer_<song>_meta.json : public/models/transformer_<song>_meta.json
  *
  * 공개 API:
- *   const tg = new TransformerGenerator();
+ *   const tg = new TransformerGenerator('solari');  // 또는 'aqua'
  *   await tg.load();
  *   const res = await tg.generate({
  *     overlap,        // { T, K, values: Int8Array|Float32Array (T*K) }
@@ -82,7 +82,8 @@
   class TransformerGenerator {
     // song: 'solari' | 'aqua' 등. transformer_<song>.onnx 를 로드.
     constructor(song) {
-      this.song = song || 'solari';
+      if (!song) throw new Error('TransformerGenerator: song 인자 필수 (transformer_<song>.onnx)');
+      this.song = song;
       this.session = null;
       this.meta = null;
       this._loading = null;
