@@ -2467,6 +2467,10 @@
         subEl.textContent = SONG_DESC[song] || SONG_DESC.hibari;
       }
 
+      // 참조 카드 제목 곡명 동기화 (하드코딩 'hibari' 제거)
+      const refTitle = $('refCardTitle');
+      if (refTitle) refTitle.textContent = `참조 overlap (${song})`;
+
       // Algorithm 2 라디오 라벨 동적화 (텍스트 노드만 교체)
       const algo2Labels = document.querySelectorAll('input[name="algo"][value="algo2"]');
       algo2Labels.forEach(radio => {
