@@ -268,7 +268,7 @@
     const hasPhoto = !!photoState.baseOM;
     btn.hidden = !hasPhoto;
     if (photoState.active) {
-      btn.textContent = 'hibari 로 되돌리기';
+      btn.textContent = '원곡으로 되돌리기';
       btn.dataset.state = 'active';
     } else {
       btn.textContent = '사진 다시 적용';
@@ -504,7 +504,7 @@
     if (typeof recomputeStackToEditor === 'function') recomputeStackToEditor();
     updatePhotoStatsUi();
     updatePhotoButtonStates();
-    log('hibari 원본 연속 OM 으로 복귀했습니다. (사진은 메모리에 남아 있음 — "사진 다시 적용" 가능)');
+    log('원곡 연속 OM 으로 복귀했습니다. (사진은 메모리에 남아 있음 — "사진 다시 적용" 가능)');
   }
 
   function reapplyPhoto() {
@@ -547,7 +547,7 @@
         gs.value = String(g);
         gv.textContent = g.toFixed(2);
         injectPhotoAsContinuousOM();
-        log(`자동 γ=${g.toFixed(2)} 재적용 (hibari 평균 ${photoState.targetMean.toFixed(3)} 기준)`);
+        log(`자동 γ=${g.toFixed(2)} 재적용 (원곡 평균 ${photoState.targetMean.toFixed(3)} 기준)`);
       });
     }
 

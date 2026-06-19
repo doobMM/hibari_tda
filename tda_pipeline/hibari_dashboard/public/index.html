@@ -7,8 +7,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=Noto+Serif+KR:wght@500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/tokens.css?v=4.25">
-  <link rel="stylesheet" href="css/style.css?v=4.25">
+  <link rel="stylesheet" href="css/tokens.css?v=4.26">
+  <link rel="stylesheet" href="css/style.css?v=4.26">
   <link rel="stylesheet" href="../../shared/nav.css">
 </head>
 <body>
@@ -117,11 +117,11 @@
             <span class="slider-row__value" id="sliderGammaVal">1.00</span>
           </div>
           <p class="hint photo-panel__gamma-hint" id="photoGammaHint">
-            γ = 1.0 사진 그대로 · γ 높이면 어두워져 밀도↓ · 추천값은 hibari 평균과 일치하도록 자동 계산
+            γ = 1.0 사진 그대로 · γ 높이면 어두워져 밀도↓ · 추천값은 원곡 평균과 일치하도록 자동 계산
           </p>
           <div class="photo-panel__btnrow">
             <button class="btn btn--small" id="btnPhotoAutoGamma" type="button">자동 γ 추천</button>
-            <button class="btn btn--small" id="btnPhotoToggle" type="button" data-state="active">hibari 로 되돌리기</button>
+            <button class="btn btn--small" id="btnPhotoToggle" type="button" data-state="active">원곡으로 되돌리기</button>
           </div>
         </div>
       </details>
@@ -318,9 +318,9 @@
           <span class="disclosure-summary__meta">구조 × 신선함</span>
         </summary>
         <p class="hint">
-          가로 = <b>위상 구조 보존</b> (편집 OM이 hibari 참조의 cycle 분포를 얼마나 유지하는지),
+          가로 = <b>위상 구조 보존</b> (편집 OM이 원곡 참조의 cycle 분포를 얼마나 유지하는지),
           세로 = <b>신선함</b> (생성된 음의 분포가 원곡과 얼마나 다른지, JS divergence).
-          오른쪽 위 = "hibari 구조인데 새로운 음악".
+          오른쪽 위 = "원곡 구조인데 새로운 음악".
         </p>
         <div class="quality-map__canvas-wrap">
           <canvas id="qualityMapCanvas" width="260" height="208" aria-label="생성 품질 산점도"></canvas>
@@ -452,17 +452,17 @@
   </script>
 
   <!-- ── App scripts ────────────────────────────────────────────────────── -->
-  <script src="js/data-loader.js?v=4.25"></script>
-  <script src="js/overlap-editor.js?v=4.25"></script>
-  <script src="js/generation-algo1.js?v=4.25"></script>
-  <script src="js/generation-algo2.js?v=4.25"></script>
-  <script src="js/generation-algo-transformer.js?v=4.25"></script>
-  <script src="js/vae-explorer.js?v=4.25"></script>
+  <script src="js/data-loader.js?v=4.26"></script>
+  <script src="js/overlap-editor.js?v=4.26"></script>
+  <script src="js/generation-algo1.js?v=4.26"></script>
+  <script src="js/generation-algo2.js?v=4.26"></script>
+  <script src="js/generation-algo-transformer.js?v=4.26"></script>
+  <script src="js/vae-explorer.js?v=4.26"></script>
   <script src="../../shared/midi-io.js?v=4.12"></script>
   <script src="../../shared/state.js?v=4.12"></script>
-  <script src="js/audio-playback.js?v=4.25"></script>
-  <script src="js/ood-detector.js?v=4.25"></script>
-  <script src="js/ui-bootstrap.js?v=4.25"></script>
+  <script src="js/audio-playback.js?v=4.26"></script>
+  <script src="js/ood-detector.js?v=4.26"></script>
+  <script src="js/ui-bootstrap.js?v=4.26"></script>
 
 </body>
 </html>
