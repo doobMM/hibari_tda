@@ -210,11 +210,17 @@
         목표는 오른쪽 위: <b>구조는 hibari, 소리는 새 곡</b>.
         연구에서는 신경망(FC) 모델이 JS = 0.00035까지 도달했습니다.
       </p>
+      <p>
+        그리고 이 방법은 hibari에만 머물지 않습니다 — 곡마다 위상이 다르고, 그래서
+        <b>최적의 도구도 다릅니다</b>. 대시보드의 곡 전환 토글에서 직접 대조할 수 있습니다:
+        <b>hibari</b>(DFT 거리·FC, 고리 14개) · <b>solari</b>(voice leading·Transformer, 25개) ·
+        <b>aqua</b>(Tonnetz·Transformer, 82개). <i>"곡의 성격이 최적 도구를 결정한다"</i> 가 이 연구의 핵심입니다.
+      </p>
       <p>이제 직접 만들어 볼 차례입니다:</p>
       <div class="cards">
         <a class="card" href="./hibari_dashboard/public/">
           <span class="card__title">🎛 OM Dashboard</span>
-          <span class="card__desc">중첩행렬을 그리고 · 변형하고 · 30초 단위로 생성. 라이브 모드, 품질 맵, 사진→OM까지.</span>
+          <span class="card__desc">중첩행렬을 그리고 · 변형하고 · 30초 단위로 생성. 곡 전환(hibari·solari·aqua), 라이브 모드, 구조 탐험(VAE), 품질 맵, 사진→OM까지.</span>
         </a>
         <a class="card" href="./tonnetz_demo/">
           <span class="card__title">🔺 Tonnetz Demo</span>
