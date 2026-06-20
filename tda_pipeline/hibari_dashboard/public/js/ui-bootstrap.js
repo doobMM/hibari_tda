@@ -658,6 +658,14 @@
     wireLiveMode();
     wireQualityMap();
     wireVaePanel();
+    // 협화도 우선 토글 — hint 표시
+    const chkCons = $('chkConsonance');
+    if (chkCons) {
+      chkCons.addEventListener('change', () => {
+        const h = $('consonanceHint');
+        if (h) h.hidden = !chkCons.checked;
+      });
+    }
     const btnPlayLocal = $('btnPlayLocal');
     if (btnPlayLocal) btnPlayLocal.addEventListener('click', playLastGenerated);
     const btnStopLocal = $('btnStopLocal');
@@ -2245,18 +2253,55 @@
       const myToken = ++genToken;
       if (algo === 'algo2') await ensureAlgo2Loaded();
 
+      // 단일 후보 생성 (algo 분기)
+      const genOne = async (s) => (algo === 'algo2')
+        ? await runAlgo2Once({ overlap, temperature, seed: s })
+        : runAlgo1Once({ overlap, instLen, temperature, seed: s });
+
+      // 협화도 우선: 후보 N개 생성 → 구조 JS 예산 내 최고 협화도 선택.
+      // 라이브 모드(quiet)는 반응성 위해 비활성 (단일 생성).
+      const chkCons = $('chkConsonance');
+      const consonanceFirst = !opts.quiet && chkCons && chkCons.checked;
+
       const t0 = performance.now();
-      let res;
-      if (algo === 'algo2') {
-        res = await runAlgo2Once({ overlap, temperature, seed });
+      let res, consMeta = null;
+      if (consonanceFirst) {
+        const N = 8;
+        const cands = [];
+        for (let k = 0; k < N; k++) {
+          const r = await genOne((seed + k) >>> 0);
+          if (myToken !== genToken) return null;   // 루프 중 새 생성 → stale 폐기
+          r._C = consonanceScore(r.notes);
+          r._F = computeFreshnessScore(r.notes);   // 원곡 대비 분포 JS (낮을수록 구조 충실)
+          cands.push(r);
+        }
+        const Fs = cands.map(c => c._F);
+        const minF = Math.min(...Fs);
+        const meanF = Fs.reduce((a, b) => a + b, 0) / Fs.length;
+        const sdF = Math.sqrt(Fs.reduce((a, b) => a + (b - meanF) ** 2, 0) / Fs.length);
+        const budget = minF + sdF;                  // 실험과 동일: JS ≤ min + std
+        const eligible = cands.filter(c => c._F <= budget + 1e-9);
+        res = eligible.reduce((best, c) => (c._C > best._C ? c : best), eligible[0]);
+        const Cs = cands.map(c => c._C);
+        consMeta = {
+          n: N, chosenC: res._C, chosenF: res._F,
+          cMin: Math.min(...Cs), cMax: Math.max(...Cs),
+        };
       } else {
-        res = runAlgo1Once({ overlap, instLen, temperature, seed });
+        res = await genOne(seed);
+        if (myToken !== genToken) return null;   // 더 새로운 생성이 시작됨 — stale 폐기
       }
-      if (myToken !== genToken) return null;   // 더 새로운 생성이 시작됨 — stale 폐기
       res.offset = offset;
       res.segment = seg ? { m: seg.m, start: seg.start, len: seg.len } : null;
       const dt = performance.now() - t0;
-      if (!opts.quiet) log(`생성 완료 (${dt.toFixed(0)}ms, ${res.notes.length} notes)`, 'OK');
+      if (!opts.quiet) {
+        if (consMeta) {
+          log(`협화도 우선: 후보 ${consMeta.n}개 (협화도 ${(consMeta.cMin * 100).toFixed(0)}~${(consMeta.cMax * 100).toFixed(0)}%) ` +
+              `→ ${(consMeta.chosenC * 100).toFixed(0)}% 선택 (구조 JS=${consMeta.chosenF.toFixed(3)}, ${dt.toFixed(0)}ms)`, 'OK');
+        } else {
+          log(`생성 완료 (${dt.toFixed(0)}ms, ${res.notes.length} notes)`, 'OK');
+        }
+      }
 
       playState.lastGenerated = res;
       $('btnDownloadMidi').disabled = false;

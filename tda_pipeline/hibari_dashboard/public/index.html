@@ -7,8 +7,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=Noto+Serif+KR:wght@500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/tokens.css?v=4.27">
-  <link rel="stylesheet" href="css/style.css?v=4.27">
+  <link rel="stylesheet" href="css/tokens.css?v=4.29">
+  <link rel="stylesheet" href="css/style.css?v=4.29">
   <link rel="stylesheet" href="../../shared/nav.css">
 </head>
 <body>
@@ -289,6 +289,11 @@
                  min="0" max="99999" step="1" value="42" aria-label="Seed">
           <button class="btn btn--small" id="btnRandomSeed" title="무작위 seed">&#x1F3B2;</button>
         </div>
+        <label class="check-row" title="여러 후보를 생성해 구조(JS)를 거의 유지하면서 가장 협화로운(consonant) 결과를 자동 선택합니다">
+          <input type="checkbox" id="chkConsonance">
+          &#x266B; 협화도 우선 (후보 8개 중 선택)
+        </label>
+        <p class="hint" id="consonanceHint" hidden>구조 JS 예산 안에서 협화도 최대 후보를 고릅니다 (검증된 유일 미적 지표)</p>
       </div>
 
       <!-- Section: 재생 -->
@@ -452,17 +457,17 @@
   </script>
 
   <!-- ── App scripts ────────────────────────────────────────────────────── -->
-  <script src="js/data-loader.js?v=4.27"></script>
-  <script src="js/overlap-editor.js?v=4.27"></script>
-  <script src="js/generation-algo1.js?v=4.27"></script>
-  <script src="js/generation-algo2.js?v=4.27"></script>
-  <script src="js/generation-algo-transformer.js?v=4.27"></script>
-  <script src="js/vae-explorer.js?v=4.27"></script>
+  <script src="js/data-loader.js?v=4.29"></script>
+  <script src="js/overlap-editor.js?v=4.29"></script>
+  <script src="js/generation-algo1.js?v=4.29"></script>
+  <script src="js/generation-algo2.js?v=4.29"></script>
+  <script src="js/generation-algo-transformer.js?v=4.29"></script>
+  <script src="js/vae-explorer.js?v=4.29"></script>
   <script src="../../shared/midi-io.js?v=4.12"></script>
   <script src="../../shared/state.js?v=4.12"></script>
-  <script src="js/audio-playback.js?v=4.27"></script>
-  <script src="js/ood-detector.js?v=4.27"></script>
-  <script src="js/ui-bootstrap.js?v=4.27"></script>
+  <script src="js/audio-playback.js?v=4.29"></script>
+  <script src="js/ood-detector.js?v=4.29"></script>
+  <script src="js/ui-bootstrap.js?v=4.29"></script>
 
 </body>
 </html>
