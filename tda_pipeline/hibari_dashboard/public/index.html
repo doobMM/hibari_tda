@@ -7,8 +7,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=Noto+Serif+KR:wght@500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/tokens.css?v=4.29">
-  <link rel="stylesheet" href="css/style.css?v=4.29">
+  <link rel="stylesheet" href="css/tokens.css?v=4.30">
+  <link rel="stylesheet" href="css/style.css?v=4.30">
   <link rel="stylesheet" href="../../shared/nav.css">
 </head>
 <body>
@@ -296,6 +296,26 @@
         <p class="hint" id="consonanceHint" hidden>구조 JS 예산 안에서 협화도 최대 후보를 고릅니다 (검증된 유일 미적 지표)</p>
       </div>
 
+      <!-- Section: 음악적 의도 (Algorithm 1 샘플링 유도) -->
+      <div class="control-group" id="intentGroup">
+        <h2 class="control-group__heading">음악적 의도</h2>
+        <p class="hint">음악 용어로 의도를 표현하면 생성에 반영됩니다. <b>라이브 모드</b>와 함께 쓰면 조절하는 즉시 음악이 따라옵니다. (Algorithm 1 적용)</p>
+        <div class="slider-row" aria-label="음역">
+          <span class="slider-row__label">음역</span>
+          <input class="slider-row__track" type="range" id="sliderRegister"
+                 min="-100" max="100" step="5" value="0" aria-label="음역 — 낮게↔높게">
+          <span class="slider-row__value" id="sliderRegisterVal">중간</span>
+        </div>
+        <div class="slider-row" aria-label="밀도">
+          <span class="slider-row__label">밀도</span>
+          <input class="slider-row__track" type="range" id="sliderDensity"
+                 min="-100" max="100" step="5" value="0" aria-label="밀도 — 성기게↔빽빽하게">
+          <span class="slider-row__value" id="sliderDensityVal">기본</span>
+        </div>
+        <button class="btn btn--small" id="btnIntentReset" type="button">의도 초기화</button>
+        <p class="hint hint--intent" id="intentAlgo2Note" hidden>Algorithm 2(신경망)는 고정 가중치라 음악적 의도가 적용되지 않습니다 — Algorithm 1을 선택하세요.</p>
+      </div>
+
       <!-- Section: 재생 -->
       <div class="control-group">
         <h2 class="control-group__heading">재생</h2>
@@ -457,17 +477,17 @@
   </script>
 
   <!-- ── App scripts ────────────────────────────────────────────────────── -->
-  <script src="js/data-loader.js?v=4.29"></script>
-  <script src="js/overlap-editor.js?v=4.29"></script>
-  <script src="js/generation-algo1.js?v=4.29"></script>
-  <script src="js/generation-algo2.js?v=4.29"></script>
-  <script src="js/generation-algo-transformer.js?v=4.29"></script>
-  <script src="js/vae-explorer.js?v=4.29"></script>
+  <script src="js/data-loader.js?v=4.30"></script>
+  <script src="js/overlap-editor.js?v=4.30"></script>
+  <script src="js/generation-algo1.js?v=4.30"></script>
+  <script src="js/generation-algo2.js?v=4.30"></script>
+  <script src="js/generation-algo-transformer.js?v=4.30"></script>
+  <script src="js/vae-explorer.js?v=4.30"></script>
   <script src="../../shared/midi-io.js?v=4.12"></script>
   <script src="../../shared/state.js?v=4.12"></script>
-  <script src="js/audio-playback.js?v=4.29"></script>
-  <script src="js/ood-detector.js?v=4.29"></script>
-  <script src="js/ui-bootstrap.js?v=4.29"></script>
+  <script src="js/audio-playback.js?v=4.30"></script>
+  <script src="js/ood-detector.js?v=4.30"></script>
+  <script src="js/ui-bootstrap.js?v=4.30"></script>
 
 </body>
 </html>

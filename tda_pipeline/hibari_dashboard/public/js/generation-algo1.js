@@ -61,7 +61,8 @@
      * @param {number} [opts.temperature=1.0]
      * @param {Function} [opts.rng]
      */
-    constructor({ labels, numModules = 65, temperature = 1.0, rng = Math.random }) {
+    // pitchTilt: 음역 의도. 0=영향 없음(기존 동작 보존), >0=높은 음 선호, <0=낮은 음 선호.
+    constructor({ labels, numModules = 65, temperature = 1.0, rng = Math.random, pitchTilt = 0 }) {
       this.labels = labels;
       this.labelToEntryPlus1 = new Map();   // label+1 key → entry (Python 버그 재현용)
       for (const e of labels) this.labelToEntryPlus1.set(e.label + 1, e);
@@ -76,10 +77,17 @@
       this.rng = rng;
 
       // 온도 스케일링: count × num_modules → round(c ^ (1/T))
+      // 이어서 음역 tilt 적용 (pitchTilt=0 이면 기존 동작과 정확히 동일)
       const scaled = labels.map(n => {
-        const v = n.count * numModules;
-        if (Math.abs(temperature - 1.0) < 1e-9) return v;
-        return Math.max(1, Math.round(Math.pow(v, 1.0 / temperature)));
+        let v = n.count * numModules;
+        if (Math.abs(temperature - 1.0) >= 1e-9) {
+          v = Math.max(1, Math.round(Math.pow(v, 1.0 / temperature)));
+        }
+        if (pitchTilt) {
+          // exp 틸트: 높은 음(+)/낮은 음(-) 가중. 중심 pitch 66, 스케일 12(옥타브).
+          v = Math.max(1, Math.round(v * Math.exp(pitchTilt * (n.pitch - 66) / 12)));
+        }
+        return v;
       });
 
       const pool = [];

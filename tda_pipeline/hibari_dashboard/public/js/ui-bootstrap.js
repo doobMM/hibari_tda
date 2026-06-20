@@ -666,6 +666,8 @@
         if (h) h.hidden = !chkCons.checked;
       });
     }
+    // 음악적 의도 슬라이더
+    wireIntentControls();
     const btnPlayLocal = $('btnPlayLocal');
     if (btnPlayLocal) btnPlayLocal.addEventListener('click', playLastGenerated);
     const btnStopLocal = $('btnStopLocal');
@@ -2123,16 +2125,89 @@
     if (smooth) smooth.addEventListener('click', onVaeSmooth);
   }
 
+  function registerLabel(v) {
+    if (v <= -60) return '많이 낮게';
+    if (v < -10) return '낮게';
+    if (v <= 10) return '중간';
+    if (v < 60) return '높게';
+    return '많이 높게';
+  }
+  function densityLabel(v) {
+    if (v <= -60) return '아주 성기게';
+    if (v < -10) return '성기게';
+    if (v <= 10) return '기본';
+    if (v < 60) return '빽빽하게';
+    return '아주 빽빽';
+  }
+
+  function wireIntentControls() {
+    const reg = $('sliderRegister');
+    const den = $('sliderDensity');
+    const regVal = $('sliderRegisterVal');
+    const denVal = $('sliderDensityVal');
+    const note = $('intentAlgo2Note');
+
+    const refresh = () => {
+      if (reg && regVal) regVal.textContent = registerLabel(parseFloat(reg.value) || 0);
+      if (den && denVal) denVal.textContent = densityLabel(parseFloat(den.value) || 0);
+    };
+    // 슬라이더 조절 → 표시 갱신 + 라이브 모드면 즉시 재생성(의도→음악)
+    const onInput = () => { refresh(); invalidateGeneratedOnEdit(); liveMaybeRegenerate(); };
+    if (reg) reg.addEventListener('input', onInput);
+    if (den) den.addEventListener('input', onInput);
+
+    const btnReset = $('btnIntentReset');
+    if (btnReset) btnReset.addEventListener('click', () => {
+      if (reg) reg.value = '0';
+      if (den) den.value = '0';
+      onInput();
+      log('음악적 의도 초기화 (음역·밀도 중립)');
+    });
+
+    // Algorithm 2 선택 시 의도 미적용 안내 표시
+    const syncAlgoNote = () => {
+      const algo = document.querySelector('input[name="algo"]:checked')?.value || 'algo1';
+      if (note) note.hidden = (algo !== 'algo2');
+    };
+    document.querySelectorAll('input[name="algo"]').forEach(r => r.addEventListener('change', syncAlgoNote));
+    refresh();
+    syncAlgoNote();
+  }
+
+  // 음악적 의도 슬라이더 읽기 — 음역(pitchTilt), 밀도(densityFactor)
+  function readIntent() {
+    const reg = $('sliderRegister');
+    const den = $('sliderDensity');
+    // 음역: 슬라이더 -100~100 → tilt -2.0~2.0
+    const pitchTilt = reg ? (parseFloat(reg.value) || 0) / 50 : 0;
+    // 밀도: 슬라이더 -100~100 → factor 0.5~2.0 (2^(v/100))
+    const densityFactor = den ? Math.pow(2, (parseFloat(den.value) || 0) / 100) : 1;
+    return { pitchTilt, densityFactor };
+  }
+
+  // instLen 에 밀도 의도 적용 (factor=1 이면 변화 없음)
+  function applyDensity(instLen, factor) {
+    if (Math.abs(factor - 1) < 1e-6) return instLen;
+    const out = new Int32Array(instLen.length);
+    for (let i = 0; i < instLen.length; i++) {
+      out[i] = Math.max(0, Math.round(instLen[i] * factor));
+    }
+    return out;
+  }
+
   // 알고리즘 1: overlap(이미 슬라이스된 형태 포함) 하나 생성
   function runAlgo1Once({ overlap, instLen, temperature, seed }) {
     const { NodePool, CycleSetManager, algorithm1, makeRng } = window.GenerationAlgo1;
     const rng = makeRng(seed >>> 0);
+    const { pitchTilt, densityFactor } = readIntent();
     const pool = new NodePool({
       labels: UI.data.notesMeta.labels,
       numModules: UI.data.notesMeta.num_modules_reference,
       temperature,
       rng,
+      pitchTilt,
     });
+    instLen = applyDensity(instLen, densityFactor);
     const cycleMgr = new CycleSetManager({
       cycles: UI.data.cyclesMeta.cycles,
       K: overlap.K,
