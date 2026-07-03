@@ -7,9 +7,20 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=Noto+Serif+KR:wght@500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/tokens.css?v=4.30">
-  <link rel="stylesheet" href="css/style.css?v=4.30">
+  <link rel="stylesheet" href="css/tokens.css?v=4.31">
+  <link rel="stylesheet" href="css/style.css?v=4.31">
   <link rel="stylesheet" href="../../shared/nav.css">
+  <script>
+    // FOUC 방지 — CSS 로드 전에 uimode 속성을 즉시 세팅 (기본값 simple)
+    (function () {
+      var mode = 'simple';
+      try {
+        var saved = localStorage.getItem('hibari_dashboard_uimode');
+        if (saved === 'advanced' || saved === 'simple') mode = saved;
+      } catch (e) {}
+      document.documentElement.setAttribute('data-uimode', mode);
+    })();
+  </script>
 </head>
 <body>
 
@@ -85,6 +96,8 @@
     <!-- ── LEFT PANEL — edit controls ──────────────────────────────────── -->
     <aside class="panel--left" id="editControls" aria-label="편집 컨트롤">
 
+      <p class="hint simple-mode-hint">가운데 편집 OM을 클릭해 칸을 켜고 끄면, 오른쪽 ▶ 생성으로 새 음악을 만들 수 있습니다.</p>
+
       <!-- Section: 편집 -->
       <div class="control-group">
         <h2 class="control-group__heading">편집</h2>
@@ -127,7 +140,7 @@
       </details>
 
       <!-- Section: 변형 스택 (Q1) -->
-      <details class="control-group disclosure-group">
+      <details class="control-group disclosure-group stack-group">
         <summary class="disclosure-summary">
           <span>변형 스택</span>
           <span class="stack-mode-badge" id="stackModeBadge" data-mode="binary"
@@ -277,7 +290,7 @@
           <button class="btn btn--small" id="btnSegNext" type="button" title="다음 블록" aria-label="다음 블록">▶</button>
         </div>
         <p class="hint" id="segmentHint">30초 세그먼트 (T=60 step) · 캔버스에 구간이 표시됩니다</p>
-        <div class="slider-row" aria-label="Temperature">
+        <div class="slider-row slider-row--temp" aria-label="Temperature">
           <span class="slider-row__label">Temperature</span>
           <input class="slider-row__track" type="range" id="sliderTemp"
                  min="0.5" max="5.0" step="0.1" value="3.0" aria-label="Temperature">
@@ -289,7 +302,7 @@
                  min="0" max="99999" step="1" value="42" aria-label="Seed">
           <button class="btn btn--small" id="btnRandomSeed" title="무작위 seed">&#x1F3B2;</button>
         </div>
-        <label class="check-row" title="여러 후보를 생성해 구조(JS)를 거의 유지하면서 가장 협화로운(consonant) 결과를 자동 선택합니다">
+        <label class="check-row check-row--consonance" title="여러 후보를 생성해 구조(JS)를 거의 유지하면서 가장 협화로운(consonant) 결과를 자동 선택합니다">
           <input type="checkbox" id="chkConsonance">
           &#x266B; 협화도 우선 (후보 8개 중 선택)
         </label>
@@ -393,6 +406,14 @@
         </div>
       </details>
 
+      <!-- Section: 모드 전환 — 심플 모드에서도 항상 노출 -->
+      <div class="control-group control-group--uimode">
+        <label class="check-row" title="켜면 사진→OM, 변형 스택, 구조 탐험, Temperature/Seed 등 전체 컨트롤이 표시됩니다">
+          <input type="checkbox" id="chkAdvancedMode">
+          고급 모드 (전체 컨트롤 표시)
+        </label>
+      </div>
+
     </aside>
 
     <!-- ── Log panel — spans full width ─────────────────────────────────── -->
@@ -476,18 +497,43 @@
     })();
   </script>
 
+  <!-- ── UI 모드 토글 스크립트 (심플/고급, CSS-only 숨김) ─────────────────── -->
+  <script>
+    (function () {
+      var STORAGE_KEY = 'hibari_dashboard_uimode';
+      var html = document.documentElement;
+      var chk = document.getElementById('chkAdvancedMode');
+
+      function getMode() {
+        return html.getAttribute('data-uimode') === 'advanced' ? 'advanced' : 'simple';
+      }
+      function setMode(mode) {
+        html.setAttribute('data-uimode', mode);
+        try { localStorage.setItem(STORAGE_KEY, mode); } catch (e) {}
+        if (chk) chk.checked = (mode === 'advanced');
+      }
+      // head 인라인 스크립트에서 이미 속성을 세팅했으므로 체크박스 상태만 동기화
+      if (chk) {
+        chk.checked = (getMode() === 'advanced');
+        chk.addEventListener('change', function () {
+          setMode(chk.checked ? 'advanced' : 'simple');
+        });
+      }
+    })();
+  </script>
+
   <!-- ── App scripts ────────────────────────────────────────────────────── -->
-  <script src="js/data-loader.js?v=4.30"></script>
-  <script src="js/overlap-editor.js?v=4.30"></script>
-  <script src="js/generation-algo1.js?v=4.30"></script>
-  <script src="js/generation-algo2.js?v=4.30"></script>
-  <script src="js/generation-algo-transformer.js?v=4.30"></script>
-  <script src="js/vae-explorer.js?v=4.30"></script>
+  <script src="js/data-loader.js?v=4.31"></script>
+  <script src="js/overlap-editor.js?v=4.31"></script>
+  <script src="js/generation-algo1.js?v=4.31"></script>
+  <script src="js/generation-algo2.js?v=4.31"></script>
+  <script src="js/generation-algo-transformer.js?v=4.31"></script>
+  <script src="js/vae-explorer.js?v=4.31"></script>
   <script src="../../shared/midi-io.js?v=4.12"></script>
   <script src="../../shared/state.js?v=4.12"></script>
-  <script src="js/audio-playback.js?v=4.30"></script>
-  <script src="js/ood-detector.js?v=4.30"></script>
-  <script src="js/ui-bootstrap.js?v=4.30"></script>
+  <script src="js/audio-playback.js?v=4.31"></script>
+  <script src="js/ood-detector.js?v=4.31"></script>
+  <script src="js/ui-bootstrap.js?v=4.31"></script>
 
 </body>
 </html>
