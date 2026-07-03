@@ -184,17 +184,23 @@
         구조(고리의 일정)는 hibari를 닮았지만, 음의 흐름은 새로운 —
         <b>"비슷한 느낌의 다른 공간"</b>이 목표입니다.
       </p>
-      <p>아래 미니 행렬을 칠하고 들어보세요. (세로 14줄이 실제 hibari의 고리들입니다)</p>
+      <p>
+        아래 미니 행렬을 칠하고 들어보세요. (세로 14줄이 실제 hibari의 고리들입니다)
+        단, 이 소리는 <b>음표를 지운 구조만</b>을 단순한 소리로 바꾼 것 — 진짜 멜로디가 아닙니다.
+        원곡과 비교하려면 <b>🎧 원곡 30초 듣기</b> 버튼을 눌러 보세요. 같은 뼈대, 다른 살입니다.
+      </p>
       <div class="figure">
         <canvas id="paintCanvas" width="720" height="240" aria-label="미니 중첩행렬 — 클릭·드래그로 칠하기"></canvas>
         <div class="paint-toolbar">
-          <button class="btn" id="btnTourPlay" type="button">▶ 들어보기</button>
+          <button class="btn" id="btnTourPlay" type="button">▶ 내가 그린 구조 듣기</button>
           <button class="btn btn--ghost" id="btnTourSeed" type="button">hibari 첫 30초 불러오기</button>
           <button class="btn btn--ghost" id="btnTourClear" type="button">지우기</button>
+          <button class="btn" id="btnOriginalPlay" type="button" style="background:linear-gradient(135deg,#dba93f,#c98a2b);">🎧 원곡 30초 듣기</button>
           <span class="paint-hint" id="paintHint">클릭·드래그로 칠하기 — 각 줄은 실제 cycle의 구성음으로 울립니다</span>
         </div>
         <div class="figure__caption">
-          ※ 이 데모는 "활성 고리 → 구성음 화음"의 단순화 버전입니다.
+          ※ "내가 그린 구조 듣기"는 "활성 고리 → 구성음 화음"의 단순화 버전(구조 소리)입니다.
+          "🎧 원곡 30초 듣기"는 hibari 원곡의 실제 음표를 그대로 재생합니다(원곡 소리).
           실제 Algorithm 1(확률 샘플링)·Algorithm 2(신경망)는 OM Dashboard에서 체험할 수 있습니다.
         </div>
       </div>
@@ -283,7 +289,7 @@
 
     // ── 공용: 데이터 로드 ───────────────────────────────────────────
     const DATA = './hibari_dashboard/data/';
-    const state = { notes: null, cycles: null, om: null };
+    const state = { notes: null, cycles: null, om: null, original: null };
 
     function fetchJson(url) {
       return fetch(url).then((r) => { if (!r.ok) throw new Error(url + ' ' + r.status); return r.json(); });
@@ -600,19 +606,73 @@
       }, stepSec * 1000);
     }
 
+    // ── 5b. 원곡 30초 그대로 재생 ────────────────────────────────────
+    // 미니 페인트의 "구조 소리"와 대비되는 "원곡 소리". 같은 WebAudio 신스를
+    // 재사용하되, cycle 구성음이 아니라 원곡 note (start,pitch,end)를 그대로 스케줄한다.
+    let originalPlaying = false;
+    function playOriginal() {
+      if (originalPlaying) return;
+      if (!state.original || !state.original.notes || !state.original.notes.length) return;
+      originalPlaying = true;
+      const btn = document.getElementById('btnOriginalPlay');
+      if (btn) btn.disabled = true;
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!paint.ctx) paint.ctx = new AC();
+      if (paint.ctx.state === 'suspended') paint.ctx.resume();
+      const ctx = paint.ctx;
+      const { bpm, notes } = state.original;
+      const secPerStep = 60 / bpm / 2; // 8분음표 = 0.5s @ bpm60
+      const t0 = ctx.currentTime + 0.06;
+
+      // 동시발음이 많은 구간에서 클리핑 방지 — step별 최대 동시음 수로 게인 스케일
+      const concurrency = new Array(64).fill(0);
+      for (const [s] of notes) if (s < concurrency.length) concurrency[s]++;
+      const maxConcurrency = Math.max(1, ...concurrency);
+      const gainPerNote = 0.5 / Math.max(3, maxConcurrency);
+
+      let maxEndSec = 0;
+      for (const [s, p, e] of notes) {
+        const on = t0 + s * secPerStep;
+        const off = t0 + e * secPerStep;
+        const dur = Math.max(0.05, off - on);
+        maxEndSec = Math.max(maxEndSec, e * secPerStep);
+        const osc = ctx.createOscillator();
+        osc.type = 'triangle';
+        osc.frequency.value = 440 * Math.pow(2, (p - 69) / 12);
+        const g = ctx.createGain();
+        g.gain.setValueAtTime(0, on);
+        g.gain.linearRampToValueAtTime(gainPerNote, on + 0.015);
+        g.gain.exponentialRampToValueAtTime(0.001, on + dur * 0.98 + 0.05);
+        osc.connect(g).connect(ctx.destination);
+        osc.start(on);
+        osc.stop(on + dur + 0.08);
+      }
+      // self-check: 스케줄된 note 수 / 최대 끝 시각 (~30s 근사여야 함)
+      console.log('[tour] 원곡 재생 스케줄 — notes:', notes.length, 'maxEndSec≈', maxEndSec.toFixed(1));
+
+      setTimeout(() => {
+        originalPlaying = false;
+        if (btn) btn.disabled = false;
+      }, maxEndSec * 1000 + 200);
+    }
+
     // ── 부트 ───────────────────────────────────────────────────────
     Promise.all([
       fetchJson(DATA + 'notes_metadata.json'),
       fetchJson(DATA + 'cycles_metadata.json'),
       fetchJson(DATA + 'overlap_matrix_reference.json'),
-    ]).then(([notes, cycles, om]) => {
+      fetchJson(DATA + 'original_first30s.json'),
+    ]).then(([notes, cycles, om, original]) => {
       state.notes = notes;
       state.cycles = cycles;
       state.om = { T: om.T, K: om.K, values: new Int8Array(om.values), density: om.density };
+      state.original = original;
       renderNotes();
       renderTonnetz();
       renderOM();
       paintInit();
+      const origBtn = document.getElementById('btnOriginalPlay');
+      if (origBtn) origBtn.addEventListener('click', playOriginal);
     }).catch((e) => {
       console.error('[tour] 데이터 로드 실패:', e);
       document.getElementById('notesCaption').textContent = '데이터 로드 실패 — ' + e.message;
