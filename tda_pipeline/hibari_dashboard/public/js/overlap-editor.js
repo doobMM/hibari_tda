@@ -67,6 +67,8 @@
       del:      hexToRgb(readCssVar('--cell-diff-remove')) || FALLBACK.del,
       canvasBg: readCssVar('--surface-canvas')             || FALLBACK.canvasBg,
       hover:    FALLBACK.hover,
+      // 개화점(bloom) 색 — 햇살 토큰에서 (Persistent Bloom 렌더용)
+      hoverRGB: hexToRgb(readCssVar('--accent-amber'))     || [219, 169, 63],
       grid:     readCssVar('--grid-line')                  || FALLBACK.grid,
     };
   }
@@ -85,6 +87,10 @@
       this.reference = opts.reference ? new Alloc(opts.reference) : null;
       this.readonly = !!opts.readonly;
       this.showDiff = false;
+      // Persistent Bloom 렌더 (기본 ON) — 같은 데이터를 자라는 들판으로 표현
+      this.bloomMode = opts.bloomMode !== false;
+      this._bloomCache = null;
+      this._bloomDirty = true;
       this.onChange = opts.onChange || (() => {});
       this.onHover = opts.onHover || (() => {});
 
@@ -117,6 +123,7 @@
       }
       const Alloc = this.displayMode === 'continuous' ? Float32Array : Int8Array;
       this.values = new Alloc(values);
+      this._bloomDirty = true;   // 렌더 전에 무효화 (캐시 지연 방지)
       this.render();
       this._emitChange();
     }
@@ -161,6 +168,7 @@
         }
         this.values = out;
       }
+      this._bloomDirty = true;   // 표시 모드 전환 = 활성 판정 기준 변경
       if (opts.reference) {
         if (opts.reference.length !== N) throw new Error('setDisplayMode reference 크기 불일치');
         this.reference = new Alloc(opts.reference);
@@ -684,6 +692,179 @@
       });
     }
 
+    // ── Persistent Bloom: 구조를 자라는 들판으로 ────────────────────────
+    // 철학: docs/algorithmic_philosophy_persistent_bloom.md
+    // 이진 격자를 적분(활성=성장 / 비활성=감쇠)하여 유기적 형상으로 번역한다.
+    // 캐시는 데이터가 바뀔 때만 재계산 (드래그 중 성능 보호).
+    _ensureBloomCache() {
+      if (this._bloomCache && !this._bloomDirty) return this._bloomCache;
+      const T = this.T, K = this.K;
+      const energy = new Float32Array(T * K);
+      const density = new Float32Array(T * K);
+      const onset = new Uint8Array(T * K);
+      const GROWTH = 0.30;   // 깨어난 줄기가 솟는 속도
+      const MEMORY = 0.70;   // 잠든 줄기가 기억되는 정도
+
+      for (let c = 0; c < K; c++) {
+        let e = 0, prev = 0;
+        for (let t = 0; t < T; t++) {
+          const v = this.values[t * K + c];
+          const a = (this.displayMode === 'continuous') ? (v >= 0.35 ? 1 : 0) : (v ? 1 : 0);
+          e = a ? Math.min(1, e + GROWTH) : e * MEMORY;
+          energy[t * K + c] = e;
+          onset[t * K + c] = (a && !prev) ? 1 : 0;
+          prev = a;
+        }
+      }
+      // 국소 밀도 — 겹쳐 자란 곳은 짙은 이끼로 가라앉는다.
+      // 분리 가능 박스 블러(수평 ±3 → 수직 ±1): 셀당 21회 루프를 2패스로.
+      // K=82·T=539(aqua) 기준 재계산 비용이 한 자릿수 배로 줄어 드래그가 끊기지 않는다.
+      const tmp = new Float32Array(T * K);
+      const RT = 3, RC = 1;
+      for (let c = 0; c < K; c++) {
+        let sum = 0;
+        const w0 = Math.min(RT, T - 1);
+        for (let t = 0; t <= w0; t++) sum += energy[t * K + c];
+        for (let t = 0; t < T; t++) {
+          const lo = t - RT, hi = t + RT;
+          const n = Math.min(hi, T - 1) - Math.max(lo, 0) + 1;
+          tmp[t * K + c] = sum / n;
+          // 창을 오른쪽으로 한 칸 굴린다
+          if (lo >= 0) sum -= energy[lo * K + c];
+          if (hi + 1 < T) sum += energy[(hi + 1) * K + c];
+        }
+      }
+      for (let t = 0; t < T; t++) {
+        const base = t * K;
+        for (let c = 0; c < K; c++) {
+          let s = 0, n = 0;
+          for (let dc = -RC; dc <= RC; dc++) {
+            const cc = c + dc;
+            if (cc < 0 || cc >= K) continue;
+            s += tmp[base + cc];
+            n++;
+          }
+          density[base + c] = s / n;
+        }
+      }
+      // 밀도 최댓값 — 곡마다 밀도 범위가 다르므로(hibari 34% vs aqua 1.3%)
+      // 팔레트 전 구간을 항상 활용하도록 정규화 기준을 저장한다.
+      let dMax = 0;
+      for (let i = 0; i < density.length; i++) if (density[i] > dMax) dMax = density[i];
+      this._bloomCache = { energy, density, onset, dMax: dMax || 1 };
+      this._bloomDirty = false;
+      return this._bloomCache;
+    }
+
+    _renderMeadow(ctx, P, ox, oy, cellW, cellH, tStart, tEnd, cStart, cEnd) {
+      const { energy, density, onset, dMax } = this._ensureBloomCache();
+      const K = this.K;
+      const g = P.on;
+      // 팔레트 파생: 새싹(밝게) · 이끼(짙게) — 토큰 3색만으로 깊이를 얻는다
+      const moss = [g[0] * 0.34, g[1] * 0.40, g[2] * 0.32];
+      const dInv = 1 / (dMax || 1);
+      // 멀리서 본 들판은 더 짙고 촘촘하다 — 축소 시 얇은 선의 안티앨리어싱이
+      // 색을 배경으로 씻어내므로, 팔레트 밝은 끝을 눌러 대비를 지킨다.
+      const far = cellW < 1.5;
+      const sprout = far
+        ? [g[0] * 1.02, g[1] * 0.98, g[2] * 1.02]
+        : [Math.min(255, g[0] * 1.18 + 20), Math.min(255, g[1] * 1.10 + 24), Math.min(255, g[2] * 1.20 + 14)];
+      const detailed = cellW >= 2.2;   // 확대 시에만 곡선 — 축소 시엔 직선으로 성능 보호
+
+      // ── 색 버킷 배치(batching) ────────────────────────────────────────
+      // 수천 개의 stroke() 호출은 캔버스에서 비싸다. 밀도 8단계 × 밝기 2단계
+      // = 16개 버킷 + diff 2개로 묶어 stroke 을 18회로 줄인다. 드래그가 부드러워진다.
+      const DBANDS = 8;
+      const NB = DBANDS * 2;
+      const paths = new Array(NB + 2);
+      for (let b = 0; b < NB + 2; b++) paths[b] = new Path2D();
+      const bloomPath = new Path2D();
+      let hasBloom = false;
+
+      const lineW = far ? 1.0 : Math.max(0.6, cellW * 0.62);
+
+      for (let c = cStart; c < cEnd; c++) {
+        const baseY = oy + (c + 1) * cellH;
+        // 지면선: 행 구조(데이터)를 잃지 않기 위한 최소한의 흔적
+        ctx.strokeStyle = 'rgba(34, 51, 31, 0.10)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(ox + tStart * cellW, baseY + 0.5);
+        ctx.lineTo(ox + tEnd * cellW, baseY + 0.5);
+        ctx.stroke();
+
+        for (let t = tStart; t < tEnd; t++) {
+          const i = t * K + c;
+          const e = energy[i];
+          if (e < 0.04) continue;
+
+          const x = ox + (t + 0.5) * cellW;
+          const h = e * cellH * 0.92;
+          if (h < 0.8) continue;
+
+          // 편집 피드백은 미학보다 우선 — 참조와 다른 셀은 diff 버킷으로
+          const v = this.values[i], refV = this.reference ? this.reference[i] : v;
+          const changed = this.showDiff && this.reference && v !== refV;
+          let bucket;
+          if (changed) {
+            bucket = (v && !refV) ? NB : NB + 1;
+          } else {
+            const dBand = Math.min(DBANDS - 1, (density[i] * dInv * DBANDS) | 0);
+            bucket = dBand * 2 + (e > 0.62 ? 1 : 0);
+          }
+          const p = paths[bucket];
+
+          // 바람: 결정적 저주파 흔들림 — 뿌리는 고정, 끝은 자유
+          const bend = (Math.sin(x * 0.013 + c * 1.7) + 0.5 * Math.sin(x * 0.037)) * h * 0.16;
+
+          p.moveTo(x, baseY);
+          if (detailed) {
+            p.bezierCurveTo(x + bend * 0.2, baseY - h * 0.45,
+                            x + bend * 0.7, baseY - h * 0.8,
+                            x + bend, baseY - h);
+          } else {
+            p.lineTo(x + bend * 0.6, baseY - h);
+          }
+
+          // 개화점: 활성이 시작되는 순간 — 시간의 맥동
+          if (onset[i] && cellW >= 1.2) {
+            bloomPath.moveTo(x + bend + cellW * 0.5, baseY - h);
+            bloomPath.arc(x + bend, baseY - h, Math.max(0.8, cellW * 0.5), 0, Math.PI * 2);
+            hasBloom = true;
+          }
+        }
+      }
+
+      // 버킷별 1회 stroke — 밀도가 색을, 에너지가 밝기를 결정한다
+      ctx.lineWidth = lineW;
+      ctx.lineCap = 'round';
+      for (let b = 0; b < NB; b++) {
+        const dBand = (b / 2) | 0;
+        const bright = b % 2;
+        // 정규화된 밀도 0→1 이 팔레트 전 구간(새싹→풀잎→이끼)을 관통한다
+        const d = (dBand + 0.5) / DBANDS;
+        const dl = Math.min(1, d * 1.6);
+        const dm = Math.max(0, Math.min(1, (d - 0.5) * 2));
+        const r = (sprout[0] + (g[0] - sprout[0]) * dl) * (1 - dm) + moss[0] * dm;
+        const gr = (sprout[1] + (g[1] - sprout[1]) * dl) * (1 - dm) + moss[1] * dm;
+        const bl = (sprout[2] + (g[2] - sprout[2]) * dl) * (1 - dm) + moss[2] * dm;
+        const k = bright ? 1.12 : 0.92;   // 높이 솟은 줄기는 빛을 더 받는다
+        const alpha = far ? (bright ? 1.0 : 0.86) : (bright ? 0.95 : 0.72);
+        ctx.strokeStyle = `rgba(${Math.min(255, r * k) | 0}, ${Math.min(255, gr * k) | 0}, ${Math.min(255, bl * k) | 0}, ${alpha})`;
+        ctx.stroke(paths[b]);
+      }
+      ctx.strokeStyle = `rgba(${P.add[0]}, ${P.add[1]}, ${P.add[2]}, 0.95)`;
+      ctx.stroke(paths[NB]);
+      ctx.strokeStyle = `rgba(${P.del[0]}, ${P.del[1]}, ${P.del[2]}, 0.95)`;
+      ctx.stroke(paths[NB + 1]);
+      ctx.lineCap = 'butt';
+
+      if (hasBloom) {
+        ctx.fillStyle = `rgba(${P.hoverRGB[0]}, ${P.hoverRGB[1]}, ${P.hoverRGB[2]}, 0.72)`;
+        ctx.fill(bloomPath);
+      }
+    }
+
     render() {
       const { ctx, cssW, cssH } = this;
       if (!ctx) return;
@@ -704,8 +885,10 @@
       const cStart = Math.max(0, Math.floor((0 - oy) / cellH));
       const cEnd   = Math.min(this.K, Math.ceil((cssH - oy) / cellH));
 
-      // 모드별 셀 렌더 — 이진은 on/off/diff, 연속은 HSL 그라데이션 (200→160 hue)
-      if (this.displayMode === 'continuous') {
+      // Persistent Bloom — 구조가 자라는 들판 (직관 모드). 데이터는 동일, 표현만 유기적.
+      if (this.bloomMode) {
+        this._renderMeadow(ctx, P, ox, oy, cellW, cellH, tStart, tEnd, cStart, cEnd);
+      } else if (this.displayMode === 'continuous') {
         const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
         const baseL = isDark ? 12 : 95;
         const peakL = isDark ? 60 : 35;
@@ -769,7 +952,9 @@
         const bandTop = oy + cStart * cellH;
         const bandH = (cEnd - cStart) * cellH;
         const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-        ctx.fillStyle = isDark ? 'rgba(5, 8, 5, 0.55)' : 'rgba(245, 248, 242, 0.62)';
+        // 구간 밖을 살짝만 눌러 둔다 — 강하게 덮으면 들판(Persistent Bloom)이 씻겨나간다.
+        // 어느 구간이 생성 대상인지는 아래 액센트 경계선이 알려준다.
+        ctx.fillStyle = isDark ? 'rgba(5, 8, 5, 0.30)' : 'rgba(245, 248, 242, 0.30)';
         if (segX0 > ox) ctx.fillRect(ox, bandTop, segX0 - ox, bandH);
         const rightEdge = ox + this.T * cellW;
         if (segX1 < rightEdge) ctx.fillRect(segX1, bandTop, rightEdge - segX1, bandH);
@@ -795,7 +980,14 @@
     }
 
     _emitChange() {
+      this._bloomDirty = true;   // 데이터가 바뀌면 들판을 다시 기른다
       try { this.onChange(this); } catch (e) { console.error('onChange cb error:', e); }
+    }
+
+    // 들판 ↔ 격자 전환 (고급 모드에서 원래 격자를 보고 싶을 때)
+    setBloomMode(on) {
+      this.bloomMode = !!on;
+      this.render();
     }
   }
 

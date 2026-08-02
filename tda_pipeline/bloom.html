@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Persistent Bloom — 음악의 구조가 자라는 들판</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&family=Lora:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        /* Anthropic Brand Colors */
+        :root {
+            --anthropic-dark: #141413;
+            --anthropic-light: #faf9f5;
+            --anthropic-mid-gray: #b0aea5;
+            --anthropic-light-gray: #e8e6dc;
+            --anthropic-orange: #d97757;
+            --anthropic-blue: #6a9bcc;
+            --anthropic-green: #788c5d;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, var(--anthropic-light) 0%, #f5f3ee 100%);
+            min-height: 100vh;
+            color: var(--anthropic-dark);
+        }
+
+        .container {
+            display: flex;
+            min-height: 100vh;
+            padding: 20px;
+            gap: 20px;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 320px;
+            flex-shrink: 0;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 24px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(20, 20, 19, 0.1);
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+
+        .sidebar h1 {
+            font-family: 'Lora', serif;
+            font-size: 24px;
+            font-weight: 500;
+            color: var(--anthropic-dark);
+            margin-bottom: 8px;
+        }
+
+        .sidebar .subtitle {
+            color: var(--anthropic-mid-gray);
+            font-size: 14px;
+            margin-bottom: 32px;
+            line-height: 1.4;
+        }
+
+        /* Control Sections */
+        .control-section {
+            margin-bottom: 32px;
+        }
+
+        .control-section h3 {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--anthropic-dark);
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .control-section h3::before {
+            content: '•';
+            color: var(--anthropic-orange);
+            font-weight: bold;
+        }
+
+        /* Seed Controls */
+        .seed-input {
+            width: 100%;
+            background: var(--anthropic-light);
+            padding: 12px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            margin-bottom: 12px;
+            border: 1px solid var(--anthropic-light-gray);
+            text-align: center;
+        }
+
+        .seed-input:focus {
+            outline: none;
+            border-color: var(--anthropic-orange);
+            box-shadow: 0 0 0 2px rgba(217, 119, 87, 0.1);
+            background: white;
+        }
+
+        .seed-controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .regen-button {
+            margin-bottom: 0;
+        }
+
+        /* Parameter Controls */
+        .control-group {
+            margin-bottom: 20px;
+        }
+
+        .control-group label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--anthropic-dark);
+            margin-bottom: 8px;
+        }
+
+        .control-group .hint {
+            display: block;
+            font-size: 11px;
+            font-weight: 400;
+            color: var(--anthropic-mid-gray);
+            margin-top: -4px;
+            margin-bottom: 6px;
+        }
+
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .slider-container input[type="range"] {
+            flex: 1;
+            height: 4px;
+            background: var(--anthropic-light-gray);
+            border-radius: 2px;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .slider-container input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            background: var(--anthropic-orange);
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .slider-container input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.1);
+            background: #c86641;
+        }
+
+        .slider-container input[type="range"]::-moz-range-thumb {
+            width: 16px;
+            height: 16px;
+            background: var(--anthropic-orange);
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .value-display {
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            color: var(--anthropic-mid-gray);
+            min-width: 60px;
+            text-align: right;
+        }
+
+        /* Color Pickers */
+        .color-group {
+            margin-bottom: 16px;
+        }
+
+        .color-group label {
+            display: block;
+            font-size: 12px;
+            color: var(--anthropic-mid-gray);
+            margin-bottom: 4px;
+        }
+
+        .color-picker-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .color-picker-container input[type="color"] {
+            width: 32px;
+            height: 32px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            background: none;
+            padding: 0;
+        }
+
+        .color-value {
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            color: var(--anthropic-mid-gray);
+        }
+
+        /* Buttons */
+        .button {
+            background: var(--anthropic-orange);
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            width: 100%;
+        }
+
+        .button:hover {
+            background: #c86641;
+            transform: translateY(-1px);
+        }
+
+        .button:active {
+            transform: translateY(0);
+        }
+
+        .button.secondary {
+            background: var(--anthropic-blue);
+        }
+
+        .button.secondary:hover {
+            background: #5a8bb8;
+        }
+
+        .button.tertiary {
+            background: var(--anthropic-green);
+        }
+
+        .button.tertiary:hover {
+            background: #6b7b52;
+        }
+
+        .button-row {
+            display: flex;
+            gap: 8px;
+        }
+
+        .button-row .button {
+            flex: 1;
+        }
+
+        /* Canvas Area */
+        .canvas-area {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 0;
+        }
+
+        #canvas-container {
+            width: 100%;
+            max-width: 1000px;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 20px 40px rgba(20, 20, 19, 0.1);
+            background: white;
+        }
+
+        #canvas-container canvas {
+            display: block;
+            width: 100% !important;
+            height: auto !important;
+        }
+
+        /* Loading State */
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            color: var(--anthropic-mid-gray);
+            padding: 80px 0;
+        }
+
+        /* Responsive - Stack on mobile */
+        @media (max-width: 600px) {
+            .container {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                width: 100%;
+            }
+
+            .canvas-area {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Control Sidebar -->
+        <div class="sidebar">
+            <h1>Persistent Bloom</h1>
+            <div class="subtitle">
+                음악의 위상 구조가 자라는 들판.<br>
+                가로는 시간, 각 줄기는 하나의 고리(cycle).<br>
+                고리가 깨어 있으면 자라고, 잠들면 낮아집니다.
+            </div>
+
+            <!-- Seed Section (ALWAYS KEEP THIS) -->
+            <div class="control-section">
+                <h3>Seed</h3>
+                <input type="number" id="seed-input" class="seed-input" value="12345" onchange="updateSeed()">
+                <div class="seed-controls">
+                    <button class="button secondary" onclick="previousSeed()">← Prev</button>
+                    <button class="button secondary" onclick="nextSeed()">Next →</button>
+                </div>
+                <button class="button tertiary regen-button" onclick="randomSeedAndUpdate()">↻ Random</button>
+            </div>
+
+            <!-- Parameters Section -->
+            <div class="control-section">
+                <h3>Parameters</h3>
+
+                <div class="control-group">
+                    <label>Strands · 고리 수 (K)</label>
+                    <span class="hint">몇 개의 위상 고리가 이 들판에 사는가</span>
+                    <div class="slider-container">
+                        <input type="range" id="strands" min="4" max="28" step="1" value="14" oninput="updateParam('strands', this.value)">
+                        <span class="value-display" id="strands-value">14</span>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label>Time Span · 시간 폭</label>
+                    <span class="hint">화면에 담기는 시점의 수</span>
+                    <div class="slider-container">
+                        <input type="range" id="timeSpan" min="48" max="320" step="8" value="160" oninput="updateParam('timeSpan', this.value)">
+                        <span class="value-display" id="timeSpan-value">160</span>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label>Growth · 성장 속도</label>
+                    <span class="hint">깨어난 줄기가 얼마나 빠르게 솟는가</span>
+                    <div class="slider-container">
+                        <input type="range" id="growth" min="0.03" max="0.45" step="0.01" value="0.14" oninput="updateParam('growth', this.value)">
+                        <span class="value-display" id="growth-value">0.14</span>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label>Memory · 잔향</label>
+                    <span class="hint">잠든 줄기가 얼마나 오래 기억되는가</span>
+                    <div class="slider-container">
+                        <input type="range" id="memory" min="0.70" max="0.99" step="0.01" value="0.92" oninput="updateParam('memory', this.value)">
+                        <span class="value-display" id="memory-value">0.92</span>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label>Wind · 바람</label>
+                    <span class="hint">보이지 않는 힘의 세기</span>
+                    <div class="slider-container">
+                        <input type="range" id="wind" min="0" max="1.6" step="0.05" value="0.6" oninput="updateParam('wind', this.value)">
+                        <span class="value-display" id="wind-value">0.6</span>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label>Phase Drift · 위상 어긋남</label>
+                    <span class="hint">서로소 주기가 어긋나는 정도</span>
+                    <div class="slider-container">
+                        <input type="range" id="phaseDrift" min="0" max="1" step="0.02" value="0.42" oninput="updateParam('phaseDrift', this.value)">
+                        <span class="value-display" id="phaseDrift-value">0.42</span>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label>Bloom Rate · 개화 밀도</label>
+                    <span class="hint">들판이 얼마나 빽빽한가</span>
+                    <div class="slider-container">
+                        <input type="range" id="bloomRate" min="0.08" max="0.72" step="0.02" value="0.34" oninput="updateParam('bloomRate', this.value)">
+                        <span class="value-display" id="bloomRate-value">0.34</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Colors Section -->
+            <div class="control-section">
+                <h3>Colors</h3>
+
+                <div class="color-group">
+                    <label>Grass · 풀잎</label>
+                    <div class="color-picker-container">
+                        <input type="color" id="color1" value="#3a8f3d" onchange="updateColor('color1', this.value)">
+                        <span class="color-value" id="color1-value">#3a8f3d</span>
+                    </div>
+                </div>
+
+                <div class="color-group">
+                    <label>Sprout · 새싹</label>
+                    <div class="color-picker-container">
+                        <input type="color" id="color2" value="#6cc24a" onchange="updateColor('color2', this.value)">
+                        <span class="color-value" id="color2-value">#6cc24a</span>
+                    </div>
+                </div>
+
+                <div class="color-group">
+                    <label>Bloom · 개화</label>
+                    <div class="color-picker-container">
+                        <input type="color" id="color3" value="#dba93f" onchange="updateColor('color3', this.value)">
+                        <span class="color-value" id="color3-value">#dba93f</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Actions Section (ALWAYS KEEP THIS) -->
+            <div class="control-section">
+                <h3>Actions</h3>
+                <div class="button-row">
+                    <button class="button" onclick="initializeSystem()">Regenerate</button>
+                    <button class="button" onclick="resetParameters()">Reset</button>
+                </div>
+                <div style="height:8px"></div>
+                <button class="button tertiary" onclick="downloadPNG()">↓ Download PNG</button>
+            </div>
+        </div>
+
+        <!-- Main Canvas Area -->
+        <div class="canvas-area">
+            <div id="canvas-container">
+                <div class="loading">Cultivating the field…</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ═══════════════════════════════════════════════════════════════════════
+        // PERSISTENT BLOOM — 위상 구조가 자라는 들판
+        //
+        // 철학: docs/algorithmic_philosophy_persistent_bloom.md
+        // 각 고리(cycle)는 시간이라는 땅에 뿌리내린 살아 있는 줄기.
+        // 활성 = 성장, 비활성 = 감쇠. 이진 데이터가 미분방정식으로 번역된다.
+        // ═══════════════════════════════════════════════════════════════════════
+
+        let params = {
+            seed: 12345,
+            strands: 14,
+            timeSpan: 160,
+            growth: 0.14,
+            memory: 0.92,
+            wind: 0.6,
+            phaseDrift: 0.42,
+            bloomRate: 0.34,
+            colorPalette: ['#3a8f3d', '#6cc24a', '#dba93f']
+        };
+
+        let defaultParams = JSON.parse(JSON.stringify(params));
+
+        // 서로소 주기 — 최소공배수가 화면 밖에 있어 패턴이 결코 정확히 반복되지 않는다
+        const COPRIME_PERIODS = [7, 11, 13, 17, 19, 23, 29, 31, 37, 41,
+                                 43, 47, 53, 59, 61, 67, 71, 73, 79, 83,
+                                 89, 97, 101, 103, 107, 109, 113, 127];
+
+        let activation = [];   // [k][t] ∈ {0,1} — 위상 고리의 활성 여부
+        let energy = [];       // [k][t] ∈ [0,1] — 적분된 성장 에너지
+        let onsets = [];       // [k][t] — 개화점(0→1 전이)
+        let jitter = [];       // [k][t] — 셀별 고정 난수 (프레임 간 안정)
+        let density = [];      // [k][t] ∈ [0,1] — 국소 밀도 (겹침의 정도)
+        let colGrass, colSprout, colBloom, colMoss;
+
+        function setup() {
+            const canvas = createCanvas(1400, 900);
+            canvas.parent('canvas-container');
+            initializeSystem();
+            const loading = document.querySelector('.loading');
+            if (loading) loading.style.display = 'none';
+        }
+
+        // ── 시스템 초기화 ──────────────────────────────────────────────────
+        function initializeSystem() {
+            randomSeed(params.seed);
+            noiseSeed(params.seed);
+
+            const K = params.strands;
+            const T = params.timeSpan;
+
+            activation = [];
+            energy = [];
+            onsets = [];
+            jitter = [];
+
+            for (let k = 0; k < K; k++) {
+                // 각 줄기는 고유한 서로소 주기와 위상 오프셋을 갖는다
+                const period = COPRIME_PERIODS[k % COPRIME_PERIODS.length];
+                const offset = random(period);
+                const duty = constrain(params.bloomRate * (0.6 + random(0.9)), 0.05, 0.9);
+                // 위상 어긋남 — 주기가 시간에 따라 아주 느리게 늘어난다
+                const drift = 1 + params.phaseDrift * 0.004 * (k + 1);
+
+                const aRow = new Array(T).fill(0);
+                const eRow = new Array(T).fill(0);
+                const oRow = new Array(T).fill(0);
+                const jRow = new Array(T);
+
+                let e = 0;
+                let prev = 0;
+                for (let t = 0; t < T; t++) {
+                    // 주기적 맥동 × 노이즈 변조 — 반복되되 결코 똑같지 않게
+                    const phase = ((t * drift + offset) % period) / period;
+                    const pulse = phase < duty ? 1 : 0;
+                    const n = noise(k * 31.7, t * 0.045);
+                    const active = (pulse && n > 0.36) || (n > 0.78 && random() < params.bloomRate * 0.35) ? 1 : 0;
+
+                    aRow[t] = active;
+                    oRow[t] = active && !prev ? 1 : 0;
+                    prev = active;
+
+                    // 적분: 활성이면 성장, 비활성이면 감쇠 — 격자를 유기체로 바꾸는 핵심
+                    e = active ? min(1, e + params.growth) : e * params.memory;
+                    eRow[t] = e;
+
+                    jRow[t] = [random(), random(), random()];
+                }
+                activation.push(aRow);
+                energy.push(eRow);
+                onsets.push(oRow);
+                jitter.push(jRow);
+            }
+
+            // 국소 밀도: 시간 ±3, 이웃 줄기 ±1 창의 에너지 평균
+            // "여러 줄기가 겹치는 구간은 짙은 이끼색으로 가라앉는다"
+            density = [];
+            for (let k = 0; k < K; k++) {
+                const dRow = new Array(T).fill(0);
+                for (let t = 0; t < T; t++) {
+                    let s = 0, n = 0;
+                    for (let dk = -1; dk <= 1; dk++) {
+                        const kk = k + dk;
+                        if (kk < 0 || kk >= K) continue;
+                        for (let dt = -3; dt <= 3; dt++) {
+                            const tt = t + dt;
+                            if (tt < 0 || tt >= T) continue;
+                            s += energy[kk][tt];
+                            n++;
+                        }
+                    }
+                    dRow[t] = n ? constrain(s / n, 0, 1) : 0;
+                }
+                density.push(dRow);
+            }
+
+            refreshColors();
+        }
+
+        function refreshColors() {
+            colGrass  = color(params.colorPalette[0]);
+            colSprout = color(params.colorPalette[1]);
+            colBloom  = color(params.colorPalette[2]);
+            // 이끼색은 풀잎색에서 자동 파생 — 팔레트는 3색으로 유지하되 깊이를 얻는다
+            colMoss = color(red(colGrass) * 0.42, green(colGrass) * 0.46, blue(colGrass) * 0.40);
+        }
+
+        // ── 렌더링 ────────────────────────────────────────────────────────
+        function draw() {
+            drawSky();
+
+            const K = params.strands;
+            const T = params.timeSpan;
+            const padX = 46;
+            const padTop = 40;
+            const padBottom = 40;
+            const fieldW = width - padX * 2;
+            const fieldH = height - padTop - padBottom;
+            const rowH = fieldH / K;
+            const colW = fieldW / T;
+            const time = frameCount * 0.008;
+
+            noFill();
+            for (let k = 0; k < K; k++) {
+                // 각 줄기의 지면(뿌리선) — 위에서부터 순서대로 쌓인다
+                const baseY = padTop + rowH * (k + 1);
+
+                // 아주 옅은 지면선: 데이터의 행 구조를 잃지 않기 위한 최소한의 격자
+                stroke(34, 51, 31, 12);
+                strokeWeight(1);
+                line(padX, baseY, padX + fieldW, baseY);
+
+                for (let t = 0; t < T; t++) {
+                    const e = energy[k][t];
+                    if (e < 0.02) continue;
+
+                    const x = padX + colW * (t + 0.5);
+                    const j = jitter[k][t];
+                    // 에너지가 클수록 잎이 여러 갈래로 돋는다
+                    const blades = 1 + floor(e * 2.6);
+
+                    for (let b = 0; b < blades; b++) {
+                        const jx = (j[b % 3] - 0.5) * colW * 1.5;
+                        const hMul = 0.55 + j[(b + 1) % 3] * 0.75;
+                        const h = e * rowH * 0.98 * hMul;
+                        if (h < 1.2) continue;
+
+                        // 바람: 저주파 노이즈 벡터장, 시간에 따라 느리게 회전
+                        const w = (noise(x * 0.0035, baseY * 0.01, time) - 0.5) * 2;
+                        // 뿌리는 고정, 끝은 자유 — 유연도는 높이에 비례
+                        const bend = w * params.wind * h * 0.42;
+
+                        // 밀도가 색을 결정한다 — 이 알고리즘의 색채 원리
+                        // 홀로 선 줄기는 새싹의 연둣빛, 겹쳐 자란 곳은 짙은 이끼로 가라앉는다
+                        const d = density[k][t];
+                        const lift = constrain(h / (rowH * 1.1), 0, 1);
+                        let c = lerpColor(colSprout, colGrass, constrain(d * 1.35, 0, 1));
+                        c = lerpColor(c, colMoss, constrain((d - 0.42) * 1.7, 0, 1));
+                        c = lerpColor(c, colSprout, lift * 0.22);   // 끝으로 갈수록 빛을 받는다
+                        stroke(red(c), green(c), blue(c), 145 + 95 * e);
+                        strokeWeight(0.7 + e * 1.5);
+
+                        beginShape();
+                        vertex(x + jx, baseY);
+                        bezierVertex(
+                            x + jx + bend * 0.18, baseY - h * 0.42,
+                            x + jx + bend * 0.62, baseY - h * 0.78,
+                            x + jx + bend, baseY - h
+                        );
+                        endShape();
+                    }
+
+                    // 개화점: 활성 구간의 시작 — 시간의 맥동을 시각적 박동으로
+                    if (onsets[k][t]) {
+                        const pulse = 1 + 0.28 * sin(time * 6 + k * 1.7 + t * 0.4);
+                        const r = (1.6 + e * 2.4) * pulse;
+                        noStroke();
+                        fill(red(colBloom), green(colBloom), blue(colBloom), 40);
+                        circle(x, baseY - e * rowH * 0.92, r * 3.2);
+                        fill(red(colBloom), green(colBloom), blue(colBloom), 210);
+                        circle(x, baseY - e * rowH * 0.92, r);
+                        noFill();
+                    }
+                }
+            }
+
+            drawFrameLabels(padX, padTop, fieldW, fieldH, K, T);
+        }
+
+        function drawSky() {
+            // 하늘 → 들판으로 가라앉는 배경 (괴물의 초록 들판)
+            noStroke();
+            for (let y = 0; y < height; y += 4) {
+                const t = y / height;
+                const r = lerp(244, 233, t);
+                const g = lerp(249, 241, t);
+                const b = lerp(238, 216, t);
+                fill(r, g, b);
+                rect(0, y, width, 4);
+            }
+            // 햇살 — 왼쪽 위에서 스며드는 따뜻함
+            noStroke();
+            for (let i = 8; i > 0; i--) {
+                fill(255, 236, 170, 5);
+                circle(width * 0.16, height * 0.1, i * 190);
+            }
+        }
+
+        function drawFrameLabels(padX, padTop, fieldW, fieldH, K, T) {
+            noStroke();
+            fill(122, 144, 112, 190);
+            textFont('Courier New');
+            textSize(13);
+            textAlign(LEFT, TOP);
+            text('고리 ' + K + '개 · 시간 ' + T + '칸', padX, 14);
+            textAlign(RIGHT, TOP);
+            text('시간 →', padX + fieldW, 14);
+            textAlign(LEFT, BOTTOM);
+            fill(122, 144, 112, 140);
+            textSize(11);
+            text('Persistent Bloom · seed ' + params.seed, padX, height - 12);
+        }
+
+        // ═══════════════════════════════════════════════════════════════════════
+        // UI CONTROL HANDLERS
+        // ═══════════════════════════════════════════════════════════════════════
+
+        function updateParam(name, value) {
+            const v = parseFloat(value);
+            params[name] = (name === 'strands' || name === 'timeSpan') ? parseInt(value, 10) : v;
+            document.getElementById(name + '-value').textContent = value;
+            initializeSystem();
+        }
+
+        function updateColor(colorId, value) {
+            const idx = { color1: 0, color2: 1, color3: 2 }[colorId];
+            params.colorPalette[idx] = value;
+            document.getElementById(colorId + '-value').textContent = value;
+            refreshColors();
+        }
+
+        function downloadPNG() {
+            saveCanvas('persistent-bloom-seed' + params.seed, 'png');
+        }
+
+        // ═══════════════════════════════════════════════════════════════════════
+        // SEED CONTROL FUNCTIONS - ALWAYS KEEP THESE
+        // ═══════════════════════════════════════════════════════════════════════
+
+        function updateSeedDisplay() {
+            document.getElementById('seed-input').value = params.seed;
+        }
+
+        function updateSeed() {
+            const input = document.getElementById('seed-input');
+            const newSeed = parseInt(input.value, 10);
+            if (newSeed && newSeed > 0) {
+                params.seed = newSeed;
+                initializeSystem();
+            } else {
+                updateSeedDisplay();
+            }
+        }
+
+        function previousSeed() {
+            params.seed = Math.max(1, params.seed - 1);
+            updateSeedDisplay();
+            initializeSystem();
+        }
+
+        function nextSeed() {
+            params.seed = params.seed + 1;
+            updateSeedDisplay();
+            initializeSystem();
+        }
+
+        function randomSeedAndUpdate() {
+            params.seed = Math.floor(Math.random() * 999999) + 1;
+            updateSeedDisplay();
+            initializeSystem();
+        }
+
+        function resetParameters() {
+            params = JSON.parse(JSON.stringify(defaultParams));
+
+            ['strands', 'timeSpan', 'growth', 'memory', 'wind', 'phaseDrift', 'bloomRate'].forEach(function (name) {
+                document.getElementById(name).value = params[name];
+                document.getElementById(name + '-value').textContent = params[name];
+            });
+            ['color1', 'color2', 'color3'].forEach(function (id, i) {
+                document.getElementById(id).value = params.colorPalette[i];
+                document.getElementById(id + '-value').textContent = params.colorPalette[i];
+            });
+
+            updateSeedDisplay();
+            initializeSystem();
+        }
+
+        window.addEventListener('load', function () {
+            updateSeedDisplay();
+        });
+    </script>
+</body>
+</html>
