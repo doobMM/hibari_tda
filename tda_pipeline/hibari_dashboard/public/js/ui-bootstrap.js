@@ -2116,6 +2116,81 @@
     }
   }
 
+  // ── 모티브만 남기고 채우기 (위상 손실 디퓨전 + RePaint) ──────────────
+  // 지금 켜 둔 칸을 "내가 정한 것"으로 고정하고, 나머지를 디노이저가 채운다.
+  // 재학습이 없으므로 모티브를 바꾸는 비용은 0 이다.
+  const motifFillState = { busy: false };
+
+  function setMotifStatus(msg) {
+    const el = $('motifFillStatus');
+    if (el) el.textContent = msg;
+  }
+
+  async function onMotifFill() {
+    if (motifFillState.busy) return;
+    const seg = getVaeSegment();
+    if (!seg) return;
+    const md = window.motifDiffusion;
+    if (!md) { setMotifStatus('모듈 미로드'); return; }
+
+    const ed = UI.editEditor;
+    const K = ed.K;
+    const n = seg.len * K;
+    const cont = readSegmentContinuous(seg);
+
+    let onCount = 0;
+    for (let i = 0; i < n; i++) if (cont[i] >= 0.5) onCount++;
+    if (onCount === 0) {
+      setMotifStatus('먼저 칸을 몇 개 켜세요 — 그게 모티브가 됩니다');
+      return;
+    }
+    if (onCount === n) {
+      setMotifStatus('전부 켜져 있어 채울 자리가 없습니다');
+      return;
+    }
+
+    const btn = $('btnMotifFill');
+    motifFillState.busy = true;
+    if (btn) btn.disabled = true;
+    try {
+      setMotifStatus('모델 로드 중… (~3MB, 첫 1회만)');
+      const seedEl = $('sliderSeed');          // 생성 패널의 seed 입력과 공유
+      const seed = seedEl && +seedEl.value ? (+seedEl.value | 0) : 1;
+      const res = await md.completeFromOn(cont, seg.len, K, {
+        seed,
+        steps: 50,
+        onProgress: (d, t) => setMotifStatus(`채우는 중… ${Math.round(d / t * 100)}%`),
+      });
+
+      const isBinary = ed.displayMode !== 'continuous';
+      const Alloc = isBinary ? Int8Array : Float32Array;
+      const full = new Alloc(ed.getMatrix());
+      const src = isBinary ? res.binary : res.raw;
+      for (let i = 0; i < n; i++) full[seg.start * K + i] = src[i];
+      vaeState.applying = true;
+      try { ed.setMatrix(full); } finally { vaeState.applying = false; }
+
+      let after = 0;
+      for (let i = 0; i < n; i++) if (res.binary[i] >= 0.5) after++;
+      setMotifStatus(`완료 — 모티브 ${onCount}칸 고정, ${after - onCount}칸을 새로 채웠습니다`);
+      log(`모티브 조건부 채우기 (블록 ${seg.m}) — 고정 ${onCount} / 총 ${after}`, 'OK');
+    } catch (e) {
+      setMotifStatus('오류: ' + e.message);
+    } finally {
+      motifFillState.busy = false;
+      if (btn) btn.disabled = false;
+    }
+  }
+
+  // 모델 파일이 실제로 있을 때만 버튼을 보인다 (없으면 조용히 숨김)
+  async function probeMotifDiffusion() {
+    const block = $('motifFillBlock');
+    if (!block || !window.motifDiffusion) return;
+    let ok = false;
+    try { ok = await window.motifDiffusion.available(); } catch (e) { ok = false; }
+    if (ok) block.hidden = false;
+  }
+
   function wireVaePanel() {
     const slider = $('sliderVaeMix');
     if (slider) slider.addEventListener('input', onVaeMixInput);
@@ -2123,6 +2198,9 @@
     if (dice) dice.addEventListener('click', onVaeDice);
     const smooth = $('btnVaeSmooth');
     if (smooth) smooth.addEventListener('click', onVaeSmooth);
+    const fill = $('btnMotifFill');
+    if (fill) fill.addEventListener('click', onMotifFill);
+    probeMotifDiffusion();
   }
 
   function registerLabel(v) {

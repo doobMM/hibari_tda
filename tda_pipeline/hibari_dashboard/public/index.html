@@ -7,8 +7,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=Noto+Serif+KR:wght@500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/tokens.css?v=4.32">
-  <link rel="stylesheet" href="css/style.css?v=4.32">
+  <link rel="stylesheet" href="css/tokens.css?v=4.33">
+  <link rel="stylesheet" href="css/style.css?v=4.33">
   <link rel="stylesheet" href="../../shared/nav.css">
   <script>
     // FOUC 방지 — CSS 로드 전에 uimode 속성을 즉시 세팅 (기본값 simple)
@@ -192,6 +192,13 @@
           <button class="btn" id="btnVaeSmooth" type="button" title="손으로 그린 OM을 학습된 구조 공간으로 부드럽게 보정합니다">&#x1F33F; 부드럽게 보정</button>
         </div>
         <p class="hint" id="vaeStatus">첫 사용 시 모델을 내려받습니다 (~2MB)</p>
+
+        <div class="motif-fill" id="motifFillBlock" hidden>
+          <button class="btn btn--primary" id="btnMotifFill" type="button"
+                  title="지금 켜 둔 칸을 모티브로 고정하고, 나머지를 디퓨전이 채웁니다">
+            &#x1F331; 모티브만 남기고 채우기</button>
+          <p class="hint" id="motifFillStatus">켜 둔 칸은 그대로 두고 나머지를 새로 채웁니다</p>
+        </div>
       </details>
 
     </aside>
@@ -523,17 +530,18 @@
   </script>
 
   <!-- ── App scripts ────────────────────────────────────────────────────── -->
-  <script src="js/data-loader.js?v=4.32"></script>
-  <script src="js/overlap-editor.js?v=4.32"></script>
-  <script src="js/generation-algo1.js?v=4.32"></script>
-  <script src="js/generation-algo2.js?v=4.32"></script>
-  <script src="js/generation-algo-transformer.js?v=4.32"></script>
-  <script src="js/vae-explorer.js?v=4.32"></script>
+  <script src="js/data-loader.js?v=4.33"></script>
+  <script src="js/overlap-editor.js?v=4.33"></script>
+  <script src="js/generation-algo1.js?v=4.33"></script>
+  <script src="js/generation-algo2.js?v=4.33"></script>
+  <script src="js/generation-algo-transformer.js?v=4.33"></script>
+  <script src="js/vae-explorer.js?v=4.33"></script>
+  <script src="js/motif-diffusion.js?v=4.33"></script>
   <script src="../../shared/midi-io.js?v=4.12"></script>
   <script src="../../shared/state.js?v=4.12"></script>
-  <script src="js/audio-playback.js?v=4.32"></script>
-  <script src="js/ood-detector.js?v=4.32"></script>
-  <script src="js/ui-bootstrap.js?v=4.32"></script>
+  <script src="js/audio-playback.js?v=4.33"></script>
+  <script src="js/ood-detector.js?v=4.33"></script>
+  <script src="js/ui-bootstrap.js?v=4.33"></script>
 
 </body>
 </html>

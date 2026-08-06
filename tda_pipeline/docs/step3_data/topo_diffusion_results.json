@@ -1,0 +1,107 @@
+{
+  "experiment": "topo_diffusion",
+  "description": "TopoDiffusionNet 방식 위상 손실 + 1D-conv U-Net 디노이저. 1D cubical H0 persistence 폐형식(총 상승변동)으로 PH 라이브러리 없이 미분 가능.",
+  "config": {
+    "window": 60,
+    "K": 14,
+    "stride": 2,
+    "T_diffusion": 200,
+    "epochs": 20,
+    "ch": 96,
+    "lr": 0.002,
+    "batch": 128,
+    "lambda_topo": 0.3,
+    "lambda_dens": 0.3,
+    "persist_eps": 0.1,
+    "n_group": 64
+  },
+  "baseline_mlp_ddpm_recorded": {
+    "source": "docs/step3_data/om_diffusion_results.json (커밋 54e7878)",
+    "note": "MLP-DDPM negative — 밀도 3배, autocorr 붕괴"
+  },
+  "results": {
+    "REAL": {
+      "structural": {
+        "density_mean": 139.0,
+        "density_std": 22.64424705505371,
+        "per_cycle_profile": [
+          0.13203123211860657,
+          0.23619791865348816,
+          0.15989583730697632,
+          0.13333331048488617,
+          0.23671872913837433,
+          0.25859373807907104,
+          0.04531248286366463,
+          0.10729166120290756,
+          0.17135411500930786,
+          0.041145823895931244,
+          0.12161454558372498,
+          0.2656250298023224,
+          0.26588544249534607,
+          0.14166666567325592
+        ],
+        "js_vs_real_profile": 0.0,
+        "temporal_autocorr": 0.8134836561743342,
+        "diversity_pairwise_hamming": 222.0734126984127,
+        "h0_runs_per_cycle": 5.675223214285714,
+        "mean_run_length": 1.8005868403103296
+      }
+    },
+    "full": {
+      "structural": {
+        "density_mean": 0.0,
+        "density_std": 0.0,
+        "per_cycle_profile": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "js_vs_real_profile": 0.02960553244320912,
+        "temporal_autocorr": 1.0,
+        "diversity_pairwise_hamming": 0.0,
+        "h0_runs_per_cycle": 0.0,
+        "mean_run_length": 0.0,
+        "train_seconds": 313.864520072937,
+        "sample_seconds": 47.65521812438965
+      },
+      "train_meta": {
+        "variant": "full",
+        "n_params": 2725550,
+        "best_epoch": 20,
+        "best_val_mse": 0.12947502732276917,
+        "epochs": 20,
+        "lambda_topo": 0.3,
+        "lambda_dens": 0.3,
+        "persist_eps": 0.1
+      },
+      "history": [
+        {
+          "epoch": 10,
+          "simple": 0.197309081753095,
+          "topo": 0.16046315630276997,
+          "dens": 0.046653871238231656,
+          "val": 0.17271795868873596
+        },
+        {
+          "epoch": 20,
+          "simple": 0.14810964663823445,
+          "topo": 0.11312600324551264,
+          "dens": 0.019674616182843843,
+          "val": 0.12947502732276917
+        }
+      ]
+    }
+  },
+  "total_seconds": 361.89089012145996
+}
