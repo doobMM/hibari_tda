@@ -290,6 +290,31 @@ best-practice 도입 커밋 시리즈(316e125 / 9c781ff / 1ca08d4) 이후 병렬
 | R6 | Codex 병렬 | OBS 녹화 → YouTube 업로드 스크립트·메타데이터 | 없음 | Codex에 위임: `docs/youtube_script.md` + `docs/youtube_description.md` + 썸네일 브리프 |
 | R7 | Codex 병렬 | SKMT 재단 연락 — 3-language portfolio 1p + 이메일 | 없음 | Codex에 위임: `docs/outreach/skmt_portfolio_1p.md` + ko/ja/en 이메일 3개 |
 
+### 위상 손실 디퓨전 · 모티브 통제 (2026-08-07, 커밋 5fc1290)
+
+`docs/research_next_algorithms_2026.md` §1 최우선 후보(TopoDiffusionNet) 접목 **성공**.
+상세: `docs/topo_diffusion_report.md`, `docs/motif_control_design.md`,
+메모: `memory/project_topo_diffusion_motif_control.md`.
+
+| 항목 | 결과 |
+|---|---|
+| OM 생성 (τ=0.5, 창 64) | density 132.5 (원곡 139.0) · autocorr 0.8251 (0.8135) · JS_profile **0.00301** |
+| 직전 MLP-DDPM (공정 재평가) | 409.3 / 0.5047 / 0.02737 → **JS_profile 9.1배 개선** |
+| 모티브 조건부 통제 (RePaint) | 보존 **100.0%** 전 조건 · 자유영역 변주차 6.2~14.8% |
+| 모티브 판별력 | 프로파일 JS A-C 0.019 ~ **B-D 0.153** (D=hibari 밖 대조군) |
+| 브라우저 | `topo_denoiser.onnx` 3.13MB, 배치·시간 가변, 파이썬 대조 3e-6 |
+
+**재사용할 교훈 2건 (다른 디퓨전 실험에서 반복 위험):**
+1. DDPM 역방향에서 **x̂₀ 를 [-1,1] 로 클리핑**하지 않으면 샘플이 0/1 로 포화된다.
+2. `np.zeros_like` 는 입력 메모리순서를 물려받는다. torch `permute` 결과를 넘기면
+   `out[i].reshape(-1)` 이 **뷰가 아니라 복사본**이 되어 쓰기가 조용히 사라진다.
+
+| # | 세션 | 남은 작업 | 비고 |
+|---|------|------|------|
+| T1 | A | ablation 완료 후 `eval_topo_diffusion.py` 로 `conv`/`conv_topo`/`full` 분리 | 개선을 아키텍처 vs 위상 손실로 귀속. 학습 진행 중 |
+| T2 | C | 12 트랙 청취 평가 (`output/topo_diffusion/motif.html`) | 모티브별 인상, 뼈대↔변주 차이 |
+| T3 | B | 대시보드 "모티브만 남기고 채우기" 실기기 검증 | 자산 v=4.33. 30초 세그먼트에서 respacing 50스텝 체감속도 |
+
 ### Codex 병렬 위임 후보 (사용자가 발송)
 
 1. **R6 YouTube 스크립트** 8~12분 한국어 내레이션 → `docs/youtube_script.md`
