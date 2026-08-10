@@ -8,8 +8,10 @@ on:
       - 'tda_pipeline/tonnetz_demo/**'
       - 'tda_pipeline/filtration_viz/**'
       - 'tda_pipeline/shared/**'
-      - 'tda_pipeline/index.html'
       - 'tda_pipeline/tour.html'
+      - 'tda_pipeline/bloom.html'
+      - 'tda_pipeline/output/**'
+      - 'index.html'
       - '.github/workflows/pages.yml'
   workflow_dispatch:
 
@@ -35,7 +37,7 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v4
 
-      - name: Assemble site (tour + 3 viz + shared nav + root redirect)
+      - name: Assemble site (landing + tour + 3 viz + 생성 음악 + shared nav)
         run: |
           set -euo pipefail
           mkdir -p _site
@@ -43,9 +45,24 @@ jobs:
           cp -R tda_pipeline/tonnetz_demo      _site/tonnetz_demo
           cp -R tda_pipeline/filtration_viz    _site/filtration_viz
           cp -R tda_pipeline/shared            _site/shared
-          cp    tda_pipeline/index.html        _site/index.html
           cp    tda_pipeline/tour.html         _site/tour.html
-          # 구 URL 호환: /public/ → /hibari_dashboard/public/
+          cp    tda_pipeline/bloom.html        _site/bloom.html
+
+          # 감상용 산출물 (git 에 tracked 된 것만 체크아웃돼 있으므로 WAV 는 애초에 없다)
+          mkdir -p _site/output
+          cp -R tda_pipeline/output/hibari+          _site/output/hibari+
+          cp -R tda_pipeline/output/topo_diffusion   _site/output/topo_diffusion
+
+          # 랜딩용 PDF 2종
+          mkdir -p _site/docs
+          cp tda_pipeline/docs/연구요약_3장.pdf      _site/docs/ 2>/dev/null || true
+          cp tda_pipeline/docs/환대_포트폴리오.pdf   _site/docs/ 2>/dev/null || true
+
+          # 사이트 루트 index 는 **저장소 루트의 리치 랜딩**을 쓴다.
+          # 그 안의 링크는 ./tda_pipeline/... 형태이므로, 사이트 루트 기준으로 접두어를 벗긴다.
+          sed 's|\./tda_pipeline/|./|g' index.html > _site/index.html
+
+          # 구 URL 호환 ①: /public/ → /hibari_dashboard/public/
           mkdir -p _site/public
           cat > _site/public/index.html <<'HTML'
           <!doctype html>
@@ -54,8 +71,40 @@ jobs:
           <title>Redirecting…</title>
           <p>Redirecting to <a href="../hibari_dashboard/public/">OM Dashboard</a>.</p>
           HTML
+
+          # 구 URL 호환 ②: 레거시 브랜치 빌드 시절의 /tda_pipeline/... 진입점들.
+          # 트리 전체를 복제하면 아티팩트가 두 배가 되므로 리다이렉트 스텁만 둔다.
+          redirect () {   # $1=만들 경로  $2=보낼 상대경로
+            mkdir -p "$(dirname "_site/$1")"
+            printf '<!doctype html>\n<meta charset="utf-8">\n<meta http-equiv="refresh" content="0; url=%s">\n<title>Redirecting…</title>\n<p>이동합니다 → <a href="%s">%s</a></p>\n' "$2" "$2" "$2" > "_site/$1"
+          }
+          redirect tda_pipeline/index.html                        ../
+          redirect tda_pipeline/tour.html                         ../tour.html
+          redirect tda_pipeline/bloom.html                        ../bloom.html
+          redirect tda_pipeline/hibari_dashboard/public/index.html ../../../hibari_dashboard/public/
+          redirect tda_pipeline/tonnetz_demo/index.html            ../../tonnetz_demo/
+          redirect tda_pipeline/filtration_viz/index.html          ../../filtration_viz/
+          redirect tda_pipeline/output/topo_diffusion/motif.html   ../../../output/topo_diffusion/motif.html
+          redirect tda_pipeline/output/hibari+/index.html          ../../../output/hibari+/
+
           echo "── Published tree ──"
           find _site -maxdepth 2 -type d | sort
+          echo "── 크기 ──"
+          du -sh _site
+          echo "── 필수 파일 존재 확인 ──"
+          for f in index.html tour.html bloom.html \
+                   hibari_dashboard/public/index.html \
+                   hibari_dashboard/public/js/motif-diffusion.js \
+                   hibari_dashboard/public/models/topo_denoiser.onnx \
+                   output/topo_diffusion/motif.html \
+                   output/topo_diffusion/topo_motifA_skeleton.ogg; do
+            test -f "_site/$f" || { echo "빠짐: $f"; exit 1; }
+            echo "  OK $f"
+          done
+          grep -q 'output/topo_diffusion/motif.html' _site/index.html \
+            || { echo "랜딩에 모티브 페이지 링크 없음"; exit 1; }
+          grep -q './tda_pipeline/' _site/index.html \
+            && { echo "랜딩에 tda_pipeline 접두어가 남아 있다"; exit 1; } || true
 
       - name: Upload _site/ as Pages artifact
         uses: actions/upload-pages-artifact@v3
