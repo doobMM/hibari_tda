@@ -100,6 +100,15 @@ HEAD = """<!doctype html>
        margin:52px 0 8px}
   .note{font-size:13px;color:var(--muted);border-left:3px solid var(--line);
         padding:3px 0 3px 14px;margin:14px 0 0}
+  details.nums{margin-top:10px;border:1px solid var(--line);border-radius:10px;
+               background:var(--card);padding:0 14px}
+  details.nums>summary{cursor:pointer;padding:10px 0;font-size:13px;color:var(--muted);
+                       list-style:none}
+  details.nums>summary::-webkit-details-marker{display:none}
+  details.nums>summary::before{content:'▸ ';color:var(--accent)}
+  details.nums[open]>summary::before{content:'▾ '}
+  details.nums[open]>summary{border-bottom:1px solid var(--line)}
+  details.nums>:last-child{margin-bottom:14px}
   @media(max-width:480px){.wrap{padding:28px 14px 64px}.track canvas{height:96px}}
 </style>
 <div class="wrap">
@@ -248,6 +257,7 @@ def main() -> None:
                     f'<span class="pl">← 이 8스텝(1마디) 패치가 지시입니다.<br>'
                     f'32스텝마다 되풀이해 심었습니다 (시간의 26.7%).</span></div>')
 
+        detail_rows = []
         for role in ("skeleton", "v1", "v2"):
             tr = next((t for t in by_motif[name] if t.get("role") == role), None)
             if not tr:
@@ -262,11 +272,12 @@ def main() -> None:
                     print(f"  {tr['track']:<20} → {src}  {os.path.getsize(ogg_abs)/1e6:.1f}MB")
                 else:
                     src = tr["wav"]
+            # 첫눈에 필요한 것만 남긴다. 지표는 아래 '숫자로 확인하기'에 접어 둔다.
             stats = [f"길이 <b>{tr.get('duration_sec',0):.0f}초</b>",
-                     f"음 <b>{tr.get('n_notes',0)}</b>개",
-                     f"협화도 <b>{tr.get('consonance',0):.3f}</b>",
-                     f"음고 JS <b>{tr.get('js',0):.4f}</b>",
-                     f"온도 <b>{tr.get('temperature',0):.1f}</b>"]
+                     f"음 <b>{tr.get('n_notes',0)}</b>개"]
+            detail_rows.append(
+                f"<tr><td>{title}</td><td>{tr.get('consonance',0):.3f}</td>"
+                f"<td>{tr.get('js',0):.4f}</td><td>{tr.get('temperature',0):.1f}</td></tr>")
             body.append(
                 f'<div class="track{" sk" if role=="skeleton" else ""}">'
                 f'<div class="thead"><span class="ttitle">{title}</span></div>'
@@ -279,7 +290,10 @@ def main() -> None:
 
         if ctl:
             body.append(
-                f'<table><tr><th>모티브 {name} 통제 지표</th><th>값</th><th>뜻</th></tr>'
+                '<details class="nums"><summary>숫자로 확인하기</summary>'
+                + (f'<table><tr><th>트랙</th><th>협화도</th><th>음고 JS</th><th>온도</th></tr>'
+                   + "".join(detail_rows) + '</table>' if detail_rows else '')
+                + f'<table><tr><th>모티브 {name} 통제 지표</th><th>값</th><th>뜻</th></tr>'
                 f'<tr><td>모티브 보존</td><td><b>{ctl.get("fidelity",0)*100:.1f}%</b></td>'
                 f'<td>내가 정한 자리가 그대로 남았는가</td></tr>'
                 f'<tr><td>자유영역 변주간 차이</td><td><b>{ctl.get("free_region_difference",0)*100:.1f}%</b></td>'
@@ -292,7 +306,7 @@ def main() -> None:
                 f'<td><b>{ctl.get("h0_runs_per_cycle",0)/240:.4f}</b></td>'
                 f'<td>원곡 0.0946 (=5.675/60)</td></tr>'
                 f'<tr><td>스텝당 밀도</td><td><b>{ctl.get("density_per_step",0):.2f}</b></td>'
-                f'<td>원곡 2.32 (=139/60)</td></tr></table>')
+                f'<td>원곡 2.32 (=139/60)</td></tr></table></details>')
         body.append("</div>")
 
         data.append(name)
@@ -307,7 +321,7 @@ def main() -> None:
             f"<tr><td>{k}</td><td>{cross.get(k, float('nan')):.5f}</td><td>—</td></tr>"
             for k in keys)
         body.append(
-            '<div class="sec">모티브를 바꾸면 결과가 달라지는가</div>'
+            '<details class="nums"><summary>모티브를 바꾸면 결과가 달라지는가 — 수치</summary>'
             '<p class="mdesc">서로 다른 모티브가 만든 고리 활성 프로파일 사이의 '
             'Jensen-Shannon 거리입니다. <b>중요</b> — 모티브는 시간의 26.7%를 '
             '<i>직접</i> 차지하므로, 전 영역에서 재면 "내가 넣은 것이 거기 있다"는 '
@@ -318,7 +332,7 @@ def main() -> None:
             '<p class="note">자유영역 기준으로도 모델이 채운 내용은 모티브마다 달라집니다'
             '(C–D 0.055, B–D 0.046, A–C 0.044, A–B 0.044). 다만 <b>A–D 는 0.0037 로 거의 같습니다</b> — '
             '전 영역에서 보이던 "D 가 모든 쌍에서 가장 멀다"는 인상은 모티브 자신의 기여였습니다. '
-            '표본이 모티브당 변주 2개(쌍당 1비교)뿐이라 순위는 잠정입니다.</p>')
+            '표본이 모티브당 변주 2개(쌍당 1비교)뿐이라 순위는 잠정입니다.</p></details>')
 
     knob = res.get("coverage_knob", {})
     if knob:
@@ -327,11 +341,11 @@ def main() -> None:
             f'<td><b>{v["fidelity"]*100:.1f}%</b></td>'
             f'<td><b>{v["free_region_difference"]*100:.1f}%</b></td></tr>'
             for k, v in knob.items())
-        body.append('<div class="sec">통제 강도 노브</div>'
+        body.append('<details class="nums"><summary>통제 강도 노브 — 수치</summary>'
                     '<p class="mdesc">모티브를 얼마나 넓게 고정하느냐가 곧 통제의 세기입니다. '
-                    '넓게 잡을수록 내 뜻대로지만 변주의 자유도는 줄어듭니다.</p>'
+                    '다만 아래 표본으로는 자유도 감소를 판별하지 못했습니다(조건당 쌍 1개).</p>'
                     f'<table><tr><th>배치</th><th>고정 비율</th><th>모티브 보존</th>'
-                    f'<th>자유영역 차이</th></tr>{rows}</table>')
+                    f'<th>자유영역 차이</th></tr>{rows}</table></details>')
 
     body.append('<p class="note">방법 — 학습된 디노이저는 그대로 두고, 매 디노이징 스텝에서 '
                 '고정 영역만 원본 모티브로 덮어씁니다(RePaint). 재학습이 없으므로 '

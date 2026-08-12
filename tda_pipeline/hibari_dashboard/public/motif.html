@@ -1,0 +1,343 @@
+<!doctype html>
+<html lang="ko" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>모티브를 그리면 음악이 된다 · hibari</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=Noto+Serif+KR:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#f5f8f2;--fg:#1b2419;--muted:#5c6b57;--line:#d6e0cd;--card:#fff;
+        --moss:#1f3d24;--grass:#4a7c4e;--sprout:#8fbf6a;--accent:#2f6b3a;--fix:#c9dfc0;}
+  @media (prefers-color-scheme:dark){:root{--bg:#0f1410;--fg:#e6ede2;--muted:#8fa088;
+        --line:#243021;--card:#161d15;--accent:#7fb069;--fix:#2b4a2c;}}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);line-height:1.65;
+       font-family:"Noto Sans KR",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+  .wrap{max-width:820px;margin:0 auto;padding:36px 18px 80px}
+  h1{font-family:"Noto Serif KR",Georgia,serif;font-size:clamp(22px,5vw,32px);margin:0 0 8px}
+  .lede{color:var(--muted);font-size:15px;margin:0 0 26px}
+  .steps{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 18px}
+  .step{flex:1 1 200px;background:var(--card);border:1px solid var(--line);
+        border-radius:10px;padding:11px 13px;font-size:13.5px}
+  .step b{display:block;color:var(--accent);font-size:12px;margin-bottom:3px}
+  .board{background:var(--card);border:1px solid var(--line);border-radius:14px;
+         padding:16px;margin-bottom:14px}
+  canvas{width:100%;display:block;border-radius:9px;background:var(--bg);
+         border:1px solid var(--line);touch-action:none;cursor:crosshair}
+  #edit{height:190px}
+  #out{height:150px;cursor:default}
+  .lbl{font-size:12.5px;color:var(--muted);margin:0 0 7px;display:flex;
+       justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
+  .lbl b{color:var(--fg);font-weight:600}
+  .row{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+  button{font:inherit;font-size:14px;padding:9px 15px;border-radius:9px;cursor:pointer;
+         border:1px solid var(--line);background:var(--card);color:var(--fg)}
+  button:hover:not(:disabled){border-color:var(--accent)}
+  button:disabled{opacity:.45;cursor:not-allowed}
+  button.pri{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:600}
+  .status{margin-top:12px;font-size:13.5px;color:var(--muted);min-height:1.5em}
+  .status.busy{color:var(--accent)}
+  .status.err{color:#b4432f}
+  details{margin-top:26px;border:1px solid var(--line);border-radius:11px;
+          background:var(--card);padding:0 15px}
+  summary{cursor:pointer;padding:13px 0;font-weight:600;font-size:14.5px}
+  details[open] summary{border-bottom:1px solid var(--line);margin-bottom:12px}
+  details .body{padding-bottom:15px;font-size:13.5px;color:var(--muted)}
+  details .body b{color:var(--fg)}
+  table{width:100%;border-collapse:collapse;font-size:13px;margin:8px 0}
+  th,td{text-align:right;padding:6px 8px;border-bottom:1px solid var(--line)}
+  th:first-child,td:first-child{text-align:left}
+  th{color:var(--muted);font-weight:500}
+  .nav{margin-top:30px;font-size:13.5px}
+  .nav a{color:var(--accent)}
+  @media(max-width:520px){#edit{height:150px}#out{height:120px}.wrap{padding:24px 13px 60px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>모티브를 그리면 음악이 된다</h1>
+  <p class="lede">칸을 몇 개 켜면 그게 <b>지시</b>가 됩니다. 나머지는 hibari 로 학습한
+     디퓨전이 채우고, 그 결과를 바로 들려줍니다.</p>
+
+  <div class="steps">
+    <div class="step"><b>1</b>아래 격자를 문질러 칸을 켜세요. 가로가 시간(30초), 세로가 위상적 고리 14개입니다.</div>
+    <div class="step"><b>2</b><b>채우고 듣기</b>를 누르면 켜 둔 칸은 그대로 두고 빈 곳만 모델이 메웁니다.</div>
+    <div class="step"><b>3</b>같은 그림으로 다시 눌러 보세요 — 지시는 남고 사이만 달라집니다.</div>
+  </div>
+
+  <div class="board">
+    <p class="lbl"><span>① 내가 그리는 모티브</span><span id="cellCount">켜진 칸 0</span></p>
+    <canvas id="edit"></canvas>
+    <div class="row">
+      <button class="pri" id="btnFill">🌱 채우고 듣기</button>
+      <button id="btnPlay" disabled>♪ 다시 듣기</button>
+      <button id="btnStop" disabled>■ 정지</button>
+      <button id="btnHibari">hibari 한 마디 넣기</button>
+      <button id="btnClear">지우기</button>
+      <button id="btnDice">🎲 다른 씨앗</button>
+    </div>
+    <p class="status" id="status">모델은 처음 누를 때 한 번만 내려받습니다 (약 3MB).</p>
+  </div>
+
+  <div class="board">
+    <p class="lbl"><span>② 모델이 채운 들판</span><span id="outInfo">아직 없음</span></p>
+    <canvas id="out"></canvas>
+  </div>
+
+  <details>
+    <summary>이게 무슨 연구인가 — 3분 브리핑</summary>
+    <div class="body">
+      <p><b>중첩행렬(Overlap Matrix)</b>이 이 연구의 심장입니다. 사카모토 류이치의
+      <i>hibari</i> 를 위상수학(persistent homology)으로 분석하면 <b>고리 14개</b>가 나옵니다.
+      각 고리가 시간에 따라 켜지고 꺼지는 표가 중첩행렬이고, 위 격자가 바로 그것입니다.
+      음악이 아니라 <b>음악의 골격</b>입니다.</p>
+
+      <p><b>2026-06 에는 실패했습니다.</b> 이 골격을 디퓨전으로 생성하려 했는데,
+      60×14 격자를 840차원 벡터로 펴서 MLP 에 넣은 탓에 "옆 칸이 옆 시각"이라는 사실이
+      모델에 전달되지 않았습니다. 결과는 밀도 3배 과밀, 시간 구조 붕괴(0.814→0.504).</p>
+
+      <p><b>이번에 뒤집었습니다.</b> 시간축 1D-conv 로 바꾸고,
+      TopoDiffusionNet(ICLR 2025) 방식의 <b>위상 손실</b>을 붙였습니다. 원 논문은 매 스텝
+      persistent homology 를 계산해 무겁지만, 우리가 필요한 위상은 1차원이라
+      <b>닫힌 식</b>이 있습니다 — <code>Σ ReLU(x[t]−x[t−1])</code>. 외부 라이브러리 없이
+      O(T) 로, 정확히 미분 가능합니다.</p>
+
+      <table id="tblAblate">
+        <tr><th>모델</th><th>밀도</th><th>시간 연속성</th></tr>
+        <tr><td>원곡 hibari</td><td>139.0</td><td>0.8135</td></tr>
+        <tr><td>MLP (2026-06, 공정 재평가)</td><td>409.3</td><td>0.5047</td></tr>
+        <tr><td>위상 손실 (이번)</td><td><b>127.9</b></td><td><b>0.8232</b></td></tr>
+      </table>
+
+      <p><b>그리고 통제.</b> 위 버튼이 하는 일이 그것입니다. 학습된 모델은 그대로 두고
+      매 디노이징 스텝에서 <b>내가 그린 칸만 덮어씁니다</b>(RePaint). 재학습이 없으므로
+      모티브를 바꾸는 비용은 0 입니다. 모티브 보존율은 측정상 <b>100%</b> 입니다.</p>
+
+      <p><b>정직하게 덧붙일 것 넷.</b><br>
+      ① 개선 지표 4개 중 3개(밀도·고리 프로파일·구간 수)는 <b>손실이 직접 최적화한 양</b>이라
+      독립 증거가 아닙니다. 독립적인 것은 <b>시간 연속성 하나</b>입니다.<br>
+      ② "낯선 모티브가 가장 다른 결과를 낸다"던 초기 주장은 <b>철회</b>했습니다 —
+      모티브 자신이 시간의 26.7%를 차지해 생긴 착시였고, 모델이 채운 영역만 따로 재면
+      순위가 뒤집힙니다.<br>
+      ③ 생성된 골격은 원곡보다 <b>26~48% 성깁니다</b>. 조건부화의 대가입니다.<br>
+      ④ 중첩행렬은 "어떤 음을 뽑을지"만 정하고 "몇 개 뽑을지"는 정하지 않습니다.
+      그래서 모티브가 음악 표면의 밀도까지 지배하지는 못합니다.</p>
+    </div>
+  </details>
+
+  <p class="nav">
+    🎧 <a href="../../output/topo_diffusion/motif.html">미리 만들어 둔 12트랙 듣기 (모티브 A~D × 뼈대/변주)</a><br>
+    🎛 <a href="./index.html">전체 대시보드 (고급)</a> ·
+    🌿 <a href="../../bloom.html">Persistent Bloom</a>
+  </p>
+</div>
+
+<script src="js/data-loader.js?v=4.34"></script>
+<script src="js/generation-algo1.js?v=4.34"></script>
+<script src="js/motif-diffusion.js?v=4.34"></script>
+<script src="js/audio-playback.js?v=4.34"></script>
+<script>
+(function () {
+  'use strict';
+  const T = 60, K = 14;                       // 30초 세그먼트 (모바일·대시보드와 동일 기준)
+  const GROWTH = 0.30, MEMORY = 0.70;         // Persistent Bloom 과 같은 규칙
+
+  const motif = new Float32Array(T * K);      // 사용자가 그린 것 = 지시
+  let filled = null;                          // 모델이 채운 결과
+  let notes = null;
+  let seed = 42;
+  let busy = false;
+
+  const $ = id => document.getElementById(id);
+  const editCv = $('edit'), outCv = $('out');
+  const player = new window.PianoPlayer();
+
+  function setStatus(msg, kind) {
+    const el = $('status');
+    el.textContent = msg;
+    el.className = 'status' + (kind ? ' ' + kind : '');
+  }
+
+  // ── 들판 렌더 ────────────────────────────────────────────────────────
+  function palette() {
+    const cs = getComputedStyle(document.documentElement);
+    const hx = n => { const s = cs.getPropertyValue(n).trim() || '#4a7c4e';
+      return [parseInt(s.slice(1,3),16), parseInt(s.slice(3,5),16), parseInt(s.slice(5,7),16)]; };
+    return { moss: hx('--moss'), grass: hx('--grass'), sprout: hx('--sprout'), fix: hx('--fix') };
+  }
+
+  function draw(cv, cells, maskCells) {
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    const w = cv.clientWidth || cv.offsetWidth || 700;
+    const h = cv.clientHeight || cv.offsetHeight || 160;
+    cv.width = w * dpr; cv.height = h * dpr;
+    const g = cv.getContext('2d');
+    g.setTransform(dpr, 0, 0, dpr, 0, 0);
+    g.clearRect(0, 0, w, h);
+    const P = palette();
+
+    if (maskCells) {                       // 고정된 자리를 옅은 띠로
+      g.fillStyle = `rgba(${P.fix[0]},${P.fix[1]},${P.fix[2]},0.5)`;
+      for (let t = 0; t < T; t++) {
+        let any = false;
+        for (let c = 0; c < K; c++) if (maskCells[t * K + c] > 0.5) { any = true; break; }
+        if (any) g.fillRect(t * w / T, 0, w / T, h);
+      }
+    }
+
+    const energy = new Float32Array(T * K);
+    for (let c = 0; c < K; c++) { let e = 0;
+      for (let t = 0; t < T; t++) {
+        e = cells[t * K + c] > 0.5 ? Math.min(1, e + GROWTH) : e * MEMORY;
+        energy[t * K + c] = e;
+      } }
+    const dens = new Float32Array(T * K); let dMax = 0;
+    for (let c = 0; c < K; c++) for (let t = 0; t < T; t++) {
+      let s = 0;
+      for (let dt = -3; dt <= 3; dt++) for (let dc = -1; dc <= 1; dc++) {
+        const tt = t + dt, cc = c + dc;
+        if (tt < 0 || tt >= T || cc < 0 || cc >= K) continue;
+        s += energy[tt * K + cc];
+      }
+      dens[t * K + c] = s; if (s > dMax) dMax = s;
+    }
+    dMax = dMax || 1;
+
+    const cw = w / T, base = h - 6, maxH = h - 15;
+    const lerp = (a, b, u) => [a[0]+(b[0]-a[0])*u, a[1]+(b[1]-a[1])*u, a[2]+(b[2]-a[2])*u];
+    for (let c = 0; c < K; c++) for (let t = 0; t < T; t++) {
+      const e = energy[t * K + c]; if (e < 0.04) continue;
+      const d = dens[t * K + c] / dMax;
+      const col = d < 0.5 ? lerp(P.sprout, P.grass, d / 0.5) : lerp(P.grass, P.moss, (d - 0.5) / 0.5);
+      const x = t * cw + cw * 0.5;
+      const bh = maxH * (0.25 + 0.75 * e) * (0.55 + 0.45 * (1 - c / K));
+      const wind = (Math.sin(x * 0.013 + c * 1.7) + 0.5 * Math.sin(x * 0.037)) * bh * 0.16;
+      g.strokeStyle = `rgb(${col[0]|0},${col[1]|0},${col[2]|0})`;
+      g.lineWidth = Math.max(1.1, cw * 0.5); g.lineCap = 'round';
+      g.beginPath(); g.moveTo(x, base);
+      g.quadraticCurveTo(x + wind * 0.4, base - bh * 0.55, x + wind, base - bh);
+      g.stroke();
+    }
+  }
+
+  function repaint() {
+    draw(editCv, motif, null);
+    let n = 0; for (let i = 0; i < motif.length; i++) if (motif[i] > 0.5) n++;
+    $('cellCount').textContent = `켜진 칸 ${n}`;
+    $('btnFill').disabled = busy || n === 0 || n === motif.length;
+    if (filled) draw(outCv, filled, motif);
+  }
+
+  // ── 그리기 (마우스·터치 공용) ─────────────────────────────────────────
+  let painting = false, paintVal = 1;
+  function cellAt(ev) {
+    const r = editCv.getBoundingClientRect();
+    const t = Math.floor((ev.clientX - r.left) / r.width * T);
+    const c = Math.floor((ev.clientY - r.top) / r.height * K);
+    if (t < 0 || t >= T || c < 0 || c >= K) return -1;
+    return t * K + c;
+  }
+  editCv.addEventListener('pointerdown', ev => {
+    const i = cellAt(ev); if (i < 0) return;
+    editCv.setPointerCapture(ev.pointerId);
+    paintVal = motif[i] > 0.5 ? 0 : 1;
+    motif[i] = paintVal; painting = true; repaint(); ev.preventDefault();
+  });
+  editCv.addEventListener('pointermove', ev => {
+    if (!painting) return;
+    const i = cellAt(ev); if (i < 0) return;
+    if (motif[i] !== paintVal) { motif[i] = paintVal; repaint(); }
+  });
+  ['pointerup', 'pointercancel'].forEach(e =>
+    editCv.addEventListener(e, () => { painting = false; }));
+
+  // ── 액션 ─────────────────────────────────────────────────────────────
+  $('btnClear').onclick = () => { motif.fill(0); filled = null; notes = null;
+    $('outInfo').textContent = '아직 없음'; $('btnPlay').disabled = true;
+    draw(outCv, new Float32Array(T * K), null); repaint();
+    setStatus('지웠습니다. 칸을 켜서 지시를 그려 보세요.'); };
+
+  $('btnDice').onclick = () => { seed = (Math.random() * 1e6) | 0;
+    setStatus(`씨앗 ${seed} — 같은 모티브로 다시 채우면 다른 결과가 나옵니다.`); };
+
+  // hibari 실제 중심 모티브(고리 1,2,4,5,11,13)를 8스텝마다 심어 준다.
+  $('btnHibari').onclick = () => {
+    motif.fill(0);
+    const cyc = [1, 2, 4, 5, 11, 13];
+    for (let p = 0; p < T; p += 16) {
+      for (let d = 0; d < 4 && p + d < T; d++) {
+        for (const c of cyc) if ((d + c) % 3 !== 2) motif[(p + d) * K + c] = 1;
+      }
+    }
+    repaint();
+    setStatus('hibari 가 곡 안에서 90번 되풀이하는 몸짓을 넣었습니다. 이제 채워 보세요.');
+  };
+
+  $('btnStop').onclick = () => { player.stop();
+    $('btnStop').disabled = true; };
+
+  function playNotes() {
+    if (!notes || !notes.length) return;
+    player.play(notes.map(n => [n[0] * 0.4545, n[1], n[2] * 0.4545, 80]),
+                { gain: 0.9, velocityScale: 0.2 });
+    $('btnStop').disabled = false;
+    setStatus(`재생 중 — ${notes.length}음, 약 ${Math.round(T * 0.4545)}초.`);
+  }
+  $('btnPlay').onclick = playNotes;
+
+  $('btnFill').onclick = async () => {
+    if (busy) return;
+    busy = true; repaint();
+    $('btnFill').disabled = true;
+    try {
+      setStatus('모델 준비 중…', 'busy');
+      const md = window.motifDiffusion;
+      const res = await md.completeFromOn(motif, T, K, {
+        seed, steps: 50,
+        onProgress: (d, t) => setStatus(`채우는 중… ${Math.round(d / t * 100)}%`, 'busy'),
+      });
+      filled = res.binary;
+
+      let before = 0, after = 0;
+      for (let i = 0; i < motif.length; i++) { if (motif[i] > 0.5) before++;
+        if (filled[i] > 0.5) after++; }
+      $('outInfo').textContent = `고정 ${before}칸 + 모델이 ${after - before}칸`;
+      draw(outCv, filled, motif);
+
+      setStatus('음악으로 옮기는 중…', 'busy');
+      const { NodePool, CycleSetManager, algorithm1, makeRng, buildHibariInstLen } =
+        window.GenerationAlgo1;
+      const D = window.HibariData;
+      const rng = makeRng(seed >>> 0);
+      const pool = new NodePool({ labels: D.notesMeta.labels,
+        numModules: D.notesMeta.num_modules_reference, temperature: 3.0, rng });
+      const mgr = new CycleSetManager({ cycles: D.cyclesMeta.cycles, K });
+      const out = algorithm1({ nodePool: pool, cycleManager: mgr,
+        instLen: buildHibariInstLen(T), overlap: { T, K, values: filled },
+        maxResample: 50, rng });
+      notes = out.notes || out.generated || out;
+      $('btnPlay').disabled = !(notes && notes.length);
+      playNotes();
+    } catch (e) {
+      setStatus('오류: ' + (e && e.message ? e.message : e), 'err');
+    } finally {
+      busy = false; repaint();
+    }
+  };
+
+  // ── 시작 ─────────────────────────────────────────────────────────────
+  window.addEventListener('resize', repaint);
+  matchMedia('(prefers-color-scheme: dark)').addEventListener('change', repaint);
+
+  window.HibariData.onReady(() => {
+    $('btnHibari').click();                    // 빈 화면 대신 실제 모티브로 시작
+    setStatus('준비됐습니다. 칸을 문질러 고치거나, 바로 채워 보세요.');
+  });
+  repaint();
+  draw(outCv, new Float32Array(T * K), null);
+})();
+</script>
+</body>
+</html>

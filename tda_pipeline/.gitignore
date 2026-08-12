@@ -31,3 +31,7 @@ pipeline_cache.pkl
 # OS
 .DS_Store
 Thumbs.db
+
+# 수업 자료 (연구 파이프라인과 무관, 87MB — Markov.zip 44M / goodnotes.zip 35M).
+# 저장소에 넣을 이유가 없어 제외한다. 필요하면 -f 로 개별 추가.
+수리생물학/
