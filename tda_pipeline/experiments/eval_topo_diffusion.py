@@ -94,7 +94,13 @@ def main():
 
     raw_samples: Dict[str, np.ndarray] = {}
     metas: Dict[str, dict] = {}
-    for v in VARIANTS:
+    available = [v for v in VARIANTS
+                 if os.path.exists(os.path.join(CACHE_DIR, f"topo_diffusion_{v}.pt"))]
+    missing = [v for v in VARIANTS if v not in available]
+    if missing:
+        # ablation 학습이 끝나기 전에도 있는 변이만으로 진짜 아티팩트를 남길 수 있어야 한다.
+        print(f"  !! 체크포인트 없는 변이는 건너뛴다: {missing}")
+    for v in available:
         m, ddpm, meta = load_model(v)
         t0 = time.time()
         raw_samples[v] = sample(m, ddpm, N_GROUP, SAMPLE_SEED)
@@ -124,7 +130,7 @@ def main():
 
         proto_res = {"REAL": rep_real}
         bins_for_music = {"REAL": real_bin}
-        for v in VARIANTS:
+        for v in available:
             bs = binf(raw_samples[v])
             rep = structural_report(v, bs, real_prof)
             proto_res[v] = rep

@@ -285,20 +285,40 @@ def main() -> None:
                 f'<tr><td>자유영역 변주간 차이</td><td><b>{ctl.get("free_region_difference",0)*100:.1f}%</b></td>'
                 f'<td>나머지는 매번 달라지는가 (통제 ≠ 복제)</td></tr>'
                 f'<tr><td>시간 연속성</td><td><b>{ctl.get("temporal_autocorr",0):.3f}</b></td>'
-                f'<td>원곡 0.814</td></tr>'
-                f'<tr><td>고리당 활성 구간</td><td><b>{ctl.get("h0_runs_per_cycle",0):.2f}</b></td>'
-                f'<td>원곡 5.68</td></tr></table>')
+                f'<td>원곡 0.814 (길이에 무관한 지표)</td></tr>'
+                # 원곡 기준값 5.675 는 T=60 창에서 잰 것이므로, T=240 인 이 트랙과
+                # 그대로 비교하면 안 된다. 스텝당으로 정규화해 같은 자로 맞춘다.
+                f'<tr><td>고리당 활성 구간 <span style="opacity:.7">(스텝당)</span></td>'
+                f'<td><b>{ctl.get("h0_runs_per_cycle",0)/240:.4f}</b></td>'
+                f'<td>원곡 0.0946 (=5.675/60)</td></tr>'
+                f'<tr><td>스텝당 밀도</td><td><b>{ctl.get("density_per_step",0):.2f}</b></td>'
+                f'<td>원곡 2.32 (=139/60)</td></tr></table>')
         body.append("</div>")
 
         data.append(name)
 
     cross = res.get("cross_motif_profile_js", {})
+    free = res.get("cross_motif_profile_js_free_region", {})
     if cross:
-        rows = "".join(f"<tr><td>{k}</td><td><b>{v:.5f}</b></td></tr>" for k, v in cross.items())
-        body.append('<div class="sec">모티브를 바꾸면 결과가 달라지는가</div>'
-                    '<p class="mdesc">서로 다른 모티브가 만든 고리 활성 프로파일 사이의 '
-                    'Jensen-Shannon 거리입니다. 클수록 지시가 결과를 실제로 갈랐다는 뜻입니다.</p>'
-                    f'<table><tr><th>모티브 쌍</th><th>프로파일 JS</th></tr>{rows}</table>')
+        keys = sorted(set(cross) | set(free))
+        rows = "".join(
+            f"<tr><td>{k}</td><td>{cross.get(k, float('nan')):.5f}</td>"
+            f"<td><b>{free[k]:.5f}</b></td></tr>" if k in free else
+            f"<tr><td>{k}</td><td>{cross.get(k, float('nan')):.5f}</td><td>—</td></tr>"
+            for k in keys)
+        body.append(
+            '<div class="sec">모티브를 바꾸면 결과가 달라지는가</div>'
+            '<p class="mdesc">서로 다른 모티브가 만든 고리 활성 프로파일 사이의 '
+            'Jensen-Shannon 거리입니다. <b>중요</b> — 모티브는 시간의 26.7%를 '
+            '<i>직접</i> 차지하므로, 전 영역에서 재면 "내가 넣은 것이 거기 있다"는 '
+            '동어반복이 섞입니다. 진짜 질문은 <b>모델이 채운 곳</b>이 달라지느냐이고, '
+            '그건 오른쪽 열입니다.</p>'
+            f'<table><tr><th>모티브 쌍</th><th>전 영역 (동어반복 포함)</th>'
+            f'<th>자유영역만 ★</th></tr>{rows}</table>'
+            '<p class="note">자유영역 기준으로도 모델이 채운 내용은 모티브마다 달라집니다'
+            '(C–D 0.055, B–D 0.046, A–C 0.044, A–B 0.044). 다만 <b>A–D 는 0.0037 로 거의 같습니다</b> — '
+            '전 영역에서 보이던 "D 가 모든 쌍에서 가장 멀다"는 인상은 모티브 자신의 기여였습니다. '
+            '표본이 모티브당 변주 2개(쌍당 1비교)뿐이라 순위는 잠정입니다.</p>')
 
     knob = res.get("coverage_knob", {})
     if knob:

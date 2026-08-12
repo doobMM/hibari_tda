@@ -1814,7 +1814,8 @@
 
   // 협화도 — 각 시점 동시발음의 협화 interval class {0,3,4,5} 비율.
   // 실험(experiments/run_aesthetic_rerank.py)에서 calibration 유효 확인된 유일한 미적 성분.
-  // (성부진행·도약은 hibari 2성부 음역분리를 페널티해 무효 → 표시하지 않음)
+  // (성부진행·도약은 hibari 를 페널티해 무효 → 표시하지 않음.
+  //  원인을 '음역분리'로 적었던 것은 오류 — 두 성부 pitch 집합은 동일하다)
   function consonanceScore(notes) {
     const CONSONANT = new Set([0, 3, 4, 5]);
     const timeToPitches = new Map();

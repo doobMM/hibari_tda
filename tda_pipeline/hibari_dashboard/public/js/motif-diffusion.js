@@ -217,8 +217,13 @@
       const randn = makeRandn(seed);
       const onProgress = o.onProgress || function () {};
 
-      const { sched } = respace(this._baseSchedule(), o.steps || 50);
+      // 재배치 스케줄과 **원본 타임스텝 인덱스**를 함께 받는다.
+      // 계수(β·ᾱ·사후평균)는 재배치본 sched 로 계산하지만, 모델에 넣는 t 는
+      // 반드시 **학습 때 쓰인 원본 인덱스**(0..199)여야 한다. 재배치 인덱스(0..49)를
+      // 그대로 넣으면 디노이저가 노이즈 수준을 완전히 잘못 읽는다.
+      const { sched, srcIdx } = respace(this._baseSchedule(), o.steps || 50);
       const S = sched.T;
+      const modelT = i => (srcIdx ? srcIdx[i] : i);
 
       const md = (this.meta && this.meta.multidiffusion) || { win: 60, stride: 15 };
       const win = Math.min(md.win || 60, T);
@@ -273,7 +278,7 @@
               const src = idxCT(c, 0) + s0;
               crop.set(x.subarray(src, src + win), (w * K + c) * win);
             }
-            tArr[w] = BigInt(i);
+            tArr[w] = BigInt(modelT(i));
           }
           const feeds = {
             x: new global.ort.Tensor('float32', crop, [starts.length, K, win]),

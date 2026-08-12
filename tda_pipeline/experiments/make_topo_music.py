@@ -18,7 +18,8 @@ Algorithm 1 로 음악을 생성한 뒤, **들을 수 있는 WAV** 까지 만든
   2차 미적 랭킹   : 협화도 최대. 협화도는 미적 지표 3종 중 유일하게
                     calibration 을 통과한 성분이다
                     (`project_aesthetic_rerank_negative_0613` — V·L 은 hibari
-                     의 2성부 음역 분리를 오히려 페널티했다).
+                     를 오히려 페널티했다. 당시 원인으로 적은 "음역 분리"는
+                     사실이 아니었다 — 두 성부 pitch 집합이 동일하다).
 
 실행
 ────
@@ -206,9 +207,11 @@ def produce_track(track: str, om_pool: np.ndarray, data: dict, cycle_labeled: di
 def write_midi(notes: List[Tuple[int, int, int]], path: str, *, shape_velocity: bool = True) -> None:
     """
     MIDI 기록. shape_velocity 는 **연주 레이어**이지 알고리즘의 일부가 아니다 —
-    음고·리듬은 그대로 두고 세기만 손댄다. 근거는 hibari 의 2성부 음역 분리:
-    아래 성부는 울림(페달)로 받치고 위 성부를 앞으로 낸다. 또 같은 순간에 음이
-    많이 몰리면 전체를 살짝 눌러 탁해지지 않게 한다.
+    음고·리듬은 그대로 두고 세기만 손댄다. 이는 **피아노 연주 관습**이지
+    곡 구조에 대한 주장이 아니다 — 예전에 "hibari 의 2성부 음역 분리"를 근거로
+    적었으나 그 전제는 틀렸다(두 성부 pitch 집합이 [52,81] 로 완전히 동일하다).
+    낮은 음은 울림으로 받치고 높은 음을 앞으로 내며, 같은 순간에 음이 몰리면
+    전체를 살짝 눌러 탁해지지 않게 한다.
     """
     import pretty_midi
     from collections import Counter
