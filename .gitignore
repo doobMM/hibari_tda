@@ -17,6 +17,8 @@ build/
 !.claude/rules/
 !.claude/agents/
 !.claude/skills/
+# 적대적 조언자가 세션 간 누적하는 실패 유형 — 공유 가치가 크므로 tracked
+!.claude/agent-memory/
 
 # ── 대용량 바이너리 (재생성 가능) ──
 *.pkl
