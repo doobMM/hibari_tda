@@ -13,14 +13,35 @@ run_gillespie_onsets.py — 스텝별 음 개수를 OM 이 정하게 한다 (τ-
 ────────────────────────────────────────────────
 hibari 원곡에서 스텝별 onset 수를 세어 상관을 재면:
 
-  OM 연속 활성합 vs onset   Pearson r = +0.663   Spearman ρ = +0.700
-  MODULES 스케줄 vs onset   Pearson r = +0.587   Spearman ρ = +0.571
+  OM 연속 활성합 vs onset      Pearson +0.663   Spearman +0.700
+  OM **이진** 활성수 vs onset  Pearson +0.571   Spearman +0.587   ← 실제로 쓰는 자
+  MODULES 스케줄 vs onset      Pearson +0.587   Spearman +0.571
+  원곡 32주기 평균 프로파일     Pearson +0.695                     ← 셋 다 이긴다
 
-**OM 이 MODULES 보다 원곡의 리듬 밀도를 더 잘 설명한다.** 게다가 MODULES 는 실제
-onset 과 13.1% 만 일치하고 값이 3~4 로 사실상 평평한데, 원곡은 0~8 로 움직인다.
-활성 사분위별 평균 onset 은 1.67 → 3.08 → 3.95 → 5.46 으로 단조 증가한다(3.3배).
+⚠ **이 동기 근거는 무너졌다** (적대적 감사 2026-08-13). 세 가지 이유다.
+  1. `fit_propensity` 는 `binarized=True` 가 기본이라 **이진 활성수**를 쓴다.
+     그 자로 재면 Pearson 기준 **MODULES(+0.587)가 OM(+0.571)보다 낫다.**
+     연속값 r=0.663 은 연속/이진 불일치 버그를 고치면서 무효가 된 수치인데
+     갱신하지 않았다 — MEMORY.md 유형 B 의 재발이다.
+  2. 자유도가 다르다. OM 은 1088스텝 신호, MODULES 는 사실상 2값(3/4) 상수 템플릿이다.
+     같은 계열의 **최선** baseline(원곡 32주기 평균 프로파일)은 +0.695 로 OM 을 이긴다.
+     밀도 정보는 **32주기 구조**에 있고 MODULES 가 그 구조의 나쁜 판본이었을 뿐이다.
+  3. 결정적으로, 메커니즘을 뺀 대조군이 τ-leaping 을 이긴다 (아래).
 
-즉 밀도 정보는 이미 OM 안에 있는데 파이프라인이 쓰지 않고 있었다.
+**대조군 실측** (같은 8케이스 × 6시드, onset_hist_JS):
+
+  modules_fixed        0.22555   —        음 361.5
+  tau_leaping_matched  0.17008   −24.6%   음 423.8
+  poisson_const        0.17558   −22.2%   음 398.1   ← OM 미사용
+  modules_×1.2         0.15322   −32.1%   음 462.6   ← OM·확률성 둘 다 미사용
+  modules_×1.6         0.13710   −39.2%   음 566.5
+
+τ-leaping vs OM-free `poisson_const` 케이스수준 paired **p = 0.106 — 판별 불가**.
+모드 간 corr(음 수, JS) = **−0.869**. 이 지표는 사실상 "음을 충분히 냈나"를 잰다.
+
+**따라서 "OM 이 리듬 밀도를 잡는다"고 주장할 수 없다.** 남는 정직한 진술은
+"고정 스케줄을 확률화하면 리듬분포 JS 가 −22~32% 개선되나 대부분 음 수 증가 효과이며,
+OM 활성도 자체의 기여는 판별되지 않았다" 이다.
 
 방법 — Gillespie τ-leaping
 ─────────────────────────
@@ -108,9 +129,13 @@ def tau_leap_inst_len(om_bin: np.ndarray, a: float, b: float,
     """
     τ-leaping — 스텝별 propensity λ_j 로 Poisson 추출.
 
-    match_total 을 주면 Σλ 를 그 값에 맞춰 재정규화한다. 총 음 수를 고정 스케줄과
-    같게 두고 **밀도 프로파일의 모양만** 바꾸므로, 총량 변화에 오염되지 않은
-    "OM 이 밀도를 잡는가" 효과만 분리해서 잴 수 있다.
+    match_total 을 주면 Σλ 를 그 값에 맞춰 재정규화한다.
+
+    ⚠ **이것은 총량을 보증하지 않는다.** 예전 주석은 "총 음 수를 고정 스케줄과 같게 두므로
+    총량 오염 없이 밀도 모양만 잰다"고 적었으나 **거짓이다.** 뒤이어 clip(0, n_max) 와
+    Algorithm 1 의 slot 차감이 걸리므로 산출 총량은 안 맞는다 — 실측 361.5 → 424.6 (+17.2%)
+    로 세 팔 중 오염이 가장 심하다. 그리고 이 지표는 총량과 corr = −0.869 로 강상관이라
+    그 오염이 곧 개선폭의 실체다. (적대적 감사 2026-08-13)
     """
     act = om_bin.sum(axis=1).astype(float)
     lam = np.clip(a + b * act, 0.0, float(n_max))
@@ -262,9 +287,13 @@ def main():
           f"{(g['pitch_js_mean']/m['pitch_js_mean']-1)*100:>+11.1f}%{p_js:>11.2e}")
     print(f"{'협화도':<20}{m['consonance_mean']:>14.4f}{g['consonance_mean']:>14.4f}")
 
-    for k in ("modules_fixed", "tau_leaping"):
-        for drop in ("_js", "_ratio", "_cnt"):
-            results[k].pop(drop, None)
+    # 원자료를 **버리지 않는다.** 예전엔 여기서 _js/_ratio/_cnt 를 pop 했는데,
+    # 그 결과 보고된 p 값을 커밋된 아티팩트만으로 재검증할 수 없었다
+    # (MEMORY.md 유형 H). 검정에 쓴 두 팔의 표본을 모두 남긴다.
+    for k in list(results):
+        for key in ("_js", "_ratio", "_cnt"):
+            if key in results[k]:
+                results[k][key.lstrip("_") + "_all"] = results[k].pop(key)
     payload = {"experiment": "gillespie_tau_leaping_onsets",
                "source_idea": "수리생물학/hw3 Exercise 3.6 (tau-leaping)",
                "propensity_fit": fit, "n_max": N_MAX,
