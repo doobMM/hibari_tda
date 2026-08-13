@@ -94,6 +94,7 @@ jobs:
           echo "── 필수 파일 존재 확인 ──"
           for f in index.html tour.html bloom.html \
                    hibari_dashboard/public/index.html \
+                   hibari_dashboard/public/motif.html \
                    hibari_dashboard/public/js/motif-diffusion.js \
                    hibari_dashboard/public/models/topo_denoiser.onnx \
                    output/topo_diffusion/motif.html \
