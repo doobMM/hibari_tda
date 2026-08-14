@@ -52,6 +52,7 @@ jobs:
           mkdir -p _site/output
           cp -R tda_pipeline/output/hibari+          _site/output/hibari+
           cp -R tda_pipeline/output/topo_diffusion   _site/output/topo_diffusion
+          cp -R tda_pipeline/output/ab_check         _site/output/ab_check
 
           # 랜딩용 PDF 2종
           mkdir -p _site/docs

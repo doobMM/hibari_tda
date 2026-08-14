@@ -1,0 +1,91 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>귀로 확인하기 — 10분 A/B</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=Noto+Serif+KR:wght@600&display=swap" rel="stylesheet">
+<style>
+ :root{--bg:#f5f8f2;--fg:#1b2419;--muted:#5c6b57;--line:#d6e0cd;--card:#fff;--accent:#2f6b3a}
+ @media(prefers-color-scheme:dark){:root{--bg:#0f1410;--fg:#e6ede2;--muted:#8fa088;--line:#243021;--card:#161d15;--accent:#7fb069}}
+ *{box-sizing:border-box}
+ body{margin:0;background:var(--bg);color:var(--fg);line-height:1.65;
+      font-family:"Noto Sans KR",-apple-system,BlinkMacSystemFont,sans-serif}
+ .wrap{max-width:680px;margin:0 auto;padding:36px 18px 90px}
+ h1{font-family:"Noto Serif KR",serif;font-size:clamp(21px,5vw,29px);margin:0 0 8px}
+ .lede{color:var(--muted);font-size:14.5px;margin:0 0 8px}
+ .why{border:1px solid var(--line);border-radius:11px;padding:14px 16px;background:var(--card);
+      font-size:13.5px;color:var(--muted);margin:0 0 28px}
+ .why b{color:var(--fg)}
+ .pair{background:var(--card);border:1px solid var(--line);border-radius:14px;
+       padding:18px;margin-bottom:16px}
+ .pn{font-size:11.5px;color:var(--accent);font-weight:700;letter-spacing:.05em}
+ .pt{font-family:"Noto Serif KR",serif;font-size:17px;font-weight:600;margin:2px 0 4px}
+ .pd{font-size:13px;color:var(--muted);margin:0 0 14px}
+ .side{margin-bottom:10px}
+ .side label{font-size:13px;font-weight:600;display:block;margin-bottom:4px}
+ audio{width:100%}
+ .choices{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+ .choices button{flex:1 1 30%;font:inherit;font-size:14px;padding:10px 8px;border-radius:9px;
+   border:1px solid var(--line);background:transparent;color:var(--fg);cursor:pointer}
+ .choices button:hover{border-color:var(--accent)}
+ .choices button.sel{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:600}
+ textarea{width:100%;margin-top:10px;font:inherit;font-size:13px;padding:8px;border-radius:8px;
+   border:1px solid var(--line);background:var(--bg);color:var(--fg);min-height:44px}
+ .done{position:sticky;bottom:0;background:var(--bg);padding:14px 0 6px;border-top:1px solid var(--line)}
+ .done button{width:100%;font:inherit;font-size:15px;font-weight:700;padding:13px;border-radius:10px;
+   border:none;background:var(--accent);color:#fff;cursor:pointer}
+ .done button:disabled{opacity:.4;cursor:not-allowed}
+ #code{width:100%;margin-top:12px;font-family:ui-monospace,monospace;font-size:12.5px;
+   padding:10px;border-radius:8px;border:1px solid var(--accent);background:var(--card);color:var(--fg)}
+ .hint{font-size:12.5px;color:var(--muted);margin-top:8px}
+</style>
+<div class="wrap">
+<h1>귀로 확인하기</h1>
+<p class="lede">5쌍 · 각 27초 · 약 10분. 어느 쪽이 무엇인지는 <b>가려져 있습니다</b>.</p>
+<div class="why">
+ 지금까지 이 연구의 모든 판단은 <b>음고 분포·협화도라는 대리 지표</b>로 내려졌습니다.
+ 그런데 최근 "개선" 두 개가 검증에서 무너졌고, 살아남은 개선조차 <b>협화도를 거의 같은 크기로
+ 깎으면서</b> 얻은 것입니다. 그 맞바꿈이 실제로 어떻게 들리는지는 아직 아무도 모릅니다.<br><br>
+ <b>정답은 없습니다.</b> "그냥 이쪽이 낫다"면 그걸로 충분하고, 모르겠으면 모르겠다고 하시면 됩니다 —
+ <b>구별이 안 된다는 것 자체가 중요한 결과</b>입니다.
+</div>
+<div class="pair"><div class="pn">P1</div><div class="pt">같은 지시, 만드는 방식만 다름</div><p class="pd">둘 다 원곡 중첩행렬에서 나왔습니다. 음을 고르는 내부 배선만 다릅니다.</p><div class="side"><label>A</label><audio controls preload="none" src="P1A.ogg"></audio></div><div class="side"><label>B</label><audio controls preload="none" src="P1B.ogg"></audio></div><div class="choices"><button data-pair="P1" data-val="A">A가 낫다</button><button data-pair="P1" data-val="B">B가 낫다</button><button data-pair="P1" data-val="?">구별 안 됨</button></div><textarea data-pair="P1" placeholder="한 줄 인상 (선택)"></textarea></div>
+<div class="pair"><div class="pn">P2</div><div class="pt">같은 지시, 음 고르는 규칙만 다름</div><p class="pd">한쪽은 활성 고리 안에서 균일하게, 다른 쪽은 곡에서 자주 나온 음을 더 자주 고릅니다.</p><div class="side"><label>A</label><audio controls preload="none" src="P2A.ogg"></audio></div><div class="side"><label>B</label><audio controls preload="none" src="P2B.ogg"></audio></div><div class="choices"><button data-pair="P2" data-val="A">A가 낫다</button><button data-pair="P2" data-val="B">B가 낫다</button><button data-pair="P2" data-val="?">구별 안 됨</button></div><textarea data-pair="P2" placeholder="한 줄 인상 (선택)"></textarea></div>
+<div class="pair"><div class="pn">P3</div><div class="pt">뼈대 vs 채운 것</div><p class="pd">한쪽은 모티브만 남긴 뼈대, 다른 쪽은 그 사이를 디퓨전이 채운 것입니다.</p><div class="side"><label>A</label><audio controls preload="none" src="P3A.ogg"></audio></div><div class="side"><label>B</label><audio controls preload="none" src="P3B.ogg"></audio></div><div class="choices"><button data-pair="P3" data-val="A">A가 낫다</button><button data-pair="P3" data-val="B">B가 낫다</button><button data-pair="P3" data-val="?">구별 안 됨</button></div><textarea data-pair="P3" placeholder="한 줄 인상 (선택)"></textarea></div>
+<div class="pair"><div class="pn">P4</div><div class="pt">출처가 다른 두 골격</div><p class="pd">한쪽은 원곡의 중첩행렬, 다른 쪽은 모델이 새로 만든 중첩행렬입니다.</p><div class="side"><label>A</label><audio controls preload="none" src="P4A.ogg"></audio></div><div class="side"><label>B</label><audio controls preload="none" src="P4B.ogg"></audio></div><div class="choices"><button data-pair="P4" data-val="A">A가 낫다</button><button data-pair="P4" data-val="B">B가 낫다</button><button data-pair="P4" data-val="?">구별 안 됨</button></div><textarea data-pair="P4" placeholder="한 줄 인상 (선택)"></textarea></div>
+<div class="pair"><div class="pn">P5</div><div class="pt">서로 다른 두 모티브</div><p class="pd">지시가 다릅니다. 지표상으로는 이 둘이 가장 멀다고 나왔습니다.</p><div class="side"><label>A</label><audio controls preload="none" src="P5A.ogg"></audio></div><div class="side"><label>B</label><audio controls preload="none" src="P5B.ogg"></audio></div><div class="choices"><button data-pair="P5" data-val="A">A가 낫다</button><button data-pair="P5" data-val="B">B가 낫다</button><button data-pair="P5" data-val="?">구별 안 됨</button></div><textarea data-pair="P5" placeholder="한 줄 인상 (선택)"></textarea></div>
+<div class="done">
+ <button id="fin" disabled>답 정리하기</button>
+ <textarea id="code" hidden readonly rows="3"></textarea>
+ <p class="hint" id="hint">5쌍 모두 고르면 활성화됩니다.</p>
+</div>
+</div>
+<script>
+const N=5, ans={}, note={};
+document.querySelectorAll('.choices button').forEach(b=>{
+  b.onclick=()=>{
+    const p=b.dataset.pair;
+    document.querySelectorAll(`.choices button[data-pair="${p}"]`).forEach(x=>x.classList.remove('sel'));
+    b.classList.add('sel'); ans[p]=b.dataset.val; check();
+  };
+});
+document.querySelectorAll('textarea[data-pair]').forEach(t=>{
+  t.oninput=()=>{ note[t.dataset.pair]=t.value.trim(); };
+});
+function check(){
+  const n=Object.keys(ans).length;
+  document.getElementById('fin').disabled = n<N;
+  document.getElementById('hint').textContent = n<N ? `${n}/${N} 선택됨` : '이제 정리할 수 있습니다.';
+}
+document.getElementById('fin').onclick=()=>{
+  const payload = Object.keys(ans).sort().map(p=>`${p}:${ans[p]}${note[p]?'|'+note[p].replace(/[\n|]/g,' '):''}`).join(' ; ');
+  const ta=document.getElementById('code');
+  ta.hidden=false; ta.value='AB-CHECK ' + payload;
+  ta.select();
+  try{ navigator.clipboard.writeText(ta.value); }catch(e){}
+  document.getElementById('hint').textContent='복사됐습니다. 그대로 붙여넣어 주세요.';
+};
+// 한 번에 하나만 재생
+document.querySelectorAll('audio').forEach(a=>a.addEventListener('play',()=>{
+  document.querySelectorAll('audio').forEach(o=>{ if(o!==a) o.pause(); });
+}));
+</script>
