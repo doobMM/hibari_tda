@@ -67,28 +67,50 @@ class NodePool:
             }
 
         # 빈도 기반 노드 풀 생성 (numpy 배열)
+        #
+        # ⚠ 인덱스 규약 — 풀은 **0-indexed** 여야 한다 (2026-08-13 수정).
+        # `notes_label` 의 값은 1..N 이지만 이 풀에서 뽑힌 값은 곧바로
+        # `label_to_note_info`(= 원본 `get_note_by_label`) 로 디코딩되고,
+        # 그 함수는 `val == label + 1` 이라 **0-indexed 입력을 전제**한다.
+        # 교집합 경로(`cycle_manager.get_intersect_nodes`)도 0-indexed 를 준다.
+        #
+        # 이전에는 1-indexed 를 그대로 넣어, 뽑힌 값 전부가 한 칸 밀린 음으로
+        # 디코딩되고 마지막 라벨은 None 이 되어 조용히 폐기됐다(hibari 기준 4.17%).
+        # 원본이 0-indexed 인 근거: professor.py 의 node_pool 은
+        # `frequent_nodes(all_cycle_set, ...)` 로 만들어지고 그 원소는 barcode
+        # 노드 id(0-indexed)이며, 원본 `get_note_by_label` 에는 None 가드가 없어
+        # 1-indexed 를 넣으면 TypeError 로 즉시 터진다.
         pool_list = []
         for note, count in whole_counts.items():
             if note in notes_label:
-                label = notes_label[note]
-                pool_list.extend([label] * count)
+                pool_list.extend([notes_label[note] - 1] * count)
 
         # 셔플
         random.shuffle(pool_list)
         self.pool = np.array(pool_list, dtype=int)
         self.total_size = len(self.pool)
+        # 디코딩 실패(=조용히 버려진 추출) 횟수. 정상이면 0 이어야 한다.
+        self.decode_misses = 0
     
     def sample(self) -> int:
         """풀에서 무작위 note label을 샘플링합니다."""
         return int(np.random.choice(self.pool))
     
     def label_to_note_info(self, label: int) -> Tuple[int, int]:
-        """label → (pitch, duration) 변환"""
-        # notes_label은 1-indexed이므로 label+1이 아닌 label 자체 사용
-        # 기존 코드의 get_note_by_label과 동일
+        """
+        **0-indexed** 노드 id → (pitch, duration).
+
+        원본 `professor.py:get_note_by_label` 과 동일한 계약이다 —
+        barcode/cycle 분석은 0부터, `notes_label` 딕셔너리는 1부터 인덱싱하므로
+        `lbl == label + 1` 로 맞춘다. 입력이 1-indexed 면 전부 한 칸 밀린 음이 나온다.
+        (이전 주석은 "label 자체 사용"이라 적혀 있었으나 코드와 모순이었다.)
+
+        찾지 못하면 None. 호출부가 조용히 넘어가므로 폐기 횟수를 세어 둔다.
+        """
         for note, lbl in self.notes_label.items():
-            if lbl == label + 1:  # 0-indexed label → 1-indexed notes_label
+            if lbl == label + 1:
                 return note
+        self.decode_misses += 1
         return None
 
 
