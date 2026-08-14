@@ -45,10 +45,17 @@ class NodePool:
     노드 풀 관리 클래스.
     기존 코드의 node_pool, node_freq, node_i를 캡슐화합니다.
 
-    temperature: §7.7.3 온도 스케일링. w(n) ∝ freq(n)^(1/T).
-      T=1.0: 원래 빈도 (기존 동작)
-      T=3.0: 균등화 방향 (N=10 최적, JS -6.7%)
-      T<1.0: 고빈도 집중
+    temperature: 온도 스케일링. w(n) ∝ freq(n)^(1/T).
+      T=1.0: 원래 빈도 (기본값)  ·  T>1: 균등화  ·  T<1: 고빈도 집중
+
+    ⚠ **"T=3.0 최적(N=10, JS -6.7%)" 주장은 철회됐다 (2026-08-14).**
+      풀은 아래 두 경로에서만 쓰인다 — ① OM 행이 전부 0  ② 활성 cycle 의
+      교집합이 빈 경우(`generation.py` 의 `intersect_pool is None`).
+      §7.7.3 원 실험은 tonnetz OM(zero-row 0/1088, 빈 교집합 0회)을 써서
+      **풀을 한 번도 뽑지 않았다** — 온도가 생성물에 닿을 수 없었다.
+      원 함수를 그대로 재실행하면 오히려 T=1.0(0.0452)이 T=3.0(0.0496)을 이긴다.
+      정본 Algorithm 1 경로(`run_dft_gap0_suite.py`)는 애초에 temperature 를
+      넘기지 않으므로 JS=0.00902 는 **T=1.0 산출물**이다.
     """
 
     def __init__(self, notes_label: dict, notes_counts: Counter,
@@ -75,11 +82,23 @@ class NodePool:
         # 교집합 경로(`cycle_manager.get_intersect_nodes`)도 0-indexed 를 준다.
         #
         # 이전에는 1-indexed 를 그대로 넣어, 뽑힌 값 전부가 한 칸 밀린 음으로
-        # 디코딩되고 마지막 라벨은 None 이 되어 조용히 폐기됐다(hibari 기준 4.17%).
-        # 원본이 0-indexed 인 근거: professor.py 의 node_pool 은
-        # `frequent_nodes(all_cycle_set, ...)` 로 만들어지고 그 원소는 barcode
-        # 노드 id(0-indexed)이며, 원본 `get_note_by_label` 에는 None 가드가 없어
-        # 1-indexed 를 넣으면 TypeError 로 즉시 터진다.
+        # 디코딩되고 마지막 라벨은 None 이 되어 조용히 폐기됐다
+        # (draw 기준 T=3.0 에서 4.17% / T=1.0 에서 3.39% — note 가 아니라 draw 이며
+        #  `max_resample` 로 재시도된다).
+        #
+        # 원본이 0-indexed 인 근거:
+        #   1. `professor.py:519 get_note_by_label` 은 `val == (value+1)` 이고
+        #      주석에 "generateBarcode 는 0부터 인덱싱" 이라 명시돼 있다
+        #   2. 원본 `cycle_generate` 에는 None 가드가 없어 1-indexed 를 넣으면
+        #      마지막 라벨에서 TypeError 로 즉시 터진다 — 조용히 넘어갈 수 없다
+        #   3. 같은 파일의 `build_orphan_supplement` 가 이미
+        #      `orphan_labels = {n - 1 ...}  # 0-indexed for node_pool` 이다
+        #   4. 진짜 출처는 `WK14/WK13_model.ipynb` 의
+        #      `node_i = [nodelist.index(...)]` — `list.index()` 는 0-based
+        # ⚠ 이전 판에 있던 "node_pool 은 `frequent_nodes` 산출물" 이라는 근거는
+        #   **거짓**이었다(2026-08-14 정정). `frequent_nodes` 는 `node_intersect` 가
+        #   쓰는 교집합 풀을 만들고, `node_pool` 은 `algorithm1` 의 인자다.
+        #   결론(0-indexed)은 위 1~4 로 유지된다.
         pool_list = []
         for note, count in whole_counts.items():
             if note in notes_label:

@@ -10,6 +10,10 @@ JS 쪽에서 지표까지 다시 구현하면 "두 구현이 같은 실수를 �
 판정: 수정된 JS 포트의 음고 JS 가 파이썬 정본(0.00902 ± 0.00170)의 3σ 안에 있어야 한다.
       RNG 가 다르므로(mulberry32 vs Mersenne Twister) 비트 일치는 기대하지 않는다.
 
+⚠ 3σ 라는 느슨한 기준을 쓰는 이유: 하네스가 쓰는 대시보드 자산이 정본과 **다른 PH 회차**라
+   OM 자체가 조금 다르다(CLAUDE.md T11). 즉 이 검사는 "규약이 어긋나면 4~5배로 벌어진다"를
+   잡는 것이지 소수점 재현을 잡는 것이 아니다. 실제로 규약 버그는 4.49배로 나타났다.
+
 실행:  node tools/verify_js_algo1.mjs --with-old  &&  python tools/verify/score_js_algo1.py
 """
 

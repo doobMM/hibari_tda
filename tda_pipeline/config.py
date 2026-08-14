@@ -74,7 +74,15 @@ class GenerationConfig:
     """음악 생성(Algorithm 1 & 2) 설정"""
     num_modules: int = 65      # 반복 모듈 수
     tempo_bpm: int = 66
-    temperature: float = 3.0   # NodePool 샘플링 온도: w(n) ∝ freq(n)^(1/T). T>1=균등화, T<1=집중 (N=10 결과: T=3.0 최적)
+    # NodePool 샘플링 온도: w(n) ∝ freq(n)^(1/T). T>1=균등화, T<1=집중.
+    # ⚠ 값 3.0 의 근거였던 "§7.7.3 N=10 최적" 은 **철회됐다 (2026-08-14)** —
+    #   그 실험은 zero-row 0 인 tonnetz OM 을 써서 풀을 한 번도 뽑지 않았고,
+    #   원 함수를 재실행하면 T=1.0 이 T=3.0 을 9.6% 이긴다.
+    #   `NodePool` 자체 기본값은 1.0 이고 정본 Algorithm 1 경로는 이 값을 쓰지 않는다
+    #   (`run_dft_gap0_suite.py` 는 temperature 를 넘기지 않는다).
+    #   여기 3.0 을 1.0 으로 내리는 것은 `pipeline.py` 경로의 **동작 변경**이므로
+    #   사용자 결정 사항으로 남긴다 → CLAUDE.md T8.
+    temperature: float = 3.0
     # Algorithm 2 (Neural Network)
     epochs: int = 100
     lr: float = 0.001

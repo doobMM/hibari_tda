@@ -13,6 +13,13 @@
  * `debug/diagnose.py` 는 generation 을 import 하지 않아 이 계열을 잡지 못한다.
  * 그래서 **실제 배포 JS 를 그대로 실행**하는 이 하네스를 둔다.
  *
+ * ⚠ 범위 — 이 하네스는 `hibari_dashboard/data/*.json`, 즉 **배포되는 자산**을 쓴다.
+ *   그 자산은 논문 정본과 **다른 PH 회차**다(cycle 4 대표원소가 다르고 연속값 기준
+ *   32.3% 일치, density 0.3409 vs 0.3451 — CLAUDE.md T11). 이진화 후 98.7% 일치라
+ *   Algo1 결과는 가깝지만(0.0096 vs 0.0092), **이것은 "배포본이 제 데이터로 올바로
+ *   동작하는가" 검사이지 정본 재현 검사가 아니다.**
+ *   정본 수치를 재현하려면 `cache/metric_dft_*.pkl` 재계산을 써야 한다.
+ *
  * 실행:
  *   node tools/verify_js_algo1.mjs            # 현재 코드만
  *   node tools/verify_js_algo1.mjs --with-old # 수정 전 규약도 함께 산출(대조군)
