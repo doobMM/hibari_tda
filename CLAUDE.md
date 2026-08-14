@@ -75,6 +75,11 @@ Lag: lag 1~4 감쇄 가중 (DFT에서 lag=1 대비 -7.1%, `decayed_lag_dft_resul
   - Algorithm 2: FC + continuous 입력 → JS=0.00035±0.00015 (N=10, Welch p=1.66e-4) ★
 gap_min: 0
 온도: T=3.0 (`section77_experiments.json` best_temperature)
+      ⚠ **재확인 필요** — 2026-08-13 전곡·이진 OM·N=20 paired 로 재보니 T=1.0 이
+      단조 우세(0.0381 vs 3.0 의 0.0438, p<1e-4). 다만 §7.7.3 원 실험은 값 범위가
+      달라(0.0585~0.0627) **설정이 다르고**, n·표준편차가 기록돼 있지 않아 원래
+      3.0 과 1.0 이 구별 가능했는지도 알 수 없다. **정본 설정(per-cycle τ 연속 OM,
+      α=0.25)에서 재튜닝하기 전까지 이 값은 바꾸지 않는다.** → T7
 ```
 
 ### 다음 할 작업 (세션별)
@@ -328,7 +333,8 @@ best-practice 도입 커밋 시리즈(316e125 / 9c781ff / 1ca08d4) 이후 병렬
 | T1 | ✅ | ablation 완료 (2026-08-13) | **위상 손실 기여 없음** 확정. `topo_diffusion_compare.json` + `ablation_bootstrap.json` |
 | T4 | ⚠ 무효 | ~~τ-leaping 이 OM 으로 리듬 밀도를 잡는다~~ | **적대적 감사에서 무너짐.** 메커니즘 뺀 대조군을 돌리니 OM 없는 `poisson_const` 가 −22.2%, OM·확률성 둘 다 없는 `modules_×1.2` 가 −32.1% 로 τ-leaping(−24.6%)을 **이긴다**. τ-leaping vs OM-free paired p=0.106 판별 불가. 지표가 사실상 "음을 충분히 냈나"를 잰다(corr(음수,JS)=−0.869). 정직한 서술: *"고정 스케줄을 확률화하면 리듬분포 JS 가 −22~32% 개선되나 대부분 음 수 증가 효과이며 OM 자체 기여는 판별되지 않았다"* |
 | T5 | A | **교집합 추출에 곡빈도+온도 반영** | 음고 JS **−6.2%**(`freq_intersect`, Holm 보정 후 p=0.046, d=0.65). QMC 추가분은 기여 없음(paired p=0.460)이므로 −7.9%(`combined`)로 귀속하면 안 됨. **대가: 협화도 −0.011 이 유의**(p=0.024, d≈0.60) — JS 개선과 거의 같은 크기. `run_qmc_sampling.py` |
-| T6 | B | ⚠ **`generation.py` NodePool 인덱스 규약 불일치** | 풀은 1-indexed(`notes_label` 값 1..23), 디코더 `label_to_note_info` 는 0-indexed(`lbl == label+1`). **23개 라벨 전부가 다른 음으로 디코딩**되고 라벨 23 은 `None` → **추출의 4.17% 가 조용히 폐기**. 교집합 경로(0-indexed)는 정상. 원본 `professor.py:get_note_by_label` 주석은 "generateBarcode 는 0부터 인덱싱"이라 명시 → 리팩터 유입 버그로 보임. 고치면 음고 JS −4.1%(N=24, p=0.17 비유의), 음 +2.7%. **역사적 수치 전부가 이 상태에서 산출됐으므로 수정은 사용자 결정 필요** |
+| T7 | A | **정본 설정에서 온도 재튜닝** | NodePool 수정 후. 전곡·이진 OM 에서는 T=1.0 단조 우세(N=20 paired p<1e-4)인데 §7.7.3 은 다른 설정·n 미기록이라 직접 비교 불가. per-cycle τ 연속 OM α=0.25 로 다시 재야 정본 값을 바꿀 수 있다. `run_temperature_retune.py` 가 그리드 틀을 제공 |
+| T6 | ✅ | ~~`generation.py` NodePool 인덱스 규약 불일치~~ **수정 완료 (fcf929f)** | 풀은 1-indexed(`notes_label` 값 1..23), 디코더 `label_to_note_info` 는 0-indexed(`lbl == label+1`). **23개 라벨 전부가 다른 음으로 디코딩**되고 라벨 23 은 `None` → **추출의 4.17% 가 조용히 폐기**. 교집합 경로(0-indexed)는 정상. 원본 `professor.py:get_note_by_label` 주석은 "generateBarcode 는 0부터 인덱싱"이라 명시 → 리팩터 유입 버그로 보임. 고치면 음고 JS −4.1%(N=24, p=0.17 비유의), 음 +2.7%. **역사적 수치 전부가 이 상태에서 산출됐으므로 수정은 사용자 결정 필요** |
 | T2 | C | 12 트랙 청취 평가 (`output/topo_diffusion/motif.html`) | 모티브별 인상, 뼈대↔변주 차이 |
 | T3 | B | 대시보드 "모티브만 남기고 채우기" 실기기 검증 | 자산 v=4.33. 30초 세그먼트에서 respacing 50스텝 체감속도 |
 
