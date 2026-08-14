@@ -19,14 +19,18 @@
  *   res.notes       — [[startEighth, pitch, endEighth], ...]
  *   res.resampleFails
  *
- * 주의:
- *   - Python NodePool 은 풀에 1-indexed label 을 저장하고
- *     label_to_note_info 는 `lbl === label + 1` 로 조회한다.
- *     실질적으로 pool-sampled 경로는 "한 레이블 시프트" 된 조회가 발생하는
- *     잠재 버그가 존재하지만, 실험 결과(JS=0.00902±0.00170, N=20)가 이 동작에
- *     맞춰져 보정되어 있으므로 본 포트는 이 동작을 그대로 재현한다.
- *   - cycle_labeled 는 0-indexed note 인덱스를 담으므로 intersect 경로는
- *     label_idx 와 일치한다 (정상).
+ * 인덱스 규약 — **전부 0-indexed(`label_idx`)** 로 통일한다 (2026-08-14 정정).
+ *   Python `generation.py` 도 같은 날 0-indexed 로 정정됐다(커밋 fcf929f).
+ *   · 풀·cycle note 인덱스·avoid 집합 모두 `label_idx` (0..N-1)
+ *   · 디코딩은 `byIdx.get(z)` 한 곳만 쓴다
+ *   `notes_metadata.json` 의 description 도 "JS 포팅 시 label_idx 사용 권장" 이라 명시.
+ *
+ * ⚠ 이전 버전은 풀에 1-indexed `label` 을 넣고 `labelToEntryPlus1.get(z+1)`,
+ *   즉 **항등 조회**를 했다. 풀 경로는 우연히 맞았지만 **intersect 경로**
+ *   (cycle_labeled 는 0-indexed) 는 한 칸 낮은 음으로 디코딩되고 z=0 은 항상 버려졌다.
+ *   헤더에 적혀 있던 "Python 을 그대로 재현" 은 사실이 아니었다.
+ *   정본 실험(JS=0.00902)은 per-cycle τ 연속 OM 이라 풀 경로가 0% 이므로
+ *   **그 수치는 intersect 경로 100% 산출물이고, 이 버그의 영향을 받은 쪽은 JS 포트다.**
  * ========================================================================= */
 
 (function (global) {
@@ -64,11 +68,8 @@
     // pitchTilt: 음역 의도. 0=영향 없음(기존 동작 보존), >0=높은 음 선호, <0=낮은 음 선호.
     constructor({ labels, numModules = 65, temperature = 1.0, rng = Math.random, pitchTilt = 0 }) {
       this.labels = labels;
-      this.labelToEntryPlus1 = new Map();   // label+1 key → entry (Python 버그 재현용)
-      for (const e of labels) this.labelToEntryPlus1.set(e.label + 1, e);
-      this.labelToEntry = new Map();        // label key → entry (정상 조회)
-      for (const e of labels) this.labelToEntry.set(e.label, e);
-      // label_idx → entry (cycle intersect 조회용)
+      // label_idx(0-indexed) → entry. 유일한 디코딩 경로다.
+      // 규약을 하나로 유지하려고 label 기반 보조 맵은 두지 않는다 — 그게 이번 버그의 원인이었다.
       this.byIdx = new Map();
       for (const e of labels) this.byIdx.set(e.label_idx, e);
 
@@ -93,7 +94,7 @@
       const pool = [];
       labels.forEach((n, i) => {
         const c = scaled[i];
-        for (let k = 0; k < c; k++) pool.push(n.label);   // 1-indexed (Python 호환)
+        for (let k = 0; k < c; k++) pool.push(n.label_idx);   // 0-indexed (Python fcf929f 이후와 동일)
       });
       shuffle(pool, rng);
       this.pool = pool;
@@ -104,12 +105,10 @@
       return this.pool[Math.floor(this.rng() * this.pool.length)];
     }
 
-    // Python label_to_note_info 완전 재현.
-    // 호출자에 따라 input 이 0-indexed(cycle) 또는 1-indexed(pool) 로 들어오지만,
-    // 둘 다 `target = input + 1` 로 조회하도록 Python 을 그대로 따른다.
+    // Python `label_to_note_info` 대응. 입력은 **항상 0-indexed** 다
+    // (풀 경로 = label_idx, intersect 경로 = cycle_labeled 의 note 인덱스).
     labelToNoteInfo(label) {
-      const e = this.labelToEntryPlus1.get(label + 1);
-      return e || null;
+      return this.byIdx.get(label) || null;
     }
   }
 

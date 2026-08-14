@@ -75,11 +75,17 @@ Lag: lag 1~4 감쇄 가중 (DFT에서 lag=1 대비 -7.1%, `decayed_lag_dft_resul
   - Algorithm 2: FC + continuous 입력 → JS=0.00035±0.00015 (N=10, Welch p=1.66e-4) ★
 gap_min: 0
 온도: T=3.0 (`section77_experiments.json` best_temperature)
-      ⚠ **재확인 필요** — 2026-08-13 전곡·이진 OM·N=20 paired 로 재보니 T=1.0 이
-      단조 우세(0.0381 vs 3.0 의 0.0438, p<1e-4). 다만 §7.7.3 원 실험은 값 범위가
-      달라(0.0585~0.0627) **설정이 다르고**, n·표준편차가 기록돼 있지 않아 원래
-      3.0 과 1.0 이 구별 가능했는지도 알 수 없다. **정본 설정(per-cycle τ 연속 OM,
-      α=0.25)에서 재튜닝하기 전까지 이 값은 바꾸지 않는다.** → T7
+      ⚠ **이 설정에서 온도는 no-op 이다 (2026-08-14 확정).**
+      `NodePool` 은 `flag==0`(OM 행 전체가 0)일 때만 쓰인다. 정본 OM(per-cycle τ)은
+      **zero-row 0/1088** 이라 풀 경로가 한 번도 열리지 않는다 → 온도가 생성물에
+      닿지 않는다. §7.7.3 원 실험도 tonnetz OM(zero-row 0/1088)을 썼다.
+      실측: 풀 생성 직후 재시드로 RNG 상태를 통일하면 T=1.0/2.0/3.0/5.0 이
+      **8/8 비트 단위 동일**(JS 0.049789±0.003852 전부 같음). "T=3.0 최적"은
+      `random.shuffle(pool_list)` 의 난수 소비량 차이가 만든 노이즈였다.
+      → 값을 바꾸는 게 아니라 **주장을 철회**해야 한다 (§5.8.3, D 세션 T8).
+      같은 이유로 **NodePool 인덱스 버그도 정본 JS=0.00902 에 닿지 않는다**(재산출 불필요).
+      온도가 실제로 작동하는 설정(zero-row 18%인 이진 τ=0.5 OM)에서는
+      T=1.0 이 단조 우세하고 재시드 대조를 통과한다(paired p=6.07e-08, dz=1.91).
 ```
 
 ### 다음 할 작업 (세션별)
@@ -333,8 +339,11 @@ best-practice 도입 커밋 시리즈(316e125 / 9c781ff / 1ca08d4) 이후 병렬
 | T1 | ✅ | ablation 완료 (2026-08-13) | **위상 손실 기여 없음** 확정. `topo_diffusion_compare.json` + `ablation_bootstrap.json` |
 | T4 | ⚠ 무효 | ~~τ-leaping 이 OM 으로 리듬 밀도를 잡는다~~ | **적대적 감사에서 무너짐.** 메커니즘 뺀 대조군을 돌리니 OM 없는 `poisson_const` 가 −22.2%, OM·확률성 둘 다 없는 `modules_×1.2` 가 −32.1% 로 τ-leaping(−24.6%)을 **이긴다**. τ-leaping vs OM-free paired p=0.106 판별 불가. 지표가 사실상 "음을 충분히 냈나"를 잰다(corr(음수,JS)=−0.869). 정직한 서술: *"고정 스케줄을 확률화하면 리듬분포 JS 가 −22~32% 개선되나 대부분 음 수 증가 효과이며 OM 자체 기여는 판별되지 않았다"* |
 | T5 | A | **교집합 추출에 곡빈도+온도 반영** | 음고 JS **−6.2%**(`freq_intersect`, Holm 보정 후 p=0.046, d=0.65). QMC 추가분은 기여 없음(paired p=0.460)이므로 −7.9%(`combined`)로 귀속하면 안 됨. **대가: 협화도 −0.011 이 유의**(p=0.024, d≈0.60) — JS 개선과 거의 같은 크기. `run_qmc_sampling.py` |
-| T7 | A | **정본 설정에서 온도 재튜닝** | NodePool 수정 후. 전곡·이진 OM 에서는 T=1.0 단조 우세(N=20 paired p<1e-4)인데 §7.7.3 은 다른 설정·n 미기록이라 직접 비교 불가. per-cycle τ 연속 OM α=0.25 로 다시 재야 정본 값을 바꿀 수 있다. `run_temperature_retune.py` 가 그리드 틀을 제공 |
-| T6 | ✅ | ~~`generation.py` NodePool 인덱스 규약 불일치~~ **수정 완료 (fcf929f)** | 풀은 1-indexed(`notes_label` 값 1..23), 디코더 `label_to_note_info` 는 0-indexed(`lbl == label+1`). **23개 라벨 전부가 다른 음으로 디코딩**되고 라벨 23 은 `None` → **추출의 4.17% 가 조용히 폐기**. 교집합 경로(0-indexed)는 정상. 원본 `professor.py:get_note_by_label` 주석은 "generateBarcode 는 0부터 인덱싱"이라 명시 → 리팩터 유입 버그로 보임. 고치면 음고 JS −4.1%(N=24, p=0.17 비유의), 음 +2.7%. **역사적 수치 전부가 이 상태에서 산출됐으므로 수정은 사용자 결정 필요** |
+| T7 | ✅ | ~~정본 설정에서 온도 재튜닝~~ **재튜닝할 대상이 없다 (2026-08-14)** | 정본 OM 은 zero-row 0/1088 → 풀 경로 0% → **온도는 생성물에 닿지 않는다.** 재시드로 RNG 를 통일하면 T=1.0~5.0 이 8/8 비트 단위 동일. 사전 예측("수정 후 최적 온도가 내려간다")은 **반증**됐다 — 최적은 양쪽 배선 모두 이미 1.0 이었다. `temperature_retune_results.json` |
+| T8 | **D** | **§5.8.3 온도 주장 철회** | T7 결과 반영. §7.7.3 실험은 tonnetz OM(zero-row 0)을 써서 풀을 한 번도 뽑지 않았다 → "T=3.0 최적"은 `random.shuffle` 의 난수 소비량이 만든 노이즈. L1653 부근 entropy 해석도 함께 철회. full.md / short.md / LaTeX 3파일 |
+| T9 | **A** | **§4.1 · §5.2 재산출** | NodePool 버그는 **풀 경로가 열리는 설정에서만** 영향. §4.1 frequency(K=1, zero-row 59%)·solari/aqua(50~65%)가 해당. 정본(0.00902)·Algorithm 2 는 무영향. 병행 세션 조사: `memory/project_t6_nodepool_index_audit_0814.md`. ⚠ DFT 쪽 변화량은 시드 스트림마다 부호가 흔들려 **"판별 불가"가 정확** — 점추정 보고 금지 |
+| T10 | ✅ | ~~배포 JS 포트 인덱스 버그~~ **수정 완료 (2026-08-14)** | `generation-algo1.js` 2사본이 풀에 1-indexed `label` 을 넣고 항등 조회 → **intersect 경로**(정본 draw 의 100%)가 한 칸 낮은 음으로 디코딩, z=0 은 항상 폐기. node 로 실제 JS 실행 후 파이썬 지표 채점: 0.04390→**0.00977** (4.49배, paired p=4.1e-24), 파이썬 정본 0.00902 의 1σ 이내. 회귀 테스트 `tools/verify_js_algo1.mjs` + `tools/verify/score_js_algo1.py` 신설 |
+| T6 | ✅ | ~~`generation.py` NodePool 인덱스 규약 불일치~~ **수정 완료 (fcf929f)** | 풀은 1-indexed(`notes_label` 값 1..23), 디코더 `label_to_note_info` 는 0-indexed(`lbl == label+1`). **23개 라벨 전부가 다른 음으로 디코딩**되고 라벨 23 은 `None` → **추출의 4.17% 가 조용히 폐기**. 교집합 경로(0-indexed)는 정상. 원본 `professor.py:get_note_by_label` 주석은 "generateBarcode 는 0부터 인덱싱"이라 명시 → 리팩터 유입 버그로 보임. 고치면 음고 JS −4.1%(N=24, p=0.17 비유의), 음 +2.7%. ⚠ **정정 2건 (2026-08-14)**: ① "추출의 4.17% 폐기"는 T=3.0 조건부값이고(T=1.0 에선 3.39%) 폐기되는 건 note 가 아니라 **draw** 다(`max_resample=50` 으로 재시도). ② 커밋 메시지의 근거 3번("원본 node_pool 은 `frequent_nodes` 산출물")은 **거짓** — `frequent_nodes` 는 교집합 풀을 만들고 `node_pool` 은 `algorithm1` 의 인자다. 진짜 근거는 `WK14/WK13_model.ipynb` 의 `list.index()`(0-based)와 같은 파일의 orphan 경로. 결론(0-indexed)은 유지 |
 | T2 | C | 12 트랙 청취 평가 (`output/topo_diffusion/motif.html`) | 모티브별 인상, 뼈대↔변주 차이 |
 | T3 | B | 대시보드 "모티브만 남기고 채우기" 실기기 검증 | 자산 v=4.33. 30초 세그먼트에서 respacing 50스텝 체감속도 |
 

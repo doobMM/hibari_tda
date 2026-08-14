@@ -8,8 +8,9 @@
 //   const res  = algorithm1({ nodePool: pool, cycleManager: mgr,
 //                              instLen, overlap, maxResample, rng, onProgress })
 //
-// 주의: Python NodePool 의 label_to_note_info 는 `lbl === label + 1` 로 조회함.
-//       본 포트는 그 동작을 그대로 재현 (JS=0.00902 실험 결과에 정렬).
+// 인덱스 규약: **전부 0-indexed(`label_idx`)** (2026-08-14 정정, Python fcf929f 와 동일).
+// ⚠ 이전 버전은 풀에 1-indexed `label` 을 넣고 항등 조회를 해서 intersect 경로
+//   (cycle_labeled = 0-indexed) 가 한 칸 낮은 음으로 디코딩됐다. z=0 은 항상 버려졌다.
 
 // ── 결정적 PRNG (mulberry32) ───────────────────────────────────────────────
 export function makeRng(seed) {
@@ -35,10 +36,7 @@ function shuffle(arr, rng) {
 export class NodePool {
   constructor({ labels, numModules = 65, temperature = 1.0, rng = Math.random }) {
     this.labels = labels;
-    this.labelToEntryPlus1 = new Map();
-    for (const e of labels) this.labelToEntryPlus1.set(e.label + 1, e);
-    this.labelToEntry = new Map();
-    for (const e of labels) this.labelToEntry.set(e.label, e);
+    // label_idx(0-indexed) → entry. 유일한 디코딩 경로.
     this.byIdx = new Map();
     for (const e of labels) this.byIdx.set(e.label_idx, e);
 
@@ -55,7 +53,7 @@ export class NodePool {
     const pool = [];
     labels.forEach((n, i) => {
       const c = scaled[i];
-      for (let k = 0; k < c; k++) pool.push(n.label); // 1-indexed
+      for (let k = 0; k < c; k++) pool.push(n.label_idx); // 0-indexed
     });
     shuffle(pool, rng);
     this.pool = pool;
@@ -66,9 +64,9 @@ export class NodePool {
     return this.pool[Math.floor(this.rng() * this.pool.length)];
   }
 
+  // 입력은 항상 0-indexed (풀 = label_idx, intersect = cycle_labeled note 인덱스).
   labelToNoteInfo(label) {
-    const e = this.labelToEntryPlus1.get(label + 1);
-    return e || null;
+    return this.byIdx.get(label) || null;
   }
 }
 
