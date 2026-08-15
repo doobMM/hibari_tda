@@ -1,0 +1,111 @@
+{
+  "experiment": "P4 반복 — 원곡 OM vs 디퓨전 OM",
+  "n_pairs": 6,
+  "T_steps": 32,
+  "seconds_each": 14.5,
+  "temperature": 1.0,
+  "shuffle_seed": 20260815,
+  "generation_seeds": [
+    5101,
+    5202,
+    5303,
+    5404,
+    5505,
+    5606
+  ],
+  "key": {
+    "Q1": {
+      "A": "디퓨전 OM (motifA_v1)",
+      "B": "원곡 OM",
+      "window": [
+        192,
+        224
+      ],
+      "seed": 5101,
+      "temperature": 1.0
+    },
+    "Q2": {
+      "A": "원곡 OM",
+      "B": "디퓨전 OM (motifA_v2)",
+      "window": [
+        224,
+        256
+      ],
+      "seed": 5202,
+      "temperature": 1.0
+    },
+    "Q3": {
+      "A": "원곡 OM",
+      "B": "디퓨전 OM (motifB_v1)",
+      "window": [
+        256,
+        288
+      ],
+      "seed": 5303,
+      "temperature": 1.0
+    },
+    "Q4": {
+      "A": "디퓨전 OM (motifB_v2)",
+      "B": "원곡 OM",
+      "window": [
+        288,
+        320
+      ],
+      "seed": 5404,
+      "temperature": 1.0
+    },
+    "Q5": {
+      "A": "원곡 OM",
+      "B": "디퓨전 OM (motifC_v1)",
+      "window": [
+        320,
+        352
+      ],
+      "seed": 5505,
+      "temperature": 1.0
+    },
+    "Q6": {
+      "A": "디퓨전 OM (motifC_v2)",
+      "B": "원곡 OM",
+      "window": [
+        352,
+        384
+      ],
+      "seed": 5606,
+      "temperature": 1.0
+    }
+  },
+  "pool_exposure": {
+    "Q1": {
+      "real_zero_rows": 6,
+      "diffusion_zero_rows": 12,
+      "T": 32
+    },
+    "Q2": {
+      "real_zero_rows": 8,
+      "diffusion_zero_rows": 9,
+      "T": 32
+    },
+    "Q3": {
+      "real_zero_rows": 8,
+      "diffusion_zero_rows": 11,
+      "T": 32
+    },
+    "Q4": {
+      "real_zero_rows": 8,
+      "diffusion_zero_rows": 8,
+      "T": 32
+    },
+    "Q5": {
+      "real_zero_rows": 7,
+      "diffusion_zero_rows": 7,
+      "T": 32
+    },
+    "Q6": {
+      "real_zero_rows": 5,
+      "diffusion_zero_rows": 8,
+      "T": 32
+    }
+  },
+  "note": "이 파일을 먼저 열지 마세요 — 블라인드가 깨집니다."
+}

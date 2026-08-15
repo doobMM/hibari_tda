@@ -53,6 +53,7 @@ jobs:
           cp -R tda_pipeline/output/hibari+          _site/output/hibari+
           cp -R tda_pipeline/output/topo_diffusion   _site/output/topo_diffusion
           cp -R tda_pipeline/output/ab_check         _site/output/ab_check
+          cp -R tda_pipeline/output/ab_p4            _site/output/ab_p4
 
           # 랜딩용 PDF 2종
           mkdir -p _site/docs
@@ -99,7 +100,9 @@ jobs:
                    hibari_dashboard/public/js/motif-diffusion.js \
                    hibari_dashboard/public/models/topo_denoiser.onnx \
                    output/topo_diffusion/motif.html \
-                   output/topo_diffusion/topo_motifA_skeleton.ogg; do
+                   output/topo_diffusion/topo_motifA_skeleton.ogg \
+                   output/ab_p4/index.html \
+                   output/ab_p4/Q1A.ogg output/ab_p4/Q6B.ogg; do
             test -f "_site/$f" || { echo "빠짐: $f"; exit 1; }
             echo "  OK $f"
           done
