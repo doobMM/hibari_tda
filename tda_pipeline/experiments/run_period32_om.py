@@ -28,9 +28,13 @@
    **"모양이 좋은가"가 아니라 "대비가 센가"** 를 잰다.
    **결정적 대조**: MODULES 의 *모양은 그대로* 두고 대비만 키우면(γ=3.5) ρ 0.402 → 0.635.
    1차 헤드라인 +81% 중 **71% 가 순수 대비**였다.
-   → 그래서 대비를 맞춘다. 그런데 **한 지점에서만 맞추면 그 지점이 어느 모양에 유리한지에
-     따라 순위가 바뀐다** — 실제로 내 1차 정정이 다시 정정됐다.
-     **두 지점(0.99 / 0.60)에서 부호가 같은 것만 결론으로 인정한다.**
+   → 그래서 대비를 맞춰야 한다. 그런데 **한 지점을 맞추는 방법은 두 번 실패했다**:
+     ① 한 지점에서만 맞추니 그 지점이 어느 모양에 유리한지에 따라 순위가 바뀌었다
+     ② γ 를 전반부에서 고르면 후반부로 전이되지 않는다 (실현 0.99 → 0.473).
+        `realized(γ)` 가 계단 함수(MODULES 는 값이 3/4 뿐)라 이분 탐색이 경계에 수렴한다.
+     → **곡선 방법**으로 바꿨다. γ 를 쓸어 (실현 대비 → ρ) 곡선을 얻고
+       **겹치는 대비 구간에서만** 비교한다. 실현 대비를 평가 구간에서 직접 재므로 전이가 없고,
+       결과가 아니라 공변량으로 맞추므로 누출이 아니다. 안 겹치면 "비교 불가"라고 말한다.
 
 **사전 예측 (1차 실행 전에 기록했다)**
   · 리듬 프로파일 상관: combined > phase32 > om ≈ modules, shuffled 는 modules 수준.
@@ -39,12 +43,15 @@
 
 한계
 ────
-대비 정렬은 **근사**다. MODULES 는 값이 3/4 뿐이라 정수 반올림 때문에 실현 대비 0.60 에
-도달하지 못하고(0.473), om 은 γ=8 에서도 0.99 에 도달하지 못한다(0.892).
-각 비교의 실현 대비를 JSON 에 함께 기록한다.
+모양마다 **도달 가능한 대비 범위가 다르다** — modules [0.473,1.335] · om [0.267,0.892] ·
+phase32 [0.600,1.313] · combined [0.534,1.344]. 그래서 모든 쌍을 전 구간에서 비교할 수 없다.
+겹치는 구간만 쓰고, 겹치지 않으면 비교 불가로 보고한다.
 
-산출:  docs/step3_data/period32_om_results.json        (팔 비교, 팔별 γ 보정)
-       docs/step3_data/period32_contrast_matched.json  (대비 정렬 2지점 + 견고성)
+⚠ **원곡의 리듬 대비 0.457 은 modules·phase32·combined 의 도달 범위 아래**다.
+고정 예산에서 생성기는 원곡만큼 평탄한 리듬을 만들지 못한다 (om 만 0.267 까지 내려간다).
+
+산출:  docs/step3_data/period32_om_results.json       (팔 비교, 팔별 γ 보정 — 기술적)
+       docs/step3_data/period32_contrast_curve.json   (대비-ρ 곡선 + 겹침 구간 비교 — 추론적)
 
 실행:  python experiments/run_period32_om.py [--n-seeds 20] [--skip-contrast]
 """
@@ -78,7 +85,7 @@ from run_topo_diffusion import (
 PERIOD = 32
 ARMS = ["modules", "om", "phase32", "combined", "phase32_shuffled", "combined_shuffled"]
 SHAPES_MATCHED = ["modules", "om", "phase32", "combined"]
-TARGETS = [0.99, 0.60]
+GAMMA_GRID = [0.05, 0.1, 0.2, 0.35, 0.5, 0.75, 1.0, 1.5, 2.25, 3.5, 5.0, 8.0]
 CONTRAST_TOL = 0.10          # 실현 대비 차이가 이보다 크면 "정렬됐다"고 할 수 없다
 PREDICTION = ("리듬 프로파일 상관: combined > phase32 > om ≈ modules, shuffled 는 modules 수준. "
               "음고 JS 는 방향을 예측하지 않는다.")
@@ -184,17 +191,6 @@ def evaluate(ctx, shape, gamma, seeds, *, region="test"):
     res = {k: np.array(v) for k, v in out.items()}
     res["inst_contrast"] = contrast(phase_profile(inst.astype(float), offset))
     return res
-
-
-def find_gamma(ctx, shape, target, seeds, lo=0.05, hi=8.0, iters=18):
-    """실현 대비가 target 이 되는 γ 를 이분 탐색. 탐색은 **전반부에서만** 한다."""
-    for _ in range(iters):
-        mid = 0.5 * (lo + hi)
-        if evaluate(ctx, shape, mid, seeds, region="train")["realized_contrast"].mean() < target:
-            lo = mid
-        else:
-            hi = mid
-    return 0.5 * (lo + hi)
 
 
 # ── 준비 ─────────────────────────────────────────────────────────────────────
@@ -311,82 +307,120 @@ def analysis_arms(ctx, seeds, t0):
     }
 
 
-# ── 분석 B: 실현 대비를 맞춰 '모양'만 비교 ────────────────────────────────────
+# ── 분석 B: 대비-ρ **곡선**을 그려 겹치는 구간에서만 비교 ─────────────────────
+#
+# 왜 곡선인가 — 한 지점을 맞추려던 이전 방법이 두 이유로 깨졌다:
+#   (a) `realized(γ)` 가 계단 함수다 (MODULES 는 값이 3/4 뿐) → 이분 탐색이 경계에 수렴
+#   (b) 전반부에서 고른 γ 가 후반부로 전이되지 않는다 (실현 0.99 → 0.473)
+# 곡선은 둘 다 피한다. γ 를 쓸어 (실현 대비 → ρ) 곡선을 얻고 **겹치는 대비 구간에서만**
+# 비교한다. 실현 대비를 평가 구간에서 **직접 측정**하므로 전이 문제가 없고,
+# 결과(ρ)가 아니라 **공변량(대비)** 으로 맞추는 것이라 누출도 아니다.
+# 겹치지 않으면 "비교 불가"라고 말한다 — 외삽하지 않는다.
 
-def analysis_contrast_matched(ctx, seeds, t0):
-    shapes = build_shapes(ctx, ctx.om_test, ctx.mods_test, ctx.half, np.random.default_rng(seeds[0]))
 
+def analysis_contrast_curve(ctx, seeds, t0):
+    shapes = build_shapes(ctx, ctx.om_test, ctx.mods_test, ctx.half,
+                          np.random.default_rng(seeds[0]))
+
+    # 대조 A — 모양을 고정하고 대비만 키워도 ρ 가 오르는가 (이 실험의 출발점)
     r0 = evaluate(ctx, shapes["modules"], 1.0, seeds)
     r1 = evaluate(ctx, shapes["modules"], 3.5, seeds)
     p_amp = float(stats.ttest_rel(r1["rho"], r0["rho"]).pvalue)
-    print(f"\n[대조 A] MODULES **모양 그대로** 대비만 ↑ : "
+    print("\n[대조 A] MODULES **모양 그대로** 대비만 키움 : "
           f"ρ {r0['rho'].mean():.4f}(대비 {r0['realized_contrast'].mean():.3f}) → "
           f"{r1['rho'].mean():.4f}(대비 {r1['realized_contrast'].mean():.3f})  "
-          f"Δ={r1['rho'].mean()-r0['rho'].mean():+.4f} p={p_amp:.2e}")
+          f"Δ={r1['rho'].mean() - r0['rho'].mean():+.4f} p={p_amp:.2e}")
     print("         → 모양을 안 바꿔도 대비만으로 ρ 가 오른다. 대비를 맞추지 않은 비교는 무효다.")
 
-    out = {"experiment": "period32_contrast_matched",
-           "original_contrast": ctx.orig_contrast,
-           "contrast_only_control": {"rho_gamma1": float(r0["rho"].mean()),
-                                     "rho_gamma3p5": float(r1["rho"].mean()),
-                                     "contrast_gamma1": float(r0["realized_contrast"].mean()),
-                                     "contrast_gamma3p5": float(r1["realized_contrast"].mean()),
-                                     "p": p_amp},
-           "levels": {}, "robustness": {}}
-
-    for tgt in TARGETS:
-        print(f"\n[목표 실현 대비 {tgt}]")
-        print(f"  {'모양':10} {'γ':>7} {'실현대비':>8} {'리듬상관 ρ':>17} {'음고 JS':>17} {'협화도':>9}")
-        store, lvl = {}, {}
-        for name in SHAPES_MATCHED:
-            g = find_gamma(ctx, shapes[name], tgt, seeds[:5])
+    # ── 곡선 쓸기 ──
+    print(f"\n[곡선] γ {len(GAMMA_GRID)}점 × 모양 {len(SHAPES_MATCHED)}개 × 시드 {len(seeds)}")
+    curves = {}
+    for name in SHAPES_MATCHED:
+        pts = []
+        for g in GAMMA_GRID:
             r = evaluate(ctx, shapes[name], g, seeds)
-            store[name] = r["rho"]
-            lvl[name] = {"gamma": float(g),
-                         "realized_contrast": float(r["realized_contrast"].mean()),
-                         "rho": [float(r["rho"].mean()), float(r["rho"].std(ddof=1))],
-                         "pitch_js": [float(r["js"].mean()), float(r["js"].std(ddof=1))],
-                         "consonance": [float(r["cons"].mean()), float(r["cons"].std(ddof=1))],
-                         "rho_all": [float(x) for x in r["rho"]]}
-            print(f"  {name:10} {g:>7.3f} {r['realized_contrast'].mean():>8.4f} "
-                  f"{r['rho'].mean():>10.4f}±{r['rho'].std(ddof=1):.4f} "
-                  f"{r['js'].mean():>10.5f}±{r['js'].std(ddof=1):.5f} {r['cons'].mean():>9.4f}")
-        # ⚠ γ 는 **전반부에서만** 정한다(누출 방지). 그래서 평가 구간에서 목표 대비에
-        #   도달하지 못하는 모양이 있다 — 그런 비교는 애초에 정렬돼 있지 않으므로 무효 처리한다.
-        tests = {}
-        for a, b in (("combined", "om"), ("combined", "modules"), ("om", "modules"),
-                     ("combined", "phase32"), ("phase32", "modules")):
-            gap = abs(lvl[a]["realized_contrast"] - lvl[b]["realized_contrast"])
-            matched = gap <= CONTRAST_TOL
-            p = float(stats.ttest_rel(store[a], store[b]).pvalue)
-            d = float(store[a].mean() - store[b].mean())
-            tests[f"{a}_vs_{b}"] = {"delta": d, "p": p,
-                                    "contrast_gap": float(gap), "contrast_matched": bool(matched)}
-            print(f"     {a:9} vs {b:9} Δ={d:+.4f} p={p:.2e} "
-                  f"{'유의' if p < 0.05 else '판별 불가'}"
-                  f"{'' if matched else f'   ⚠ 대비 미정렬(Δ={gap:.3f}) → 무효'}")
-        out["levels"][str(tgt)] = {"arms": lvl, "tests": tests}
+            pts.append({"gamma": float(g),
+                        "contrast": float(r["realized_contrast"].mean()),
+                        "rho": float(r["rho"].mean()), "rho_all": r["rho"],
+                        "pitch_js": float(r["js"].mean()),
+                        "consonance": float(r["cons"].mean())})
+        pts.sort(key=lambda d: d["contrast"])
+        curves[name] = pts
+        print(f"  {name:10} 도달 대비 [{pts[0]['contrast']:.3f}, {pts[-1]['contrast']:.3f}]  "
+              f"ρ [{min(q['rho'] for q in pts):.3f}, {max(q['rho'] for q in pts):.3f}]")
 
-    print(f"\n{'─'*88}\n견고성 — **대비가 정렬된** 지점에서만, 부호가 같은가")
-    hi, lo = (out["levels"][str(t)]["tests"] for t in TARGETS)
-    for k in hi:
-        ok = [x for x in (hi[k], lo[k]) if x["contrast_matched"]]
-        same = len(ok) == 2 and (ok[0]["delta"] > 0) == (ok[1]["delta"] > 0)
-        if len(ok) == 2:
-            verdict = "견고" if same else "★ 부호 뒤집힘 — 판별 불가"
-        elif len(ok) == 1:
-            verdict = "△ 정렬된 지점 1개뿐 — 견고성 미검증"
+    print(f"\n  원곡 대비 {ctx.orig_contrast:.3f} 에서의 값 (선형보간):")
+    at_orig = {}
+    for name in SHAPES_MATCHED:
+        pts = curves[name]
+        xs = [q["contrast"] for q in pts]
+        if xs[0] <= ctx.orig_contrast <= xs[-1]:
+            y = float(np.interp(ctx.orig_contrast, xs, [q["rho"] for q in pts]))
+            j = float(np.interp(ctx.orig_contrast, xs, [q["pitch_js"] for q in pts]))
+            at_orig[name] = {"rho": y, "pitch_js": j}
+            print(f"    {name:10} ρ≈{y:.4f}   음고 JS≈{j:.5f}")
         else:
-            verdict = "✗ 두 지점 모두 대비 미정렬 — 비교 불가"
-        print(f"  {k:26} {hi[k]['delta']:+.4f}{'' if hi[k]['contrast_matched'] else '(무효)'}"
-              f" / {lo[k]['delta']:+.4f}{'' if lo[k]['contrast_matched'] else '(무효)'}   {verdict}")
-        out["robustness"][k] = {"delta_hi": hi[k]["delta"], "delta_lo": lo[k]["delta"],
-                                "matched_hi": hi[k]["contrast_matched"],
-                                "matched_lo": lo[k]["contrast_matched"],
-                                "n_valid_levels": len(ok),
-                                "sign_consistent": bool(same) if len(ok) == 2 else None}
-    out["total_seconds"] = time.time() - t0
-    return out
+            at_orig[name] = None
+            print(f"    {name:10} 도달 범위 밖 — 보간 불가")
+
+    # ── 겹치는 구간에서만 쌍 비교 ──
+    print(f"\n{'-' * 88}")
+    print(f"겹치는 대비 구간에서 쌍 비교 (지점마다 paired t-test, 대비 차이 ≤ {CONTRAST_TOL})")
+    pairs = {}
+    for a, b in (("combined", "om"), ("combined", "modules"), ("om", "modules"),
+                 ("combined", "phase32"), ("phase32", "modules"), ("om", "phase32")):
+        ca, cb = curves[a], curves[b]
+        lo = max(ca[0]["contrast"], cb[0]["contrast"])
+        hi = min(ca[-1]["contrast"], cb[-1]["contrast"])
+        if hi <= lo:
+            print(f"  {a:9} vs {b:9}  겹치는 구간 없음 → 비교 불가")
+            pairs[f"{a}_vs_{b}"] = {"overlap": None, "verdict": "비교 불가 (구간 미겹침)"}
+            continue
+        rows, wins = [], []
+        for c in np.linspace(lo, hi, 5):
+            pa = min(ca, key=lambda q: abs(q["contrast"] - c))
+            pb = min(cb, key=lambda q: abs(q["contrast"] - c))
+            gap = abs(pa["contrast"] - pb["contrast"])
+            if gap > CONTRAST_TOL:
+                continue
+            d = float(pa["rho"] - pb["rho"])
+            pv = float(stats.ttest_rel(pa["rho_all"], pb["rho_all"]).pvalue)
+            rows.append({"target": float(c), "contrast_a": pa["contrast"],
+                         "contrast_b": pb["contrast"], "gap": float(gap),
+                         "delta": d, "p": pv})
+            wins.append(1 if d > 0 else -1)
+        if not rows:
+            verdict = "비교 불가 (정렬 지점 없음)"
+        elif all(w > 0 for w in wins):
+            verdict = f"{a} 우세 (정렬 {len(rows)}지점 전부)"
+        elif all(w < 0 for w in wins):
+            verdict = f"{b} 우세 (정렬 {len(rows)}지점 전부)"
+        else:
+            verdict = f"판별 불가 (부호 갈림 {sum(w > 0 for w in wins)}/{len(rows)})"
+        ds = " ".join(f"{r['delta']:+.3f}" for r in rows)
+        print(f"  {a:9} vs {b:9}  겹침 [{lo:.3f},{hi:.3f}]  Δ = {ds or '-'}   → {verdict}")
+        pairs[f"{a}_vs_{b}"] = {"overlap": [float(lo), float(hi)],
+                                "points": rows, "verdict": verdict}
+
+    return {
+        "experiment": "period32_contrast_curve",
+        "method": ("γ 를 쓸어 (실현 대비 → ρ) 곡선을 얻고 겹치는 구간에서만 비교한다. "
+                   "실현 대비를 평가 구간에서 직접 측정하므로 train→test 전이 문제가 없고, "
+                   "결과가 아니라 공변량으로 맞추므로 누출이 아니다. "
+                   "겹치지 않으면 비교 불가로 보고하고 외삽하지 않는다."),
+        "original_contrast": ctx.orig_contrast,
+        "gamma_grid": GAMMA_GRID, "contrast_tolerance": CONTRAST_TOL,
+        "contrast_only_control": {"rho_gamma1": float(r0["rho"].mean()),
+                                  "rho_gamma3p5": float(r1["rho"].mean()),
+                                  "contrast_gamma1": float(r0["realized_contrast"].mean()),
+                                  "contrast_gamma3p5": float(r1["realized_contrast"].mean()),
+                                  "p": p_amp},
+        "curves": {k: [{kk: vv for kk, vv in q.items() if kk != "rho_all"} for q in v]
+                   for k, v in curves.items()},
+        "at_original_contrast": at_orig,
+        "pair_comparisons": pairs,
+        "total_seconds": time.time() - t0,
+    }
 
 
 def main():
@@ -411,8 +445,8 @@ def main():
 
     for name, payload in (("period32_om_results.json", analysis_arms(ctx, seeds, t0)),
                           *(() if args.skip_contrast else
-                            (("period32_contrast_matched.json",
-                              analysis_contrast_matched(ctx, seeds, t0)),))):
+                            (("period32_contrast_curve.json",
+                              analysis_contrast_curve(ctx, seeds, t0)),))):
         path = os.path.join(STEP3_DIR, name)
         with open(path, "w", encoding="utf-8") as f:
             json.dump(payload, f, ensure_ascii=False, indent=2)
