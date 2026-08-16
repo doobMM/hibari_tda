@@ -44,6 +44,7 @@ jobs:
           cp -R tda_pipeline/hibari_dashboard  _site/hibari_dashboard
           cp -R tda_pipeline/tonnetz_demo      _site/tonnetz_demo
           cp -R tda_pipeline/filtration_viz    _site/filtration_viz
+          cp -R tda_pipeline/mobile_tonnetz    _site/mobile_tonnetz
           cp -R tda_pipeline/shared            _site/shared
           cp    tda_pipeline/tour.html         _site/tour.html
           cp    tda_pipeline/bloom.html        _site/bloom.html

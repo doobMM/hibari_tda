@@ -144,9 +144,13 @@ def generate_with_temperature(data, cycle_labeled, om_bin, seed, temperature):
                                 max_resample=50, verbose=False, min_onset_gap=0)
 
 
-# 후보 공간을 온도 축으로 넓힌다. 1.0=원래 빈도, 3.0=§7.7.3 JS 최적.
-# 어느 쪽이 더 "듣기 좋은지"는 협화도 랭킹이 고르게 한다.
-TEMPERATURES = [1.0, 2.0, 3.0, 4.0]
+# ⚠ 2026-08-15: 종전에는 [1.0, 2.0, 3.0, 4.0] 을 쓸었고 그 근거로 "3.0=§7.7.3 JS 최적"을 들었다.
+#   **그 주장은 철회됐다** — §7.7.3 은 zero-row 0 인 OM 을 써서 노드 풀을 한 번도 뽑지 않았고,
+#   원 함수를 재실행하면 순위가 뒤집힌다 (`t8_temperature_audit.json`).
+#   반면 여기 모티브 OM 들은 zero-row 가 23~87% 라 풀이 실제로 열리고, 그런 설정에서는
+#   T=1.0 이 단조 우세하다 (귀무 개입 대조군 통과, paired p=6.1e-08).
+#   따라서 온도 축을 없애고 1.0 으로 고정한다. 후보 다양성은 seed 와 OM 인덱스로 충분하다.
+TEMPERATURES = [1.0]
 
 
 def produce_track(track: str, om_pool: np.ndarray, data: dict, cycle_labeled: dict,
@@ -168,6 +172,8 @@ def produce_track(track: str, om_pool: np.ndarray, data: dict, cycle_labeled: di
         return {"track": track, "error": "후보 0개"}
 
     # 1차 구조 게이트 → 2차 협화도 랭킹
+    # ⚠ 게이트 임계값(중앙값)과 랭킹을 **같은 후보 집합**에서 뽑으므로 `best` 의 js·협화도는
+    #   선택 후 값이라 낙관적으로 편향된다. 비편향 요약은 아래 `pool_stats` 를 쓸 것.
     js_med = float(np.median([c["js"] for c in cands]))
     passed = [c for c in cands if c["js"] <= js_med] or cands
     best = max(passed, key=lambda c: c["consonance"])
@@ -196,6 +202,9 @@ def produce_track(track: str, om_pool: np.ndarray, data: dict, cycle_labeled: di
             "consonance_std": float(np.std([c["consonance"] for c in cands], ddof=1)),
             "consonance_best": float(best["consonance"]),
         },
+        "selection_note": ("`best` 의 js·consonance 는 게이트+랭킹을 통과한 뒤의 값이라 "
+                           "낙관적으로 편향돼 있다(게이트 임계값과 랭킹이 같은 후보 집합에서 나온다). "
+                           "트랙 간 비교나 보고에는 `pool_stats` 의 mean±std 를 쓸 것."),
         "notes": best["notes"],
     }
 
