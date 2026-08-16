@@ -59,7 +59,7 @@
 | 곡 | PC 수 | 최적 거리 | 2위와 구별 | 최적 모델 | 비고 |
 |---|---|---|---|---|---|
 | hibari | 7 (diatonic) | **DFT** 0.0216 | p=7.8e-06 | FC | 스펙트럼 구조 포착, entropy 0.974 |
-| Bach Fugue | 12 (chromatic) | **Tonnetz** 0.0130 | p=1.3e-18 | — | 대위법인데 Tonnetz (freq 대비 −56.7%) |
+| Bach Fugue | 12 (chromatic) | **Tonnetz** 0.0130 | p=1.3e-18 | — | 대위법인데 Tonnetz (freq 대비 −56.5%) |
 | Ravel Pavane | 12 (N=49) | **Tonnetz** 0.0156 ★변경 | p=1.1e-16 | FC | ~~frequency 최적~~ 뒤집힘. "N 크면 빈도 유리" 해석 철회 |
 | solari | 12 (chromatic) | frequency 0.0131 ★변경 | p=2.3e-03 | Transformer | ⚠ 대조 팔이 종전값 재현 실패 → 인덱스 수정에 귀속 불가 |
 | aqua | 12 (chromatic) | **판별 불가** ★변경 | **p=0.69** | — | ~~Tonnetz +26.3%~~ 무효. freq 0.0086 ≈ Tonnetz 0.0088 |
