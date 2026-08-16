@@ -76,6 +76,9 @@ def main():
         frames.append({
             "alpha": a, "K": len(cyc),
             "cycles": {str(k): sorted(int(x) for x in v) for k, v in cyc.items()},
+            # 브라우저 재생용 — τ=0.5 이진 OM 을 t-major 비트열로. 전체 21프레임 합 ~470KB,
+            # gzip 후엔 수십 KB 다. 연속값을 실으면 20배가 되므로 이진만 싣는다.
+            "om_bits": "".join("1" if v else "0" for v in ob.reshape(-1).astype(int)),
             "om_density": float(ob.mean()),
             "zero_rows": int((ob.sum(1) == 0).sum()),
             "T": int(ob.shape[0]),
@@ -147,6 +150,15 @@ def main():
     with open(path, "w", encoding="utf-8") as f:
         json.dump(out, f, ensure_ascii=False, indent=2)
     print(f"\n저장: {path}  ({time.time()-t0:.1f}s)")
+
+    # 웹 사본 — 원본은 step3_data 이고 이것은 파생물이다. 수동 복사는 언젠가 어긋나므로
+    # 여기서 같이 쓴다. indent 없이 써서 크기를 줄인다(gzip 전 ~470KB → ~300KB).
+    web_dir = os.path.join(suite.BASE_DIR, "vineyard")
+    os.makedirs(web_dir, exist_ok=True)
+    web = os.path.join(web_dir, "alpha_vineyard.json")
+    with open(web, "w", encoding="utf-8") as f:
+        json.dump(out, f, ensure_ascii=False, separators=(",", ":"))
+    print(f"웹 사본: {web}  ({os.path.getsize(web)/1024:.0f} KB)")
 
 
 if __name__ == "__main__":

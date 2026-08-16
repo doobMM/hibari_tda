@@ -1,0 +1,203 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>위상이 자라는 것을 듣기 — α vineyard</title>
+<style>
+ :root{--bg:#f5f8f2;--fg:#1b2419;--muted:#5c6b57;--line:#d6e0cd;--card:#fff;
+       --accent:#2f6b3a;--bone:#2f6b3a;--transient:#b8c9ae}
+ @media(prefers-color-scheme:dark){:root{--bg:#0f1410;--fg:#e6ede2;--muted:#8fa088;
+       --line:#243021;--card:#161d15;--accent:#7fb069;--bone:#7fb069;--transient:#3c4a37}}
+ *{box-sizing:border-box}
+ body{margin:0;background:var(--bg);color:var(--fg);line-height:1.6;
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans KR",sans-serif}
+ .wrap{max-width:900px;margin:0 auto;padding:28px 16px 80px}
+ h1{font-size:clamp(19px,4.5vw,26px);margin:0 0 6px;font-weight:700}
+ .lede{color:var(--muted);font-size:14px;margin:0 0 22px}
+ .card{background:var(--card);border:1px solid var(--line);border-radius:13px;
+       padding:16px;margin-bottom:14px}
+ .rail{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+ input[type=range]{flex:1 1 220px;min-width:200px;height:44px;accent-color:var(--accent)}
+ .big{font-variant-numeric:tabular-nums;font-weight:700}
+ .alpha{font-size:26px;color:var(--accent)}
+ .kbox{display:flex;gap:18px;flex-wrap:wrap;margin-top:10px;font-size:13.5px;color:var(--muted)}
+ .kbox b{color:var(--fg);font-size:17px;font-variant-numeric:tabular-nums}
+ svg{width:100%;height:auto;display:block;touch-action:none}
+ .legend{display:flex;gap:14px;font-size:12.5px;color:var(--muted);margin-top:8px;flex-wrap:wrap}
+ .sw{display:inline-block;width:22px;height:3px;vertical-align:middle;margin-right:5px;border-radius:2px}
+ button{font:inherit;font-size:14.5px;padding:11px 18px;min-height:44px;border-radius:9px;
+        border:1px solid var(--line);background:transparent;color:var(--fg);cursor:pointer}
+ button.primary{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:600}
+ button:disabled{opacity:.45;cursor:not-allowed}
+ .cyc{font-family:ui-monospace,monospace;font-size:12px;color:var(--muted);
+      max-height:150px;overflow-y:auto;margin-top:10px;line-height:1.75}
+ .note{font-size:12.5px;color:var(--muted);margin-top:10px}
+ .status{font-size:13px;color:var(--muted);margin-left:4px}
+</style>
+<div class="wrap">
+<h1>위상이 자라는 것을 듣기</h1>
+<p class="lede">
+  hibari의 음들 사이 거리를 <b>두 가지 방식으로 섞습니다</b>. 섞는 비율 α를 밀면
+  위상 구조(cycle)가 태어나고 죽습니다. 그 자리에서 바로 들을 수 있습니다.
+</p>
+
+<div class="card">
+  <div class="rail">
+    <span class="big alpha" id="av">α = 0.25</span>
+    <input type="range" id="sl" min="0" max="20" value="5" step="1">
+  </div>
+  <div class="kbox">
+    <span>cycle 수 <b id="kv">–</b></span>
+    <span>조용한 시점 <b id="zv">–</b></span>
+    <span>OM 밀도 <b id="dv">–</b></span>
+  </div>
+</div>
+
+<div class="card">
+  <svg id="vine" viewBox="0 0 600 300" preserveAspectRatio="xMidYMid meet"></svg>
+  <div class="legend">
+    <span><i class="sw" style="background:var(--bone)"></i>backbone — α를 바꿔도 살아남는 cycle</span>
+    <span><i class="sw" style="background:var(--transient)"></i>일시적 — 특정 α에서만 나타남</span>
+  </div>
+  <p class="note" id="vnote"></p>
+</div>
+
+<div class="card">
+  <div class="rail">
+    <button class="primary" id="play">▶ 이 α로 30초 듣기</button>
+    <button id="stop" disabled>■ 정지</button>
+    <span class="status" id="st"></span>
+  </div>
+  <div class="cyc" id="cyc"></div>
+</div>
+
+<p class="note">
+  α는 두 음악적 거리 함수를 섞는 계수입니다. 양 끝(0, 1)에서는 위상이 무너져 cycle이 하나만
+  남고, 가운데에서 가장 풍부해집니다. 이 그림은 α를 21단계로 나눠 각각 persistent homology를
+  다시 계산한 뒤, 이웃한 α 사이에서 겹치는 cycle을 이어 붙인 것입니다 —
+  <b>격자 표본이라 그 사이에서 일어나는 교대는 보이지 않습니다.</b>
+</p>
+</div>
+
+<script src="../hibari_dashboard/public/js/generation-algo1.js"></script>
+<script src="../hibari_dashboard/public/js/audio-playback.js"></script>
+<script>
+const SEC_PER_8TH = 60 / 66 / 2;      // 66 BPM, 8분음표
+const PLAY_FROM = 200, PLAY_STEPS = 66;   // 약 30초
+let DATA = null, LABELS = null, player = null;
+
+const $ = id => document.getElementById(id);
+
+function bits(s, T, K) {
+  const a = new Int8Array(T * K);
+  for (let i = 0; i < a.length; i++) a[i] = s.charCodeAt(i) === 49 ? 1 : 0;
+  return a;
+}
+
+function drawVines() {
+  const F = DATA.frames, V = DATA.vines, n = F.length;
+  // 오래 사는 것부터 위로 — 읽는 사람이 backbone 을 먼저 본다
+  const order = [...V].sort((a, b) => b.members.length - a.members.length);
+  const W = 600, H = Math.max(160, Math.min(300, order.length * 3.4 + 30));
+  const padL = 34, padR = 8, padT = 12, padB = 20;
+  const x = i => padL + (W - padL - padR) * (i / (n - 1));
+  const y = r => padT + (H - padT - padB) * (r / Math.max(1, order.length - 1));
+  const idxOf = a => F.findIndex(f => Math.abs(f.alpha - a) < 1e-9);
+
+  let s = `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">`;
+  s += `<g stroke="var(--line)" stroke-width="1">`;
+  for (let i = 0; i < n; i += 4) s += `<line x1="${x(i)}" y1="${padT}" x2="${x(i)}" y2="${H - padB}"/>`;
+  s += `</g><g fill="var(--muted)" font-size="10" text-anchor="middle">`;
+  for (let i = 0; i < n; i += 4) s += `<text x="${x(i)}" y="${H - 6}">${F[i].alpha.toFixed(2)}</text>`;
+  s += `</g>`;
+  order.forEach((v, r) => {
+    const b = idxOf(v.birth_alpha);
+    const d = v.death_alpha == null ? n - 1 : idxOf(v.death_alpha);
+    const life = v.members.length;
+    const bone = life >= 12;
+    s += `<line x1="${x(b)}" y1="${y(r)}" x2="${x(Math.max(b, d))}" y2="${y(r)}" `
+       + `stroke="${bone ? 'var(--bone)' : 'var(--transient)'}" `
+       + `stroke-width="${bone ? 2.4 : 1.2}" stroke-linecap="round" opacity="${bone ? .95 : .6}"/>`;
+  });
+  s += `<line id="cursor" x1="0" y1="${padT - 4}" x2="0" y2="${H - padB + 2}" `
+     + `stroke="var(--accent)" stroke-width="2" opacity=".85"/>`;
+  s += `<text x="4" y="${padT + 8}" fill="var(--muted)" font-size="10">긴 vine</text>`;
+  s += `</svg>`;
+  $('vine').outerHTML = s;
+  $$cursor = { x, padT, H, padB };
+}
+let $$cursor = null;
+
+function moveCursor(i) {
+  const c = document.getElementById('cursor');
+  if (c && $$cursor) { c.setAttribute('x1', $$cursor.x(i)); c.setAttribute('x2', $$cursor.x(i)); }
+}
+
+function render(i) {
+  const f = DATA.frames[i];
+  $('av').textContent = `α = ${f.alpha.toFixed(2)}`;
+  $('kv').textContent = f.K;
+  $('zv').textContent = `${f.zero_rows} / ${f.T}`;
+  $('dv').textContent = f.om_density.toFixed(3);
+  moveCursor(i);
+  const ks = Object.keys(f.cycles);
+  $('cyc').innerHTML = ks.length > 40
+    ? `cycle ${ks.length}개 — 너무 많아 접습니다. (앞 12개)<br>` +
+      ks.slice(0, 12).map(k => `#${k} · note ${f.cycles[k].join(', ')}`).join('<br>')
+    : ks.map(k => `#${k} · note ${f.cycles[k].join(', ')}`).join('<br>');
+}
+
+async function boot() {
+  const [d, meta] = await Promise.all([
+    fetch('./alpha_vineyard.json').then(r => r.json()),
+    fetch('../hibari_dashboard/data/notes_metadata.json').then(r => r.json()),
+  ]);
+  DATA = d; LABELS = meta.labels;
+  const nb = DATA.vines.filter(v => v.members.length >= 12).length;
+  $('vnote').textContent =
+    `vine ${DATA.vines.length}개 중 ${nb}개가 12프레임 이상 지속합니다 — 이것이 backbone입니다. `
+    + `나머지는 특정 α에서만 잠깐 나타납니다.`;
+  $('sl').max = DATA.frames.length - 1;
+  drawVines();
+  const start = DATA.frames.findIndex(f => Math.abs(f.alpha - 0.25) < 1e-9);
+  $('sl').value = start >= 0 ? start : 0;
+  render(+$('sl').value);
+  $('sl').oninput = () => render(+$('sl').value);
+  $('play').onclick = playCurrent;
+  $('stop').onclick = () => { if (player) player.stop(); $('stop').disabled = true; $('st').textContent = ''; };
+}
+
+function playCurrent() {
+  const G = window.GenerationAlgo1;
+  const f = DATA.frames[+$('sl').value];
+  $('st').textContent = '생성 중…';
+  $('play').disabled = true;
+  setTimeout(() => {
+    try {
+      const full = bits(f.om_bits, f.T, f.K);
+      const T = Math.min(PLAY_STEPS, f.T - PLAY_FROM);
+      const values = full.slice(PLAY_FROM * f.K, (PLAY_FROM + T) * f.K);
+      const cycles = Object.keys(f.cycles).map((k, i) => ({
+        cycle_idx: i, note_labels_0idx: f.cycles[k],
+      }));
+      const rng = G.makeRng(4242);
+      const pool = new G.NodePool({ labels: LABELS, numModules: 65, temperature: 1.0, rng });
+      const mgr = new G.CycleSetManager({ cycles, K: f.K });
+      const res = G.algorithm1({
+        nodePool: pool, cycleManager: mgr,
+        instLen: G.buildHibariInstLen(T),
+        overlap: { T, K: f.K, values }, maxResample: 50, rng,
+      });
+      const notes = res.notes.map(n => [n[0] * SEC_PER_8TH, n[1], n[2] * SEC_PER_8TH]);
+      player = player || new window.PianoPlayer();
+      player.play(notes, { gain: 0.75 });
+      $('st').textContent = `${res.notes.length}음 · 약 ${(T * SEC_PER_8TH).toFixed(0)}초`;
+      $('stop').disabled = false;
+    } catch (e) {
+      $('st').textContent = '오류: ' + e.message;
+    } finally {
+      $('play').disabled = false;
+    }
+  }, 10);
+}
+boot().catch(e => { $('st').textContent = '로드 실패: ' + e.message; });
+</script>

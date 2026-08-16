@@ -7,6 +7,8 @@ on:
       - 'tda_pipeline/hibari_dashboard/**'
       - 'tda_pipeline/tonnetz_demo/**'
       - 'tda_pipeline/filtration_viz/**'
+      - 'tda_pipeline/mobile_tonnetz/**'
+      - 'tda_pipeline/vineyard/**'
       - 'tda_pipeline/shared/**'
       - 'tda_pipeline/tour.html'
       - 'tda_pipeline/bloom.html'
@@ -45,6 +47,7 @@ jobs:
           cp -R tda_pipeline/tonnetz_demo      _site/tonnetz_demo
           cp -R tda_pipeline/filtration_viz    _site/filtration_viz
           cp -R tda_pipeline/mobile_tonnetz    _site/mobile_tonnetz
+          cp -R tda_pipeline/vineyard          _site/vineyard
           cp -R tda_pipeline/shared            _site/shared
           cp    tda_pipeline/tour.html         _site/tour.html
           cp    tda_pipeline/bloom.html        _site/bloom.html
