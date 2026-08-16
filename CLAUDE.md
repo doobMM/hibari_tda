@@ -36,7 +36,7 @@
 
 | 실험 | 핵심 결과 |
 |---|---|
-| §4.1 거리 함수 비교 (N=20) | DFT 0.0213★ (frequency -38.2%, Tonnetz -56.8%, voice_leading -62.4%) |
+| §4.1 거리 함수 비교 (N=20) | DFT 0.0216★ (frequency −12.4%, Tonnetz −56.1%, voice_leading −59.1%) — **2026-08-15 재산출**. 종전 0.0213 / −38.2% / −56.8% / −62.4% 는 NodePool 인덱스 오류로 frequency baseline 이 부풀려진 값 |
 | §3.3a Continuous overlap (N=20) | τ=0.7 이진화가 추가 -39.1% (0.0488→0.0297) |
 | §3.4a 개선 F (N=5) | Continuous + FC → JS 0.0004 ★ 본 연구 최저 |
 | §3.6 곡 고유 구조 | deep scale, entropy 0.974, phase shifting |
@@ -54,13 +54,17 @@
 
 ### 핵심 발견 — 곡의 성격이 최적 도구를 결정한다
 
-| 곡 | PC 수 | 최적 거리 | 최적 모델 | 해석 |
-|---|---|---|---|---|
-| hibari | 7 (diatonic) | DFT | FC | 스펙트럼 구조 포착, entropy 0.974 |
-| solari | 12 (chromatic) | voice_leading | Transformer | 선율적 진행 |
-| aqua | 12 (chromatic) | Tonnetz | Transformer | Tonnetz +26.3%. 대시보드 곡전환 구현 (T=539·K=82·N=51, 2026-06-14) |
-| Bach Fugue | 12 (chromatic) | Tonnetz | — | 대위법인데 Tonnetz 최적 (-54.8%) |
-| Ravel Pavane | 12 (N=49) | frequency | FC | 풍부한 분포 → 빈도 가중 유리 |
+⚠ **2026-08-15 T9 재산출로 5곡 중 3곡의 최적 거리가 바뀌었다** (`t9_nodepool_recompute_sec52.json`).
+
+| 곡 | PC 수 | 최적 거리 | 2위와 구별 | 최적 모델 | 비고 |
+|---|---|---|---|---|---|
+| hibari | 7 (diatonic) | **DFT** 0.0216 | p=7.8e-06 | FC | 스펙트럼 구조 포착, entropy 0.974 |
+| Bach Fugue | 12 (chromatic) | **Tonnetz** 0.0130 | p=1.3e-18 | — | 대위법인데 Tonnetz (freq 대비 −56.7%) |
+| Ravel Pavane | 12 (N=49) | **Tonnetz** 0.0156 ★변경 | p=1.1e-16 | FC | ~~frequency 최적~~ 뒤집힘. "N 크면 빈도 유리" 해석 철회 |
+| solari | 12 (chromatic) | frequency 0.0131 ★변경 | p=2.3e-03 | Transformer | ⚠ 대조 팔이 종전값 재현 실패 → 인덱스 수정에 귀속 불가 |
+| aqua | 12 (chromatic) | **판별 불가** ★변경 | **p=0.69** | — | ~~Tonnetz +26.3%~~ 무효. freq 0.0086 ≈ Tonnetz 0.0088 |
+
+**남는 것**: 곡마다 최적 도구가 다르다는 *관찰*. **사라진 것**: 어떤 곡 성격이 어떤 거리를 부르는지에 대한 *설명* (사후 해석이었다).
 
 ### hibari 현재 최적 설정
 
@@ -351,10 +355,10 @@ best-practice 도입 커밋 시리즈(316e125 / 9c781ff / 1ca08d4) 이후 병렬
 | T5 | ⛔ 보류 | ~~교집합 추출에 곡빈도+온도 반영~~ **청취에서 거부됨 (2026-08-15)** | 음고 JS −6.2%(`freq_intersect`, Holm 후 p=0.046, d=0.65)였으나 **대가로 협화도 −0.011 이 유의**(p=0.024)했다. 블라인드 A/B **P2 에서 baseline(균일추출)이 선택**됐다 — 양쪽 동일 OM 이라 공정한 쌍. N=1 이라 결정적이진 않으나 지표 이득과 청각 손실이 같은 크기이므로 **정본 채택 보류**. `run_qmc_sampling.py` |
 | T13 | **C** | **A/B 재확인 — P4 반복, P3 재설계** | 2026-08-15 블라인드 A/B(N=1·쌍당 1회): 지표 예측이 맞은 건 4쌍 중 1쌍. **P4(원곡 OM > 디퓨전 OM)가 가장 깨끗한 부정 신호** — 디퓨전 라인의 존재 이유에 직결되므로 반복 필요. **P3 는 무효** — "뼈대"는 zero-row 83.3% 라 시간 대부분이 OM 이 아니라 **풀 자유 샘플링**이었다(변주 37%). 재생성 시 `temperature=1.0`. `memory/project_ab_listening_result_0815.md` |
 | T7 | ✅ | ~~정본 설정에서 온도 재튜닝~~ **재튜닝할 대상이 없다 (2026-08-14)** | 정본 경로는 temperature 를 넘기지 않고(T=1.0), OM 도 zero-row 0/1088 이라 풀이 안 뽑힌다(40 run 계측 `sample()` 0회). 사전 예측("수정 후 최적 온도가 내려간다")은 **반증** — 최적은 양쪽 배선 모두 이미 1.0. ⚠ 최초 근거로 쓴 대시보드 JSON 재구성은 **무효**였다(T11 참조, 다른 PH 회차). 정본 캐시 재계산으로 결론만 유지. `temperature_retune_results.json` |
-| T8 | **D** | **§5.8.3 온도 주장 철회** (`academic_paper_full.md:1633`) | §7.7.3 은 tonnetz OM(zero-row 0)을 써서 풀을 한 번도 뽑지 않았다. 원 함수 재실행 시 **순위가 뒤집힌다**(T=1.0 0.0452 < T=3.0 0.0496). 기록된 n=10·js_std 로 계산하면 Welch p=0.0471 이나 후보 6개 argmin 다중비교 미보정 → **애초에 유의하지 않았다**. L1653 entropy 해석도 함께 철회. full/short/LaTeX 3파일. `config.py:77` 기본값 3.0→1.0 변경 여부는 사용자 결정 |
+| T8 | ✅ | ~~§5.8.3 온도 주장 철회~~ **완료 (2026-08-15)** — 아래는 근거 요약 | §7.7.3 은 tonnetz OM(zero-row 0)을 써서 풀을 한 번도 뽑지 않았다. 원 함수 재실행 시 **순위가 뒤집힌다**(T=1.0 0.0452 < T=3.0 0.0496). 기록된 n=10·js_std 로 계산하면 Welch p=0.0471 이나 후보 6개 argmin 다중비교 미보정 → **애초에 유의하지 않았다**. L1653 entropy 해석도 함께 철회. full/short/LaTeX 3파일. `config.py:77` 기본값 3.0→1.0 변경 여부는 사용자 결정 |
 | T11 | **B** | **대시보드 자산이 정본과 다른 PH 회차다** | `hibari_dashboard/data/overlap_matrix_continuous.json` 은 `cache/metric_dft_*.pkl` 재계산과 **32.3%만 일치**(maxdiff 0.449). density 0.3409 vs 정본 0.3451. 원인: **cycle 4 대표원소가 다르다** (정본 `[1,2,6,9]` vs 대시보드 `[1,5,6,8]`). 이진화 후 98.7% 일치·Algo1 0.00959 vs 0.00924 라 눈치채기 어렵다. **정본 검증에 대시보드 JSON 을 쓰지 말 것.** 자산 재생성 또는 출처 명시 필요 |
 | T12 | **C/B** | **T2 청취 대상 12트랙 재생성 필요** | `output/topo_diffusion/*.ogg` 는 2026-08-12 산출로 `fcf929f`(08-14) **이전**이다. 그 OM 들은 zero-row 23~87% 라 풀 경로가 활짝 열려 있고 `make_topo_music.py:147` 이 `TEMPERATURES=[1,2,3,4]` 를 쓸었다 → **온도 + NodePool 인덱스 버그가 둘 다 반영된 오디오**. 재생성 전 T2 착수 금지. 부수: 같은 함수가 `js_median` 게이트와 협화도 랭킹을 **같은 후보 집합**에서 뽑아 선택 편향이 있다 |
-| T9 | 🔄 진행 | **§4.1 · §5.2 재산출** | **§4.1 완료 (739c389)** — 같은 시드 paired 설계. 하네스 검증: 수정 전 팔이 논문 4값을 4자리까지 재현, tonnetz(노출 0%)는 20/20 비트 동일. 노출도가 효과를 예측: frequency 70%→**−28.3%**, voice_leading 5%→−6.7%, dft 8%→+1.7%(**p=0.49 판별 불가**), tonnetz 0%→동일. **DFT 최적 결론 유지, 대비는 −38.1%(p=8.8e-21) → −12.4%(p=7.8e-06)**. `t9_nodepool_recompute_sec41.json`. §5.2 는 `run_t9_sec52_recompute.py` 진행 중 |
+| T9 | ✅ | ~~§4.1 · §5.2 재산출~~ **완료 (2026-08-15)** | **§4.1 완료 (739c389)** — 같은 시드 paired 설계. 하네스 검증: 수정 전 팔이 논문 4값을 4자리까지 재현, tonnetz(노출 0%)는 20/20 비트 동일. 노출도가 효과를 예측: frequency 70%→**−28.3%**, voice_leading 5%→−6.7%, dft 8%→+1.7%(**p=0.49 판별 불가**), tonnetz 0%→동일. **DFT 최적 결론 유지, 대비는 −38.1%(p=8.8e-21) → −12.4%(p=7.8e-06)**. `t9_nodepool_recompute_sec41.json`. §5.2 는 `run_t9_sec52_recompute.py` 진행 중 |
 | T14 | B | 죽은 `suite.MIDI_FILE` 우회 7곳 제거 | `BASE_DIR` 근본 수정(739c389) 후 7개 호출부의 몽키패치가 같은 값을 넣는 no-op 이 됐다. 주석("import 시점에 experiments/ 기준")도 거짓이 됐다. `run_aesthetic_rerank` / `run_om_diffusion` / `run_topo_diffusion` / `filtration_viz/scripts/export_filtration_data` / `hibari_dashboard/scripts/{add_cycle_traversal,export_first30s,export_hibari_data}` |
 | T10 | ✅ | ~~배포 JS 포트 인덱스 버그~~ **수정 완료 (2026-08-14)** | `generation-algo1.js` 2사본이 풀에 1-indexed `label` 을 넣고 항등 조회 → **intersect 경로**(정본 draw 의 100%)가 한 칸 낮은 음으로 디코딩, z=0 은 항상 폐기. node 로 실제 JS 실행 후 파이썬 지표 채점: 0.04390→**0.00977** (4.49배, paired p=4.1e-24), 파이썬 정본 0.00902 의 1σ 이내. 회귀 테스트 `tools/verify_js_algo1.mjs` + `tools/verify/score_js_algo1.py` 신설 |
 | T6 | ✅ | ~~`generation.py` NodePool 인덱스 규약 불일치~~ **수정 완료 (fcf929f)** | 풀은 1-indexed(`notes_label` 값 1..23), 디코더 `label_to_note_info` 는 0-indexed(`lbl == label+1`). **23개 라벨 전부가 다른 음으로 디코딩**되고 라벨 23 은 `None` → **추출의 4.17% 가 조용히 폐기**. 교집합 경로(0-indexed)는 정상. 원본 `professor.py:get_note_by_label` 주석은 "generateBarcode 는 0부터 인덱싱"이라 명시 → 리팩터 유입 버그로 보임. 고치면 음고 JS −4.1%(N=24, p=0.17 비유의), 음 +2.7%. ⚠ **정정 2건 (2026-08-14)**: ① "추출의 4.17% 폐기"는 T=3.0 조건부값이고(T=1.0 에선 3.39%) 폐기되는 건 note 가 아니라 **draw** 다(`max_resample=50` 으로 재시도). ② 커밋 메시지의 근거 3번("원본 node_pool 은 `frequent_nodes` 산출물")은 **거짓** — `frequent_nodes` 는 교집합 풀을 만들고 `node_pool` 은 `algorithm1` 의 인자다. 진짜 근거는 `WK14/WK13_model.ipynb` 의 `list.index()`(0-based)와 같은 파일의 orphan 경로. 결론(0-indexed)은 유지 |
