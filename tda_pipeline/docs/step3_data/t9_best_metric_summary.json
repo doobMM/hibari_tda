@@ -1,0 +1,57 @@
+{
+  "hibari": {
+    "best": "dft",
+    "second": "frequency",
+    "p": 7.777924339743094e-06,
+    "means": {
+      "frequency": 0.024678539354264763,
+      "tonnetz": 0.04926724272283975,
+      "voice_leading": 0.05283057544197457,
+      "dft": 0.021630227123957946
+    }
+  },
+  "solari": {
+    "best": "frequency",
+    "second": "tonnetz",
+    "p": 0.0023094087033655917,
+    "means": {
+      "frequency": 0.01307613917669134,
+      "tonnetz": 0.015785479927861334,
+      "voice_leading": 0.02468574941794026,
+      "dft": 0.018770037112306393
+    }
+  },
+  "aqua": {
+    "best": "frequency",
+    "second": "tonnetz",
+    "p": 0.6851399281978452,
+    "means": {
+      "frequency": 0.008642743707017873,
+      "tonnetz": 0.008779564616637064,
+      "voice_leading": 0.010587848753158848,
+      "dft": 0.009127733222333012
+    }
+  },
+  "ravel_pavane": {
+    "best": "tonnetz",
+    "second": "frequency",
+    "p": 1.1447372259814261e-16,
+    "means": {
+      "frequency": 0.02425732230206181,
+      "tonnetz": 0.015631463825829858,
+      "voice_leading": 0.02515755299347145,
+      "dft": 0.026047748699425187
+    }
+  },
+  "bach_fugue": {
+    "best": "tonnetz",
+    "second": "dft",
+    "p": 1.2928558275439422e-18,
+    "means": {
+      "frequency": 0.029958501587036435,
+      "tonnetz": 0.01301877467764057,
+      "voice_leading": 0.026509805470896534,
+      "dft": 0.020155369513254293
+    }
+  }
+}
