@@ -131,6 +131,22 @@ VARIANTS = ["full", "conv_topo", "conv"]
 # ═══════════════════════════════════════════════════════════════════════════
 
 def load_continuous_om() -> np.ndarray:
+    """대시보드가 export 한 연속 OM (DFT α=0.25, w_o=0.3, w_d=1.0).
+
+    ⚠ **이 파일은 `use_decayed=True` 산출물이다** (감쇄 lag 1~4).
+      논문 헤드라인 JS=0.00902 를 만든 `run_percycle_tau_dft_alpha_grid.py:155` 는
+      `use_decayed=False` 를 쓴다 — 즉 **여기서 돌아오는 OM 은 헤드라인과 다른 설정**이다.
+      저장소에서 `use_decayed=True` 를 넘기는 곳은 `export_hibari_data.py` 하나뿐인데,
+      그 산출물을 이 함수를 통해 실험 스크립트 10여 개가 공유하고 있다.
+
+      두 설정은 연속값의 약 52% 가 다르지만(maxdiff 0.449, cycle 4 구성원도 다르다:
+      False `[1,2,6,9]` vs True `[1,5,6,8]`), **생성 결과는 구별되지 않는다** —
+      τ=0.5 이진화 후 zero-row 가 196/1088 로 같고 Algorithm 1 음고 JS 는
+      0.03828 vs 0.03889 (paired p=0.315, N=20). 그래서 지금까지 아무도 눈치채지 못했다.
+
+      → 자산을 재생성하지 않는다. 다만 **"이 OM = 헤드라인 설정" 이라고 가정하지 말 것.**
+        헤드라인을 재현하려면 `suite.build_overlap_bundle(..., use_decayed=False)` 를 직접 부를 것.
+    """
     with open(os.path.join(DATA_DIR, "overlap_matrix_continuous.json"), "r", encoding="utf-8") as f:
         d = json.load(f)
     T, Kk = d["T"], d["K"]

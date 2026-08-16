@@ -72,7 +72,13 @@
 거리 함수: DFT (w_o=0.3, w_d=1.0)
 Hybrid α: 0.25 (§6.8 확정, DFT α-hybrid grid)
 모드: timeflow (Complex는 Tonnetz 한정 유효 — §6.9 Task 34b 확정)
-Lag: lag 1~4 감쇄 가중 (DFT에서 lag=1 대비 -7.1%, `decayed_lag_dft_results.json`)
+Lag: ⚠ **헤드라인 JS=0.00902 는 감쇄 lag 을 쓰지 않는다** (2026-08-15 확인).
+     `run_percycle_tau_dft_alpha_grid.py:155` 가 `use_decayed=False` 다.
+     "lag 1~4 감쇄 가중, DFT에서 lag=1 대비 −7.1%"(`decayed_lag_dft_results.json`)는
+     **다른 설정에서 잰 값**이며 정본 경로에 반영돼 있지 않다.
+     `use_decayed=True` 를 넘기는 곳은 `export_hibari_data.py` 하나뿐인데,
+     그 산출물이 `load_continuous_om()` 을 통해 실험 스크립트 10여 개의 입력이다.
+     두 설정의 Algo1 차이는 **판별 불가**(0.03828 vs 0.03889, paired p=0.315). → T15
 중첩행렬: continuous activation + per-cycle τ_c (DFT continuous OM 기반)
 생성 모델:
   - Algorithm 1: DFT + per-cycle τ (α=0.25, K=14) → JS=0.00902±0.00170 (N=20) ★ (α-grid 재탐색, percycle_tau_dft_gap0_alpha_grid_results.json)
@@ -370,7 +376,8 @@ best-practice 도입 커밋 시리즈(316e125 / 9c781ff / 1ca08d4) 이후 병렬
 | T13 | **C** | **A/B 재확인 — P4 반복, P3 재설계** | 2026-08-15 블라인드 A/B(N=1·쌍당 1회): 지표 예측이 맞은 건 4쌍 중 1쌍. **P4(원곡 OM > 디퓨전 OM)가 가장 깨끗한 부정 신호** — 디퓨전 라인의 존재 이유에 직결되므로 반복 필요. **P3 는 무효** — "뼈대"는 zero-row 83.3% 라 시간 대부분이 OM 이 아니라 **풀 자유 샘플링**이었다(변주 37%). 재생성 시 `temperature=1.0`. `memory/project_ab_listening_result_0815.md` |
 | T7 | ✅ | ~~정본 설정에서 온도 재튜닝~~ **재튜닝할 대상이 없다 (2026-08-14)** | 정본 경로는 temperature 를 넘기지 않고(T=1.0), OM 도 zero-row 0/1088 이라 풀이 안 뽑힌다(40 run 계측 `sample()` 0회). 사전 예측("수정 후 최적 온도가 내려간다")은 **반증** — 최적은 양쪽 배선 모두 이미 1.0. ⚠ 최초 근거로 쓴 대시보드 JSON 재구성은 **무효**였다(T11 참조, 다른 PH 회차). 정본 캐시 재계산으로 결론만 유지. `temperature_retune_results.json` |
 | T8 | ✅ | ~~§5.8.3 온도 주장 철회~~ **완료 (2026-08-15)** — 아래는 근거 요약 | §7.7.3 은 tonnetz OM(zero-row 0)을 써서 풀을 한 번도 뽑지 않았다. 원 함수 재실행 시 **순위가 뒤집힌다**(T=1.0 0.0452 < T=3.0 0.0496). 기록된 n=10·js_std 로 계산하면 Welch p=0.0471 이나 후보 6개 argmin 다중비교 미보정 → **애초에 유의하지 않았다**. L1653 entropy 해석도 함께 철회. full/short/LaTeX 3파일. `config.py:77` 기본값 3.0→1.0 변경 여부는 사용자 결정 |
-| T11 | **B** | **대시보드 자산이 정본과 다른 PH 회차다** | `hibari_dashboard/data/overlap_matrix_continuous.json` 은 `cache/metric_dft_*.pkl` 재계산과 **32.3%만 일치**(maxdiff 0.449). density 0.3409 vs 정본 0.3451. 원인: **cycle 4 대표원소가 다르다** (정본 `[1,2,6,9]` vs 대시보드 `[1,5,6,8]`). 이진화 후 98.7% 일치·Algo1 0.00959 vs 0.00924 라 눈치채기 어렵다. **정본 검증에 대시보드 JSON 을 쓰지 말 것.** 자산 재생성 또는 출처 명시 필요 |
+| T11 | ✅ | ~~대시보드 자산이 정본과 다른 PH 회차다~~ **진단이 틀렸다 — 다른 설정이다 (2026-08-15)** | 두 자산 모두 100% 재현된다. 차이는 회차가 아니라 **`use_decayed` 플래그**다: `cache/metric_dft_*.pkl` = `False`(cycle 4 `[1,2,6,9]`), 대시보드 JSON = **`True`**(`[1,5,6,8]`). 연속값 52% 가 다르지만(maxdiff 0.449) **생성 결과는 구별 불가** — τ=0.5 이진화 후 zero-row 196/1088 동일, Algo1 0.03828 vs 0.03889 (paired **p=0.315**, N=20). → **재생성하지 않는다.** `load_continuous_om()` 에 어느 설정인지 명시했다. ⚠ 남은 문제는 아래 T15 |
+| T15 | **A/B** | **정본 설정 블록이 실제 정본 경로와 또 어긋난다** | 헤드라인 JS=0.00902 를 만든 `run_percycle_tau_dft_alpha_grid.py:155` 는 **`use_decayed=False`** 인데, CLAUDE.md 정본 블록은 "Lag: lag 1~4 감쇄 가중"이라 적고 있다. 저장소에서 `use_decayed=True` 를 넘기는 곳은 `export_hibari_data.py` **하나뿐**이고, 그 산출물을 `load_continuous_om()` 으로 실험 스크립트 10여 개가 공유한다. **온도(T=3.0)에 이어 두 번째로, 정본 블록이 정본 경로가 하지 않는 일을 적고 있다.** 감쇄 lag −7.1% 근거(`decayed_lag_dft_results.json`)가 어느 설정에서 나왔는지 확인하고 블록을 정정할 것 |
 | T12 | **C/B** | **T2 청취 대상 12트랙 재생성 필요** | `output/topo_diffusion/*.ogg` 는 2026-08-12 산출로 `fcf929f`(08-14) **이전**이다. 그 OM 들은 zero-row 23~87% 라 풀 경로가 활짝 열려 있고 `make_topo_music.py:147` 이 `TEMPERATURES=[1,2,3,4]` 를 쓸었다 → **온도 + NodePool 인덱스 버그가 둘 다 반영된 오디오**. 재생성 전 T2 착수 금지. 부수: 같은 함수가 `js_median` 게이트와 협화도 랭킹을 **같은 후보 집합**에서 뽑아 선택 편향이 있다 |
 | T9 | ✅ | ~~§4.1 · §5.2 재산출~~ **완료 (2026-08-15)** | **§4.1 완료 (739c389)** — 같은 시드 paired 설계. 하네스 검증: 수정 전 팔이 논문 4값을 4자리까지 재현, tonnetz(노출 0%)는 20/20 비트 동일. 노출도가 효과를 예측: frequency 70%→**−28.3%**, voice_leading 5%→−6.7%, dft 8%→+1.7%(**p=0.49 판별 불가**), tonnetz 0%→동일. **DFT 최적 결론 유지, 대비는 −38.1%(p=8.8e-21) → −12.4%(p=7.8e-06)**. `t9_nodepool_recompute_sec41.json`. §5.2 는 `run_t9_sec52_recompute.py` 진행 중 |
 | T14 | B | 죽은 `suite.MIDI_FILE` 우회 7곳 제거 | `BASE_DIR` 근본 수정(739c389) 후 7개 호출부의 몽키패치가 같은 값을 넣는 no-op 이 됐다. 주석("import 시점에 experiments/ 기준")도 거짓이 됐다. `run_aesthetic_rerank` / `run_om_diffusion` / `run_topo_diffusion` / `filtration_viz/scripts/export_filtration_data` / `hibari_dashboard/scripts/{add_cycle_traversal,export_first30s,export_hibari_data}` |
