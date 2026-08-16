@@ -53,7 +53,6 @@ def build_distance_matrix():
                          compute_out_of_reach)
     from musical_metrics import compute_hybrid_distance
 
-    suite.MIDI_FILE = str(TDA_ROOT / 'Ryuichi_Sakamoto_-_hibari.mid')
     data = suite.setup_hibari()
 
     inter = compute_inter_weights_decayed(

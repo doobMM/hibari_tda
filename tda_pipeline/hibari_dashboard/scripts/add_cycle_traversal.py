@@ -32,10 +32,8 @@ sys.path.insert(0, str(TDA_ROOT))
 sys.path.insert(0, str(TDA_ROOT / 'experiments'))
 
 import experiments.run_dft_gap0_suite as _suite  # noqa: E402
-# MIDI 는 프로젝트 루트에 있음 — suite 의 BASE_DIR 경로(experiments/) 대신 루트로 교정
-_ROOT_MIDI = TDA_ROOT / 'Ryuichi_Sakamoto_-_hibari.mid'
-if _ROOT_MIDI.exists():
-    _suite.MIDI_FILE = str(_ROOT_MIDI)
+# `suite.MIDI_FILE` 몽키패치 제거 (2026-08-15, T14).
+# BASE_DIR 근본 수정(739c389) 으로 suite 가 이미 루트를 가리킨다.
 
 from experiments.run_dft_gap0_suite import (  # noqa: E402
     setup_hibari, metric_distance_matrix,

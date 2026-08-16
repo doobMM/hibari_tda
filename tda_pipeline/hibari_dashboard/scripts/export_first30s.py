@@ -12,7 +12,7 @@ Guided Tour(`tour.html`)의 미니 페인트 데모는 "활성 고리 → 구성
 
 주의:
 - `experiments/run_dft_gap0_suite.py`의 setup_hibari()를 재사용.
-- suite.MIDI_FILE은 __file__(experiments/ 하위) 기준 상대경로라 실제 위치로
+- (2026-08-15) suite.BASE_DIR 이 정정되어 MIDI 경로 우회가 불필요해졌다
   override 필요 (export_hibari_data.py와 동일 패턴).
 - inst1_real/inst2_real은 동일 절대 타임라인(8분음표 단위, bpm=60 가정)의
   (start, pitch, end) 튜플 리스트. inst2는 33-step 솔로 인트로 이후 시작.
@@ -31,8 +31,8 @@ sys.path.insert(0, str(TDA_ROOT / 'experiments'))
 
 import run_dft_gap0_suite as suite  # experiments/run_dft_gap0_suite.py
 
-# suite.MIDI_FILE은 __file__ 기준으로 experiments/ 하위를 가리키므로 실제 MIDI 위치로 교체.
-suite.MIDI_FILE = str(TDA_ROOT / 'Ryuichi_Sakamoto_-_hibari.mid')
+# `suite.MIDI_FILE` 몽키패치 제거 (2026-08-15, T14).
+# BASE_DIR 근본 수정(739c389) 으로 suite 가 이미 루트를 가리킨다.
 
 DASHBOARD_ROOT = HERE.parent                      # hibari_dashboard/
 DATA_DIR = DASHBOARD_ROOT / 'data'

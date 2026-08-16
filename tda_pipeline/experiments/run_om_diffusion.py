@@ -64,11 +64,8 @@ import run_dft_gap0_suite as suite
 from eval_metrics import pitch_distribution_similarity
 from generation import CycleSetManager, NodePool, algorithm1_optimized
 
-# suite.MIDI_FILE 은 import 시점에 experiments/ 기준으로 잡히므로 실제 위치로 교체
-suite.MIDI_FILE = os.path.join(
-    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),  # tda_pipeline/
-    "Ryuichi_Sakamoto_-_hibari.mid",
-)
+# `suite.MIDI_FILE` 몽키패치 제거 (2026-08-15, T14).
+# BASE_DIR 근본 수정(739c389) 으로 suite 가 이미 루트를 가리킨다.
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))            # experiments/
 TDA_ROOT = os.path.dirname(BASE_DIR)                              # tda_pipeline/

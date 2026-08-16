@@ -79,7 +79,8 @@ from generation import CycleSetManager, NodePool, algorithm1_optimized
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))          # experiments/
 TDA_ROOT = os.path.dirname(BASE_DIR)                            # tda_pipeline/
-suite.MIDI_FILE = os.path.join(TDA_ROOT, "Ryuichi_Sakamoto_-_hibari.mid")
+# `suite.MIDI_FILE` 몽키패치 제거 (2026-08-15, T14).
+# BASE_DIR 근본 수정(739c389) 으로 suite 가 이미 루트를 가리킨다.
 
 DASH_DIR = os.path.join(TDA_ROOT, "hibari_dashboard")
 DATA_DIR = os.path.join(DASH_DIR, "data")

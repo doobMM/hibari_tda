@@ -38,8 +38,8 @@ sys.path.insert(0, str(TDA_ROOT / 'experiments'))
 # 동일하게 K=14 cycles를 복원하기 위해 `run_dft_gap0_suite`의 빌드 함수를 재사용.
 import run_dft_gap0_suite as suite  # experiments/run_dft_gap0_suite.py
 
-# suite.MIDI_FILE은 __file__ 기준으로 experiments/ 하위를 가리키므로 실제 MIDI 위치로 교체.
-suite.MIDI_FILE = str(TDA_ROOT / 'Ryuichi_Sakamoto_-_hibari.mid')
+# `suite.MIDI_FILE` 몽키패치 제거 (2026-08-15, T14).
+# BASE_DIR 근본 수정(739c389) 으로 suite 가 이미 루트를 가리킨다.
 
 
 # ──────────────────────────────────────────────────────────────────────────
