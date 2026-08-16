@@ -56,7 +56,11 @@ except ImportError:
     torch = None
 
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+# 프로젝트 루트(tda_pipeline/). cache/ · docs/ · *.mid 가 전부 여기 있다.
+# ⚠ 2026-04-19 폴더 재편(7876d62) 때 이 파일이 experiments/ 로 내려가면서 한 칸 어긋나
+#   MIDI·cache·step3_data 경로가 전부 깨졌고, 호출부 7곳이 `suite.MIDI_FILE = ...` 로
+#   각자 우회하고 있었다(cache 는 아무도 우회하지 않아 그냥 실패). 2026-08-15 근본 수정.
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 STEP3_DIR = os.path.join(BASE_DIR, "docs", "step3_data")
 MIDI_FILE = os.path.join(BASE_DIR, "Ryuichi_Sakamoto_-_hibari.mid")
 TOTAL_LENGTH = 1088
