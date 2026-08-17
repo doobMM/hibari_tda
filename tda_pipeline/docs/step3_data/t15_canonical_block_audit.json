@@ -1,0 +1,107 @@
+{
+  "experiment": "t15_canonical_block_audit",
+  "purpose": "CLAUDE.md '정본 설정' 블록을 헤드라인 산출 스크립트와 한 줄씩 대조한다",
+  "canonical_script": "experiments/run_percycle_tau_dft_alpha_grid.py",
+  "audit": {
+    "metric": {
+      "block": "DFT",
+      "code": "dft",
+      "ok": true
+    },
+    "octave_weight": {
+      "block": 0.3,
+      "code": 0.3,
+      "ok": true
+    },
+    "duration_weight": {
+      "block": 1.0,
+      "code": 1.0,
+      "ok": true
+    },
+    "alpha": {
+      "block": 0.25,
+      "code": 0.25,
+      "ok": true
+    },
+    "min_onset_gap": {
+      "block": 0,
+      "code": 0,
+      "ok": true
+    },
+    "overlap": {
+      "block": "continuous + per-cycle τ_c",
+      "code": "동일",
+      "ok": true
+    },
+    "n_repeats": {
+      "block": 20,
+      "code": 20,
+      "ok": true
+    },
+    "threshold": {
+      "block": "(미기재)",
+      "code": 0.35,
+      "ok": null,
+      "note": "블록에 없다 — 추가 권장"
+    },
+    "lag": {
+      "block": "lag 1~4 감쇄 가중 (−7.1%)",
+      "code": "use_decayed=False",
+      "ok": false,
+      "note": "★ 불일치. 아래 참조"
+    },
+    "temperature": {
+      "block": "T=3.0",
+      "code": "인자 미전달 → 기본 1.0",
+      "ok": false,
+      "note": "2026-08-14 이미 정정됨(T8)"
+    }
+  },
+  "lag_finding": {
+    "headline_reproduction": {
+      "use_decayed_false": [
+        0.00902,
+        0.00123
+      ],
+      "recorded_headline": 0.00902,
+      "note": "정본 조건 재현 성공 — 하네스 검증"
+    },
+    "canonical_condition_test": {
+      "config": "α=0.25, per-cycle τ(기록된 tau_profile), K=14, N=20 paired",
+      "use_decayed_false": [
+        0.00902,
+        0.00123
+      ],
+      "use_decayed_true": [
+        0.00975,
+        0.00134
+      ],
+      "delta_pct": 8.2,
+      "paired_p": 0.0112,
+      "significant": true,
+      "conclusion": "정본 조건에서 감쇄 lag 은 **유의하게 나쁘다**(+8.2%)"
+    },
+    "original_claim_recheck": {
+      "source": "decayed_lag_dft_results.json",
+      "condition": "K=17 (정본 K=14 와 다른 α)",
+      "lag1_only": [
+        0.021075,
+        0.002074,
+        20
+      ],
+      "lag1to4_decayed": [
+        0.019581,
+        0.00216,
+        20
+      ],
+      "delta_pct": -7.1,
+      "welch_t": 2.23,
+      "p_raw": 0.0317,
+      "n_comparisons": 4,
+      "p_bonferroni": 0.127,
+      "significant_after_correction": false,
+      "note": "dft/tonnetz × lag1/lag1-4 네 조합 중에서 고른 것이므로 보정이 필요하다. 보정하면 유의하지 않다. 같은 JSON 의 tonnetz 는 오히려 +4.8% 악화."
+    },
+    "verdict": "−7.1% 는 **다른 조건(K=17)** 에서 잰 값이고 그 자체로도 보정 후 비유의하다. 정본 조건에서는 방향이 반대로 유의하다. → 정본 블록의 Lag 항목은 틀렸다."
+  }
+}

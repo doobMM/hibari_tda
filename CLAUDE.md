@@ -72,13 +72,16 @@
 거리 함수: DFT (w_o=0.3, w_d=1.0)
 Hybrid α: 0.25 (§6.8 확정, DFT α-hybrid grid)
 모드: timeflow (Complex는 Tonnetz 한정 유효 — §6.9 Task 34b 확정)
-Lag: ⚠ **헤드라인 JS=0.00902 는 감쇄 lag 을 쓰지 않는다** (2026-08-15 확인).
-     `run_percycle_tau_dft_alpha_grid.py:155` 가 `use_decayed=False` 다.
-     "lag 1~4 감쇄 가중, DFT에서 lag=1 대비 −7.1%"(`decayed_lag_dft_results.json`)는
-     **다른 설정에서 잰 값**이며 정본 경로에 반영돼 있지 않다.
-     `use_decayed=True` 를 넘기는 곳은 `export_hibari_data.py` 하나뿐인데,
-     그 산출물이 `load_continuous_om()` 을 통해 실험 스크립트 10여 개의 입력이다.
-     두 설정의 Algo1 차이는 **판별 불가**(0.03828 vs 0.03889, paired p=0.315). → T15
+Lag: **lag=1 만 쓴다 (`use_decayed=False`)** — 감쇄 lag 을 쓰지 않는다.
+     ⚠ 종전 기재 "lag 1~4 감쇄 가중 (−7.1%)" 는 **틀렸다** (2026-08-15 T15 감사).
+       ① 정본 조건(α=0.25, per-cycle τ, K=14)에서 감쇄 lag 은 오히려 **유의하게 나쁘다**:
+          `False` **0.00902±0.00123**(기록된 헤드라인 재현) vs `True` 0.00975±0.00134,
+          **+8.2%, paired p=0.0112**
+       ② −7.1% 는 **K=17(다른 α)** 에서 잰 값이고, 그 자체로도 dft/tonnetz × lag1/lag1-4
+          네 조합 중 argmin 이라 보정하면 비유의다 (Welch p=0.032 → Bonferroni **0.127**).
+          같은 JSON 의 tonnetz 는 감쇄 시 오히려 +4.8% 악화한다.
+     `t15_canonical_block_audit.json`
+threshold: 0.35 (`build_overlap_bundle` 인자, 종전 블록에 누락돼 있었다)
 중첩행렬: continuous activation + per-cycle τ_c (DFT continuous OM 기반)
 생성 모델:
   - Algorithm 1: DFT + per-cycle τ (α=0.25, K=14) → JS=0.00902±0.00170 (N=20) ★ (α-grid 재탐색, percycle_tau_dft_gap0_alpha_grid_results.json)
