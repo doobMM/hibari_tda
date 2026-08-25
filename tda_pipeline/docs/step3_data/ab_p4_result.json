@@ -1,0 +1,95 @@
+{
+  "experiment": "ab_p4_decode",
+  "answers": {
+    "Q1": "A",
+    "Q2": "B",
+    "Q3": "?",
+    "Q4": "B",
+    "Q5": "B",
+    "Q6": "A"
+  },
+  "rows": [
+    {
+      "pair": "Q1",
+      "choice": "A",
+      "identity": "디퓨전",
+      "js_chosen": 0.03374512944097101,
+      "js_other": 0.03864973891458508,
+      "js_agrees": true,
+      "cons_chosen": 0.671875,
+      "cons_other": 0.6197916666666667,
+      "cons_agrees": true,
+      "n_chosen": 60,
+      "n_other": 58
+    },
+    {
+      "pair": "Q2",
+      "choice": "B",
+      "identity": "디퓨전",
+      "js_chosen": 0.048279460049838185,
+      "js_other": 0.07298890470420544,
+      "js_agrees": true,
+      "cons_chosen": 0.6302083333333333,
+      "cons_other": 0.7083333333333333,
+      "cons_agrees": false,
+      "n_chosen": 54,
+      "n_other": 52
+    },
+    {
+      "pair": "Q3",
+      "choice": null
+    },
+    {
+      "pair": "Q4",
+      "choice": "B",
+      "identity": "원곡",
+      "js_chosen": 0.10653113782561566,
+      "js_other": 0.09902026654835855,
+      "js_agrees": false,
+      "cons_chosen": 0.6979166666666666,
+      "cons_other": 0.6458333333333333,
+      "cons_agrees": true,
+      "n_chosen": 56,
+      "n_other": 56
+    },
+    {
+      "pair": "Q5",
+      "choice": "B",
+      "identity": "디퓨전",
+      "js_chosen": 0.04856097054438336,
+      "js_other": 0.05654419591259883,
+      "js_agrees": true,
+      "cons_chosen": 0.7291666666666666,
+      "cons_other": 0.71875,
+      "cons_agrees": true,
+      "n_chosen": 55,
+      "n_other": 54
+    },
+    {
+      "pair": "Q6",
+      "choice": "A",
+      "identity": "디퓨전",
+      "js_chosen": 0.07262958165192905,
+      "js_other": 0.10439909915670643,
+      "js_agrees": true,
+      "cons_chosen": 0.7083333333333333,
+      "cons_other": 0.6197916666666667,
+      "cons_agrees": true,
+      "n_chosen": 50,
+      "n_other": 53
+    }
+  ],
+  "js_agreement": [
+    4,
+    5
+  ],
+  "consonance_agreement": [
+    4,
+    5
+  ],
+  "diffusion_vs_real": [
+    4,
+    1
+  ],
+  "binom_p": 0.375
+}
