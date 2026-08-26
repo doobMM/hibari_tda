@@ -44,18 +44,39 @@ function resize() {
 }
 window.addEventListener('resize', resize);
 
+// 실패를 삼키지 않는다. 종전에는 catch 에서 console.warn 만 하고 호출부가 오버레이를
+// 닫아버려, 사용자에게는 "허용했는데 아무 일도 안 일어남" 으로 보였다(실기기 피드백).
+function cameraError(e) {
+  const m = {
+    NotAllowedError: '카메라 권한이 거부되었습니다. 브라우저 설정에서 허용해 주세요.',
+    NotFoundError: '카메라를 찾을 수 없습니다.',
+    NotReadableError: '다른 앱이 카메라를 쓰고 있습니다. 그 앱을 닫고 다시 시도해 주세요.',
+    OverconstrainedError: '요청한 카메라 설정을 지원하지 않습니다.',
+    SecurityError: 'HTTPS 에서만 카메라를 쓸 수 있습니다.',
+  }[e && e.name] || ('카메라를 열지 못했습니다: ' + (e && e.name ? e.name : e));
+  return m;
+}
+
 async function startCamera() {
-  try {
-    if (stream) stream.getTracks().forEach(t => t.stop());
-    stream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: facing, width: { ideal: 320 }, height: { ideal: 240 } },
-      audio: false,
-    });
-    video.srcObject = stream;
-    await video.play();
-  } catch (e) {
-    console.warn('camera error', e);
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    return { ok: false, msg: '이 브라우저는 카메라를 지원하지 않습니다.' };
   }
+  if (!window.isSecureContext) {
+    return { ok: false, msg: 'HTTPS(또는 localhost) 에서만 카메라를 쓸 수 있습니다.' };
+  }
+  if (stream) stream.getTracks().forEach(t => t.stop());
+  // 후면 카메라가 없는 기기가 있다 — 실패하면 제약 없이 한 번 더 시도한다.
+  for (const c of [{ facingMode: facing, width: { ideal: 320 }, height: { ideal: 240 } }, true]) {
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({ video: c, audio: false });
+      video.srcObject = stream;
+      await video.play();
+      return { ok: true };
+    } catch (e) {
+      var last = e;
+    }
+  }
+  return { ok: false, msg: cameraError(last) };
 }
 
 function sampleColor() {
@@ -181,14 +202,26 @@ function stop() {
 }
 
 btnPerm.addEventListener('click', async () => {
-  await startCamera();
+  const r = await startCamera();
+  if (!r.ok) {                       // 실패하면 오버레이를 닫지 않고 이유를 보여준다
+    let el = document.getElementById('camErr');
+    if (!el) {
+      el = document.createElement('p');
+      el.id = 'camErr';
+      el.style.cssText = 'color:#ff9c8f;font-size:13px;margin-top:10px;line-height:1.5';
+      btnPerm.parentNode.appendChild(el);
+    }
+    el.textContent = r.msg;
+    return;
+  }
   await audio.unlock();
   overlay.classList.add('hidden');
 });
 btnStart.addEventListener('click', start);
 btnFlip.addEventListener('click', async () => {
   facing = facing === 'environment' ? 'user' : 'environment';
-  await startCamera();
+  const r = await startCamera();
+  if (!r.ok) console.warn(r.msg);
 });
 
 resize();

@@ -88,6 +88,10 @@ window.addEventListener('resize', resize);
 let shakePulse = 0;
 
 function step(now) {
+  // ⚠ 다음 프레임을 **먼저** 예약한다. 종전에는 마지막 줄에 있어서 tick()/draw() 가
+  //   한 번이라도 던지면 루프가 영구히 죽었다 — 화면도 소리도 멈춘 것처럼 보인다.
+  requestAnimationFrame(step);
+  try {
   if (running) {
     const elapsed = (now - startT) / 1000;
     const left = Math.max(0, SESSION_SEC - elapsed);
@@ -102,7 +106,9 @@ function step(now) {
     hudTime.textContent = SESSION_SEC.toFixed(1) + 's';
   }
   draw();
-  requestAnimationFrame(step);
+  } catch (e) {
+    console.error('shake step error', e);
+  }
 }
 
 function tick() {

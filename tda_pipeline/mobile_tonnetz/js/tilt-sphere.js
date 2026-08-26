@@ -290,7 +290,10 @@ async function onGenerateClick() {
       T: 120,            // 30s × (1000/250ms)
       K: 14,
       stepMs: 250,
-      temperature: 3.0,
+      // ⚠ 3.0 은 §7.7.3 근거로 쓰였으나 그 주장은 철회됐다(2026-08-15,
+      //   `t8_temperature_audit.json`). 개인화 OM 은 zero-row 가 많아 노드 풀이
+      //   실제로 열리는데, 그런 설정에서는 T=1.0 이 단조 우세하다(paired p=6.1e-08).
+      temperature: 1.0,
       windowSize: 4,
     });
     activePlayback = res.playback;

@@ -41,7 +41,7 @@ export async function runGeneration(recording, audio, {
   T = 120,
   K = 14,
   stepMs = 250,
-  temperature = 3.0,
+  temperature = 1.0,   // 2026-08-15: 3.0 의 근거(§7.7.3)는 철회됨
   seed = Math.floor(Math.random() * 2 ** 30),
   windowSize = 4,
   onProgress = null,
