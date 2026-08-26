@@ -1,6 +1,6 @@
 import { AudioEngine } from './audio-engine.js';
-import { PC_NAME, resolveToScale } from './tonnetz-pc.js';
 import { requestSensorPermission } from './sensor-permission.js';
+import { loadHibari, generateFromBank, playNotes, bankAlpha, bankK } from './hibari-source.js';
 
 const SESSION_SEC = 30;
 const BPM = 120;
@@ -23,31 +23,11 @@ let running = false;
 let startT = 0;
 let lastStep = -1;
 
-// Mock Algorithm 1 state — maintained pitch pool + transition matrix.
-// Replace with real hibari notes_metadata.json when integrating with R1.
-const SCALES = ['major', 'minor', 'phrygian'];
-let state = freshSeed();
-
-function freshSeed() {
-  const seed = Math.floor(Math.random() * 1e6);
-  const r = seededRng(seed);
-  return {
-    seed,
-    scaleIdx: Math.floor(r() * SCALES.length),
-    rootPc: Math.floor(r() * 12),
-    pitches: Array.from({length: 8}, () => 48 + Math.floor(r() * 24)),
-    rng: r,
-    createdAt: performance.now(),
-  };
-}
-
-function seededRng(seed) {
-  let s = seed | 0;
-  return function() {
-    s = (s * 1664525 + 1013904223) | 0;
-    return ((s >>> 0) % 1_000_000) / 1_000_000;
-  };
-}
+// 진짜 hibari — 참조 OM 뱅크에서 Algorithm 1 을 돌린다 (mock 제거, 2026-08-15).
+const BANK_IDX = 2;              // α=0.25 = 논문 정본 조건
+let state = { seed: Math.floor(Math.random() * 1e6), alpha: null, K: null, n: 0 };
+let cancelPlayback = null;
+let ready = false;
 
 // Shake detection via DeviceMotion
 let accelHistory = [];
@@ -71,9 +51,21 @@ function onMotion(e) {
 }
 
 function triggerShake() {
-  state = freshSeed();
-  // visual pulse
   shakePulse = 1.0;
+  state.seed = Math.floor(Math.random() * 1e6);
+  regenerate();
+}
+
+function regenerate() {
+  if (!ready) return;
+  try {
+    const g = generateFromBank(BANK_IDX, state.seed);
+    state.alpha = g.alpha; state.K = g.K; state.n = g.n;
+    if (cancelPlayback) cancelPlayback();
+    cancelPlayback = playNotes(audio, g.notes, { velocity: 0.5 });
+  } catch (e) {
+    console.error('regenerate failed', e);
+  }
 }
 
 function resize() {
@@ -111,14 +103,8 @@ function step(now) {
   }
 }
 
-function tick() {
-  const r = state.rng;
-  // Pick from the pool, mutate towards scale.
-  const pick = state.pitches[Math.floor(r() * state.pitches.length)];
-  const scaleName = SCALES[state.scaleIdx];
-  const midi = resolveToScale(pick, scaleName, state.rootPc);
-  audio.note(midi, {velocity: 0.55, dur: 0.35});
-}
+// 음은 regenerate() 에서 30초치를 한 번에 스케줄한다 — 스텝마다 뽑지 않는다.
+function tick() {}
 
 function draw() {
   ctx.fillStyle = '#0a0a12';
@@ -140,7 +126,8 @@ function draw() {
   ctx.fillText(`seed ${state.seed}`, cx, cy - 6);
   ctx.fillStyle = '#e8e8f0';
   ctx.font = '12px -apple-system, sans-serif';
-  ctx.fillText(`${SCALES[state.scaleIdx]} · root ${PC_NAME[state.rootPc]}`, cx, cy + 14);
+  ctx.fillText(ready ? `hibari · α=${state.alpha} · cycle ${state.K}개 · ${state.n}음`
+                     : 'hibari 데이터 불러오는 중…', cx, cy + 14);
   // hint
   ctx.fillStyle = '#8888a0';
   ctx.font = '13px -apple-system, sans-serif';
@@ -149,7 +136,10 @@ function draw() {
 
 async function start() {
   await audio.unlock();
+  if (!ready) { try { await loadHibari(); ready = true; } catch (e) {
+      console.error('hibari load failed', e); return; } }
   running = true;
+  regenerate();
   startT = performance.now();
   lastStep = -1;
   btnStart.textContent = 'running…';
@@ -159,6 +149,7 @@ function stop() {
   running = false;
   btnStart.textContent = 'start (30s)';
   btnStart.disabled = false;
+  if (cancelPlayback) { cancelPlayback(); cancelPlayback = null; }
   audio.stopAll(200);
 }
 
@@ -168,6 +159,7 @@ async function onPerm() {
     window.addEventListener('devicemotion', onMotion);
   }
   await audio.unlock();
+  try { await loadHibari(); ready = true; } catch (e) { console.error('hibari load failed', e); }
   overlay.classList.add('hidden');
 }
 

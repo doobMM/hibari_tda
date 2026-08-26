@@ -34,7 +34,7 @@ let yStep = xStep * SQRT_3 / 2;
 let panX = 0, panY = 0;
 let pvx  = 0, pvy  = 0;
 const friction = 0.92;
-const gain     = 0.6;
+const gain     = 0.9;   // 실기기 피드백 반영 (0.6 → 0.9). 굴림이 굼떴다.
 
 // ── Hot-node map ───────────────────────────────────────────────────────────
 const hotMap = new Map();
@@ -118,12 +118,17 @@ function triadType(pc1, pc2, pc3) {
 
 // ── Sensor / keyboard ──────────────────────────────────────────────────────
 let tiltX = 0, tiltY = 0;
+// 실기기 피드백: 민감도가 낮다. 종전에는 ±45° 를 다 기울여야 최대 편향이었는데
+// 손에 든 상태에서 45° 는 과하다. ±26° 로 좁혀 같은 동작에 약 1.7배 반응한다.
+// TILT_RANGE 를 키우면 둔해지고 줄이면 예민해진다.
+const TILT_RANGE = 26;
+const TILT_REST  = 20;   // 손에 들었을 때의 기본 beta (화면을 눕히지 않는 자세)
 function onOrient(e) {
   let g = e.gamma || 0, b = e.beta || 0;
-  g = Math.max(-45, Math.min(45, g));
-  b = Math.max(-45, Math.min(45, b - 20));
-  tiltX = g / 45;
-  tiltY = b / 45;
+  g = Math.max(-TILT_RANGE, Math.min(TILT_RANGE, g));
+  b = Math.max(-TILT_RANGE, Math.min(TILT_RANGE, b - TILT_REST));
+  tiltX = g / TILT_RANGE;
+  tiltY = b / TILT_RANGE;
 }
 
 const keysDown = new Set();
@@ -303,7 +308,7 @@ async function onGenerateClick() {
       ' density=' + (m.density * 100).toFixed(1) + '% fails=' + m.resampleFails +
       ' elapsed=' + m.genElapsedMs.toFixed(0) + 'ms');
 
-    btn.textContent = '⏹ 중지 (' + m.numNotes + ' notes)';
+    btn.textContent = '⏹ 중지 (seed ' + m.seed + ' · ' + m.numNotes + ' notes)';
     btn.style.background = '#b05a5a';
     btn.disabled = false;
 

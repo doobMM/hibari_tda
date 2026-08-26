@@ -1,5 +1,5 @@
 import { AudioEngine } from './audio-engine.js';
-import { resolveToScale, PC_NAME } from './tonnetz-pc.js';
+import { loadHibari, generateFromBank, playNotes, bankAlpha, bankK } from './hibari-source.js';
 
 const SESSION_SEC = 30;
 const BPM = 120;
@@ -21,6 +21,8 @@ let dpr = Math.max(1, window.devicePixelRatio || 1);
 let W = 0, H = 0;
 let running = false;
 let startT = 0;
+let bankIdx = 2, curAlpha = null, curK = null, curN = 0;
+let ready = false, cancelPlayback = null;
 let lastStep = -1;
 let facing = 'environment';
 let stream = null;
@@ -31,8 +33,6 @@ const sampler = document.createElement('canvas');
 sampler.width = samplerSize; sampler.height = samplerSize;
 const sctx = sampler.getContext('2d', { willReadFrequently: true });
 
-let currentScale = 'major';
-let currentRootPc = 0;
 let lastHue = 0, lastSat = 0, lastLight = 0;
 
 function resize() {
@@ -113,29 +113,22 @@ function rgbToHsl(r, g, b) {
   return {h, s, l};
 }
 
-function hslToScale(hsl) {
-  if (!hsl) return { scale: 'major', rootPc: 0 };
-  const {h, s} = hsl;
-  // Saturation too low → default hibari-ish major
-  if (s < 0.12) return { scale: 'major', rootPc: 0 };
-  let scale;
-  if (h < 40 || h >= 320) scale = 'phrygian';  // red
-  else if (h < 80) scale = 'major';              // yellow-green
-  else if (h < 180) scale = 'major';             // green-cyan
-  else if (h < 260) scale = 'minor';             // blue
-  else scale = 'phrygian';                       // magenta
-  // Hue → root pc (0..11)
-  const rootPc = Math.floor(((h / 360) * 12)) % 12;
-  return { scale, rootPc };
+// 색조 → α (두 음악적 거리를 섞는 비율). 종전에는 임의 음높이를 음계에 맞추는 mock 이었다.
+// 이제 색이 **위상 구조 자체**를 고른다 — 따뜻한 색일수록 구조가 성기고(cycle 적고),
+// 차가운 색일수록 촘촘하다(cycle 많다). 채도가 낮으면 정본 α=0.25 로 둔다.
+const N_BANK = 6;
+function hslToBank(hsl) {
+  if (!hsl || hsl.s < 0.12) return 2;            // 무채색 → 정본
+  return Math.min(N_BANK - 1, Math.floor((hsl.h / 360) * N_BANK));
 }
 
 function step(now) {
   const hsl = sampleColor();
   if (hsl) {
     lastHue = hsl.h; lastSat = hsl.s; lastLight = hsl.l;
-    const s = hslToScale(hsl);
-    currentScale = s.scale;
-    currentRootPc = s.rootPc;
+    const b = hslToBank(hsl);
+    // 뱅크가 바뀌면 즉시 다시 생성한다 — 색을 바꾸면 음악이 바뀌는 것이 이 모드의 전부다.
+    if (b !== bankIdx) { bankIdx = b; if (running) regenerate(); }
   }
   if (running) {
     const elapsed = (now - startT) / 1000;
@@ -154,13 +147,17 @@ function step(now) {
   requestAnimationFrame(step);
 }
 
-function tick() {
-  // ascending arpeggio biased by brightness
-  const octShift = Math.floor(lastLight * 2) - 1; // -1..1
-  const base = 60 + octShift * 12;
-  const offset = Math.floor(Math.random() * 14);
-  const midi = resolveToScale(base + offset, currentScale, currentRootPc);
-  audio.note(midi, { velocity: 0.55, dur: 0.4 });
+// 음은 regenerate() 가 30초치를 한 번에 스케줄한다.
+function tick() {}
+
+function regenerate() {
+  if (!ready) return;
+  try {
+    const g = generateFromBank(bankIdx, Math.floor(Math.random() * 1e6));
+    curAlpha = g.alpha; curK = g.K; curN = g.n;
+    if (cancelPlayback) cancelPlayback();
+    cancelPlayback = playNotes(audio, g.notes, { velocity: 0.5 });
+  } catch (e) { console.error('regenerate failed', e); }
 }
 
 function draw() {
@@ -183,18 +180,23 @@ function draw() {
   ctx.fillStyle = '#fff';
   ctx.font = '600 14px -apple-system, sans-serif';
   ctx.textAlign = 'center';
-  ctx.fillText(`${currentScale} · ${PC_NAME[currentRootPc]}`, cx, cy + size/2 + 112);
+  ctx.fillText(ready ? `hibari · α=${curAlpha} · cycle ${curK}개 · ${curN}음`
+                     : 'hibari 데이터 불러오는 중…', cx, cy + size/2 + 112);
 }
 
 async function start() {
   await audio.unlock();
+  if (!ready) { try { await loadHibari(); ready = true; } catch (e) {
+      console.error('hibari load failed', e); return; } }
   running = true;
   startT = performance.now();
+  regenerate();
   lastStep = -1;
   btnStart.textContent = 'running…';
   btnStart.disabled = true;
 }
 function stop() {
+  if (cancelPlayback) { cancelPlayback(); cancelPlayback = null; }
   running = false;
   btnStart.textContent = 'start (30s)';
   btnStart.disabled = false;
@@ -215,6 +217,7 @@ btnPerm.addEventListener('click', async () => {
     return;
   }
   await audio.unlock();
+  try { await loadHibari(); ready = true; } catch (e) { console.error('hibari load failed', e); }
   overlay.classList.add('hidden');
 });
 btnStart.addEventListener('click', start);
