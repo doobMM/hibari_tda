@@ -106,9 +106,15 @@ jobs:
                    output/topo_diffusion/motif.html \
                    output/topo_diffusion/topo_motifA_skeleton.ogg \
                    output/ab_p4/index.html \
-                   output/ab_p4/Q1A.ogg output/ab_p4/Q6B.ogg; do
+                   output/ab_p4/Q1A.ogg output/ab_p4/Q6B.ogg \
+                   vineyard/index.html vineyard/alpha_vineyard.json \
+                   mobile_tonnetz/index.html; do
             test -f "_site/$f" || { echo "빠짐: $f"; exit 1; }
             echo "  OK $f"
+          done
+          for L in vineyard/ mobile_tonnetz/; do
+            grep -q "$L" _site/index.html || { echo "랜딩에 링크 없음: $L"; exit 1; }
+            echo "  OK 랜딩 링크 $L"
           done
           grep -q 'output/topo_diffusion/motif.html' _site/index.html \
             || { echo "랜딩에 모티브 페이지 링크 없음"; exit 1; }
