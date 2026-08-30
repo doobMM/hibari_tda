@@ -1,0 +1,21 @@
+{
+  "experiment": "collapse_confound",
+  "question": "위상 붕괴 지점의 높은 협화도가 위상 부재 때문인가 자유샘플링 때문인가",
+  "design": "정본 OM 의 cycle 구조는 두고 zero-row 만 α=0 수준으로 올린 대조군",
+  "n_seeds": 24,
+  "zero_rows": {
+    "alpha0": 718,
+    "alpha25": 196
+  },
+  "consonance": {
+    "alpha25": 0.6546223958333334,
+    "alpha25_blanked": 0.6786815767973858,
+    "alpha0": 0.7350579554738563
+  },
+  "recovered_fraction": 0.2991112521821952,
+  "p_blanked_vs_canonical": 1.4327398921361189e-12,
+  "p_blanked_vs_alpha0": 4.95380324309241e-27,
+  "verdict": "자유 샘플링으로 설명되지 않는다 — 위상 자체가 협화도를 내준다",
+  "limitation": "협화도는 대리 지표다. '어느 쪽이 더 좋게 들리나' 는 R3 C족(청취)이 묻는다.",
+  "total_seconds": 42.907766819000244
+}
