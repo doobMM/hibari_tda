@@ -1,0 +1,55 @@
+{
+  "experiment": "ab_r3_decode",
+  "answers": {
+    "R1": "?",
+    "R2": "B",
+    "R3": "B",
+    "R4": "?",
+    "R5": "?",
+    "R6": "B",
+    "R7": "?",
+    "R8": "B",
+    "R9": "?",
+    "R10": "A",
+    "R11": "A",
+    "R12": "?",
+    "R13": "B",
+    "R14": "B",
+    "R15": "A"
+  },
+  "js_agree": [
+    6,
+    9
+  ],
+  "cons_agree": [
+    5,
+    9
+  ],
+  "families": {
+    "A": [
+      null,
+      "원곡 OM",
+      "디퓨전 OM (motifC_v2)",
+      null,
+      null
+    ],
+    "B": [
+      "NodePool 수정 후 (0-indexed)",
+      null,
+      "NodePool 수정 후 (0-indexed)",
+      null,
+      "NodePool 수정 후 (0-indexed)"
+    ],
+    "C": [
+      "α=0.00 위상 붕괴 (K=1)",
+      null,
+      "α=0.25 정본 (K=14)",
+      "α=0.25 정본 (K=14)",
+      "α=0.00 위상 붕괴 (K=1)"
+    ]
+  },
+  "cumulative_js": [
+    11,
+    18
+  ]
+}
