@@ -1,0 +1,170 @@
+{
+  "experiment": "metric_design_gauntlet",
+  "gates": {
+    "G1": "시간 셔플 시 나빠져야 한다",
+    "G2": "OM 을 비운 생성이 정본보다 나빠야 한다",
+    "G3": "음 수와의 |r| < 0.4",
+    "G4": "원곡 자신이 최적값에 근접"
+  },
+  "n_seeds": 20,
+  "arm_means": {
+    "정본": {
+      "pitch_js": 0.03739151007566076,
+      "interval_js": 0.1591129242083557,
+      "transition_js": 0.10411657609107443,
+      "onset_acf": 0.12547228002025404,
+      "cooc_dist": 0.3220078281404797,
+      "cycle_hit": 0.5009540125315055,
+      "n_notes": 1864.4
+    },
+    "OM 전부 비움": {
+      "pitch_js": 0.0010004648070478005,
+      "interval_js": 0.17707996332557602,
+      "transition_js": 0.08605917894178754,
+      "onset_acf": 0.15502325070662704,
+      "cooc_dist": 0.16603062205459176,
+      "cycle_hit": 0.13278091379809337,
+      "n_notes": 2036.8
+    },
+    "정본 + 음고 셔플": {
+      "pitch_js": 0.03739151007566076,
+      "interval_js": 0.17591286613950946,
+      "transition_js": 0.11400648383698826,
+      "onset_acf": 0.12547228002025404,
+      "cooc_dist": 0.26512264693974197,
+      "cycle_hit": 0.19630988797554003,
+      "n_notes": 1864.4
+    },
+    "정본 + 리듬 셔플": {
+      "pitch_js": 0.03739151007566076,
+      "interval_js": 0.17254543067600273,
+      "transition_js": 0.11252875272543487,
+      "onset_acf": 0.12547228002025404,
+      "cooc_dist": 0.32151260859278097,
+      "cycle_hit": 0.1958981071992219,
+      "n_notes": 1864.4
+    },
+    "원곡 자신": {
+      "pitch_js": 0.0,
+      "interval_js": 0.0,
+      "transition_js": 0.0,
+      "onset_acf": 0.0,
+      "cooc_dist": 0.0,
+      "cycle_hit": 0.21058823529411766,
+      "n_notes": 3835.0
+    }
+  },
+  "verdict": {
+    "pitch_js": {
+      "G1_order": false,
+      "G2_free_penalty": false,
+      "G3_note_independent": true,
+      "G4_original_min": true,
+      "r_with_notes": -0.32077473137699947,
+      "pass": false,
+      "higher_better": false,
+      "canonical": 0.03739151007566076,
+      "free_sampling": 0.0010004648070478005,
+      "shuffled": 0.03739151007566076,
+      "shuffle_kind": "정본 + 음고 셔플",
+      "original": 0.0
+    },
+    "interval_js": {
+      "G1_order": true,
+      "G2_free_penalty": true,
+      "G3_note_independent": false,
+      "G4_original_min": true,
+      "r_with_notes": -0.5091494287362194,
+      "pass": false,
+      "higher_better": false,
+      "canonical": 0.1591129242083557,
+      "free_sampling": 0.17707996332557602,
+      "shuffled": 0.17591286613950946,
+      "shuffle_kind": "정본 + 음고 셔플",
+      "original": 0.0
+    },
+    "transition_js": {
+      "G1_order": true,
+      "G2_free_penalty": false,
+      "G3_note_independent": true,
+      "G4_original_min": true,
+      "r_with_notes": -0.33181914525439776,
+      "pass": false,
+      "higher_better": false,
+      "canonical": 0.10411657609107443,
+      "free_sampling": 0.08605917894178754,
+      "shuffled": 0.11400648383698826,
+      "shuffle_kind": "정본 + 음고 셔플",
+      "original": 0.0
+    },
+    "onset_acf": {
+      "G1_order": false,
+      "G2_free_penalty": true,
+      "G3_note_independent": true,
+      "G4_original_min": true,
+      "r_with_notes": 0.3233091470072466,
+      "pass": false,
+      "higher_better": false,
+      "canonical": 0.12547228002025404,
+      "free_sampling": 0.15502325070662704,
+      "shuffled": 0.12547228002025404,
+      "shuffle_kind": "정본 + 리듬 셔플",
+      "original": 0.0
+    },
+    "cooc_dist": {
+      "G1_order": false,
+      "G2_free_penalty": false,
+      "G3_note_independent": true,
+      "G4_original_min": true,
+      "r_with_notes": -0.006443645392067127,
+      "pass": false,
+      "higher_better": false,
+      "canonical": 0.3220078281404797,
+      "free_sampling": 0.16603062205459176,
+      "shuffled": 0.26512264693974197,
+      "shuffle_kind": "정본 + 음고 셔플",
+      "original": 0.0
+    },
+    "cycle_hit": {
+      "G1_order": true,
+      "G2_free_penalty": true,
+      "G3_note_independent": false,
+      "G4_original_min": false,
+      "r_with_notes": -0.42067868220570104,
+      "pass": false,
+      "higher_better": true,
+      "canonical": 0.5009540125315055,
+      "free_sampling": 0.13278091379809337,
+      "shuffled": 0.19630988797554003,
+      "shuffle_kind": "정본 + 음고 셔플",
+      "original": 0.21058823529411766
+    }
+  },
+  "passed": [],
+  "limitation": "관문은 '무엇을 재지 못하는가' 만 거른다. 통과한 지표가 청취 선호를 예측하는지는 별도 청취 검증이 필요하다.",
+  "total_seconds": 22.002965927124023,
+  "followup": {
+    "interval_js_G3": {
+      "question": "G3 탈락(r=−0.51)이 표본 크기 편향인가 진짜 의존인가",
+      "test": "음정 표본 수를 1500 으로 고정해 히스토그램 추정 편향을 제거하고 재측정",
+      "result": {
+        "raw_r": -0.509,
+        "fixed_budget_r": -0.501,
+        "canonical": 0.16329,
+        "free_sampling": 0.18027,
+        "pitch_shuffled": 0.17818,
+        "original": 0.00508
+      },
+      "verdict": "**진짜 의존이다.** 표본을 고정해도 r 이 그대로다(−0.509 → −0.501). 음이 많을수록 음정이 촘촘해져 hibari 의 음정 분포를 닮는다. 음고 JS(r=−0.65)와 같은 병이고 정도만 약하다.",
+      "note": "다만 G1·G2·G4 는 고정판에서도 통과한다 — 순서에 반응하고(+0.0149) 자유샘플링에 벌점(+0.0170)."
+    },
+    "cycle_hit_finding": {
+      "observation": "원곡 hibari 자신의 cycle_hit 은 0.2106 인데 Algorithm 1 은 0.50 이다",
+      "meaning": "생성 규칙이 **원곡보다 cycle 교집합 제약을 더 강하게 지킨다.** 즉 '교집합 안에서 뽑는다' 는 규칙은 원곡이 실제로 하는 일이 아니다. 이 지표를 최적화하면 오히려 원곡에서 멀어진다.",
+      "status": "지표로는 탈락(G4). 그러나 **알고리즘에 대한 발견**으로 남긴다."
+    },
+    "cooc_dist_finding": "동시발생 행렬 거리는 G1·G2 를 모두 탈락했다 — 자유샘플링(0.166)과 셔플(0.265)이 정본(0.322)보다 좋다. 동시발생도 주변 빈도가 지배하므로 구조 탐침이 되지 못한다. 예상과 반대였다.",
+    "onset_acf_untestable": "내 셔플 두 종류가 모두 **onset 다중집합을 보존**하므로 이 지표는 구조적으로 불변이다(0.12547 로 세 팔 동일). 관문으로 검사되지 않았다 — 탈락이 아니라 **미검증**으로 읽어야 한다."
+  },
+  "conclusion": "여섯 후보 중 **통과한 것이 없다.** 가장 가까운 것은 interval_js 로 G1·G2·G4 를 통과하지만 음 수 의존(r=−0.50)이 진짜다. 지표 문제는 **해결되지 않았다.** 다음 수는 두 가지다 — (가) 음 수를 지표의 성질로 없애려 하지 말고 **프로토콜로 통제**한다(쌍 비교 시 음 수를 맞춘다). 그러면 interval_js 를 쓸 수 있다. (나) onset 다중집합을 실제로 바꾸는 셔플을 만들어 리듬 지표를 검사한다."
+}
