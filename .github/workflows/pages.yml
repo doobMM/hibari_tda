@@ -58,6 +58,7 @@ jobs:
           cp -R tda_pipeline/output/topo_diffusion   _site/output/topo_diffusion
           cp -R tda_pipeline/output/ab_check         _site/output/ab_check
           cp -R tda_pipeline/output/ab_p4            _site/output/ab_p4
+          cp -R tda_pipeline/output/ab_r3            _site/output/ab_r3
 
           # 랜딩용 PDF 2종
           mkdir -p _site/docs
@@ -108,7 +109,8 @@ jobs:
                    output/ab_p4/index.html \
                    output/ab_p4/Q1A.ogg output/ab_p4/Q6B.ogg \
                    vineyard/index.html vineyard/alpha_vineyard.json \
-                   mobile_tonnetz/index.html; do
+                   mobile_tonnetz/index.html \
+                   output/ab_r3/index.html output/ab_r3/R1A.ogg; do
             test -f "_site/$f" || { echo "빠짐: $f"; exit 1; }
             echo "  OK $f"
           done

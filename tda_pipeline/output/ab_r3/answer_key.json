@@ -1,0 +1,136 @@
+{
+  "experiment": "R3 — 3족 15쌍",
+  "n_pairs": 15,
+  "T_steps": 32,
+  "seconds_each": 14.5,
+  "temperature": 1.0,
+  "shuffle_seed": 20260831,
+  "families": {
+    "A": "원곡 OM vs 디퓨전 OM",
+    "B": "NodePool 수정 전 vs 후",
+    "C": "α=0 위상붕괴 vs α=0.25 정본"
+  },
+  "key": {
+    "R1": {
+      "A": "디퓨전 OM (motifB_v1)",
+      "B": "원곡 OM",
+      "family": "A",
+      "seed": 6101,
+      "real_zero": 6,
+      "other_zero": 14
+    },
+    "R2": {
+      "A": "디퓨전 OM (motifC_v1)",
+      "B": "원곡 OM",
+      "family": "A",
+      "seed": 6202,
+      "real_zero": 8,
+      "other_zero": 9
+    },
+    "R3": {
+      "A": "원곡 OM",
+      "B": "디퓨전 OM (motifC_v2)",
+      "family": "A",
+      "seed": 6303,
+      "real_zero": 8,
+      "other_zero": 11
+    },
+    "R4": {
+      "A": "디퓨전 OM (motifD_v1)",
+      "B": "원곡 OM",
+      "family": "A",
+      "seed": 6404,
+      "real_zero": 8,
+      "other_zero": 19
+    },
+    "R5": {
+      "A": "디퓨전 OM (motifD_v2)",
+      "B": "원곡 OM",
+      "family": "A",
+      "seed": 6505,
+      "real_zero": 7,
+      "other_zero": 13
+    },
+    "R6": {
+      "A": "NodePool 수정 전 (1-indexed)",
+      "B": "NodePool 수정 후 (0-indexed)",
+      "family": "B",
+      "seed": 6606,
+      "real_zero": 8,
+      "other_zero": 8
+    },
+    "R7": {
+      "A": "NodePool 수정 전 (1-indexed)",
+      "B": "NodePool 수정 후 (0-indexed)",
+      "family": "B",
+      "seed": 6707,
+      "real_zero": 8,
+      "other_zero": 8
+    },
+    "R8": {
+      "A": "NodePool 수정 전 (1-indexed)",
+      "B": "NodePool 수정 후 (0-indexed)",
+      "family": "B",
+      "seed": 6808,
+      "real_zero": 7,
+      "other_zero": 7
+    },
+    "R9": {
+      "A": "NodePool 수정 전 (1-indexed)",
+      "B": "NodePool 수정 후 (0-indexed)",
+      "family": "B",
+      "seed": 6909,
+      "real_zero": 5,
+      "other_zero": 5
+    },
+    "R10": {
+      "A": "NodePool 수정 후 (0-indexed)",
+      "B": "NodePool 수정 전 (1-indexed)",
+      "family": "B",
+      "seed": 7010,
+      "real_zero": 1,
+      "other_zero": 1
+    },
+    "R11": {
+      "A": "α=0.00 위상 붕괴 (K=1)",
+      "B": "α=0.25 정본 (K=14)",
+      "family": "C",
+      "seed": 7111,
+      "real_zero": 26,
+      "other_zero": 24
+    },
+    "R12": {
+      "A": "α=0.25 정본 (K=14)",
+      "B": "α=0.00 위상 붕괴 (K=1)",
+      "family": "C",
+      "seed": 7212,
+      "real_zero": 20,
+      "other_zero": 6
+    },
+    "R13": {
+      "A": "α=0.00 위상 붕괴 (K=1)",
+      "B": "α=0.25 정본 (K=14)",
+      "family": "C",
+      "seed": 7313,
+      "real_zero": 24,
+      "other_zero": 4
+    },
+    "R14": {
+      "A": "α=0.00 위상 붕괴 (K=1)",
+      "B": "α=0.25 정본 (K=14)",
+      "family": "C",
+      "seed": 7414,
+      "real_zero": 17,
+      "other_zero": 0
+    },
+    "R15": {
+      "A": "α=0.00 위상 붕괴 (K=1)",
+      "B": "α=0.25 정본 (K=14)",
+      "family": "C",
+      "seed": 7515,
+      "real_zero": 17,
+      "other_zero": 0
+    }
+  },
+  "note": "이 파일을 먼저 열지 마세요 — 블라인드가 깨집니다."
+}

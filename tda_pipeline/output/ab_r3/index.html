@@ -1,0 +1,99 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>어느 쪽이 더 음악 같나요 — 5분 듣기</title>
+<style>
+ :root{--bg:#f5f8f2;--fg:#1b2419;--muted:#5c6b57;--line:#d6e0cd;--card:#fff;--accent:#2f6b3a}
+ @media(prefers-color-scheme:dark){:root{--bg:#0f1410;--fg:#e6ede2;--muted:#8fa088;--line:#243021;--card:#161d15;--accent:#7fb069}}
+ *{box-sizing:border-box}
+ body{margin:0;background:var(--bg);color:var(--fg);line-height:1.65;
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans KR",sans-serif}
+ .wrap{max-width:680px;margin:0 auto;padding:32px 18px 90px}
+ h1{font-size:clamp(20px,5vw,27px);margin:0 0 8px;font-weight:700}
+ .lede{color:var(--muted);font-size:14.5px;margin:0 0 8px}
+ .why{border:1px solid var(--line);border-radius:11px;padding:14px 16px;background:var(--card);
+      font-size:13.5px;color:var(--muted);margin:0 0 28px}
+ .why b{color:var(--fg)}
+ .pair{background:var(--card);border:1px solid var(--line);border-radius:14px;
+       padding:18px;margin-bottom:16px}
+ .pn{font-size:11.5px;color:var(--accent);font-weight:700;letter-spacing:.05em}
+ .pt{font-size:16px;font-weight:600;margin:2px 0 12px}
+ .side{margin-bottom:10px}
+ .side label{font-size:13px;font-weight:600;display:block;margin-bottom:4px}
+ audio{width:100%}
+ .choices{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+ .choices button{flex:1 1 30%;font:inherit;font-size:14px;padding:11px 8px;border-radius:9px;
+   border:1px solid var(--line);background:transparent;color:var(--fg);cursor:pointer;min-height:44px}
+ .choices button:hover{border-color:var(--accent)}
+ .choices button.sel{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:600}
+ textarea{width:100%;margin-top:10px;font:inherit;font-size:13px;padding:8px;border-radius:8px;
+   border:1px solid var(--line);background:var(--bg);color:var(--fg);min-height:44px}
+ .done{position:sticky;bottom:0;background:var(--bg);padding:14px 0 6px;border-top:1px solid var(--line)}
+ .done button{width:100%;font:inherit;font-size:15px;font-weight:700;padding:13px;border-radius:10px;
+   border:none;background:var(--accent);color:#fff;cursor:pointer}
+ .done button:disabled{opacity:.4;cursor:not-allowed}
+ #code{width:100%;margin-top:12px;font-family:ui-monospace,monospace;font-size:12.5px;
+   padding:10px;border-radius:8px;border:1px solid var(--accent);background:var(--card);color:var(--fg)}
+ .hint{font-size:12.5px;color:var(--muted);margin-top:8px}
+</style>
+<div class="wrap">
+<h1>어느 쪽이 더 음악 같나요</h1>
+<p class="lede">15쌍 · 각 약 15초 · <b>10분쯤 걸립니다</b>. 어느 쪽이 무엇인지는 가려져 있습니다.</p>
+<div class="why">
+ 두 짧은 피아노 연주를 듣고 <b>그냥 더 마음에 드는 쪽</b>을 고르시면 됩니다.
+ 음악 지식은 전혀 필요 없습니다.<br><br>
+ <b>정답은 없습니다.</b> 구별이 안 되면 "모르겠다"를 눌러 주세요 —
+ <b>구별이 안 된다는 것 자체가 중요한 결과</b>입니다.
+ 이유를 한 줄 적어 주시면 큰 도움이 되지만, 비워 두셔도 됩니다.<br><br>
+ 다 고르시면 아래 버튼이 켜지고, <b>짧은 코드</b>가 자동으로 복사됩니다. 그것만 보내 주세요.
+</div>
+<div class="pair"><div class="pn">R1 / 15</div><div class="pt">어느 쪽이 더 마음에 드나요?</div><div class="side"><label>A</label><audio controls preload="none" src="R1A.ogg"></audio></div><div class="side"><label>B</label><audio controls preload="none" src="R1B.ogg"></audio></div><div class="choices"><button data-pair="R1" data-val="A">A</button><button data-pair="R1" data-val="B">B</button><button data-pair="R1" data-val="?">모르겠다</button></div><textarea data-pair="R1" placeholder="이유 한 줄 (선택)"></textarea></div>
+<div class="pair"><div class="pn">R2 / 15</div><div class="pt">어느 쪽이 더 마음에 드나요?</div><div class="side"><label>A</label><audio controls preload="none" src="R2A.ogg"></audio></div><div class="side"><label>B</label><audio controls preload="none" src="R2B.ogg"></audio></div><div class="choices"><button data-pair="R2" data-val="A">A</button><button data-pair="R2" data-val="B">B</button><button data-pair="R2" data-val="?">모르겠다</button></div><textarea data-pair="R2" placeholder="이유 한 줄 (선택)"></textarea></div>
+<div class="pair"><div class="pn">R3 / 15</div><div class="pt">어느 쪽이 더 마음에 드나요?</div><div class="side"><label>A</label><audio controls preload="none" src="R3A.ogg"></audio></div><div class="side"><label>B</label><audio controls preload="none" src="R3B.ogg"></audio></div><div class="choices"><button data-pair="R3" data-val="A">A</button><button data-pair="R3" data-val="B">B</button><button data-pair="R3" data-val="?">모르겠다</button></div><textarea data-pair="R3" placeholder="이유 한 줄 (선택)"></textarea></div>
+<div class="pair"><div class="pn">R4 / 15</div><div class="pt">어느 쪽이 더 마음에 드나요?</div><div class="side"><label>A</label><audio controls preload="none" src="R4A.ogg"></audio></div><div class="side"><label>B</label><audio controls preload="none" src="R4B.ogg"></audio></div><div class="choices"><button data-pair="R4" data-val="A">A</button><button data-pair="R4" data-val="B">B</button><button data-pair="R4" data-val="?">모르겠다</button></div><textarea data-pair="R4" placeholder="이유 한 줄 (선택)"></textarea></div>
+<div class="pair"><div class="pn">R5 / 15</div><div class="pt">어느 쪽이 더 마음에 드나요?</div><div class="side"><label>A</label><audio controls preload="none" src="R5A.ogg"></audio></div><div class="side"><label>B</label><audio controls preload="none" src="R5B.ogg"></audio></div><div class="choices"><button data-pair="R5" data-val="A">A</button><button data-pair="R5" data-val="B">B</button><button data-pair="R5" data-val="?">모르겠다</button></div><textarea data-pair="R5" placeholder="이유 한 줄 (선택)"></textarea></div>
+<div class="pair"><div class="pn">R6 / 15</div><div class="pt">어느 쪽이 더 마음에 드나요?</div><div class="side"><label>A</label><audio controls preload="none" src="R6A.ogg"></audio></div><div class="side"><label>B</label><audio controls preload="none" src="R6B.ogg"></audio></div><div class="choices"><button data-pair="R6" data-val="A">A</button><button data-pair="R6" data-val="B">B</button><button data-pair="R6" data-val="?">모르겠다</button></div><textarea data-pair="R6" placeholder="이유 한 줄 (선택)"></textarea></div>
+<div class="pair"><div class="pn">R7 / 15</div><div class="pt">어느 쪽이 더 마음에 드나요?</div><div class="side"><label>A</label><audio controls preload="none" src="R7A.ogg"></audio></div><div class="side"><label>B</label><audio controls preload="none" src="R7B.ogg"></audio></div><div class="choices"><button data-pair="R7" data-val="A">A</button><button data-pair="R7" data-val="B">B</button><button data-pair="R7" data-val="?">모르겠다</button></div><textarea data-pair="R7" placeholder="이유 한 줄 (선택)"></textarea></div>
+<div class="pair"><div class="pn">R8 / 15</div><div class="pt">어느 쪽이 더 마음에 드나요?</div><div class="side"><label>A</label><audio controls preload="none" src="R8A.ogg"></audio></div><div class="side"><label>B</label><audio controls preload="none" src="R8B.ogg"></audio></div><div class="choices"><button data-pair="R8" data-val="A">A</button><button data-pair="R8" data-val="B">B</button><button data-pair="R8" data-val="?">모르겠다</button></div><textarea data-pair="R8" placeholder="이유 한 줄 (선택)"></textarea></div>
+<div class="pair"><div class="pn">R9 / 15</div><div class="pt">어느 쪽이 더 마음에 드나요?</div><div class="side"><label>A</label><audio controls preload="none" src="R9A.ogg"></audio></div><div class="side"><label>B</label><audio controls preload="none" src="R9B.ogg"></audio></div><div class="choices"><button data-pair="R9" data-val="A">A</button><button data-pair="R9" data-val="B">B</button><button data-pair="R9" data-val="?">모르겠다</button></div><textarea data-pair="R9" placeholder="이유 한 줄 (선택)"></textarea></div>
+<div class="pair"><div class="pn">R10 / 15</div><div class="pt">어느 쪽이 더 마음에 드나요?</div><div class="side"><label>A</label><audio controls preload="none" src="R10A.ogg"></audio></div><div class="side"><label>B</label><audio controls preload="none" src="R10B.ogg"></audio></div><div class="choices"><button data-pair="R10" data-val="A">A</button><button data-pair="R10" data-val="B">B</button><button data-pair="R10" data-val="?">모르겠다</button></div><textarea data-pair="R10" placeholder="이유 한 줄 (선택)"></textarea></div>
+<div class="pair"><div class="pn">R11 / 15</div><div class="pt">어느 쪽이 더 마음에 드나요?</div><div class="side"><label>A</label><audio controls preload="none" src="R11A.ogg"></audio></div><div class="side"><label>B</label><audio controls preload="none" src="R11B.ogg"></audio></div><div class="choices"><button data-pair="R11" data-val="A">A</button><button data-pair="R11" data-val="B">B</button><button data-pair="R11" data-val="?">모르겠다</button></div><textarea data-pair="R11" placeholder="이유 한 줄 (선택)"></textarea></div>
+<div class="pair"><div class="pn">R12 / 15</div><div class="pt">어느 쪽이 더 마음에 드나요?</div><div class="side"><label>A</label><audio controls preload="none" src="R12A.ogg"></audio></div><div class="side"><label>B</label><audio controls preload="none" src="R12B.ogg"></audio></div><div class="choices"><button data-pair="R12" data-val="A">A</button><button data-pair="R12" data-val="B">B</button><button data-pair="R12" data-val="?">모르겠다</button></div><textarea data-pair="R12" placeholder="이유 한 줄 (선택)"></textarea></div>
+<div class="pair"><div class="pn">R13 / 15</div><div class="pt">어느 쪽이 더 마음에 드나요?</div><div class="side"><label>A</label><audio controls preload="none" src="R13A.ogg"></audio></div><div class="side"><label>B</label><audio controls preload="none" src="R13B.ogg"></audio></div><div class="choices"><button data-pair="R13" data-val="A">A</button><button data-pair="R13" data-val="B">B</button><button data-pair="R13" data-val="?">모르겠다</button></div><textarea data-pair="R13" placeholder="이유 한 줄 (선택)"></textarea></div>
+<div class="pair"><div class="pn">R14 / 15</div><div class="pt">어느 쪽이 더 마음에 드나요?</div><div class="side"><label>A</label><audio controls preload="none" src="R14A.ogg"></audio></div><div class="side"><label>B</label><audio controls preload="none" src="R14B.ogg"></audio></div><div class="choices"><button data-pair="R14" data-val="A">A</button><button data-pair="R14" data-val="B">B</button><button data-pair="R14" data-val="?">모르겠다</button></div><textarea data-pair="R14" placeholder="이유 한 줄 (선택)"></textarea></div>
+<div class="pair"><div class="pn">R15 / 15</div><div class="pt">어느 쪽이 더 마음에 드나요?</div><div class="side"><label>A</label><audio controls preload="none" src="R15A.ogg"></audio></div><div class="side"><label>B</label><audio controls preload="none" src="R15B.ogg"></audio></div><div class="choices"><button data-pair="R15" data-val="A">A</button><button data-pair="R15" data-val="B">B</button><button data-pair="R15" data-val="?">모르겠다</button></div><textarea data-pair="R15" placeholder="이유 한 줄 (선택)"></textarea></div>
+<div class="done">
+ <button id="fin" disabled>답 정리하기</button>
+ <textarea id="code" hidden readonly rows="3"></textarea>
+ <p class="hint" id="hint">15쌍 모두 고르면 활성화됩니다.</p>
+</div>
+</div>
+<script>
+const N=15, ans={}, note={};
+document.querySelectorAll('.choices button').forEach(b=>{
+  b.onclick=()=>{
+    const p=b.dataset.pair;
+    document.querySelectorAll(`.choices button[data-pair="${p}"]`).forEach(x=>x.classList.remove('sel'));
+    b.classList.add('sel'); ans[p]=b.dataset.val; check();
+  };
+});
+document.querySelectorAll('textarea[data-pair]').forEach(t=>{
+  t.oninput=()=>{ note[t.dataset.pair]=t.value.trim(); };
+});
+function check(){
+  const n=Object.keys(ans).length;
+  document.getElementById('fin').disabled = n<N;
+  document.getElementById('hint').textContent = n<N ? `${n}/${N} 선택됨` : '이제 정리할 수 있습니다.';
+}
+document.getElementById('fin').onclick=()=>{
+  const payload = Object.keys(ans).sort().map(p=>`${p}:${ans[p]}${note[p]?'|'+note[p].replace(/[\n|]/g,' '):''}`).join(' ; ');
+  const ta=document.getElementById('code');
+  ta.hidden=false; ta.value='AB-R3 ' + payload;
+  ta.select();
+  try{ navigator.clipboard.writeText(ta.value); }catch(e){}
+  document.getElementById('hint').textContent='복사됐습니다. 그대로 보내 주세요.';
+};
+document.querySelectorAll('audio').forEach(a=>a.addEventListener('play',()=>{
+  document.querySelectorAll('audio').forEach(o=>{ if(o!==a) o.pause(); });
+}));
+</script>
