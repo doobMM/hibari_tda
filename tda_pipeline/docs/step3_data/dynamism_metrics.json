@@ -1,0 +1,542 @@
+{
+  "experiment": "dynamism_metrics",
+  "prereg": "docs/step3_data/PREREG_dynamism_2026-08-31.md (commit 47e10a7)",
+  "status": "탐색 전용 — 확증은 신규 회차 R4 가 담당한다",
+  "metrics": {
+    "interval_entropy": "M1 음정엔트로피",
+    "onset_density_cv": "M2 타건밀도CV",
+    "duration_entropy": "M3 길이엔트로피",
+    "harmonic_change": "M4 화성변화"
+  },
+  "stage1_controls": {
+    "원곡 자신": {
+      "mean": {
+        "interval_entropy": 4.010322740045037,
+        "onset_density_cv": 0.2704471670502649,
+        "duration_entropy": 1.4472603166158469,
+        "harmonic_change": 0.20448642266824085
+      },
+      "std": {
+        "interval_entropy": 0.0,
+        "onset_density_cv": 0.0,
+        "duration_entropy": 0.0,
+        "harmonic_change": 0.0
+      },
+      "n": 1
+    },
+    "정본 (a=0.25, tau=0.5)": {
+      "mean": {
+        "interval_entropy": 4.876459041784317,
+        "onset_density_cv": 0.18802976087651266,
+        "duration_entropy": 1.3082113902354056,
+        "harmonic_change": 0.2899010669465215
+      },
+      "std": {
+        "interval_entropy": 0.026131790776936524,
+        "onset_density_cv": 0.010118259159637629,
+        "duration_entropy": 0.021413543925641744,
+        "harmonic_change": 0.005099246365688802
+      },
+      "n": 20
+    },
+    "OM 전부 비움 (자유샘플링 100%)": {
+      "mean": {
+        "interval_entropy": 5.124692203112035,
+        "onset_density_cv": 0.18896665623745154,
+        "duration_entropy": 1.4365440964167973,
+        "harmonic_change": 0.3003209585027767
+      },
+      "std": {
+        "interval_entropy": 0.02509435396938504,
+        "onset_density_cv": 0.010656895580606259,
+        "duration_entropy": 0.021388836832883767,
+        "harmonic_change": 0.003481708681625385
+      },
+      "n": 20
+    },
+    "백색잡음": {
+      "mean": {
+        "interval_entropy": 4.726741494788346,
+        "onset_density_cv": 0.18602288067237205,
+        "duration_entropy": 2.9986923804001497,
+        "harmonic_change": 0.057238952502294285
+      },
+      "std": {
+        "interval_entropy": 0.021190801466046443,
+        "onset_density_cv": 0.011698915983992702,
+        "duration_entropy": 0.000541018004222632,
+        "harmonic_change": 0.0029938612534646998
+      },
+      "n": 20
+    }
+  },
+  "stage1_argmax": {
+    "interval_entropy": "OM 전부 비움 (자유샘플링 100%)",
+    "onset_density_cv": "원곡 자신",
+    "duration_entropy": "백색잡음",
+    "harmonic_change": "OM 전부 비움 (자유샘플링 100%)"
+  },
+  "stage2_rows": [
+    {
+      "pair": "P1",
+      "round": "1차 ab_check",
+      "choice": "B",
+      "n_a": 89,
+      "n_b": 90,
+      "count_gap": 0.0111731843575419,
+      "matched": true,
+      "a": {
+        "interval_entropy": 4.648066954816187,
+        "onset_density_cv": 0.2893122065074996,
+        "duration_entropy": 1.5656871911278707,
+        "harmonic_change": 0.307103825136612
+      },
+      "b": {
+        "interval_entropy": 4.634559454977995,
+        "onset_density_cv": 0.23412563895228308,
+        "duration_entropy": 1.4920441274175529,
+        "harmonic_change": 0.2819672131147541
+      }
+    },
+    {
+      "pair": "P2",
+      "round": "1차 ab_check",
+      "choice": "B",
+      "n_a": 103,
+      "n_b": 95,
+      "count_gap": 0.08080808080808081,
+      "matched": true,
+      "a": {
+        "interval_entropy": 4.793769371944224,
+        "onset_density_cv": 0.24695334644615347,
+        "duration_entropy": 1.2458249822211818,
+        "harmonic_change": 0.28825136612021857
+      },
+      "b": {
+        "interval_entropy": 4.717322263113125,
+        "onset_density_cv": 0.3019787007953906,
+        "duration_entropy": 1.1370249368984406,
+        "harmonic_change": 0.331967213114754
+      }
+    },
+    {
+      "pair": "P3",
+      "round": "1차 ab_check",
+      "choice": "A",
+      "n_a": 94,
+      "n_b": 100,
+      "count_gap": 0.061855670103092786,
+      "matched": true,
+      "a": {
+        "interval_entropy": 4.806971511638921,
+        "onset_density_cv": 0.27822759214089404,
+        "duration_entropy": 1.7573683013521757,
+        "harmonic_change": 0.30507416081186567
+      },
+      "b": {
+        "interval_entropy": 4.7443124648762645,
+        "onset_density_cv": 0.2966479394838265,
+        "duration_entropy": 1.4064794031691736,
+        "harmonic_change": 0.28836846213895395
+      }
+    },
+    {
+      "pair": "P4",
+      "round": "1차 ab_check",
+      "choice": "B",
+      "n_a": 101,
+      "n_b": 103,
+      "count_gap": 0.0196078431372549,
+      "matched": true,
+      "a": {
+        "interval_entropy": 4.684722159792376,
+        "onset_density_cv": 0.24069793626026176,
+        "duration_entropy": 1.1736661734659182,
+        "harmonic_change": 0.29793130366900855
+      },
+      "b": {
+        "interval_entropy": 4.62251676463847,
+        "onset_density_cv": 0.21070421761369618,
+        "duration_entropy": 1.348745176887615,
+        "harmonic_change": 0.3202576112412177
+      }
+    },
+    {
+      "pair": "P5",
+      "round": "1차 ab_check",
+      "choice": "A",
+      "n_a": 94,
+      "n_b": 100,
+      "count_gap": 0.061855670103092786,
+      "matched": true,
+      "a": {
+        "interval_entropy": 4.618520409332426,
+        "onset_density_cv": 0.2909530708761137,
+        "duration_entropy": 1.501636644142264,
+        "harmonic_change": 0.26850117096018733
+      },
+      "b": {
+        "interval_entropy": 4.537834047018539,
+        "onset_density_cv": 0.24,
+        "duration_entropy": 1.397999040607969,
+        "harmonic_change": 0.3439890710382513
+      }
+    },
+    {
+      "pair": "Q1",
+      "round": "2차 ab_p4",
+      "choice": "A",
+      "n_a": 60,
+      "n_b": 58,
+      "count_gap": 0.03389830508474576,
+      "matched": true,
+      "a": {
+        "interval_entropy": 4.197457931307255,
+        "onset_density_cv": 0.18257418583505539,
+        "duration_entropy": 1.3399189469539068,
+        "harmonic_change": 0.2827561327561328
+      },
+      "b": {
+        "interval_entropy": 4.211039628658172,
+        "onset_density_cv": 0.07710579232757896,
+        "duration_entropy": 1.3033743399133952,
+        "harmonic_change": 0.3317460317460317
+      }
+    },
+    {
+      "pair": "Q2",
+      "round": "2차 ab_p4",
+      "choice": "B",
+      "n_a": 52,
+      "n_b": 54,
+      "count_gap": 0.03773584905660377,
+      "matched": true,
+      "a": {
+        "interval_entropy": 4.279571176488018,
+        "onset_density_cv": 0.05439282932204212,
+        "duration_entropy": 1.4168209851924598,
+        "harmonic_change": 0.31616161616161614
+      },
+      "b": {
+        "interval_entropy": 4.395294219033186,
+        "onset_density_cv": 0.037037037037037035,
+        "duration_entropy": 1.2784315002250424,
+        "harmonic_change": 0.3181818181818182
+      }
+    },
+    {
+      "pair": "Q4",
+      "round": "2차 ab_p4",
+      "choice": "B",
+      "n_a": 56,
+      "n_b": 56,
+      "count_gap": 0.0,
+      "matched": true,
+      "a": {
+        "interval_entropy": 4.097956414907374,
+        "onset_density_cv": 0.15971914124998499,
+        "duration_entropy": 1.018424695195087,
+        "harmonic_change": 0.3240981240981241
+      },
+      "b": {
+        "interval_entropy": 4.330915395146162,
+        "onset_density_cv": 0.07142857142857142,
+        "duration_entropy": 1.3250018168017184,
+        "harmonic_change": 0.32575757575757575
+      }
+    },
+    {
+      "pair": "Q5",
+      "round": "2차 ab_p4",
+      "choice": "B",
+      "n_a": 54,
+      "n_b": 55,
+      "count_gap": 0.01834862385321101,
+      "matched": true,
+      "a": {
+        "interval_entropy": 4.366807898196829,
+        "onset_density_cv": 0.2644973492052908,
+        "duration_entropy": 1.3989635495524975,
+        "harmonic_change": 0.31717171717171716
+      },
+      "b": {
+        "interval_entropy": 4.051183798459765,
+        "onset_density_cv": 0.14882459585222638,
+        "duration_entropy": 1.3621115312344485,
+        "harmonic_change": 0.32272727272727275
+      }
+    },
+    {
+      "pair": "Q6",
+      "round": "2차 ab_p4",
+      "choice": "A",
+      "n_a": 50,
+      "n_b": 53,
+      "count_gap": 0.05825242718446602,
+      "matched": true,
+      "a": {
+        "interval_entropy": 4.259533762606882,
+        "onset_density_cv": 0.12,
+        "duration_entropy": 1.4883674395583777,
+        "harmonic_change": 0.34242424242424246
+      },
+      "b": {
+        "interval_entropy": 4.245656247146004,
+        "onset_density_cv": 0.18773347869936224,
+        "duration_entropy": 1.2834221557812204,
+        "harmonic_change": 0.32070707070707066
+      }
+    },
+    {
+      "pair": "R2",
+      "round": "3차 ab_r3",
+      "choice": "B",
+      "n_a": 53,
+      "n_b": 50,
+      "count_gap": 0.05825242718446602,
+      "matched": true,
+      "a": {
+        "interval_entropy": 4.077293025950553,
+        "onset_density_cv": 0.14492727826167184,
+        "duration_entropy": 1.3952672106215385,
+        "harmonic_change": 0.3264790764790765
+      },
+      "b": {
+        "interval_entropy": 4.221553466431731,
+        "onset_density_cv": 0.12,
+        "duration_entropy": 1.6196946702297024,
+        "harmonic_change": 0.34581529581529585
+      }
+    },
+    {
+      "pair": "R3",
+      "round": "3차 ab_r3",
+      "choice": "B",
+      "n_a": 58,
+      "n_b": 47,
+      "count_gap": 0.20952380952380953,
+      "matched": false,
+      "a": {
+        "interval_entropy": 4.063275602925826,
+        "onset_density_cv": 0.1421760560557814,
+        "duration_entropy": 1.434126587902823,
+        "harmonic_change": 0.3702020202020202
+      },
+      "b": {
+        "interval_entropy": 4.352381456471638,
+        "onset_density_cv": 0.42286397690110195,
+        "duration_entropy": 1.6896619269170392,
+        "harmonic_change": 0.23282828282828283
+      }
+    },
+    {
+      "pair": "R6",
+      "round": "3차 ab_r3",
+      "choice": "B",
+      "n_a": 57,
+      "n_b": 55,
+      "count_gap": 0.03571428571428571,
+      "matched": true,
+      "a": {
+        "interval_entropy": 4.320136841430028,
+        "onset_density_cv": 0.05818639983079649,
+        "duration_entropy": 1.5619183694873817,
+        "harmonic_change": 0.3621212121212121
+      },
+      "b": {
+        "interval_entropy": 4.3132491423122765,
+        "onset_density_cv": 0.10756508696544756,
+        "duration_entropy": 1.3499301843487506,
+        "harmonic_change": 0.3373737373737374
+      }
+    },
+    {
+      "pair": "R8",
+      "round": "3차 ab_r3",
+      "choice": "B",
+      "n_a": 54,
+      "n_b": 55,
+      "count_gap": 0.01834862385321101,
+      "matched": true,
+      "a": {
+        "interval_entropy": 4.162001238342615,
+        "onset_density_cv": 0.22528750112215626,
+        "duration_entropy": 1.428970998494388,
+        "harmonic_change": 0.3085858585858586
+      },
+      "b": {
+        "interval_entropy": 4.6412029561001775,
+        "onset_density_cv": 0.24325614836835732,
+        "duration_entropy": 1.4712024403253576,
+        "harmonic_change": 0.3292929292929293
+      }
+    },
+    {
+      "pair": "R10",
+      "round": "3차 ab_r3",
+      "choice": "A",
+      "n_a": 58,
+      "n_b": 57,
+      "count_gap": 0.017391304347826087,
+      "matched": true,
+      "a": {
+        "interval_entropy": 4.320945988421162,
+        "onset_density_cv": 0.22079738749768443,
+        "duration_entropy": 1.0842374814121498,
+        "harmonic_change": 0.2676767676767676
+      },
+      "b": {
+        "interval_entropy": 4.275382601667946,
+        "onset_density_cv": 0.22941573387056177,
+        "duration_entropy": 1.2784309202493205,
+        "harmonic_change": 0.2875180375180375
+      }
+    },
+    {
+      "pair": "R11",
+      "round": "3차 ab_r3",
+      "choice": "A",
+      "n_a": 60,
+      "n_b": 63,
+      "count_gap": 0.04878048780487805,
+      "matched": true,
+      "a": {
+        "interval_entropy": 4.583571813529736,
+        "onset_density_cv": 0.26246692913372704,
+        "duration_entropy": 1.4618293986554696,
+        "harmonic_change": 0.3348484848484849
+      },
+      "b": {
+        "interval_entropy": 4.114855987527072,
+        "onset_density_cv": 0.1579345138264476,
+        "duration_entropy": 1.3040507848251373,
+        "harmonic_change": 0.3222222222222222
+      }
+    },
+    {
+      "pair": "R13",
+      "round": "3차 ab_r3",
+      "choice": "B",
+      "n_a": 51,
+      "n_b": 75,
+      "count_gap": 0.38095238095238093,
+      "matched": false,
+      "a": {
+        "interval_entropy": 4.085533250556852,
+        "onset_density_cv": 0.11600156437450228,
+        "duration_entropy": 1.6151301375186224,
+        "harmonic_change": 0.32727272727272727
+      },
+      "b": {
+        "interval_entropy": 4.519820683507347,
+        "onset_density_cv": 0.12147244772192399,
+        "duration_entropy": 0.993707106604508,
+        "harmonic_change": 0.3448773448773449
+      }
+    },
+    {
+      "pair": "R14",
+      "round": "3차 ab_r3",
+      "choice": "B",
+      "n_a": 46,
+      "n_b": 63,
+      "count_gap": 0.3119266055045872,
+      "matched": false,
+      "a": {
+        "interval_entropy": 4.324534762707879,
+        "onset_density_cv": 0.2572208601347659,
+        "duration_entropy": 1.6543039086116709,
+        "harmonic_change": 0.21868686868686868
+      },
+      "b": {
+        "interval_entropy": 4.591236738386588,
+        "onset_density_cv": 0.11335600680226747,
+        "duration_entropy": 1.0265132875047516,
+        "harmonic_change": 0.3035353535353535
+      }
+    },
+    {
+      "pair": "R15",
+      "round": "3차 ab_r3",
+      "choice": "A",
+      "n_a": 54,
+      "n_b": 46,
+      "count_gap": 0.16,
+      "matched": false,
+      "a": {
+        "interval_entropy": 4.2728371436431285,
+        "onset_density_cv": 0.34940670859468903,
+        "duration_entropy": 1.6780986942499816,
+        "harmonic_change": 0.24920634920634918
+      },
+      "b": {
+        "interval_entropy": 4.669196429470699,
+        "onset_density_cv": 0.17926546198337653,
+        "duration_entropy": 1.6543039086116706,
+        "harmonic_change": 0.32171717171717173
+      }
+    }
+  ],
+  "stage2_n_matched": 15,
+  "stage2_stats": {
+    "hits": {
+      "interval_entropy": 9,
+      "onset_density_cv": 6,
+      "duration_entropy": 9,
+      "harmonic_change": 10
+    },
+    "raw_p": [
+      0.6072387695312499,
+      0.6072387695312499,
+      0.6072387695312499,
+      0.30175781249999994
+    ],
+    "holm_p": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+    ],
+    "corr_notes": {
+      "interval_entropy": 0.8211584728441496,
+      "onset_density_cv": 0.6470414848329605,
+      "duration_entropy": 0.04378460118456223,
+      "harmonic_change": -0.369924836061652
+    },
+    "verdict": {
+      "interval_entropy": "유보(|r|>0.4)",
+      "onset_density_cv": "유보(|r|>0.4)",
+      "duration_entropy": "비유의",
+      "harmonic_change": "비유의"
+    },
+    "corr_matrix": {
+      "interval_entropy": {
+        "interval_entropy": 1.0,
+        "onset_density_cv": 0.6496033977669977,
+        "duration_entropy": 0.21575305098867054,
+        "harmonic_change": -0.29145877839282325
+      },
+      "onset_density_cv": {
+        "interval_entropy": 0.6496033977669977,
+        "onset_density_cv": 0.9999999999999999,
+        "duration_entropy": 0.05836868916219246,
+        "harmonic_change": -0.49067440277591523
+      },
+      "duration_entropy": {
+        "interval_entropy": 0.21575305098867054,
+        "onset_density_cv": 0.05836868916219245,
+        "duration_entropy": 1.0,
+        "harmonic_change": 0.19216121024755445
+      },
+      "harmonic_change": {
+        "interval_entropy": -0.2914587783928232,
+        "onset_density_cv": -0.49067440277591523,
+        "duration_entropy": 0.19216121024755442,
+        "harmonic_change": 0.9999999999999997
+      }
+    }
+  },
+  "limitation": "(1) 이 19쌍은 가설의 출처다 — 순환이므로 확증이 아니다. (2) 청취자 1명. (3) 지표가 원곡을 참조하지 않으므로 '높다=좋다'가 아니다(1단계 상한 참조).",
+  "n_seeds": 20,
+  "total_seconds": 4.168245077133179
+}
