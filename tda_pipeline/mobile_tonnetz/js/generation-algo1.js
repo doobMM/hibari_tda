@@ -24,13 +24,6 @@ export function makeRng(seed) {
 }
 
 // Fisher-Yates 셔플
-function shuffle(arr, rng) {
-  for (let i = arr.length - 1; i > 0; i--) {
-    const j = Math.floor(rng() * (i + 1));
-    const tmp = arr[i]; arr[i] = arr[j]; arr[j] = tmp;
-  }
-  return arr;
-}
 
 // ── NodePool ──────────────────────────────────────────────────────────────
 export class NodePool {
@@ -55,7 +48,11 @@ export class NodePool {
       const c = scaled[i];
       for (let k = 0; k < c; k++) pool.push(n.label_idx); // 0-indexed
     });
-    shuffle(pool, rng);
+    // 셔플하지 않는다. `sample()` 은 균등 인덱스 추출이라 **배열 순서와 무관**하다 —
+    // 셔플은 분포를 바꾸지 않고 난수만 소비했다. 그런데 풀 길이는 temperature 에 따라
+    // 달라지므로, 그 소비량 차이가 이후 난수를 통째로 밀어 **온도가 방향 없는 재추첨으로
+    // 보이게** 만들었다(정본 OM 에서 풀 호출 0 회인데 음의 96% 가 바뀜,
+    // `docs/step3_data/temp_slider_direction.json`). 지우는 것이 수정이다.
     this.pool = pool;
     this.totalSize = pool.length;
   }

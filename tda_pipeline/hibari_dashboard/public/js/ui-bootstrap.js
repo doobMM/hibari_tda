@@ -638,7 +638,7 @@
       log(`seed = ${seed}`);
     });
 
-    // temperature 표시
+    // temperature 표시 + **도달 범위**
     const sT = $('sliderTemp');
     const sTVal = $('sliderTempVal');
     if (sT && sTVal) {
@@ -1657,6 +1657,7 @@
     stopLocalPlayback();
     invalidateGeneratedOnEdit();   // 이전 생성물은 다른 구간 결과
     vaeResetBase();                // 다른 블록 = 다른 latent 끝점
+    updateTempReach();             // 구간마다 풀 노출도가 다르다
     liveMaybeRegenerate();
   }
 
@@ -2352,6 +2353,42 @@
     return ensureFcLoaded();
   }
 
+  // ── 온도 슬라이더의 '도달 범위' ────────────────────────────────────
+  // 온도는 노드 풀의 빈도 분포만 재구성하고, 풀은 **OM 행이 비었거나 활성 cycle
+  // 교집합이 빌 때**만 쓰인다. 즉 촘촘한 OM 에서는 아무 일도 하지 않는다.
+  // 예전에는 그 사실이 감춰져 있었다 — 풀 셔플이 난수를 소비해서 음의 96% 가
+  // 바뀌었고(방향은 0), 사용자는 반응한다고 오해했다. 셔플을 지운 지금은
+  // 정말로 아무 일도 일어나지 않으므로, **왜 안 움직이는지 표시해야 한다.**
+  // 근거: docs/step3_data/temp_slider_{liveness,direction}.json
+  function updateTempReach() {
+    const el = $('tempReachHint'), sT = $('sliderTemp');
+    if (!el || !sT || !UI.editEditor || !window.GenerationAlgo1?.poolExposure) return;
+    let e;
+    try {
+      const K = UI.editEditor.K;
+      const all = UI.editEditor.getMatrix();
+      const seg = getSegment();
+      const values = seg ? all.slice(seg.start * K, (seg.start + seg.len) * K) : all;
+      const T = seg ? seg.len : UI.editEditor.T;
+      e = window.GenerationAlgo1.poolExposure({
+        cycleManager: new window.GenerationAlgo1.CycleSetManager(
+          { cycles: UI.data.cyclesMeta.cycles, K }),
+        overlap: { T, K, values },
+      });
+    } catch (err) {
+      // 조용히 삼키지 않는다 — 이 catch 가 실제로 `UI.data.cycles` 오타를 감췄다.
+      console.warn('[tempReach] 노출도 계산 실패:', err);
+      el.textContent = ' ';
+      return;
+    }
+    const dead = e.rows === 0;
+    sT.disabled = dead;
+    sT.parentElement?.classList.toggle('is-inert', dead);
+    el.textContent = dead
+      ? `이 구간에서는 Temperature 가 아무것도 바꾸지 않습니다 — 모든 시점이 cycle 교집합으로 채워집니다(${e.T}/${e.T}). 셀을 지우면 살아납니다.`
+      : `Temperature 가 닿는 시점: ${e.rows}/${e.T} (${Math.round(100 * e.ratio)}%) — 빈 행 ${e.zeroRows} · 교집합 없음 ${e.emptyIntersect}`;
+  }
+
   // 생성 메인 — 기본은 30초 세그먼트(T=60), '전곡' 선택 시 전체.
   // opts.quiet — 라이브 모드 재생성 시 로그 최소화.
   // genToken: 라이브 모드에서 async 추론 중 재편집 시 늦게 도착한
@@ -2362,7 +2399,7 @@
     if (!window.GenerationAlgo1) { log('GenerationAlgo1 모듈 미로드', 'ERR'); return; }
 
     const algo = document.querySelector('input[name="algo"]:checked')?.value || 'algo1';
-    const temperature = parseFloat($('sliderTemp').value) || 3.0;
+    const temperature = parseFloat($('sliderTemp').value) || 1.0;
     const seed = parseInt($('sliderSeed').value, 10) || 0;
     const song = currentSong();
 
@@ -2603,11 +2640,13 @@
           saveEditState(ed);
           clearPendingOnEdit(); // 시나리오 8
           vaeResetBase();        // 수동 편집 → VAE 슬라이더 0% 끝점 재설정
+          updateTempReach();     // 온도 슬라이더 도달 범위 재계산
           liveMaybeRegenerate(); // 라이브 모드: 편집 → 자동 재생성·재생
         },
       });
       updateEditMeta(UI.editEditor);
       updateOODBanner(UI.editEditor);
+      updateTempReach();
 
       // hover tooltip
       const tt = $('hoverTooltip');

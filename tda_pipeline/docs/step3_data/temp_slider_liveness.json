@@ -1,0 +1,54 @@
+{
+  "experiment": "temp_slider_liveness",
+  "question": "대시보드 온도 슬라이더가 사용자의 조작에 반응하는가",
+  "source": "hibari_dashboard/public/js/generation-algo1.js (배포본 직접 실행)",
+  "segment_T": 60,
+  "n_seeds": 12,
+  "ui_default_temperature": 3,
+  "scenarios": [
+    {
+      "scenario": "정본 per-cycle τ (기본 로드)",
+      "zero_rows": 0,
+      "T": 60,
+      "pool_draws": 0,
+      "total_notes": 1589,
+      "pool_ratio": 0,
+      "seeds_changed": 0,
+      "n_seeds": 12,
+      "mean_note_diff_pct": 0
+    },
+    {
+      "scenario": "이진 τ=0.5",
+      "zero_rows": 22,
+      "T": 60,
+      "pool_draws": 714,
+      "total_notes": 1436,
+      "pool_ratio": 0.4972144846796657,
+      "seeds_changed": 12,
+      "n_seeds": 12,
+      "mean_note_diff_pct": 90.57665473658047
+    },
+    {
+      "scenario": "이진 τ=0.7 (희소하게 편집)",
+      "zero_rows": 52,
+      "T": 60,
+      "pool_draws": 1336,
+      "total_notes": 1414,
+      "pool_ratio": 0.9448373408769448,
+      "seeds_changed": 12,
+      "n_seeds": 12,
+      "mean_note_diff_pct": 98.11100608163457
+    },
+    {
+      "scenario": "모두 지우기 (btnClear)",
+      "zero_rows": 60,
+      "T": 60,
+      "pool_draws": 1497,
+      "total_notes": 1392,
+      "pool_ratio": 1.0754310344827587,
+      "seeds_changed": 12,
+      "n_seeds": 12,
+      "mean_note_diff_pct": 98.02264607829285
+    }
+  ]
+}

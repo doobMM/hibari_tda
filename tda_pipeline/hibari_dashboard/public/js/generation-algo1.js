@@ -48,13 +48,6 @@
   }
 
   // Fisher-Yates 셔플 (rng in-place)
-  function shuffle(arr, rng) {
-    for (let i = arr.length - 1; i > 0; i--) {
-      const j = Math.floor(rng() * (i + 1));
-      const tmp = arr[i]; arr[i] = arr[j]; arr[j] = tmp;
-    }
-    return arr;
-  }
 
   // ── NodePool ────────────────────────────────────────────────────────
   class NodePool {
@@ -96,7 +89,11 @@
         const c = scaled[i];
         for (let k = 0; k < c; k++) pool.push(n.label_idx);   // 0-indexed (Python fcf929f 이후와 동일)
       });
-      shuffle(pool, rng);
+      // 셔플하지 않는다. `sample()` 은 균등 인덱스 추출이라 **배열 순서와 무관**하다 —
+      // 셔플은 분포를 바꾸지 않고 난수만 소비했다. 그런데 풀 길이는 temperature 에 따라
+      // 달라지므로, 그 소비량 차이가 이후 난수를 통째로 밀어 **온도가 방향 없는 재추첨으로
+      // 보이게** 만들었다(정본 OM 에서 풀 호출 0 회인데 음의 96% 가 바뀜,
+      // `docs/step3_data/temp_slider_direction.json`). 지우는 것이 수정이다.
       this.pool = pool;
       this.totalSize = pool.length;
     }
@@ -234,6 +231,26 @@
     return nodePool.sample();
   }
 
+
+  // ── poolExposure — 온도 슬라이더가 이 OM 에서 실제로 닿는 시점 수 ─────
+  // 풀은 ① OM 행이 전부 0 이거나 ② 활성 cycle 교집합이 빌 때만 쓰인다.
+  // 그 두 경우가 곧 temperature 가 작동하는 유일한 지점이므로, 생성 전에 세어
+  // **슬라이더가 지금 살아 있는지** 를 사용자에게 알릴 수 있다.
+  // 실측 근거: docs/step3_data/temp_slider_liveness.json
+  function poolExposure({ cycleManager, overlap }) {
+    const { T, K, values } = overlap;
+    let zeroRows = 0, emptyIntersect = 0;
+    for (let j = 0; j < T; j++) {
+      const row = values.subarray(j * K, (j + 1) * K);
+      let flag = 0;
+      for (let c = 0; c < K; c++) flag += row[c];
+      if (flag === 0) zeroRows++;
+      else if (cycleManager.getIntersectNodes(row) == null) emptyIntersect++;
+    }
+    const rows = zeroRows + emptyIntersect;
+    return { rows, T, zeroRows, emptyIntersect, ratio: T ? rows / T : 0 };
+  }
+
   // ── 메인 Algorithm 1 ────────────────────────────────────────────────
   function algorithm1({ nodePool, cycleManager, instLen, overlap,
                         maxResample = 50, rng, onProgress }) {
@@ -312,6 +329,7 @@
     NodePool,
     CycleSetManager,
     algorithm1,
+    poolExposure,
     makeRng,
     buildHibariInstLen,
     HIBARI_MODULE_PATTERN,

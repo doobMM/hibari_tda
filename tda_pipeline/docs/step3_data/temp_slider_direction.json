@@ -1,0 +1,64 @@
+{
+  "experiment": "temp_slider_direction",
+  "question": "온도가 방향 있는 변화를 만드는가, 난수 스트림만 미는가",
+  "mechanism": "NodePool 생성자의 shuffle(pool, rng) 이 풀 길이만큼 난수를 소비한다",
+  "null_intervention": "numModules 65→64 — 풀 길이는 바뀌고 상대 빈도는 불변",
+  "n_seeds": 40,
+  "segment_T": 60,
+  "rows": [
+    {
+      "scenario": "정본 per-cycle τ (풀 0%)",
+      "metric": "pitchEntropy",
+      "base": 3.820157659174407,
+      "temp3_delta": 0,
+      "temp3_t": null,
+      "null_delta": 0,
+      "null_t": null
+    },
+    {
+      "scenario": "정본 per-cycle τ (풀 0%)",
+      "metric": "distinctPitch",
+      "base": 16.825,
+      "temp3_delta": 0,
+      "temp3_t": null,
+      "null_delta": 0,
+      "null_t": null
+    },
+    {
+      "scenario": "정본 per-cycle τ (풀 0%)",
+      "metric": "n",
+      "base": 131.35,
+      "temp3_delta": 0,
+      "temp3_t": null,
+      "null_delta": 0,
+      "null_t": null
+    },
+    {
+      "scenario": "이진 τ=0.7 (풀 96%)",
+      "metric": "pitchEntropy",
+      "base": 3.9239914004435503,
+      "temp3_delta": 0.013822880011566641,
+      "temp3_t": 1.5511849502646013,
+      "null_delta": 0,
+      "null_t": null
+    },
+    {
+      "scenario": "이진 τ=0.7 (풀 96%)",
+      "metric": "distinctPitch",
+      "base": 16.95,
+      "temp3_delta": -0.025,
+      "temp3_t": -0.4426961706379303,
+      "null_delta": 0,
+      "null_t": null
+    },
+    {
+      "scenario": "이진 τ=0.7 (풀 96%)",
+      "metric": "n",
+      "base": 117.325,
+      "temp3_delta": -18.025,
+      "temp3_t": -15.720175465743921,
+      "null_delta": 0,
+      "null_t": null
+    }
+  ]
+}

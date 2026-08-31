@@ -7,8 +7,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=Noto+Serif+KR:wght@500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/tokens.css?v=4.35">
-  <link rel="stylesheet" href="css/style.css?v=4.35">
+  <link rel="stylesheet" href="css/tokens.css?v=4.36">
+  <link rel="stylesheet" href="css/style.css?v=4.36">
   <link rel="stylesheet" href="../../shared/nav.css">
   <script>
     // FOUC 방지 — CSS 로드 전에 uimode 속성을 즉시 세팅 (기본값 simple)
@@ -300,9 +300,10 @@
         <div class="slider-row slider-row--temp" aria-label="Temperature">
           <span class="slider-row__label">Temperature</span>
           <input class="slider-row__track" type="range" id="sliderTemp"
-                 min="0.5" max="5.0" step="0.1" value="3.0" aria-label="Temperature">
-          <span class="slider-row__value" id="sliderTempVal">3.0</span>
+                 min="0.5" max="5.0" step="0.1" value="1.0" aria-label="Temperature">
+          <span class="slider-row__value" id="sliderTempVal">1.0</span>
         </div>
+        <p class="hint" id="tempReachHint">&nbsp;</p>
         <div class="seed-row">
           <span class="seed-row__label">Seed</span>
           <input class="seed-row__input" type="number" id="sliderSeed"
@@ -530,18 +531,18 @@
   </script>
 
   <!-- ── App scripts ────────────────────────────────────────────────────── -->
-  <script src="js/data-loader.js?v=4.35"></script>
-  <script src="js/overlap-editor.js?v=4.35"></script>
-  <script src="js/generation-algo1.js?v=4.35"></script>
-  <script src="js/generation-algo2.js?v=4.35"></script>
-  <script src="js/generation-algo-transformer.js?v=4.35"></script>
-  <script src="js/vae-explorer.js?v=4.35"></script>
-  <script src="js/motif-diffusion.js?v=4.35"></script>
+  <script src="js/data-loader.js?v=4.36"></script>
+  <script src="js/overlap-editor.js?v=4.36"></script>
+  <script src="js/generation-algo1.js?v=4.36"></script>
+  <script src="js/generation-algo2.js?v=4.36"></script>
+  <script src="js/generation-algo-transformer.js?v=4.36"></script>
+  <script src="js/vae-explorer.js?v=4.36"></script>
+  <script src="js/motif-diffusion.js?v=4.36"></script>
   <script src="../../shared/midi-io.js?v=4.12"></script>
   <script src="../../shared/state.js?v=4.12"></script>
-  <script src="js/audio-playback.js?v=4.35"></script>
-  <script src="js/ood-detector.js?v=4.35"></script>
-  <script src="js/ui-bootstrap.js?v=4.35"></script>
+  <script src="js/audio-playback.js?v=4.36"></script>
+  <script src="js/ood-detector.js?v=4.36"></script>
+  <script src="js/ui-bootstrap.js?v=4.36"></script>
 
 </body>
 </html>

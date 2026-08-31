@@ -2245,3 +2245,10 @@ details[open] > .disclosure-summary::before {
 [data-uimode="simple"] .mobile-workbench-tabs {
   display: none;
 }
+
+/* 온도 슬라이더가 이 OM 에서 아무것도 바꾸지 않을 때.
+   숨기지 않고 **왜 안 되는지** 를 옆의 #tempReachHint 가 설명한다 —
+   조용히 죽어 있는 손잡이가 조작감을 가장 크게 망가뜨린다. */
+.slider-row.is-inert { opacity: .45; }
+.slider-row.is-inert .slider-row__track { cursor: not-allowed; }
+#tempReachHint { margin: 2px 0 0; font-size: 11px; line-height: 1.4; }
