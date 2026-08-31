@@ -2362,6 +2362,7 @@
   // 근거: docs/step3_data/temp_slider_{liveness,direction}.json
   function updateTempReach() {
     const el = $('tempReachHint'), sT = $('sliderTemp');
+    const elR = $('registerReachHint'), sR = $('sliderRegister');
     if (!el || !sT || !UI.editEditor || !window.GenerationAlgo1?.poolExposure) return;
     let e;
     try {
@@ -2379,14 +2380,23 @@
       // 조용히 삼키지 않는다 — 이 catch 가 실제로 `UI.data.cycles` 오타를 감췄다.
       console.warn('[tempReach] 노출도 계산 실패:', err);
       el.textContent = ' ';
+      if (elR) elR.textContent = ' ';
       return;
     }
+    // 온도와 **음역** 은 둘 다 NodePool 안에서만 작동한다(생성자의 `scaled`).
+    // 따라서 도달 조건이 정확히 같다. 실측: 정본 OM 에서 둘 다 40/40 시드 비트 동일
+    // (docs/step3_data/knob_liveness.json). 밀도는 instLen 에 붙어 항상 살아 있다.
     const dead = e.rows === 0;
-    sT.disabled = dead;
-    sT.parentElement?.classList.toggle('is-inert', dead);
-    el.textContent = dead
-      ? `이 구간에서는 Temperature 가 아무것도 바꾸지 않습니다 — 모든 시점이 cycle 교집합으로 채워집니다(${e.T}/${e.T}). 셀을 지우면 살아납니다.`
-      : `Temperature 가 닿는 시점: ${e.rows}/${e.T} (${Math.round(100 * e.ratio)}%) — 빈 행 ${e.zeroRows} · 교집합 없음 ${e.emptyIntersect}`;
+    // 조사는 앞 단어의 받침을 따른다 — '템퍼러처'는 받침이 없고 '음역'은 있다.
+    for (const [sl, hint, name, ga, eun] of
+         [[sT, el, 'Temperature', '가', '는'], [sR, elR, '음역', '이', '은']]) {
+      if (!sl || !hint) continue;
+      sl.disabled = dead;
+      sl.parentElement?.classList.toggle('is-inert', dead);
+      hint.textContent = dead
+        ? `${name}${eun} 이 구간에서 아무것도 바꾸지 않습니다 — 모든 시점이 cycle 교집합으로 채워집니다(${e.T}/${e.T}). 셀을 지우면 살아납니다. (밀도는 항상 작동합니다)`
+        : `${name}${ga} 닿는 시점: ${e.rows}/${e.T} (${Math.round(100 * e.ratio)}%) — 빈 행 ${e.zeroRows} · 교집합 없음 ${e.emptyIntersect}`;
+    }
   }
 
   // 생성 메인 — 기본은 30초 세그먼트(T=60), '전곡' 선택 시 전체.

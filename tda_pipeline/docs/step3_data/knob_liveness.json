@@ -1,0 +1,76 @@
+{
+  "experiment": "knob_liveness",
+  "question": "대시보드의 각 손잡이가 사용자의 조작에 의미 있게 반응하는가",
+  "null_intervention": "numModules 65→64 (풀 길이만 변경, 의미 불변)",
+  "note": "온도·음역은 NodePool 안에서만 작동하므로 풀 경로가 닫힌 OM 에서는 무력하다",
+  "n_seeds": 40,
+  "segment_T": 60,
+  "rows": [
+    {
+      "scenario": "정본 per-cycle τ (기본 로드)",
+      "knob": "Temperature 1.0→5.0",
+      "metric": "n",
+      "delta": 0,
+      "t": 0,
+      "null_t": 0,
+      "identical": 40,
+      "n_seeds": 40,
+      "verdict": "**완전히 죽음 (출력 비트 동일)**"
+    },
+    {
+      "scenario": "정본 per-cycle τ (기본 로드)",
+      "knob": "음역 pitchTilt 0→+2.0 (슬라이더 우측 끝)",
+      "metric": "meanPitch",
+      "delta": 0,
+      "t": 0,
+      "null_t": 0,
+      "identical": 40,
+      "n_seeds": 40,
+      "verdict": "**완전히 죽음 (출력 비트 동일)**"
+    },
+    {
+      "scenario": "정본 per-cycle τ (기본 로드)",
+      "knob": "밀도 factor 1.0→2.0 (슬라이더 우측 끝)",
+      "metric": "n",
+      "delta": 142.575,
+      "t": 136.2668929537433,
+      "null_t": 0,
+      "identical": 0,
+      "n_seeds": 40,
+      "verdict": "살아 있음"
+    },
+    {
+      "scenario": "이진 τ=0.7 (많이 지운 상태)",
+      "knob": "Temperature 1.0→5.0",
+      "metric": "n",
+      "delta": -18.1,
+      "t": -16.132971341648453,
+      "null_t": 0,
+      "identical": 0,
+      "n_seeds": 40,
+      "verdict": "살아 있음"
+    },
+    {
+      "scenario": "이진 τ=0.7 (많이 지운 상태)",
+      "knob": "음역 pitchTilt 0→+2.0 (슬라이더 우측 끝)",
+      "metric": "meanPitch",
+      "delta": 6.1210532447924875,
+      "t": 81.28613684168208,
+      "null_t": 0,
+      "identical": 0,
+      "n_seeds": 40,
+      "verdict": "살아 있음"
+    },
+    {
+      "scenario": "이진 τ=0.7 (많이 지운 상태)",
+      "knob": "밀도 factor 1.0→2.0 (슬라이더 우측 끝)",
+      "metric": "n",
+      "delta": 112.475,
+      "t": 105.59290423412168,
+      "null_t": 0,
+      "identical": 0,
+      "n_seeds": 40,
+      "verdict": "살아 있음"
+    }
+  ]
+}
