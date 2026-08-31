@@ -1,0 +1,70 @@
+{
+  "experiment": "r4_dynamism_confirmatory",
+  "prereg": "docs/step3_data/PREREG_dynamism_2026-08-31.md (commit 47e10a7)",
+  "analysis_committed_before_data": true,
+  "answers": {
+    "S1": "?",
+    "S10": "?",
+    "S11": "B",
+    "S12": "?",
+    "S2": "?",
+    "S3": "B",
+    "S4": "B",
+    "S5": "A",
+    "S6": "?",
+    "S7": "?",
+    "S8": "B",
+    "S9": "B"
+  },
+  "n_decided": 6,
+  "per_metric": {
+    "interval_entropy": {
+      "hits": 3,
+      "n": 6,
+      "rate": 0.5,
+      "p_raw": 1.0,
+      "p_holm": 1.0,
+      "r_with_notes": 0.14724980501715265,
+      "predicted_rate": 0.65,
+      "prediction": "선택된 쪽이 높다",
+      "verdict": "비유의"
+    },
+    "onset_density_cv": {
+      "hits": 3,
+      "n": 6,
+      "rate": 0.5,
+      "p_raw": 1.0,
+      "p_holm": 1.0,
+      "r_with_notes": -0.09117540518588413,
+      "predicted_rate": 0.7,
+      "prediction": "선택된 쪽이 높다",
+      "verdict": "비유의"
+    },
+    "duration_entropy": {
+      "hits": 1,
+      "n": 6,
+      "rate": 0.16666666666666666,
+      "p_raw": 0.21875,
+      "p_holm": 0.875,
+      "r_with_notes": -0.21101667665299645,
+      "predicted_rate": 0.65,
+      "prediction": "선택된 쪽이 높다",
+      "verdict": "비유의"
+    },
+    "harmonic_change": {
+      "hits": 3,
+      "n": 6,
+      "rate": 0.5,
+      "p_raw": 1.0,
+      "p_holm": 1.0,
+      "r_with_notes": 0.42962580485877705,
+      "predicted_rate": 0.7,
+      "prediction": "선택된 쪽이 높다",
+      "verdict": "유보(|r|>0.4)"
+    }
+  },
+  "supported": false,
+  "notes": "",
+  "limitation": "청취자 1명 · 12쌍. 쌍 안의 차이는 시드 하나뿐이므로 위상·α 와 교란되지 않지만, 그만큼 '역동성' 외의 우연한 차이도 함께 들어간다.",
+  "caveat_M3": "1단계 대조군에서 백색잡음이 M3 최고값(2.999, 2위의 2배)을 받았다. M3 이 이겨도 '잡음스러움'을 잰 것일 수 있다."
+}
