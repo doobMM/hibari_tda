@@ -1,0 +1,352 @@
+{
+  "experiment": "R4 — 사전등록 역동성 가설 확증 회차",
+  "prereg": "docs/step3_data/PREREG_dynamism_2026-08-31.md (commit 47e10a7)",
+  "design": "창·OM·설정·온도를 고정하고 시드만 바꾼 60후보 중 목표 지표 격차가 최대인 쌍을 고른다. 음 수는 10% 이내(MCP). 두 팔의 차이는 난수 하나뿐이다.",
+  "analysis_plan_fixed_before_listening": {
+    "test": "지표마다 12쌍 **전부**에서 '선택된 쪽의 값이 더 큰가' 이항검정(양측, H0=0.5)",
+    "why_all_pairs": "자기 목표 쌍 3개만 채점하면 조작으로 만든 방향을 자기가 채점한다",
+    "correction": "Holm (지표 4종)",
+    "withhold_rule": "r(지표값, 음 수) 의 |r|>0.4 면 그 지표 결과 유보",
+    "success": "최소 하나가 Holm 후 p<0.05 이고 예측 방향(선택된 쪽이 높다)",
+    "failure": "넷 다 비유의거나 방향이 반대 — 다른 지표를 찾아 붙이지 않는다"
+  },
+  "n_pairs": 12,
+  "T_steps": 32,
+  "seconds_each": 14.5,
+  "temperature": 1.0,
+  "windows": [
+    0,
+    192,
+    384
+  ],
+  "shuffle_seed": 20260901,
+  "mcp_tolerance": 0.1,
+  "caveat_M3": "1단계 대조군에서 백색잡음이 M3 최고값(2.999, 2위의 2배)을 받았다. M3 이 이겨도 '잡음스러움'을 잰 것일 수 있다.",
+  "key": {
+    "S1": {
+      "target": "interval_entropy",
+      "window": 0,
+      "zero_rows": 16,
+      "A": {
+        "role": "높음",
+        "seed": 9000,
+        "n": 61,
+        "metrics": {
+          "interval_entropy": 4.623231428797621,
+          "onset_density_cv": 0.02839427553391602,
+          "duration_entropy": 1.238527572612988,
+          "harmonic_change": 0.3095959595959596
+        }
+      },
+      "B": {
+        "role": "낮음",
+        "seed": 9007,
+        "n": 57,
+        "metrics": {
+          "interval_entropy": 4.013685779666989,
+          "onset_density_cv": 0.1347569429450633,
+          "duration_entropy": 1.2261609682167514,
+          "harmonic_change": 0.27525252525252525
+        }
+      }
+    },
+    "S2": {
+      "target": "onset_density_cv",
+      "window": 0,
+      "zero_rows": 16,
+      "A": {
+        "role": "높음",
+        "seed": 9048,
+        "n": 55,
+        "metrics": {
+          "interval_entropy": 4.177530615316549,
+          "onset_density_cv": 0.28805417305008835,
+          "duration_entropy": 1.376074106662455,
+          "harmonic_change": 0.23621933621933622
+        }
+      },
+      "B": {
+        "role": "낮음",
+        "seed": 9046,
+        "n": 55,
+        "metrics": {
+          "interval_entropy": 4.360735418549685,
+          "onset_density_cv": 0.06030226891555272,
+          "duration_entropy": 1.4634166535018276,
+          "harmonic_change": 0.347979797979798
+        }
+      }
+    },
+    "S3": {
+      "target": "duration_entropy",
+      "window": 0,
+      "zero_rows": 16,
+      "A": {
+        "role": "높음",
+        "seed": 9035,
+        "n": 57,
+        "metrics": {
+          "interval_entropy": 4.331833663430984,
+          "onset_density_cv": 0.151934281365691,
+          "duration_entropy": 1.5135870098003033,
+          "harmonic_change": 0.3266233766233766
+        }
+      },
+      "B": {
+        "role": "낮음",
+        "seed": 9032,
+        "n": 63,
+        "metrics": {
+          "interval_entropy": 4.326876100877501,
+          "onset_density_cv": 0.12192294837886679,
+          "duration_entropy": 1.0868323983080328,
+          "harmonic_change": 0.3725108225108225
+        }
+      }
+    },
+    "S4": {
+      "target": "harmonic_change",
+      "window": 0,
+      "zero_rows": 16,
+      "A": {
+        "role": "높음",
+        "seed": 9052,
+        "n": 60,
+        "metrics": {
+          "interval_entropy": 4.369351311817022,
+          "onset_density_cv": 0.15634719199411432,
+          "duration_entropy": 1.272905595320056,
+          "harmonic_change": 0.34451659451659455
+        }
+      },
+      "B": {
+        "role": "낮음",
+        "seed": 9015,
+        "n": 57,
+        "metrics": {
+          "interval_entropy": 4.381028083112476,
+          "onset_density_cv": 0.20079865161858942,
+          "duration_entropy": 1.3887810057739332,
+          "harmonic_change": 0.24444444444444444
+        }
+      }
+    },
+    "S5": {
+      "target": "interval_entropy",
+      "window": 192,
+      "zero_rows": 6,
+      "A": {
+        "role": "낮음",
+        "seed": 9048,
+        "n": 55,
+        "metrics": {
+          "interval_entropy": 3.789351104248328,
+          "onset_density_cv": 0.07925270806437588,
+          "duration_entropy": 1.1864386410510046,
+          "harmonic_change": 0.31363636363636366
+        }
+      },
+      "B": {
+        "role": "높음",
+        "seed": 9043,
+        "n": 52,
+        "metrics": {
+          "interval_entropy": 4.650092685355464,
+          "onset_density_cv": 0.16317848796612633,
+          "duration_entropy": 1.391199385852821,
+          "harmonic_change": 0.3111111111111111
+        }
+      }
+    },
+    "S6": {
+      "target": "onset_density_cv",
+      "window": 192,
+      "zero_rows": 6,
+      "A": {
+        "role": "높음",
+        "seed": 9055,
+        "n": 47,
+        "metrics": {
+          "interval_entropy": 3.679327775860605,
+          "onset_density_cv": 0.2508473643096084,
+          "duration_entropy": 1.535199754413925,
+          "harmonic_change": 0.27878787878787875
+        }
+      },
+      "B": {
+        "role": "낮음",
+        "seed": 9024,
+        "n": 51,
+        "metrics": {
+          "interval_entropy": 4.431272380112912,
+          "onset_density_cv": 0.0650318586344196,
+          "duration_entropy": 1.3481653535038731,
+          "harmonic_change": 0.22878787878787882
+        }
+      }
+    },
+    "S7": {
+      "target": "duration_entropy",
+      "window": 192,
+      "zero_rows": 6,
+      "A": {
+        "role": "낮음",
+        "seed": 9057,
+        "n": 49,
+        "metrics": {
+          "interval_entropy": 4.204115106190033,
+          "onset_density_cv": 0.18592721590090405,
+          "duration_entropy": 1.2570587095626813,
+          "harmonic_change": 0.265079365079365
+        }
+      },
+      "B": {
+        "role": "높음",
+        "seed": 9025,
+        "n": 45,
+        "metrics": {
+          "interval_entropy": 4.050340709546388,
+          "onset_density_cv": 0.09686442096757053,
+          "duration_entropy": 1.7416105244178066,
+          "harmonic_change": 0.26551226551226553
+        }
+      }
+    },
+    "S8": {
+      "target": "harmonic_change",
+      "window": 192,
+      "zero_rows": 6,
+      "A": {
+        "role": "높음",
+        "seed": 9027,
+        "n": 52,
+        "metrics": {
+          "interval_entropy": 4.199495626701618,
+          "onset_density_cv": 0.09421114395319916,
+          "duration_entropy": 1.4061518545101985,
+          "harmonic_change": 0.34884559884559885
+        }
+      },
+      "B": {
+        "role": "낮음",
+        "seed": 9009,
+        "n": 56,
+        "metrics": {
+          "interval_entropy": 4.39443835102477,
+          "onset_density_cv": 0.1336306209562122,
+          "duration_entropy": 1.3380729024997953,
+          "harmonic_change": 0.24747474747474751
+        }
+      }
+    },
+    "S9": {
+      "target": "interval_entropy",
+      "window": 384,
+      "zero_rows": 1,
+      "A": {
+        "role": "낮음",
+        "seed": 9035,
+        "n": 55,
+        "metrics": {
+          "interval_entropy": 3.841920373531102,
+          "onset_density_cv": 0.16564424689353272,
+          "duration_entropy": 1.1944169980909523,
+          "harmonic_change": 0.3227272727272728
+        }
+      },
+      "B": {
+        "role": "높음",
+        "seed": 9046,
+        "n": 56,
+        "metrics": {
+          "interval_entropy": 4.49900834965228,
+          "onset_density_cv": 0.22015764296317772,
+          "duration_entropy": 1.1148639944299703,
+          "harmonic_change": 0.2819624819624819
+        }
+      }
+    },
+    "S10": {
+      "target": "onset_density_cv",
+      "window": 384,
+      "zero_rows": 1,
+      "A": {
+        "role": "낮음",
+        "seed": 9018,
+        "n": 57,
+        "metrics": {
+          "interval_entropy": 4.294797343410504,
+          "onset_density_cv": 0.1252882180446114,
+          "duration_entropy": 0.7499130933047641,
+          "harmonic_change": 0.3168831168831169
+        }
+      },
+      "B": {
+        "role": "높음",
+        "seed": 9047,
+        "n": 52,
+        "metrics": {
+          "interval_entropy": 4.280391646683437,
+          "onset_density_cv": 0.39223227027636803,
+          "duration_entropy": 1.2668924950309444,
+          "harmonic_change": 0.27474747474747474
+        }
+      }
+    },
+    "S11": {
+      "target": "duration_entropy",
+      "window": 384,
+      "zero_rows": 1,
+      "A": {
+        "role": "높음",
+        "seed": 9030,
+        "n": 51,
+        "metrics": {
+          "interval_entropy": 4.215337750470313,
+          "onset_density_cv": 0.18704690223861678,
+          "duration_entropy": 1.3784188527203236,
+          "harmonic_change": 0.24783549783549785
+        }
+      },
+      "B": {
+        "role": "낮음",
+        "seed": 9033,
+        "n": 53,
+        "metrics": {
+          "interval_entropy": 4.078541709917296,
+          "onset_density_cv": 0.17998852856923503,
+          "duration_entropy": 0.9387764603277671,
+          "harmonic_change": 0.2868686868686869
+        }
+      }
+    },
+    "S12": {
+      "target": "harmonic_change",
+      "window": 384,
+      "zero_rows": 1,
+      "A": {
+        "role": "낮음",
+        "seed": 9022,
+        "n": 51,
+        "metrics": {
+          "interval_entropy": 3.999079570624174,
+          "onset_density_cv": 0.2564058202082749,
+          "duration_entropy": 1.226351331613238,
+          "harmonic_change": 0.22828282828282828
+        }
+      },
+      "B": {
+        "role": "높음",
+        "seed": 9002,
+        "n": 56,
+        "metrics": {
+          "interval_entropy": 4.068764926389607,
+          "onset_density_cv": 0.15971914124998499,
+          "duration_entropy": 1.0478713584554935,
+          "harmonic_change": 0.3492063492063492
+        }
+      }
+    }
+  },
+  "note": "이 파일을 먼저 열지 마세요 — 블라인드가 깨집니다."
+}
