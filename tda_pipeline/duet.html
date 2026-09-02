@@ -1,123 +1,115 @@
 <!doctype html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
-<title>듀엣 — 둘이서 맞추는 음악</title>
+<title>듀엣 — 그림자에 곡을 맞추는 게임</title>
 <!--
-  duet.html — 2인 협력 게임 (2026-09-02)
+  duet.html — 2인 실시간 게임 (2026-09-02, 3판)
 
-  왜 이 형태인가
-  ──────────────
-  이 연구의 현재 목표는 "사람들이 원하는 방향으로 음악이 통제된다는 감각"이다.
-  그 감각을 설명하는 대신 **놀이로 만든다.**
+  1판 실패: 제출 버튼 + 텍스트 힌트. "게임이 아니라 설문지." — 즉각성이 없었다.
+  2판 실패: 손잡이를 **구조(α)** 로 뒀는데, 브라우저 실측 결과 α 는 지각 축이 아니었다.
+      음역폭 12.75→14.1→12.65→13.1→11.92→13.45 (오르내림, 방향 없음)
+      동시음 3.41→3.30 (폭 0.11음), 무음 구간 변화 0
+      "더 복잡하게" 라고 지시해도 어느 쪽으로 갈지 알 수 없다 = 손잡이가 아니다.
+  같은 검사에서 `pitchTilt`(음역)도 죽어 있었다 — 이 OM 들은 zero_rows=0 이라
+  풀 경로가 열리지 않는다(어제 대시보드에서 고친 것과 같은 원인).
 
-  설계의 핵심은 하나다 — **손잡이를 둘로 쪼개 각자에게 준다.**
-  1번은 구조만, 2번은 밀도만 만질 수 있다. 그래서 혼자서는 풀 수 없고,
-  서로 듣고 말해야 한다. "내가 민 것이 저쪽 귀에 들렸나" 가 곧 게임의 재미다.
+  3판 — **살아 있고 방향이 있는 축 두 개만 남긴다.**
+      1번 높낮이: 생성 후 이조. 피아노롤 전체가 위아래로 움직인다.
+      2번 밀도  : instLen 배율. 막대가 빽빽해지고 성겨진다.
+      두 축이 화면에서 **직교**한다(수직 이동 vs 밀도) — 그래서 각자 자기 몫이 보인다.
+  α 는 손잡이에서 뺐다. 대신 문제마다 무작위로 골라 **재료를 바꾸는 역할**만 한다.
 
-  소리 정책: **자동 재생 없음. 기본 음소거.** 버튼을 눌러야만 소리가 난다.
+  소리 정책: 자동 재생 없음 · 기본 음소거.
 -->
 <style>
  :root{--bg:#f5f8f2;--fg:#1b2419;--muted:#5c6b57;--line:#d6e0cd;--card:#fff;
-       --accent:#2f6b3a;--warm:#c98a2b;--p1:#2f6b3a;--p2:#9a5fb0}
+       --accent:#2f6b3a;--p1:#2f6b3a;--p2:#9a5fb0;--ghost:#aebfa2;--warm:#c98a2b}
  @media(prefers-color-scheme:dark){:root{--bg:#0f1410;--fg:#e6ede2;--muted:#8fa088;
-       --line:#243021;--card:#161d15;--accent:#7fb069;--p1:#7fb069;--p2:#c9a0dc}}
+       --line:#243021;--card:#161d15;--accent:#7fb069;--p1:#7fb069;--p2:#c9a0dc;--ghost:#334029}}
  *{box-sizing:border-box}
- body{margin:0;background:var(--bg);color:var(--fg);line-height:1.6;
+ body{margin:0;background:var(--bg);color:var(--fg);line-height:1.55;
       font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans KR",sans-serif}
- .wrap{max-width:860px;margin:0 auto;padding:24px 16px 90px}
- h1{font-size:clamp(20px,5vw,28px);margin:0 0 4px;font-weight:700}
- .lede{color:var(--muted);font-size:14.5px;margin:0 0 18px}
- .card{background:var(--card);border:1px solid var(--line);border-radius:13px;
-       padding:16px;margin-bottom:14px}
- .sound{display:flex;align-items:center;gap:12px;flex-wrap:wrap;
-        border:1px dashed var(--line);border-radius:11px;padding:12px 14px;margin-bottom:16px}
- .sound b{font-size:14.5px}
- .sound .why{font-size:13px;color:var(--muted)}
- button{font:inherit;font-size:15px;padding:11px 18px;min-height:48px;border-radius:10px;
+ .wrap{max-width:900px;margin:0 auto;padding:20px 14px 70px}
+ h1{font-size:clamp(19px,4.6vw,25px);margin:0 0 3px;font-weight:700}
+ .lede{color:var(--muted);font-size:14px;margin:0 0 14px}
+ .bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+ button{font:inherit;font-size:14.5px;padding:10px 15px;min-height:46px;border-radius:10px;
         border:1px solid var(--line);background:transparent;color:var(--fg);cursor:pointer}
  button.primary{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:700}
- button.big{font-size:16px;font-weight:700}
- button:disabled{opacity:.45;cursor:not-allowed}
- .players{display:grid;grid-template-columns:1fr 1fr;gap:14px}
- @media(max-width:620px){.players{grid-template-columns:1fr}}
- .p{border:2px solid var(--line);border-radius:13px;padding:14px;background:var(--card)}
+ .tot{font-variant-numeric:tabular-nums;font-weight:700;font-size:16px;margin-left:auto}
+ .stage{position:relative;background:var(--card);border:1px solid var(--line);
+        border-radius:13px;overflow:hidden}
+ canvas{display:block;width:100%;height:auto;touch-action:none}
+ .badge{position:absolute;left:12px;top:10px;font-size:12px;color:var(--muted);
+        background:var(--card);padding:3px 8px;border-radius:7px;border:1px solid var(--line)}
+ .won{position:absolute;inset:0;display:none;place-items:center;background:rgba(47,107,58,.16)}
+ .won.on{display:grid;animation:pop .35s ease-out}
+ @keyframes pop{from{transform:scale(.9);opacity:0}to{transform:none;opacity:1}}
+ .won b{font-size:clamp(22px,6vw,34px);color:#fff;background:#1f4d27;
+        padding:12px 26px;border-radius:12px;box-shadow:0 6px 20px rgba(0,0,0,.28);
+        letter-spacing:.01em}
+ .players{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}
+ @media(max-width:600px){.players{grid-template-columns:1fr}}
+ .p{border:2px solid var(--line);border-radius:13px;padding:12px 13px;background:var(--card);
+    transition:border-color .15s}
  .p--1{border-color:var(--p1)} .p--2{border-color:var(--p2)}
- .p__who{font-weight:700;font-size:13px;letter-spacing:.02em;margin-bottom:2px}
- .p--1 .p__who{color:var(--p1)} .p--2 .p__who{color:var(--p2)}
- .p__knob{font-size:19px;font-weight:700;margin-bottom:10px}
- .p__val{font-variant-numeric:tabular-nums;font-size:15px;color:var(--muted);
-         min-height:1.6em;margin-top:6px}
- input[type=range]{width:100%;height:44px;accent-color:var(--accent);margin:0}
+ .p.hit{box-shadow:0 0 0 3px rgba(47,107,58,.18)}
+ .p__hd{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+ .p__who{font-weight:700;font-size:12.5px} .p--1 .p__who{color:var(--p1)} .p--2 .p__who{color:var(--p2)}
+ .p__knob{font-size:18px;font-weight:700}
+ .p__pct{font-variant-numeric:tabular-nums;font-weight:700;font-size:15px;color:var(--muted)}
+ .p__arrow{font-size:13px;color:var(--warm);min-height:1.3em;font-weight:600}
+ .meter{height:9px;border-radius:5px;background:var(--ghost);overflow:hidden;margin:8px 0 9px}
+ .meter i{display:block;height:100%;width:0;border-radius:5px;transition:width .12s ease-out}
+ .p--1 .meter i{background:var(--p1)} .p--2 .meter i{background:var(--p2)}
+ input[type=range]{width:100%;height:42px;margin:0;accent-color:var(--p1)}
  .p--2 input[type=range]{accent-color:var(--p2)}
- .ends{display:flex;justify-content:space-between;font-size:12.5px;color:var(--muted)}
- .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
- .hintbox{margin-top:12px;font-size:14.5px;min-height:1.6em}
- .hit{color:var(--accent);font-weight:700}
- .miss{color:var(--warm)}
- .log{font-size:13px;color:var(--muted);margin-top:10px;line-height:1.9}
- .log b{color:var(--fg);font-variant-numeric:tabular-nums}
+ .ends{display:flex;justify-content:space-between;font-size:12px;color:var(--muted)}
  .note{font-size:12.5px;color:var(--muted);margin-top:14px}
- .rules{font-size:13.5px;color:var(--muted)}
- .rules b{color:var(--fg)}
- .win{border-color:var(--accent);background:linear-gradient(0deg,rgba(47,107,58,.07),transparent)}
 </style>
 
 <div class="wrap">
-<h1>듀엣 — 둘이서 맞추는 음악</h1>
+<h1>듀엣 — 그림자에 곡을 맞추는 게임</h1>
 <p class="lede">
-  손잡이가 <b>둘로 나뉘어</b> 있습니다. 한 사람은 구조만, 다른 사람은 밀도만 만질 수 있습니다.
-  혼자서는 풀 수 없습니다.
+  뒤에 흐린 <b>그림자</b>가 숨겨진 곡입니다. 손잡이를 밀면 <b>내 곡이 그 자리에서 다시 그려집니다</b>.
+  그림자에 포개지도록 맞추세요. 손잡이가 둘로 나뉘어 있어 혼자서는 맞출 수 없습니다.
 </p>
 
-<div class="sound">
-  <button id="snd" class="primary" type="button">🔇 소리 켜기</button>
-  <span class="why" id="sndWhy">지금은 음소거입니다. 이 게임은 소리를 들어야 풀 수 있습니다.</span>
+<div class="bar">
+  <button class="primary" id="snd" type="button">🔇 소리 켜기</button>
+  <button id="newg" type="button">🔄 새 문제</button>
+  <span class="tot" id="tot">포갬 0%</span>
 </div>
 
-<div class="card">
-  <p class="rules">
-    <b>규칙</b> — 컴퓨터가 곡 하나를 숨겨 놓았습니다. 그 곡을 듣고, 두 사람이 각자 자기 손잡이를
-    움직여 <b>같은 곡을 재현</b>하세요. 함께 들어 보고 제출하면, 맞았는지와
-    <b>어느 쪽으로 더 가야 하는지</b>를 알려 줍니다. <b>기회는 5번</b>입니다 — 눌러서 찍기엔 모자라니, 귀로 들으세요.
-  </p>
-  <div class="row" style="margin-top:12px">
-    <button class="primary big" id="goal" type="button">🎧 숨겨진 곡 듣기</button>
-    <button id="newg" type="button">🔄 새 문제</button>
-    <span class="p__val" id="goalOut"></span>
-  </div>
+<div class="stage">
+  <canvas id="cv" width="1720" height="620"></canvas>
+  <span class="badge" id="badge"></span>
+  <div class="won" id="won"><b>포갰습니다!</b></div>
 </div>
 
 <div class="players">
   <div class="p p--1" id="pane1">
-    <div class="p__who">1번</div>
-    <div class="p__knob">구조</div>
-    <input type="range" id="k1" min="0" max="5" step="1" value="2" aria-label="구조 손잡이 — 1번 담당">
-    <div class="ends"><span>단순</span><span>복잡</span></div>
-    <div class="p__val" id="v1">고리 –</div>
+    <div class="p__hd"><span class="p__who">1번</span><span class="p__pct" id="pct1">0%</span></div>
+    <div class="p__knob">높낮이</div>
+    <div class="meter"><i id="m1"></i></div>
+    <input type="range" id="k1" min="0" max="6" step="1" value="3" aria-label="높낮이 — 1번 담당">
+    <div class="ends"><span>낮게</span><span>높게</span></div>
+    <div class="p__arrow" id="a1"></div>
   </div>
   <div class="p p--2" id="pane2">
-    <div class="p__who">2번</div>
+    <div class="p__hd"><span class="p__who">2번</span><span class="p__pct" id="pct2">0%</span></div>
     <div class="p__knob">밀도</div>
-    <input type="range" id="k2" min="0" max="6" step="1" value="3" aria-label="밀도 손잡이 — 2번 담당">
+    <div class="meter"><i id="m2"></i></div>
+    <input type="range" id="k2" min="0" max="6" step="1" value="3" aria-label="밀도 — 2번 담당">
     <div class="ends"><span>성기게</span><span>촘촘하게</span></div>
-    <div class="p__val" id="v2">보통</div>
+    <div class="p__arrow" id="a2"></div>
   </div>
-</div>
-
-<div class="card" style="margin-top:14px">
-  <div class="row">
-    <button class="big" id="ours" type="button">▶ 우리 곡 들어보기</button>
-    <button class="primary big" id="submit" type="button">제출</button>
-    <button id="stop" type="button" disabled>■ 정지</button>
-    <span class="p__val" id="oursOut"></span>
-  </div>
-  <div class="hintbox" id="hint"></div>
-  <div class="log" id="log"></div>
 </div>
 
 <p class="note">
-  같은 손잡이 값이면 같은 곡이 나옵니다(같은 씨앗을 씁니다). 손잡이 둘 다 실제로 소리를
-  바꾼다는 것은 40회 반복 계측으로 확인했습니다 — 반응하는 척만 하는 손잡이는 빼 두었습니다.
+  손잡이를 움직이면 곡이 통째로 다시 만들어집니다 — 생성이 0.6~3밀리초라 즉시 보입니다.
+  손잡이 후보를 브라우저에서 직접 계측해, <b>방향이 없는 축(구조·온도·음역 tilt)은 빼고</b>
+  실제로 단조롭게 움직이는 둘만 남겼습니다.
 </p>
 </div>
 
@@ -125,134 +117,137 @@
 <script src="./hibari_dashboard/public/js/audio-playback.js"></script>
 <script>
 (function () {
-  var BANK = './mobile_tonnetz/data/om_bank.json';
-  var META = './hibari_dashboard/data/notes_metadata.json';
-  var DENS = [0.5, 0.65, 0.8, 1.0, 1.25, 1.5, 2.0];
-  var DNAME = ['아주 성기게', '많이 성기게', '조금 성기게', '보통',
-               '조금 촘촘하게', '많이 촘촘하게', '아주 촘촘하게'];
-  var SEED = 20260902;                       // 고정 — 같은 손잡이면 같은 곡이어야 한다
-  // 시도 제한. 없으면 42조합을 그냥 눌러서 풀 수 있고, 그러면 **한 번도 듣지 않고**
-  // 이기게 된다(실제로 테스트에서 38번 눌러 풀렸다). 5회면 방향 힌트를 따라
-  // 이진 탐색해도 빠듯하고, 귀로 들으면 단계를 건너뛸 수 있다 — 그게 이 게임의 요지다.
-  var MAX_TRIES = 5;
+  var DENS  = [0.5, 0.65, 0.8, 1.0, 1.25, 1.5, 2.0];
+  var SHIFT = [-12, -8, -4, 0, 4, 8, 12];      // 반음. 4반음(장3도)씩 — 확실히 들린다
+  var SEED = 20260902;
   var $ = function (id) { return document.getElementById(id); };
+  var cv = $('cv'), cx = cv.getContext('2d');
 
   var data = null, labels = null, player = null, muted = true;
-  var target = null, tries = 0, solved = false;
+  var target = null, mine = null, solved = false;
+  var raf = 0, playT0 = 0, playing = false, LO = 40, HI = 90;
 
-  function bits(str, n) {
+  function bits(s, n) {
     var v = new Int8Array(n);
-    for (var i = 0; i < n; i++) v[i] = str.charCodeAt(i) === 49 ? 1 : 0;
+    for (var i = 0; i < n; i++) v[i] = s.charCodeAt(i) === 49 ? 1 : 0;
     return v;
   }
-  function build(ai, di) {
-    var b = data.banks[ai], T = b.T;
-    var cycles = Object.keys(b.cycles).map(function (k, i) {
+  // α 는 손잡이가 아니다 — 문제마다 재료를 바꾸는 역할만 한다(지각 축이 아님을 실측함)
+  function gen(ai, si, di) {
+    var G = window.GenerationAlgo1, b = data.banks[ai], T = b.T;
+    var cyc = Object.keys(b.cycles).map(function (k, i) {
       return { cycle_idx: i, note_labels_0idx: b.cycles[k] };
     });
-    var base = window.GenerationAlgo1.buildHibariInstLen(T);
-    var instLen = new Int32Array(T);
-    for (var i = 0; i < T; i++) instLen[i] = Math.max(0, Math.round(base[i] * DENS[di]));
-    var rng = window.GenerationAlgo1.makeRng(SEED);
-    var res = window.GenerationAlgo1.algorithm1({
-      nodePool: new window.GenerationAlgo1.NodePool(
-        { labels: labels, numModules: 65, temperature: 1.0, rng: rng }),
-      cycleManager: new window.GenerationAlgo1.CycleSetManager({ cycles: cycles, K: b.K }),
-      instLen: instLen, overlap: { T: T, K: b.K, values: bits(b.om_bits, T * b.K) },
+    var base = G.buildHibariInstLen(T), len = new Int32Array(T);
+    for (var i = 0; i < T; i++) len[i] = Math.max(0, Math.round(base[i] * DENS[di]));
+    var rng = G.makeRng(SEED);
+    var r = G.algorithm1({
+      nodePool: new G.NodePool({ labels: labels, numModules: 65, temperature: 1.0, rng: rng }),
+      cycleManager: new G.CycleSetManager({ cycles: cyc, K: b.K }),
+      instLen: len, overlap: { T: T, K: b.K, values: bits(b.om_bits, T * b.K) },
       maxResample: 50, rng: rng,
     });
-    return { notes: res.notes, K: b.K, T: T };
+    var sh = SHIFT[si];
+    var ns = r.notes.map(function (n) { return [n[0], n[1] + sh, n[2]]; });
+    var mean = 0;
+    ns.forEach(function (n) { mean += n[1]; });
+    return { notes: ns, T: T, K: b.K, alpha: ai, si: si, di: di,
+             mean: ns.length ? mean / ns.length : 0,
+             keys: new Set(ns.map(function (n) { return n[0] + ':' + n[1]; })) };
   }
-  function play(r, tag) {
-    if (muted) { $(tag).textContent = '음소거 상태입니다 — 위에서 소리를 켜 주세요'; return; }
-    var sec = (data.step_ms || 250) / 1000;
-    player = player || new window.PianoPlayer();
-    player.play(r.notes.map(function (n) { return [n[0] * sec, n[1], n[2] * sec]; }), { gain: 0.75 });
-    $(tag).textContent = '음 ' + r.notes.length + '개 · 약 ' + Math.round(r.T * sec) + '초';
-    $('stop').disabled = false;
-  }
-  function sync() {
-    $('v1').textContent = data ? ('고리 ' + data.banks[+$('k1').value].K + '개') : '고리 –';
-    $('v2').textContent = DNAME[+$('k2').value];
-  }
-  function newGame() {
-    // 정답이 슬라이더 초기값과 겹치지 않게 뽑는다 — 첫 제출이 우연히 맞으면 게임이 아니다
-    do { target = { a: Math.floor(Math.random() * 6), d: Math.floor(Math.random() * 7) }; }
-    while (target.a === 2 && target.d === 3);
-    tries = 0; solved = false;
-    $('hint').textContent = '';
-    $('log').textContent = '';
-    $('goalOut').textContent = '';
-    $('oursOut').textContent = '';
-    $('pane1').classList.remove('win'); $('pane2').classList.remove('win');
-    $('submit').disabled = false;
+  function jac(a, b) {
+    var i = 0;
+    a.forEach(function (x) { if (b.has(x)) i++; });
+    var u = a.size + b.size - i;
+    return u ? i / u : 1;
   }
 
+  function draw(headSec) {
+    var W = cv.width, H = cv.height, T = target.T, pad = 14;
+    cx.clearRect(0, 0, W, H);
+    var css = getComputedStyle(document.documentElement);
+    var xs = (W - pad * 2) / T, ys = (H - pad * 2) / (HI - LO);
+    function box(n, th) {
+      cx.fillRect(pad + n[0] * xs, pad + (HI - n[1]) * ys,
+                  Math.max(3, (n[2] - n[0]) * xs - 1.5), Math.max(3.5, ys * th));
+    }
+    cx.fillStyle = css.getPropertyValue('--ghost').trim();
+    target.notes.forEach(function (n) { box(n, 1.7); });
+    cx.fillStyle = css.getPropertyValue('--accent').trim();
+    cx.globalAlpha = 0.9;
+    mine.notes.forEach(function (n) { box(n, 1.05); });
+    cx.globalAlpha = 1;
+    if (headSec != null) {
+      cx.fillStyle = css.getPropertyValue('--warm').trim();
+      cx.fillRect(pad + (headSec / ((data.step_ms || 250) / 1000)) * xs, 0, 3, H);
+    }
+  }
+
+  function refresh() {
+    mine = gen(target.alpha, +$('k1').value, +$('k2').value);
+    var d1 = mine.si - target.si, d2 = mine.di - target.di;
+    var s1 = 1 - Math.abs(d1) / 6, s2 = 1 - Math.abs(d2) / 6;
+    $('m1').style.width = (s1 * 100).toFixed(0) + '%';
+    $('m2').style.width = (s2 * 100).toFixed(0) + '%';
+    $('pct1').textContent = (s1 * 100).toFixed(0) + '%';
+    $('pct2').textContent = (s2 * 100).toFixed(0) + '%';
+    $('a1').textContent = d1 === 0 ? '✓ 맞았습니다' : (d1 < 0 ? '↑ 더 높게' : '↓ 더 낮게');
+    $('a2').textContent = d2 === 0 ? '✓ 맞았습니다' : (d2 < 0 ? '→ 더 촘촘하게' : '← 더 성기게');
+    $('pane1').classList.toggle('hit', d1 === 0);
+    $('pane2').classList.toggle('hit', d2 === 0);
+    var tot = jac(mine.keys, target.keys);
+    $('tot').textContent = '포갬 ' + (tot * 100).toFixed(0) + '%';
+    $('badge').textContent = '음 ' + mine.notes.length + '개 (그림자 ' + target.notes.length + '개)'
+      + ' · 평균 음높이 ' + mine.mean.toFixed(1) + ' (' + target.mean.toFixed(1) + ')';
+    if (!playing) draw();
+    if (!solved && d1 === 0 && d2 === 0) { solved = true; $('won').classList.add('on'); }
+  }
+
+  function loop() {
+    if (!playing) return;
+    var t = (performance.now() - playT0) / 1000;
+    if (t > target.T * ((data.step_ms || 250) / 1000)) { playing = false; draw(); return; }
+    draw(t);
+    raf = requestAnimationFrame(loop);
+  }
+  function playMine() {
+    if (muted || !mine) return;
+    var sec = (data.step_ms || 250) / 1000;
+    player = player || new window.PianoPlayer();
+    player.play(mine.notes.map(function (n) { return [n[0] * sec, n[1], n[2] * sec]; }), { gain: 0.7 });
+    playing = true; playT0 = performance.now();
+    cancelAnimationFrame(raf); loop();
+  }
+
+  function newGame() {
+    var a = Math.floor(Math.random() * data.banks.length);
+    var si, di;
+    do { si = Math.floor(Math.random() * 7); di = Math.floor(Math.random() * 7); }
+    while (si === +$('k1').value && di === +$('k2').value);   // 시작하자마자 정답이면 게임이 아니다
+    target = gen(a, si, di);
+    solved = false;
+    $('won').classList.remove('on');
+    refresh();
+  }
+
+  $('k1').addEventListener('input', function () { refresh(); playMine(); });
+  $('k2').addEventListener('input', function () { refresh(); playMine(); });
+  $('newg').addEventListener('click', newGame);
   $('snd').addEventListener('click', function () {
     muted = !muted;
     this.textContent = muted ? '🔇 소리 켜기' : '🔊 소리 끄기';
-    $('sndWhy').textContent = muted
-      ? '지금은 음소거입니다. 이 게임은 소리를 들어야 풀 수 있습니다.'
-      : '소리가 켜졌습니다. 버튼을 누를 때만 재생됩니다 — 저절로 나지 않습니다.';
-    if (muted && player) { player.stop(); $('stop').disabled = true; }
-  });
-  $('k1').addEventListener('input', sync);
-  $('k2').addEventListener('input', sync);
-  $('goal').addEventListener('click', function () {
-    if (!data) return;
-    play(build(target.a, target.d), 'goalOut');
-  });
-  $('ours').addEventListener('click', function () {
-    if (!data) return;
-    play(build(+$('k1').value, +$('k2').value), 'oursOut');
-  });
-  $('stop').addEventListener('click', function () {
-    if (player) player.stop();
-    this.disabled = true;
-  });
-  $('newg').addEventListener('click', newGame);
-
-  $('submit').addEventListener('click', function () {
-    if (!data || solved) return;
-    tries++;
-    var a = +$('k1').value, d = +$('k2').value;
-    var okA = a === target.a, okD = d === target.d;
-    var say = function (ok, cur, tgt, less, more) {
-      return ok ? '맞음' : (cur < tgt ? more : less);
-    };
-    if (okA && okD) {
-      solved = true;
-      $('submit').disabled = true;
-      $('pane1').classList.add('win'); $('pane2').classList.add('win');
-      $('hint').innerHTML = '<span class="hit">맞췄습니다 — ' + tries + '번 만에.</span> '
-        + (tries <= 2 ? '둘이 정말 잘 들었습니다.' : '「새 문제」로 다시 해 보세요.');
-    } else {
-      var left = MAX_TRIES - tries;
-      if (left <= 0) {
-        solved = true;
-        $('submit').disabled = true;
-        $('hint').innerHTML = '<span class="miss">기회를 다 썼습니다.</span> 정답은 구조 '
-          + data.banks[target.a].K + '개 · ' + DNAME[target.d]
-          + '. 「새 문제」로 다시 해 보세요.';
-      } else {
-        $('hint').innerHTML = '<span class="miss">아직입니다.</span> '
-          + '1번 <b>구조</b>: ' + say(okA, a, target.a, '더 단순하게', '더 복잡하게')
-          + ' · 2번 <b>밀도</b>: ' + say(okD, d, target.d, '더 성기게', '더 촘촘하게')
-          + ' <span style="color:var(--muted)">— 남은 기회 ' + left + '번</span>';
-      }
-    }
-    $('log').innerHTML += '<b>' + tries + '회</b> — 구조 ' + data.banks[a].K + '개 · '
-      + DNAME[d] + (okA && okD ? ' ✔' : '') + '<br>';
+    if (muted) { if (player) player.stop(); playing = false; draw(); } else playMine();
   });
 
   Promise.all([
-    fetch(BANK).then(function (r) { return r.json(); }),
-    fetch(META).then(function (r) { return r.json(); }),
+    fetch('./mobile_tonnetz/data/om_bank.json').then(function (r) { return r.json(); }),
+    fetch('./hibari_dashboard/data/notes_metadata.json').then(function (r) { return r.json(); }),
   ]).then(function (r) {
     data = r[0]; labels = r[1].labels;
-    sync(); newGame();
-  }).catch(function (e) {
-    $('hint').textContent = '데이터를 불러오지 못했습니다 — ' + e.message;
-  });
+    var g = gen(2, 3, 6).notes.map(function (n) { return n[1]; });
+    LO = Math.min.apply(null, g) - 14;      // 이조 범위(±12)가 화면 밖으로 나가지 않게
+    HI = Math.max.apply(null, g) + 14;
+    newGame();
+  }).catch(function (e) { $('badge').textContent = '불러오기 실패 — ' + e.message; });
 })();
 </script>
