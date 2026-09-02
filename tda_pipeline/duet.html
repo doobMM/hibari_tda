@@ -1,42 +1,48 @@
 <!doctype html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
-<title>듀엣 — 그림자에 곡을 맞추는 게임</title>
+<title>듀엣 — 같은 성격, 다른 음</title>
 <!--
-  duet.html — 2인 실시간 게임 (2026-09-02, 3판)
+  duet.html — 2인 실시간 게임 (2026-09-03, 4판)
 
-  1판 실패: 제출 버튼 + 텍스트 힌트. "게임이 아니라 설문지." — 즉각성이 없었다.
-  2판 실패: 손잡이를 **구조(α)** 로 뒀는데, 브라우저 실측 결과 α 는 지각 축이 아니었다.
-      음역폭 12.75→14.1→12.65→13.1→11.92→13.45 (오르내림, 방향 없음)
-      동시음 3.41→3.30 (폭 0.11음), 무음 구간 변화 0
-      "더 복잡하게" 라고 지시해도 어느 쪽으로 갈지 알 수 없다 = 손잡이가 아니다.
-  같은 검사에서 `pitchTilt`(음역)도 죽어 있었다 — 이 OM 들은 zero_rows=0 이라
-  풀 경로가 열리지 않는다(어제 대시보드에서 고친 것과 같은 원인).
+  이전 판들이 틀린 것
+  ───────────────────
+  1판  제출 버튼 + 텍스트 힌트  → 설문지지 게임이 아니었다
+  2판  손잡이가 **구조(α)** 였는데 실측해 보니 지각 축이 아니었다
+       (음역폭 12.75→14.10→12.65→13.10→11.92→13.45, 오르내림 = 방향 없음)
+  3판  ① 손잡이를 만질 때마다 재생이 **처음으로 되돌아갔다** — 조작감이 아니라 리셋이다
+       ② 승리 조건이 "음이 정확히 포개졌다"였다. 그런데 이 파이프라인은 **확률적**이다.
+          씨앗을 고정해 뒀기 때문에 겹친 것이고, 다시 뽑으면 같은 설정이라도 음이 다르다.
+          **파라미터 일치를 음악 일치인 척** 하고 있었다.
 
-  3판 — **살아 있고 방향이 있는 축 두 개만 남긴다.**
-      1번 높낮이: 생성 후 이조. 피아노롤 전체가 위아래로 움직인다.
-      2번 밀도  : instLen 배율. 막대가 빽빽해지고 성겨진다.
-      두 축이 화면에서 **직교**한다(수직 이동 vs 밀도) — 그래서 각자 자기 몫이 보인다.
-  α 는 손잡이에서 뺐다. 대신 문제마다 무작위로 골라 **재료를 바꾸는 역할**만 한다.
+  4판이 바꾼 것
+  ─────────────
+  · **재생이 끊기지 않는다.** 위치(step)를 이쪽이 들고 있다가, 손잡이가 바뀌면
+    지금 위치부터 이어서 다시 스케줄한다. 손잡이를 돌리는 감각에 가깝다.
+  · **목표는 다른 씨앗으로 뽑는다.** 그래서 음이 정확히 겹칠 수 없다.
+    맞춰야 하는 것은 음이 아니라 **성격**이다 — 이 연구가 실제로 하는 주장 그대로다.
+  · **템포 축 추가.** 세 축이 화면에서 직교한다:
+        높낮이 = 세로 이동 · 밀도 = 빽빽함 · 템포 = 가로 길이
+    (그래서 x축을 step 이 아니라 **초**로 그린다. 빨라지면 눈에 보이게 짧아진다.)
 
   소리 정책: 자동 재생 없음 · 기본 음소거.
 -->
 <style>
  :root{--bg:#f5f8f2;--fg:#1b2419;--muted:#5c6b57;--line:#d6e0cd;--card:#fff;
-       --accent:#2f6b3a;--p1:#2f6b3a;--p2:#9a5fb0;--ghost:#aebfa2;--warm:#c98a2b}
+       --accent:#2f6b3a;--p1:#2f6b3a;--p2:#9a5fb0;--p3:#c2711f;--ghost:#aebfa2;--warm:#c98a2b}
  @media(prefers-color-scheme:dark){:root{--bg:#0f1410;--fg:#e6ede2;--muted:#8fa088;
-       --line:#243021;--card:#161d15;--accent:#7fb069;--p1:#7fb069;--p2:#c9a0dc;--ghost:#334029}}
+       --line:#243021;--card:#161d15;--accent:#7fb069;--p1:#7fb069;--p2:#c9a0dc;
+       --p3:#e0a458;--ghost:#334029}}
  *{box-sizing:border-box}
  body{margin:0;background:var(--bg);color:var(--fg);line-height:1.55;
       font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans KR",sans-serif}
- .wrap{max-width:900px;margin:0 auto;padding:20px 14px 70px}
+ .wrap{max-width:940px;margin:0 auto;padding:20px 14px 70px}
  h1{font-size:clamp(19px,4.6vw,25px);margin:0 0 3px;font-weight:700}
  .lede{color:var(--muted);font-size:14px;margin:0 0 14px}
- .bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
- button{font:inherit;font-size:14.5px;padding:10px 15px;min-height:46px;border-radius:10px;
+ .bar{display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+ button{font:inherit;font-size:14.5px;padding:10px 14px;min-height:46px;border-radius:10px;
         border:1px solid var(--line);background:transparent;color:var(--fg);cursor:pointer}
  button.primary{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:700}
- .tot{font-variant-numeric:tabular-nums;font-weight:700;font-size:16px;margin-left:auto}
  .stage{position:relative;background:var(--card);border:1px solid var(--line);
         border-radius:13px;overflow:hidden}
  canvas{display:block;width:100%;height:auto;touch-action:none}
@@ -44,47 +50,51 @@
         background:var(--card);padding:3px 8px;border-radius:7px;border:1px solid var(--line)}
  .won{position:absolute;inset:0;display:none;place-items:center;background:rgba(47,107,58,.16)}
  .won.on{display:grid;animation:pop .35s ease-out}
- @keyframes pop{from{transform:scale(.9);opacity:0}to{transform:none;opacity:1}}
- .won b{font-size:clamp(22px,6vw,34px);color:#fff;background:#1f4d27;
-        padding:12px 26px;border-radius:12px;box-shadow:0 6px 20px rgba(0,0,0,.28);
-        letter-spacing:.01em}
- .players{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}
- @media(max-width:600px){.players{grid-template-columns:1fr}}
- .p{border:2px solid var(--line);border-radius:13px;padding:12px 13px;background:var(--card);
-    transition:border-color .15s}
- .p--1{border-color:var(--p1)} .p--2{border-color:var(--p2)}
- .p.hit{box-shadow:0 0 0 3px rgba(47,107,58,.18)}
+ @keyframes pop{from{transform:scale(.92);opacity:0}to{transform:none;opacity:1}}
+ .won b{font-size:clamp(17px,4.2vw,26px);color:#fff;background:#1f4d27;text-align:center;
+        padding:12px 24px;border-radius:12px;box-shadow:0 6px 20px rgba(0,0,0,.28)}
+ .won b small{display:block;font-size:.62em;font-weight:500;opacity:.9;margin-top:4px}
+ .players{display:grid;grid-template-columns:repeat(3,1fr);gap:11px;margin-top:12px}
+ @media(max-width:760px){.players{grid-template-columns:1fr}}
+ .p{border:2px solid var(--line);border-radius:13px;padding:11px 12px;background:var(--card)}
+ .p--1{border-color:var(--p1)} .p--2{border-color:var(--p2)} .p--3{border-color:var(--p3)}
+ .p.hit{box-shadow:0 0 0 3px rgba(47,107,58,.2)}
  .p__hd{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
- .p__who{font-weight:700;font-size:12.5px} .p--1 .p__who{color:var(--p1)} .p--2 .p__who{color:var(--p2)}
- .p__knob{font-size:18px;font-weight:700}
- .p__pct{font-variant-numeric:tabular-nums;font-weight:700;font-size:15px;color:var(--muted)}
+ .p__who{font-weight:700;font-size:12.5px}
+ .p--1 .p__who{color:var(--p1)} .p--2 .p__who{color:var(--p2)} .p--3 .p__who{color:var(--p3)}
+ .p__knob{font-size:17px;font-weight:700}
+ .p__pct{font-variant-numeric:tabular-nums;font-weight:700;font-size:14px;color:var(--muted)}
  .p__arrow{font-size:13px;color:var(--warm);min-height:1.3em;font-weight:600}
- .meter{height:9px;border-radius:5px;background:var(--ghost);overflow:hidden;margin:8px 0 9px}
+ .meter{height:8px;border-radius:5px;background:var(--ghost);overflow:hidden;margin:7px 0 8px}
  .meter i{display:block;height:100%;width:0;border-radius:5px;transition:width .12s ease-out}
  .p--1 .meter i{background:var(--p1)} .p--2 .meter i{background:var(--p2)}
+ .p--3 .meter i{background:var(--p3)}
  input[type=range]{width:100%;height:42px;margin:0;accent-color:var(--p1)}
  .p--2 input[type=range]{accent-color:var(--p2)}
+ .p--3 input[type=range]{accent-color:var(--p3)}
  .ends{display:flex;justify-content:space-between;font-size:12px;color:var(--muted)}
  .note{font-size:12.5px;color:var(--muted);margin-top:14px}
+ .note b{color:var(--fg)}
 </style>
 
 <div class="wrap">
-<h1>듀엣 — 그림자에 곡을 맞추는 게임</h1>
+<h1>듀엣 — 같은 성격, 다른 음</h1>
 <p class="lede">
-  뒤에 흐린 <b>그림자</b>가 숨겨진 곡입니다. 손잡이를 밀면 <b>내 곡이 그 자리에서 다시 그려집니다</b>.
-  그림자에 포개지도록 맞추세요. 손잡이가 둘로 나뉘어 있어 혼자서는 맞출 수 없습니다.
+  뒤의 <b>그림자</b>가 목표입니다. 손잡이를 밀면 내 곡이 <b>끊기지 않고 그 자리에서</b> 바뀝니다.
+  다만 음까지 똑같이 만들 수는 없습니다 — 목표는 <b>다른 뽑기</b>로 만들어졌으니까요.
+  맞춰야 하는 것은 음이 아니라 <b>성격</b>입니다.
 </p>
 
 <div class="bar">
   <button class="primary" id="snd" type="button">🔇 소리 켜기</button>
+  <button id="reroll" type="button">🎲 다시 뽑기</button>
   <button id="newg" type="button">🔄 새 문제</button>
-  <span class="tot" id="tot">포갬 0%</span>
 </div>
 
 <div class="stage">
-  <canvas id="cv" width="1720" height="620"></canvas>
+  <canvas id="cv" width="1760" height="600"></canvas>
   <span class="badge" id="badge"></span>
-  <div class="won" id="won"><b>포갰습니다!</b></div>
+  <div class="won" id="won"><b>세 손잡이를 다 맞췄습니다<small>음은 다릅니다 — 성격이 같습니다</small></b></div>
 </div>
 
 <div class="players">
@@ -92,7 +102,7 @@
     <div class="p__hd"><span class="p__who">1번</span><span class="p__pct" id="pct1">0%</span></div>
     <div class="p__knob">높낮이</div>
     <div class="meter"><i id="m1"></i></div>
-    <input type="range" id="k1" min="0" max="6" step="1" value="3" aria-label="높낮이 — 1번 담당">
+    <input type="range" id="k1" min="0" max="6" step="1" value="3" aria-label="높낮이 — 1번">
     <div class="ends"><span>낮게</span><span>높게</span></div>
     <div class="p__arrow" id="a1"></div>
   </div>
@@ -100,16 +110,24 @@
     <div class="p__hd"><span class="p__who">2번</span><span class="p__pct" id="pct2">0%</span></div>
     <div class="p__knob">밀도</div>
     <div class="meter"><i id="m2"></i></div>
-    <input type="range" id="k2" min="0" max="6" step="1" value="3" aria-label="밀도 — 2번 담당">
+    <input type="range" id="k2" min="0" max="6" step="1" value="3" aria-label="밀도 — 2번">
     <div class="ends"><span>성기게</span><span>촘촘하게</span></div>
     <div class="p__arrow" id="a2"></div>
+  </div>
+  <div class="p p--3" id="pane3">
+    <div class="p__hd"><span class="p__who">3번 (또는 나눠서)</span><span class="p__pct" id="pct3">0%</span></div>
+    <div class="p__knob">템포</div>
+    <div class="meter"><i id="m3"></i></div>
+    <input type="range" id="k3" min="0" max="6" step="1" value="3" aria-label="템포 — 3번">
+    <div class="ends"><span>느리게</span><span>빠르게</span></div>
+    <div class="p__arrow" id="a3"></div>
   </div>
 </div>
 
 <p class="note">
-  손잡이를 움직이면 곡이 통째로 다시 만들어집니다 — 생성이 0.6~3밀리초라 즉시 보입니다.
-  손잡이 후보를 브라우저에서 직접 계측해, <b>방향이 없는 축(구조·온도·음역 tilt)은 빼고</b>
-  실제로 단조롭게 움직이는 둘만 남겼습니다.
+  <b>같은 설정이어도 뽑을 때마다 음이 다릅니다.</b> 「🎲 다시 뽑기」를 눌러 보세요 — 손잡이는
+  그대로인데 음이 바뀝니다. 이 파이프라인이 확률적이기 때문이고, 이 연구가 하려는 말이기도
+  합니다: <b>구조는 지키고 음은 새로 짓는다.</b>
 </p>
 </div>
 
@@ -118,29 +136,36 @@
 <script>
 (function () {
   var DENS  = [0.5, 0.65, 0.8, 1.0, 1.25, 1.5, 2.0];
-  var SHIFT = [-12, -8, -4, 0, 4, 8, 12];      // 반음. 4반음(장3도)씩 — 확실히 들린다
-  var SEED = 20260902;
+  var SHIFT = [-12, -8, -4, 0, 4, 8, 12];              // 반음
+  var TEMPO = [0.6, 0.75, 0.88, 1.0, 1.18, 1.4, 1.7];  // 배속
   var $ = function (id) { return document.getElementById(id); };
   var cv = $('cv'), cx = cv.getContext('2d');
 
   var data = null, labels = null, player = null, muted = true;
   var target = null, mine = null, solved = false;
-  var raf = 0, playT0 = 0, playing = false, LO = 40, HI = 90;
+  var baseSec = 0.25, MAXSEC = 1, LO = 40, HI = 90;
+  // 재생은 **끊지 않는다** — 위치를 step 으로 들고 있다가 손잡이가 바뀌면 그 지점부터 잇는다
+  // 위치는 **시계에서 계산**한다. rAF 델타를 누적하면 탭이 백그라운드일 때
+  // (rAF 가 멈춰도 소리는 계속 나므로) 그림과 소리가 어긋난다. 실제로 이 패널에서
+  // document.hidden=true 라 rAF 가 0회 돌았다 — 사용자도 탭을 내리면 같은 일을 겪는다.
+  var playing = false, anchorStep = 0, anchorMs = 0, raf = 0;
+  function posStep() {
+    return playing ? anchorStep + (performance.now() - anchorMs) / 1000 / mine.sec : anchorStep;
+  }
 
   function bits(s, n) {
     var v = new Int8Array(n);
     for (var i = 0; i < n; i++) v[i] = s.charCodeAt(i) === 49 ? 1 : 0;
     return v;
   }
-  // α 는 손잡이가 아니다 — 문제마다 재료를 바꾸는 역할만 한다(지각 축이 아님을 실측함)
-  function gen(ai, si, di) {
+  function gen(ai, si, di, ti, seed) {
     var G = window.GenerationAlgo1, b = data.banks[ai], T = b.T;
     var cyc = Object.keys(b.cycles).map(function (k, i) {
       return { cycle_idx: i, note_labels_0idx: b.cycles[k] };
     });
     var base = G.buildHibariInstLen(T), len = new Int32Array(T);
     for (var i = 0; i < T; i++) len[i] = Math.max(0, Math.round(base[i] * DENS[di]));
-    var rng = G.makeRng(SEED);
+    var rng = G.makeRng(seed);
     var r = G.algorithm1({
       nodePool: new G.NodePool({ labels: labels, numModules: 65, temperature: 1.0, rng: rng }),
       cycleManager: new G.CycleSetManager({ cycles: cyc, K: b.K }),
@@ -149,94 +174,124 @@
     });
     var sh = SHIFT[si];
     var ns = r.notes.map(function (n) { return [n[0], n[1] + sh, n[2]]; });
-    var mean = 0;
-    ns.forEach(function (n) { mean += n[1]; });
-    return { notes: ns, T: T, K: b.K, alpha: ai, si: si, di: di,
-             mean: ns.length ? mean / ns.length : 0,
-             keys: new Set(ns.map(function (n) { return n[0] + ':' + n[1]; })) };
-  }
-  function jac(a, b) {
-    var i = 0;
-    a.forEach(function (x) { if (b.has(x)) i++; });
-    var u = a.size + b.size - i;
-    return u ? i / u : 1;
+    var m = 0;
+    ns.forEach(function (n) { m += n[1]; });
+    return { notes: ns, T: T, K: b.K, alpha: ai, si: si, di: di, ti: ti, seed: seed,
+             sec: baseSec / TEMPO[ti], mean: ns.length ? m / ns.length : 0 };
   }
 
-  function draw(headSec) {
-    var W = cv.width, H = cv.height, T = target.T, pad = 14;
+  // ── 그리기 — x축은 **초**다. 그래야 템포가 눈에 보인다 ──────────────
+  function draw() {
+    var W = cv.width, H = cv.height, pad = 14;
     cx.clearRect(0, 0, W, H);
     var css = getComputedStyle(document.documentElement);
-    var xs = (W - pad * 2) / T, ys = (H - pad * 2) / (HI - LO);
-    function box(n, th) {
-      cx.fillRect(pad + n[0] * xs, pad + (HI - n[1]) * ys,
-                  Math.max(3, (n[2] - n[0]) * xs - 1.5), Math.max(3.5, ys * th));
+    var xs = (W - pad * 2) / MAXSEC, ys = (H - pad * 2) / (HI - LO);
+    function roll(g, color, th, alpha) {
+      cx.fillStyle = color; cx.globalAlpha = alpha;
+      for (var i = 0; i < g.notes.length; i++) {
+        var n = g.notes[i];
+        cx.fillRect(pad + n[0] * g.sec * xs, pad + (HI - n[1]) * ys,
+                    Math.max(2.5, (n[2] - n[0]) * g.sec * xs - 1.2), Math.max(3.5, ys * th));
+      }
     }
-    cx.fillStyle = css.getPropertyValue('--ghost').trim();
-    target.notes.forEach(function (n) { box(n, 1.7); });
-    cx.fillStyle = css.getPropertyValue('--accent').trim();
-    cx.globalAlpha = 0.9;
-    mine.notes.forEach(function (n) { box(n, 1.05); });
+    roll(target, css.getPropertyValue('--ghost').trim(), 1.7, 1);
+    roll(mine, css.getPropertyValue('--accent').trim(), 1.05, 0.9);
     cx.globalAlpha = 1;
-    if (headSec != null) {
+    if (playing) {
       cx.fillStyle = css.getPropertyValue('--warm').trim();
-      cx.fillRect(pad + (headSec / ((data.step_ms || 250) / 1000)) * xs, 0, 3, H);
+      cx.fillRect(pad + (posStep() % mine.T) * mine.sec * xs, 0, 3, H);
     }
   }
 
-  function refresh() {
-    mine = gen(target.alpha, +$('k1').value, +$('k2').value);
-    var d1 = mine.si - target.si, d2 = mine.di - target.di;
-    var s1 = 1 - Math.abs(d1) / 6, s2 = 1 - Math.abs(d2) / 6;
-    $('m1').style.width = (s1 * 100).toFixed(0) + '%';
-    $('m2').style.width = (s2 * 100).toFixed(0) + '%';
-    $('pct1').textContent = (s1 * 100).toFixed(0) + '%';
-    $('pct2').textContent = (s2 * 100).toFixed(0) + '%';
-    $('a1').textContent = d1 === 0 ? '✓ 맞았습니다' : (d1 < 0 ? '↑ 더 높게' : '↓ 더 낮게');
-    $('a2').textContent = d2 === 0 ? '✓ 맞았습니다' : (d2 < 0 ? '→ 더 촘촘하게' : '← 더 성기게');
-    $('pane1').classList.toggle('hit', d1 === 0);
-    $('pane2').classList.toggle('hit', d2 === 0);
-    var tot = jac(mine.keys, target.keys);
-    $('tot').textContent = '포갬 ' + (tot * 100).toFixed(0) + '%';
-    $('badge').textContent = '음 ' + mine.notes.length + '개 (그림자 ' + target.notes.length + '개)'
-      + ' · 평균 음높이 ' + mine.mean.toFixed(1) + ' (' + target.mean.toFixed(1) + ')';
-    if (!playing) draw();
-    if (!solved && d1 === 0 && d2 === 0) { solved = true; $('won').classList.add('on'); }
-  }
-
-  function loop() {
-    if (!playing) return;
-    var t = (performance.now() - playT0) / 1000;
-    if (t > target.T * ((data.step_ms || 250) / 1000)) { playing = false; draw(); return; }
-    draw(t);
-    raf = requestAnimationFrame(loop);
-  }
-  function playMine() {
+  // ── 소리 — 지금 위치부터 이어서 스케줄한다 ──────────────────────────
+  // 지금 위치부터 이어서 스케줄한다. 한 바퀴(T) 뒤의 반복분도 함께 넣어 끊김을 없앤다.
+  function schedule() {
+    var p = posStep() % mine.T;
+    anchorStep = p; anchorMs = performance.now();          // 기준점 재설정
     if (muted || !mine) return;
-    var sec = (data.step_ms || 250) / 1000;
+    var out = [];
+    for (var lap = 0; lap < 2; lap++) {
+      for (var i = 0; i < mine.notes.length; i++) {
+        var n = mine.notes[i], off = lap * mine.T - p;
+        if (n[2] + off <= 0) continue;                     // 이미 지나간 음
+        out.push([Math.max(0, n[0] + off) * mine.sec, n[1], (n[2] + off) * mine.sec]);
+      }
+    }
     player = player || new window.PianoPlayer();
-    player.play(mine.notes.map(function (n) { return [n[0] * sec, n[1], n[2] * sec]; }), { gain: 0.7 });
-    playing = true; playT0 = performance.now();
-    cancelAnimationFrame(raf); loop();
+    player.play(out, { gain: 0.7 });
+  }
+  function tick() {
+    if (!playing) return;
+    if (posStep() >= mine.T * 2 - 1) schedule();           // 두 바퀴 끝나기 전에 이어 붙인다
+    draw();
+    raf = requestAnimationFrame(tick);
+  }
+  function startLoop() {
+    if (playing) return;
+    playing = true; anchorMs = performance.now();
+    schedule();
+    cancelAnimationFrame(raf); raf = requestAnimationFrame(tick);
+  }
+  function stopLoop() {
+    anchorStep = posStep() % (mine ? mine.T : 1);
+    playing = false;
+    cancelAnimationFrame(raf);
+    if (player) player.stop();
+    draw();
+  }
+  // 탭을 다시 켜면 그림을 현재 소리 위치로 맞춘다
+  document.addEventListener('visibilitychange', function () { if (!document.hidden) draw(); });
+
+  function refresh(rerollSeed) {
+    if (rerollSeed) mine = gen(target.alpha, +$('k1').value, +$('k2').value, +$('k3').value, rerollSeed);
+    else mine = gen(target.alpha, +$('k1').value, +$('k2').value, +$('k3').value, mine ? mine.seed : 101);
+    var d = [mine.si - target.si, mine.di - target.di, mine.ti - target.ti];
+    var arrow = [
+      d[0] === 0 ? '✓ 맞았습니다' : (d[0] < 0 ? '↑ 더 높게' : '↓ 더 낮게'),
+      d[1] === 0 ? '✓ 맞았습니다' : (d[1] < 0 ? '→ 더 촘촘하게' : '← 더 성기게'),
+      d[2] === 0 ? '✓ 맞았습니다' : (d[2] < 0 ? '» 더 빠르게' : '« 더 느리게'),
+    ];
+    for (var i = 0; i < 3; i++) {
+      var s = 1 - Math.abs(d[i]) / 6;
+      $('m' + (i + 1)).style.width = (s * 100).toFixed(0) + '%';
+      $('pct' + (i + 1)).textContent = (s * 100).toFixed(0) + '%';
+      $('a' + (i + 1)).textContent = arrow[i];
+      $('pane' + (i + 1)).classList.toggle('hit', d[i] === 0);
+    }
+    $('badge').textContent = '음 ' + mine.notes.length + '개 (그림자 ' + target.notes.length + '개)'
+      + ' · ' + (mine.T * mine.sec).toFixed(1) + '초 (' + (target.T * target.sec).toFixed(1) + '초)';
+    if (playing) schedule();     // **끊지 않고** 지금 위치부터 새 설정으로 잇는다
+    draw();
+    if (!solved && d[0] === 0 && d[1] === 0 && d[2] === 0) {
+      solved = true; $('won').classList.add('on');
+    }
   }
 
   function newGame() {
     var a = Math.floor(Math.random() * data.banks.length);
-    var si, di;
-    do { si = Math.floor(Math.random() * 7); di = Math.floor(Math.random() * 7); }
-    while (si === +$('k1').value && di === +$('k2').value);   // 시작하자마자 정답이면 게임이 아니다
-    target = gen(a, si, di);
-    solved = false;
+    var si, di, ti;
+    do {
+      si = Math.floor(Math.random() * 7); di = Math.floor(Math.random() * 7);
+      ti = Math.floor(Math.random() * 7);
+    } while (si === +$('k1').value && di === +$('k2').value && ti === +$('k3').value);
+    // 목표는 **다른 씨앗**으로 뽑는다 — 음까지 같아질 수 없어야 정직하다
+    target = gen(a, si, di, ti, 900000 + Math.floor(Math.random() * 1000));
+    solved = false; anchorStep = 0; anchorMs = performance.now();
     $('won').classList.remove('on');
-    refresh();
+    refresh(200000 + Math.floor(Math.random() * 1000));
   }
 
-  $('k1').addEventListener('input', function () { refresh(); playMine(); });
-  $('k2').addEventListener('input', function () { refresh(); playMine(); });
+  ['k1', 'k2', 'k3'].forEach(function (id) {
+    $(id).addEventListener('input', function () { refresh(); });
+  });
+  $('reroll').addEventListener('click', function () {
+    refresh(Math.floor(Math.random() * 1e6));
+  });
   $('newg').addEventListener('click', newGame);
   $('snd').addEventListener('click', function () {
     muted = !muted;
     this.textContent = muted ? '🔇 소리 켜기' : '🔊 소리 끄기';
-    if (muted) { if (player) player.stop(); playing = false; draw(); } else playMine();
+    if (muted) stopLoop(); else startLoop();
   });
 
   Promise.all([
@@ -244,10 +299,13 @@
     fetch('./hibari_dashboard/data/notes_metadata.json').then(function (r) { return r.json(); }),
   ]).then(function (r) {
     data = r[0]; labels = r[1].labels;
-    var g = gen(2, 3, 6).notes.map(function (n) { return n[1]; });
-    LO = Math.min.apply(null, g) - 14;      // 이조 범위(±12)가 화면 밖으로 나가지 않게
+    baseSec = (data.step_ms || 250) / 1000;
+    MAXSEC = data.banks[0].T * baseSec / TEMPO[0];    // 가장 느릴 때의 길이에 맞춰 x축 고정
+    var g = gen(2, 3, 6, 3, 1).notes.map(function (n) { return n[1]; });
+    LO = Math.min.apply(null, g) - 14;
     HI = Math.max.apply(null, g) + 14;
     newGame();
   }).catch(function (e) { $('badge').textContent = '불러오기 실패 — ' + e.message; });
+  window.__duet = { pos: function () { return posStep(); }, playing: function () { return playing; } };
 })();
 </script>
