@@ -1,0 +1,258 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>듀엣 — 둘이서 맞추는 음악</title>
+<!--
+  duet.html — 2인 협력 게임 (2026-09-02)
+
+  왜 이 형태인가
+  ──────────────
+  이 연구의 현재 목표는 "사람들이 원하는 방향으로 음악이 통제된다는 감각"이다.
+  그 감각을 설명하는 대신 **놀이로 만든다.**
+
+  설계의 핵심은 하나다 — **손잡이를 둘로 쪼개 각자에게 준다.**
+  1번은 구조만, 2번은 밀도만 만질 수 있다. 그래서 혼자서는 풀 수 없고,
+  서로 듣고 말해야 한다. "내가 민 것이 저쪽 귀에 들렸나" 가 곧 게임의 재미다.
+
+  소리 정책: **자동 재생 없음. 기본 음소거.** 버튼을 눌러야만 소리가 난다.
+-->
+<style>
+ :root{--bg:#f5f8f2;--fg:#1b2419;--muted:#5c6b57;--line:#d6e0cd;--card:#fff;
+       --accent:#2f6b3a;--warm:#c98a2b;--p1:#2f6b3a;--p2:#9a5fb0}
+ @media(prefers-color-scheme:dark){:root{--bg:#0f1410;--fg:#e6ede2;--muted:#8fa088;
+       --line:#243021;--card:#161d15;--accent:#7fb069;--p1:#7fb069;--p2:#c9a0dc}}
+ *{box-sizing:border-box}
+ body{margin:0;background:var(--bg);color:var(--fg);line-height:1.6;
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans KR",sans-serif}
+ .wrap{max-width:860px;margin:0 auto;padding:24px 16px 90px}
+ h1{font-size:clamp(20px,5vw,28px);margin:0 0 4px;font-weight:700}
+ .lede{color:var(--muted);font-size:14.5px;margin:0 0 18px}
+ .card{background:var(--card);border:1px solid var(--line);border-radius:13px;
+       padding:16px;margin-bottom:14px}
+ .sound{display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+        border:1px dashed var(--line);border-radius:11px;padding:12px 14px;margin-bottom:16px}
+ .sound b{font-size:14.5px}
+ .sound .why{font-size:13px;color:var(--muted)}
+ button{font:inherit;font-size:15px;padding:11px 18px;min-height:48px;border-radius:10px;
+        border:1px solid var(--line);background:transparent;color:var(--fg);cursor:pointer}
+ button.primary{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:700}
+ button.big{font-size:16px;font-weight:700}
+ button:disabled{opacity:.45;cursor:not-allowed}
+ .players{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+ @media(max-width:620px){.players{grid-template-columns:1fr}}
+ .p{border:2px solid var(--line);border-radius:13px;padding:14px;background:var(--card)}
+ .p--1{border-color:var(--p1)} .p--2{border-color:var(--p2)}
+ .p__who{font-weight:700;font-size:13px;letter-spacing:.02em;margin-bottom:2px}
+ .p--1 .p__who{color:var(--p1)} .p--2 .p__who{color:var(--p2)}
+ .p__knob{font-size:19px;font-weight:700;margin-bottom:10px}
+ .p__val{font-variant-numeric:tabular-nums;font-size:15px;color:var(--muted);
+         min-height:1.6em;margin-top:6px}
+ input[type=range]{width:100%;height:44px;accent-color:var(--accent);margin:0}
+ .p--2 input[type=range]{accent-color:var(--p2)}
+ .ends{display:flex;justify-content:space-between;font-size:12.5px;color:var(--muted)}
+ .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+ .hintbox{margin-top:12px;font-size:14.5px;min-height:1.6em}
+ .hit{color:var(--accent);font-weight:700}
+ .miss{color:var(--warm)}
+ .log{font-size:13px;color:var(--muted);margin-top:10px;line-height:1.9}
+ .log b{color:var(--fg);font-variant-numeric:tabular-nums}
+ .note{font-size:12.5px;color:var(--muted);margin-top:14px}
+ .rules{font-size:13.5px;color:var(--muted)}
+ .rules b{color:var(--fg)}
+ .win{border-color:var(--accent);background:linear-gradient(0deg,rgba(47,107,58,.07),transparent)}
+</style>
+
+<div class="wrap">
+<h1>듀엣 — 둘이서 맞추는 음악</h1>
+<p class="lede">
+  손잡이가 <b>둘로 나뉘어</b> 있습니다. 한 사람은 구조만, 다른 사람은 밀도만 만질 수 있습니다.
+  혼자서는 풀 수 없습니다.
+</p>
+
+<div class="sound">
+  <button id="snd" class="primary" type="button">🔇 소리 켜기</button>
+  <span class="why" id="sndWhy">지금은 음소거입니다. 이 게임은 소리를 들어야 풀 수 있습니다.</span>
+</div>
+
+<div class="card">
+  <p class="rules">
+    <b>규칙</b> — 컴퓨터가 곡 하나를 숨겨 놓았습니다. 그 곡을 듣고, 두 사람이 각자 자기 손잡이를
+    움직여 <b>같은 곡을 재현</b>하세요. 함께 들어 보고 제출하면, 맞았는지와
+    <b>어느 쪽으로 더 가야 하는지</b>를 알려 줍니다. <b>기회는 5번</b>입니다 — 눌러서 찍기엔 모자라니, 귀로 들으세요.
+  </p>
+  <div class="row" style="margin-top:12px">
+    <button class="primary big" id="goal" type="button">🎧 숨겨진 곡 듣기</button>
+    <button id="newg" type="button">🔄 새 문제</button>
+    <span class="p__val" id="goalOut"></span>
+  </div>
+</div>
+
+<div class="players">
+  <div class="p p--1" id="pane1">
+    <div class="p__who">1번</div>
+    <div class="p__knob">구조</div>
+    <input type="range" id="k1" min="0" max="5" step="1" value="2" aria-label="구조 손잡이 — 1번 담당">
+    <div class="ends"><span>단순</span><span>복잡</span></div>
+    <div class="p__val" id="v1">고리 –</div>
+  </div>
+  <div class="p p--2" id="pane2">
+    <div class="p__who">2번</div>
+    <div class="p__knob">밀도</div>
+    <input type="range" id="k2" min="0" max="6" step="1" value="3" aria-label="밀도 손잡이 — 2번 담당">
+    <div class="ends"><span>성기게</span><span>촘촘하게</span></div>
+    <div class="p__val" id="v2">보통</div>
+  </div>
+</div>
+
+<div class="card" style="margin-top:14px">
+  <div class="row">
+    <button class="big" id="ours" type="button">▶ 우리 곡 들어보기</button>
+    <button class="primary big" id="submit" type="button">제출</button>
+    <button id="stop" type="button" disabled>■ 정지</button>
+    <span class="p__val" id="oursOut"></span>
+  </div>
+  <div class="hintbox" id="hint"></div>
+  <div class="log" id="log"></div>
+</div>
+
+<p class="note">
+  같은 손잡이 값이면 같은 곡이 나옵니다(같은 씨앗을 씁니다). 손잡이 둘 다 실제로 소리를
+  바꾼다는 것은 40회 반복 계측으로 확인했습니다 — 반응하는 척만 하는 손잡이는 빼 두었습니다.
+</p>
+</div>
+
+<script src="./hibari_dashboard/public/js/generation-algo1.js"></script>
+<script src="./hibari_dashboard/public/js/audio-playback.js"></script>
+<script>
+(function () {
+  var BANK = './mobile_tonnetz/data/om_bank.json';
+  var META = './hibari_dashboard/data/notes_metadata.json';
+  var DENS = [0.5, 0.65, 0.8, 1.0, 1.25, 1.5, 2.0];
+  var DNAME = ['아주 성기게', '많이 성기게', '조금 성기게', '보통',
+               '조금 촘촘하게', '많이 촘촘하게', '아주 촘촘하게'];
+  var SEED = 20260902;                       // 고정 — 같은 손잡이면 같은 곡이어야 한다
+  // 시도 제한. 없으면 42조합을 그냥 눌러서 풀 수 있고, 그러면 **한 번도 듣지 않고**
+  // 이기게 된다(실제로 테스트에서 38번 눌러 풀렸다). 5회면 방향 힌트를 따라
+  // 이진 탐색해도 빠듯하고, 귀로 들으면 단계를 건너뛸 수 있다 — 그게 이 게임의 요지다.
+  var MAX_TRIES = 5;
+  var $ = function (id) { return document.getElementById(id); };
+
+  var data = null, labels = null, player = null, muted = true;
+  var target = null, tries = 0, solved = false;
+
+  function bits(str, n) {
+    var v = new Int8Array(n);
+    for (var i = 0; i < n; i++) v[i] = str.charCodeAt(i) === 49 ? 1 : 0;
+    return v;
+  }
+  function build(ai, di) {
+    var b = data.banks[ai], T = b.T;
+    var cycles = Object.keys(b.cycles).map(function (k, i) {
+      return { cycle_idx: i, note_labels_0idx: b.cycles[k] };
+    });
+    var base = window.GenerationAlgo1.buildHibariInstLen(T);
+    var instLen = new Int32Array(T);
+    for (var i = 0; i < T; i++) instLen[i] = Math.max(0, Math.round(base[i] * DENS[di]));
+    var rng = window.GenerationAlgo1.makeRng(SEED);
+    var res = window.GenerationAlgo1.algorithm1({
+      nodePool: new window.GenerationAlgo1.NodePool(
+        { labels: labels, numModules: 65, temperature: 1.0, rng: rng }),
+      cycleManager: new window.GenerationAlgo1.CycleSetManager({ cycles: cycles, K: b.K }),
+      instLen: instLen, overlap: { T: T, K: b.K, values: bits(b.om_bits, T * b.K) },
+      maxResample: 50, rng: rng,
+    });
+    return { notes: res.notes, K: b.K, T: T };
+  }
+  function play(r, tag) {
+    if (muted) { $(tag).textContent = '음소거 상태입니다 — 위에서 소리를 켜 주세요'; return; }
+    var sec = (data.step_ms || 250) / 1000;
+    player = player || new window.PianoPlayer();
+    player.play(r.notes.map(function (n) { return [n[0] * sec, n[1], n[2] * sec]; }), { gain: 0.75 });
+    $(tag).textContent = '음 ' + r.notes.length + '개 · 약 ' + Math.round(r.T * sec) + '초';
+    $('stop').disabled = false;
+  }
+  function sync() {
+    $('v1').textContent = data ? ('고리 ' + data.banks[+$('k1').value].K + '개') : '고리 –';
+    $('v2').textContent = DNAME[+$('k2').value];
+  }
+  function newGame() {
+    // 정답이 슬라이더 초기값과 겹치지 않게 뽑는다 — 첫 제출이 우연히 맞으면 게임이 아니다
+    do { target = { a: Math.floor(Math.random() * 6), d: Math.floor(Math.random() * 7) }; }
+    while (target.a === 2 && target.d === 3);
+    tries = 0; solved = false;
+    $('hint').textContent = '';
+    $('log').textContent = '';
+    $('goalOut').textContent = '';
+    $('oursOut').textContent = '';
+    $('pane1').classList.remove('win'); $('pane2').classList.remove('win');
+    $('submit').disabled = false;
+  }
+
+  $('snd').addEventListener('click', function () {
+    muted = !muted;
+    this.textContent = muted ? '🔇 소리 켜기' : '🔊 소리 끄기';
+    $('sndWhy').textContent = muted
+      ? '지금은 음소거입니다. 이 게임은 소리를 들어야 풀 수 있습니다.'
+      : '소리가 켜졌습니다. 버튼을 누를 때만 재생됩니다 — 저절로 나지 않습니다.';
+    if (muted && player) { player.stop(); $('stop').disabled = true; }
+  });
+  $('k1').addEventListener('input', sync);
+  $('k2').addEventListener('input', sync);
+  $('goal').addEventListener('click', function () {
+    if (!data) return;
+    play(build(target.a, target.d), 'goalOut');
+  });
+  $('ours').addEventListener('click', function () {
+    if (!data) return;
+    play(build(+$('k1').value, +$('k2').value), 'oursOut');
+  });
+  $('stop').addEventListener('click', function () {
+    if (player) player.stop();
+    this.disabled = true;
+  });
+  $('newg').addEventListener('click', newGame);
+
+  $('submit').addEventListener('click', function () {
+    if (!data || solved) return;
+    tries++;
+    var a = +$('k1').value, d = +$('k2').value;
+    var okA = a === target.a, okD = d === target.d;
+    var say = function (ok, cur, tgt, less, more) {
+      return ok ? '맞음' : (cur < tgt ? more : less);
+    };
+    if (okA && okD) {
+      solved = true;
+      $('submit').disabled = true;
+      $('pane1').classList.add('win'); $('pane2').classList.add('win');
+      $('hint').innerHTML = '<span class="hit">맞췄습니다 — ' + tries + '번 만에.</span> '
+        + (tries <= 2 ? '둘이 정말 잘 들었습니다.' : '「새 문제」로 다시 해 보세요.');
+    } else {
+      var left = MAX_TRIES - tries;
+      if (left <= 0) {
+        solved = true;
+        $('submit').disabled = true;
+        $('hint').innerHTML = '<span class="miss">기회를 다 썼습니다.</span> 정답은 구조 '
+          + data.banks[target.a].K + '개 · ' + DNAME[target.d]
+          + '. 「새 문제」로 다시 해 보세요.';
+      } else {
+        $('hint').innerHTML = '<span class="miss">아직입니다.</span> '
+          + '1번 <b>구조</b>: ' + say(okA, a, target.a, '더 단순하게', '더 복잡하게')
+          + ' · 2번 <b>밀도</b>: ' + say(okD, d, target.d, '더 성기게', '더 촘촘하게')
+          + ' <span style="color:var(--muted)">— 남은 기회 ' + left + '번</span>';
+      }
+    }
+    $('log').innerHTML += '<b>' + tries + '회</b> — 구조 ' + data.banks[a].K + '개 · '
+      + DNAME[d] + (okA && okD ? ' ✔' : '') + '<br>';
+  });
+
+  Promise.all([
+    fetch(BANK).then(function (r) { return r.json(); }),
+    fetch(META).then(function (r) { return r.json(); }),
+  ]).then(function (r) {
+    data = r[0]; labels = r[1].labels;
+    sync(); newGame();
+  }).catch(function (e) {
+    $('hint').textContent = '데이터를 불러오지 못했습니다 — ' + e.message;
+  });
+})();
+</script>

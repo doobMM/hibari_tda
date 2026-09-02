@@ -40,6 +40,41 @@
         linear-gradient(180deg, var(--bg-1) 0%, #f1f6e6 55%, var(--bg-2) 100%);
       background-attachment: fixed;
     }
+
+    /* ── 첫 화면 조작 위젯 — 설명보다 먼저 만지게 한다 ────────────────────
+       2026-09-02. 기존 랜딩은 링크 14개 허브였고 태그라인이 "조작이 필요 없습니다"
+       라고 안내했다. 목표가 "내 의도대로 만드는 감각"으로 바뀌었으므로
+       **첫 화면에서 소리가 바뀌어야** 한다. 데이터는 첫 조작 때 지연 로드한다. */
+    .play-first { background: var(--panel); border: 1px solid var(--border-strong);
+      border-radius: 14px; padding: 1.4rem 1.5rem; margin: 0 0 2.2rem;
+      backdrop-filter: blur(2px); }
+    .play-first__hint { font-size: 0.9rem; color: var(--text-mut); margin: 0 0 1rem; }
+    .knob { display: grid; grid-template-columns: 4.6rem 1fr 5.4rem;
+      align-items: center; gap: 0.7rem; margin-bottom: 0.75rem; }
+    .knob__name { font-weight: 700; font-size: 0.95rem; }
+    .knob input[type=range] { width: 100%; height: 44px; accent-color: var(--grass); margin: 0; }
+    .knob__val { font-size: 0.86rem; color: var(--text-dim); text-align: right;
+      font-variant-numeric: tabular-nums; }
+    .knob__ends { grid-column: 2; display: flex; justify-content: space-between;
+      font-size: 0.74rem; color: var(--text-mut); margin-top: -0.55rem; }
+    .play-first__row { display: flex; align-items: center; gap: 0.8rem;
+      flex-wrap: wrap; margin-top: 0.9rem; }
+    .btn-play { font: inherit; font-size: 1rem; font-weight: 700; padding: 0.75rem 1.5rem;
+      min-height: 48px; border-radius: 10px; border: 1px solid var(--grass);
+      background: var(--grass); color: #fff; cursor: pointer; }
+    .btn-play:disabled { opacity: 0.5; cursor: wait; }
+    .btn-stop { font: inherit; font-size: 0.95rem; padding: 0.7rem 1.1rem; min-height: 48px;
+      border-radius: 10px; border: 1px solid var(--border-strong);
+      background: transparent; color: var(--text); cursor: pointer; }
+    .btn-stop:disabled { opacity: 0.4; cursor: not-allowed; }
+    .play-first__out { font-size: 0.88rem; color: var(--text-dim);
+      font-variant-numeric: tabular-nums; }
+    /* 더 둘러보기 — 링크 14개를 첫 화면에서 치운다 */
+    .more > summary { cursor: pointer; font-weight: 700; font-size: 1rem;
+      padding: 0.9rem 0; color: var(--text-dim); list-style: none; }
+    .more > summary::-webkit-details-marker { display: none; }
+    .more > summary::before { content: "▸ "; color: var(--grass); }
+    .more[open] > summary::before { content: "▾ "; }
     .container { max-width: 980px; margin: 0 auto; padding: 3.5rem 1.5rem 4rem; }
     .sprout { font-size: 2.4rem; line-height: 1; display: inline-block; animation: sway 6s ease-in-out infinite; transform-origin: bottom center; }
     @keyframes sway { 0%,100% { transform: rotate(-4deg);} 50% { transform: rotate(4deg);} }
@@ -109,8 +144,47 @@
       "이 곡답게" 들리는 새 음악을 만들 수 있을까? — 이 질문에서 출발해,
       곡 안에 숨은 <strong>반복 구조(고리)</strong>를 수학으로 찾아내고 그것을
       <strong>설계도</strong> 삼아 AI로 음악을 생성하는 개인 연구입니다.
-      아래 어느 것도 전문 지식이나 조작이 필요 없습니다.
+      설명은 그 다음입니다. <strong>먼저 아래 손잡이를 밀고 재생을 눌러 보세요.</strong>
     </p>
+
+    <!-- ── 첫 화면 조작 위젯 ─────────────────────────────────────────────
+         손잡이 둘 다 **실제로 들린다**. 어제 계측에서 정본 화면의 온도·음역은
+         40/40 시드 비트 동일(= 죽어 있음)이었고 밀도만 살아 있었다.
+         α 는 위상 구조 자체를 바꾸므로 별개 축이다. -->
+    <section class="play-first" aria-label="직접 만들어 듣기">
+      <p class="play-first__hint">손잡이를 밀면 <b>곡의 구조</b>와 <b>음의 빽빽함</b>이 바뀝니다. 매번 다른 곡이 나옵니다.</p>
+
+      <div class="knob">
+        <span class="knob__name">구조</span>
+        <input type="range" id="pfAlpha" min="0" max="5" step="1" value="2"
+               aria-label="구조 — 단순할수록 고리가 적고, 복잡할수록 많습니다">
+        <span class="knob__val" id="pfAlphaVal">고리 14개</span>
+        <span class="knob__ends"><span>단순</span><span>복잡</span></span>
+      </div>
+
+      <div class="knob">
+        <span class="knob__name">밀도</span>
+        <input type="range" id="pfDens" min="0" max="6" step="1" value="3"
+               aria-label="밀도 — 음을 성기게 또는 촘촘하게">
+        <span class="knob__val" id="pfDensVal">보통</span>
+        <span class="knob__ends"><span>성기게</span><span>촘촘하게</span></span>
+      </div>
+
+      <div class="play-first__row">
+        <button class="btn-play" id="pfPlay" type="button">▶ 30초 듣기</button>
+        <button class="btn-stop" id="pfStop" type="button" disabled>■ 정지</button>
+        <span class="play-first__out" id="pfOut"></span>
+      </div>
+    </section>
+
+    <!-- 2인 게임 — 손잡이를 쪼개 각자에게 준다. 혼자서는 풀 수 없다. -->
+    <div class="path" aria-label="둘이서 해보기" style="margin-bottom:2.2rem">
+      <a href="./tda_pipeline/duet.html">
+        <span class="step">둘이서 · 5분</span>
+        <span class="what">🎮 듀엣 — 둘이서 맞추는 음악</span>
+        <span class="how">한 사람은 구조만, 다른 사람은 밀도만 만질 수 있습니다. 숨겨진 곡을 듣고 함께 재현하세요</span>
+      </a>
+    </div>
 
     <!-- 3분 파악 경로 — 읽기 · 스크롤 · 듣기 (조작 없음) -->
     <div class="path" aria-label="3분 안에 파악하기">
@@ -144,6 +218,8 @@
       <span>🖥️ 논문·코드·데모 <b>전부 공개</b>, 브라우저에서 실행</span>
     </div>
 
+    <details class="more">
+      <summary>더 둘러보기 — 투어 · 대시보드 · 데모 · 논문</summary>
     <div class="cards">
       <a class="card feature" href="./tda_pipeline/tour.html">
         <span class="tag tour">추천 · 스크롤만 하면 됩니다</span>
@@ -215,7 +291,109 @@
         <span>🌿 <a href="./tda_pipeline/bloom.html">Persistent Bloom (제너러티브 아트)</a></span>
         <span>⚙️ <a href="https://github.com/doobMM/hibari_tda">소스 코드 (GitHub)</a></span>
       </div>
+    </details>
     </div>
   </div>
+
+<script>
+/* ── 첫 화면 위젯 — 데이터·엔진은 **첫 조작 때** 불러온다 ────────────────
+   랜딩을 무겁게 하지 않으려고 지연 로드한다. vineyard 의 alpha_vineyard.json 은
+   491KB 라 랜딩에 부적합해서, 모바일용으로 만들어 둔 om_bank.json(17.6KB)을 쓴다.
+   두 파일 모두 같은 파이프라인 산출물이고 α 격자만 성글다(6점 vs 21점).      */
+(function () {
+  var BANK = './tda_pipeline/mobile_tonnetz/data/om_bank.json';
+  var META = './tda_pipeline/hibari_dashboard/data/notes_metadata.json';
+  var JS_GEN = './tda_pipeline/hibari_dashboard/public/js/generation-algo1.js';
+  var JS_AUD = './tda_pipeline/hibari_dashboard/public/js/audio-playback.js';
+  var DENS = [0.5, 0.65, 0.8, 1.0, 1.25, 1.5, 2.0];
+  var DENS_NAME = ['아주 성기게', '많이 성기게', '조금 성기게', '보통',
+                   '조금 촘촘하게', '많이 촘촘하게', '아주 촘촘하게'];
+  var PLAY_STEPS = 120;                // step_ms=250 × 120 = 정확히 30초
+  var $ = function (id) { return document.getElementById(id); };
+  var data = null, labels = null, player = null, loading = null, seed = 7000;
+
+  function loadScript(src) {
+    return new Promise(function (ok, no) {
+      var el = document.createElement('script');
+      el.src = src; el.onload = ok; el.onerror = function () { no(new Error(src)); };
+      document.head.appendChild(el);
+    });
+  }
+  function ensure() {
+    if (loading) return loading;
+    $('pfOut').textContent = '준비 중…';
+    loading = Promise.all([
+      data ? Promise.resolve(data) : fetch(BANK).then(function (r) { return r.json(); }),
+      fetch(META).then(function (r) { return r.json(); }),
+      loadScript(JS_GEN), loadScript(JS_AUD),
+    ]).then(function (r) {
+      data = r[0]; labels = r[1].labels;
+      $('pfOut').textContent = '';
+      syncAlpha();
+    });
+    return loading;
+  }
+  function bank() { return data ? data.banks[+$('pfAlpha').value] : null; }
+  function syncAlpha() {
+    var b = bank();
+    $('pfAlphaVal').textContent = b ? ('고리 ' + b.K + '개') : '고리 14개';
+  }
+  function bits(str, T, K) {
+    var v = new Int8Array(T * K);
+    for (var i = 0; i < v.length; i++) v[i] = str.charCodeAt(i) === 49 ? 1 : 0;
+    return v;
+  }
+
+  // 뱅크만 먼저 받는다(17.6KB). 손잡이를 미는 즉시 고리 수가 바뀌어야 하고,
+  // 그 즉각성이 이 위젯의 존재 이유다. 무거운 엔진은 재생할 때 받는다.
+  fetch(BANK).then(function (r) { return r.json(); })
+             .then(function (j) { data = j; syncAlpha(); })
+             .catch(function () { /* 재생 시 ensure() 가 다시 시도한다 */ });
+
+  $('pfAlpha').addEventListener('input', syncAlpha);
+  $('pfDens').addEventListener('input', function () {
+    $('pfDensVal').textContent = DENS_NAME[+this.value];
+  });
+
+  $('pfPlay').addEventListener('click', function () {
+    $('pfPlay').disabled = true;
+    ensure().then(function () {
+      var G = window.GenerationAlgo1;
+      var b = bank();
+      var T = Math.min(PLAY_STEPS, b.T);
+      var values = bits(b.om_bits, b.T, b.K).slice(0, T * b.K);
+      var cycles = Object.keys(b.cycles).map(function (k, i) {
+        return { cycle_idx: i, note_labels_0idx: b.cycles[k] };
+      });
+      var f = DENS[+$('pfDens').value];
+      var len = G.buildHibariInstLen(T);
+      var instLen = new Int32Array(T);
+      for (var i = 0; i < T; i++) instLen[i] = Math.max(0, Math.round(len[i] * f));
+
+      var rng = G.makeRng(seed++);      // 누를 때마다 다른 곡 — "매번 다르다"가 설계다
+      var res = G.algorithm1({
+        nodePool: new G.NodePool({ labels: labels, numModules: 65, temperature: 1.0, rng: rng }),
+        cycleManager: new G.CycleSetManager({ cycles: cycles, K: b.K }),
+        instLen: instLen, overlap: { T: T, K: b.K, values: values },
+        maxResample: 50, rng: rng,
+      });
+      var sec = (data.step_ms || 454) / 1000;
+      var notes = res.notes.map(function (n) { return [n[0] * sec, n[1], n[2] * sec]; });
+      player = player || new window.PianoPlayer();
+      player.play(notes, { gain: 0.75 });
+      $('pfOut').textContent = '고리 ' + b.K + '개 · 음 ' + res.notes.length + '개 · 약 '
+                            + Math.round(T * sec) + '초';
+      $('pfStop').disabled = false;
+    }).catch(function (e) {
+      $('pfOut').textContent = '재생할 수 없습니다 — ' + e.message;
+    }).finally(function () { $('pfPlay').disabled = false; });
+  });
+
+  $('pfStop').addEventListener('click', function () {
+    if (player) player.stop();
+    $('pfStop').disabled = true;
+  });
+})();
+</script>
 </body>
 </html>

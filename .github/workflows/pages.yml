@@ -12,6 +12,7 @@ on:
       - 'tda_pipeline/shared/**'
       - 'tda_pipeline/tour.html'
       - 'tda_pipeline/bloom.html'
+      - 'tda_pipeline/duet.html'
       - 'tda_pipeline/output/**'
       - 'index.html'
       - '.github/workflows/pages.yml'
@@ -51,6 +52,7 @@ jobs:
           cp -R tda_pipeline/shared            _site/shared
           cp    tda_pipeline/tour.html         _site/tour.html
           cp    tda_pipeline/bloom.html        _site/bloom.html
+          cp    tda_pipeline/duet.html         _site/duet.html
 
           # 감상용 산출물 (git 에 tracked 된 것만 체크아웃돼 있으므로 WAV 는 애초에 없다)
           mkdir -p _site/output
@@ -90,6 +92,7 @@ jobs:
           redirect tda_pipeline/index.html                        ../
           redirect tda_pipeline/tour.html                         ../tour.html
           redirect tda_pipeline/bloom.html                        ../bloom.html
+          redirect tda_pipeline/duet.html                         ../duet.html
           redirect tda_pipeline/hibari_dashboard/public/index.html ../../../hibari_dashboard/public/
           redirect tda_pipeline/tonnetz_demo/index.html            ../../tonnetz_demo/
           redirect tda_pipeline/filtration_viz/index.html          ../../filtration_viz/
@@ -101,7 +104,7 @@ jobs:
           echo "── 크기 ──"
           du -sh _site
           echo "── 필수 파일 존재 확인 ──"
-          for f in index.html tour.html bloom.html \
+          for f in index.html tour.html bloom.html duet.html \
                    hibari_dashboard/public/index.html \
                    hibari_dashboard/public/motif.html \
                    hibari_dashboard/public/js/motif-diffusion.js \
@@ -118,7 +121,7 @@ jobs:
             test -f "_site/$f" || { echo "빠짐: $f"; exit 1; }
             echo "  OK $f"
           done
-          for L in vineyard/ mobile_tonnetz/; do
+          for L in vineyard/ mobile_tonnetz/ duet.html; do
             grep -q "$L" _site/index.html || { echo "랜딩에 링크 없음: $L"; exit 1; }
             echo "  OK 랜딩 링크 $L"
           done
