@@ -1,105 +1,118 @@
 <!doctype html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
-<title>듀엣 — 둘이서 붙잡는 음악</title>
+<title>hibari LIVE — 실시간 생성 계기판</title>
 <!--
-  duet.html — 2인 실시간 게임 (2026-09-03, 5판)
+  duet.html — 실시간 생성 악기 (2026-09-03, 6판)
 
-  실패 계보
-  ─────────
-  1판  제출 버튼 + 텍스트 힌트           → 설문지. 자체 테스트가 38번 눌러 브루트포스로 이김
-  2판  손잡이가 구조(α)                 → 실측 결과 지각 축이 아님(오르내림 = 방향 없음)
-  3판  조작할 때마다 재생 리셋 / "포갬"   → 조작감 아님 / 확률적 생성인데 파라미터 일치를 음악 일치로 위장
-  4판  높낮이·밀도·템포 3축, 끊김 없는 재생, 다른 씨앗으로 목표 생성
-       남은 문제: **한 사람이 다 만져도 된다.** "각자 하나씩"은 규칙이 아니라 약속이었다.
+  게임을 접은 이유 (사용자 판정)
+  ──────────────────────────────
+  5판(조인트 손잡이 + 드리프트 + 키보드)을 실제로 해 보고 세 검사 전부 실패:
+    · 혼자서 이길 수 없다  · 둘이 해도 어렵다  · 소리를 끄면 뭘 할지 모르겠다
+  → 목표·유지 타이머·승리 조건을 **전부 제거**한다.
+    이길 것이 없으면 못 이길 일도 없다. 남는 것은 조작 그 자체다.
+  (파일명 duet.html 은 배포 배선이 걸려 있어 유지한다. 내용은 악기다.)
 
-  5판 — 두 사람을 **산수와 물리로** 묶는다
-  ────────────────────────────────────
-  ① 조인트: 축마다 손잡이가 둘이고 **출력 = (P1 + P2) / 2**.
-     혼자서는 끝까지 밀 수 없다. 사회적 약속이 아니라 산술적 제약이다.
-  ② 드리프트: 붙잡지 않은 손잡이는 **계속 흘러간다**(벽에서 반사).
-     그래서 "맞추고 끝"이 아니라 **붙잡고 있어야** 한다.
-     마우스 하나로 여섯 개를 동시에 붙잡을 수 없다 → 두 번째 사람이 필요하다.
-  ③ 승리 = 세 축을 목표 띠 안에 **5초 유지**. 순간 일치가 아니다.
-  ④ 성공하면 같은 설정에서 **새로 뽑는다** — 구조는 같고 음은 다르다(이 연구의 주장).
+  6판 = 계기판
+  ────────────
+  · 정답 없음, 실패 없음. **계속 도는 루프**를 노브로 실시간으로 주무른다.
+  · 실제 전자악기처럼 로터리 노브(끌어서 돌림) · 재료 선택기 · 리샘플 · 레벨 미터.
+  · 노브는 계측으로 **살아 있음이 확인된 셋**만 쓴다 (높낮이·밀도·템포).
+    α 는 지각 축이 아니므로 노브가 아니라 MATERIAL 선택기로 둔다.
+  · 소리를 꺼도 전부 보인다 — 롤·레벨·노브가 즉시 반응하고,
+    재생 머리가 지나는 음은 밝게 빛난다.
 
-  원칙(외부 검토에서 가져옴): 게임의 정답 = 행동/상태 조건, 음악의 변화 = 보상.
-  소리 정책: 자동 재생 없음 · 기본 음소거. 시각만으로 성립해야 한다.
+  남긴 것: 5판의 **끊기지 않는 재생**. 노브를 돌려도 처음으로 돌아가지 않는다.
+  소리 정책: 자동 재생 없음 · 기본 정지.
 -->
 <style>
- :root{--bg:#f5f8f2;--fg:#1b2419;--muted:#5c6b57;--line:#d6e0cd;--card:#fff;
-       --accent:#2f6b3a;--p1:#2f6b3a;--p2:#9a5fb0;--warm:#c98a2b;--ghost:#aebfa2;--bad:#c0563a}
- @media(prefers-color-scheme:dark){:root{--bg:#0f1410;--fg:#e6ede2;--muted:#8fa088;
-       --line:#243021;--card:#161d15;--accent:#7fb069;--p1:#7fb069;--p2:#c9a0dc;--ghost:#334029}}
+ :root{--bg:#11140f;--panel:#1b2018;--panel2:#232a1f;--line:#333d2c;--fg:#e8efe2;
+       --dim:#93a487;--led:#8fd14f;--led2:#c9a0dc;--warm:#ffb84d}
  *{box-sizing:border-box}
  body{margin:0;background:var(--bg);color:var(--fg);line-height:1.5;
       font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans KR",sans-serif}
- .wrap{max-width:960px;margin:0 auto;padding:18px 14px 60px}
- h1{font-size:clamp(19px,4.6vw,25px);margin:0 0 3px;font-weight:700}
- .lede{color:var(--muted);font-size:13.5px;margin:0 0 12px}
- .bar{display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin-bottom:11px}
- button{font:inherit;font-size:14.5px;padding:10px 14px;min-height:46px;border-radius:10px;
-        border:1px solid var(--line);background:transparent;color:var(--fg);cursor:pointer}
- button.primary{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:700}
- .hold{margin-left:auto;font-size:14px;font-weight:700;font-variant-numeric:tabular-nums}
- .stage{position:relative;background:var(--card);border:1px solid var(--line);
-        border-radius:13px;overflow:hidden}
+ .wrap{max-width:900px;margin:0 auto;padding:18px 12px 50px}
+ h1{font-size:clamp(16px,3.8vw,20px);margin:0 0 2px;font-weight:700;letter-spacing:.06em}
+ .sub{color:var(--dim);font-size:12.5px;margin:0 0 14px}
+
+ .rack{background:var(--panel);border:1px solid var(--line);border-radius:14px;
+       padding:12px;box-shadow:inset 0 1px 0 #ffffff10}
+ .screen{background:#0b0e09;border:1px solid var(--line);border-radius:9px;
+         overflow:hidden;position:relative}
  canvas{display:block;width:100%;height:auto}
- .badge{position:absolute;left:12px;top:10px;font-size:12px;color:var(--muted);
-        background:var(--card);padding:3px 8px;border-radius:7px;border:1px solid var(--line)}
- .won{position:absolute;inset:0;display:none;place-items:center;background:rgba(47,107,58,.18)}
- .won.on{display:grid;animation:pop .3s ease-out}
- @keyframes pop{from{transform:scale(.93);opacity:0}to{transform:none;opacity:1}}
- .won b{font-size:clamp(16px,4vw,24px);color:#fff;background:#1f4d27;text-align:center;
-        padding:12px 22px;border-radius:12px;box-shadow:0 6px 20px rgba(0,0,0,.3)}
- .won b small{display:block;font-size:.62em;font-weight:500;opacity:.9;margin-top:4px}
- .axes{margin-top:12px;display:grid;gap:10px}
- .ax{border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:var(--card)}
- .ax.in{border-color:var(--accent);box-shadow:0 0 0 2px rgba(47,107,58,.16)}
- .ax__hd{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:2px}
- .ax__name{font-weight:700;font-size:16px}
- .ax__st{font-size:12.5px;color:var(--muted);font-variant-numeric:tabular-nums}
- .track{position:relative;height:16px;border-radius:8px;background:var(--ghost);margin:7px 0 6px}
- .band{position:absolute;top:0;bottom:0;background:rgba(47,107,58,.35);border-radius:8px}
- .cur{position:absolute;top:-3px;width:4px;height:22px;border-radius:2px;background:var(--fg)}
- .grip{display:grid;grid-template-columns:1fr 1fr;gap:9px}
- .g{display:flex;flex-direction:column;gap:2px}
- .g label{font-size:11.5px;font-weight:700}
- .g--1 label{color:var(--p1)} .g--2 label{color:var(--p2)}
- .g input{width:100%;height:40px;margin:0}
- .g--1 input{accent-color:var(--p1)} .g--2 input{accent-color:var(--p2)}
- .g.held label::after{content:" ● 잡음";color:var(--accent)}
- .note{font-size:12.5px;color:var(--muted);margin-top:13px}
+ .hud{position:absolute;left:9px;top:7px;font-size:11px;color:var(--dim);
+      font-variant-numeric:tabular-nums;letter-spacing:.03em}
+
+ .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:12px}
+ .knobs{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}
+ .kb{background:var(--panel2);border:1px solid var(--line);border-radius:11px;
+     padding:10px 8px 8px;text-align:center;touch-action:none;cursor:ns-resize;
+     user-select:none;-webkit-user-select:none}
+ .kb.on{border-color:var(--led)}
+ .kb svg{width:100%;max-width:92px;height:auto;display:block;margin:0 auto}
+ .kb__n{font-size:11px;letter-spacing:.12em;color:var(--dim);margin-top:5px}
+ .kb__v{font-size:15px;font-weight:700;font-variant-numeric:tabular-nums;margin-top:1px}
+
+ button{font:inherit;font-size:13.5px;padding:10px 14px;min-height:46px;border-radius:9px;
+        border:1px solid var(--line);background:var(--panel2);color:var(--fg);cursor:pointer;
+        letter-spacing:.04em}
+ button:hover{border-color:var(--dim)}
+ button.go{background:var(--led);color:#12210a;border-color:var(--led);font-weight:800;min-width:98px}
+ button.go.playing{background:var(--warm);border-color:var(--warm);color:#2a1b05}
+
+ .mat{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+ .mat__l{font-size:11px;letter-spacing:.12em;color:var(--dim);margin-right:2px}
+ #mats{display:flex;gap:6px;flex-wrap:wrap}
+ .led{width:36px;height:36px;border-radius:8px;border:1px solid var(--line);
+      background:var(--panel2);color:var(--dim);font-size:11.5px;font-weight:700;
+      display:grid;place-items:center;cursor:pointer;padding:0;min-height:36px}
+ .led.on{background:var(--led2);border-color:var(--led2);color:#1a0f22}
+
+ .meter{flex:1 1 140px;min-width:110px;height:14px;border-radius:7px;background:#0b0e09;
+        border:1px solid var(--line);overflow:hidden}
+ .meter i{display:block;height:100%;width:0;
+          background:linear-gradient(90deg,var(--led),var(--warm));transition:width .09s linear}
+ .tag{font-size:11px;color:var(--dim);letter-spacing:.1em}
+ .note{font-size:12px;color:var(--dim);margin-top:14px;line-height:1.75}
  .note b{color:var(--fg)}
 </style>
 
 <div class="wrap">
-<h1>듀엣 — 둘이서 붙잡는 음악</h1>
-<p class="lede">
-  축마다 손잡이가 <b>둘</b>이고, 실제 값은 <b>둘의 평균</b>입니다. 손을 떼면 <b>계속 흘러갑니다</b> —
-  가만히 두는 것이 불가능합니다. 세 축을 초록 띠 안에 <b>5초</b> 붙잡으면 성공입니다.<br>
-  <b>키보드로 하세요.</b> 1번은 왼쪽 <b>Q/A · W/S · E/D</b>, 2번은 오른쪽 <b>I/K · O/L · P/;</b> —
-  한 자판에서 둘이 동시에 누를 수 있습니다. (태블릿이면 슬라이더를 손가락으로 붙잡아도 됩니다.)
+<h1>hibari LIVE</h1>
+<p class="sub">
+  정답도 실패도 없습니다. 루프가 계속 돌고, 노브를 돌리면 <b>그 자리에서</b> 음악이 바뀝니다.
+  노브는 위아래로 끌면 돌아갑니다 (휠도 됩니다).
 </p>
 
-<div class="bar">
-  <button class="primary" id="snd" type="button">🔇 소리 켜기</button>
-  <button id="newg" type="button">🔄 새 문제</button>
-  <span class="hold" id="hold">유지 0.0 / 5.0초</span>
-</div>
+<div class="rack">
+  <div class="screen">
+    <canvas id="cv" width="1720" height="430"></canvas>
+    <div class="hud" id="hud">LOADING…</div>
+  </div>
 
-<div class="stage">
-  <canvas id="cv" width="1760" height="560"></canvas>
-  <span class="badge" id="badge"></span>
-  <div class="won" id="won"><b>붙잡았습니다<small>같은 구조 · 새로 뽑은 음</small></b></div>
-</div>
+  <div class="knobs" id="knobs"></div>
 
-<div class="axes" id="axes"></div>
+  <div class="row">
+    <button class="go" id="go" type="button">▶ PLAY</button>
+    <button id="dice" type="button">🎲 RESAMPLE</button>
+    <span class="tag">LEVEL</span>
+    <span class="meter"><i id="lvl"></i></span>
+  </div>
+
+  <div class="row mat">
+    <span class="mat__l">MATERIAL</span>
+    <span id="mats"></span>
+    <span class="tag" id="matInfo"></span>
+  </div>
+</div>
 
 <p class="note">
-  <b>왜 둘이어야 하나</b> — 값이 두 손잡이의 평균이라 혼자서는 끝까지 밀 수 없고,
-  놓은 손잡이는 계속 흘러가서 동시에 붙잡아야 합니다. 규칙이 아니라 산수와 물리로 묶여 있습니다.
-  성공하면 같은 설정에서 음을 <b>새로 뽑습니다</b> — 구조는 같고 음은 다릅니다.
+  세 노브는 <b>실제로 소리를 바꾸는 것만</b> 남겼습니다 — 40회 반복 계측에서 방향이 없거나
+  아무 일도 하지 않던 축(구조 α · 온도 · 음역 가중)은 노브에서 뺐습니다.
+  α 는 대신 <b>MATERIAL</b> 선택기로 두었습니다. 소리의 방향을 바꾸지는 못하지만
+  바탕이 되는 위상 구조를 갈아 끼웁니다 (숫자 = 그 구조의 고리 수).<br>
+  <b>RESAMPLE</b> 은 설정을 그대로 두고 음만 새로 뽑습니다 — 이 파이프라인이 확률적이기 때문이고,
+  이 연구가 하려는 말이기도 합니다: <b>구조는 지키고 음은 새로 짓는다.</b>
 </p>
 </div>
 
@@ -109,76 +122,80 @@
 (function () {
   var $ = function (id) { return document.getElementById(id); };
   var cv = $('cv'), cx = cv.getContext('2d');
-  var HOLD_MS = 5000, TOL = 0.09, DRIFT = 0.085;   // 초/틈/초당 흘러가는 양
-  var KEYRATE = 0.30;                              // 키를 누를 때 움직이는 속도(초당)
   var AX = [
-    // keys[플레이어] = [올림, 내림]. 한 자판을 좌/우로 갈라 둘이 동시에 누를 수 있게 한다.
-    { id: 'h', name: '높낮이', lo: -12, hi: 12, unit: '반음',
-      keys: [['q', 'a'], ['i', 'k']] },
-    { id: 'd', name: '밀도',   lo: 0.5, hi: 2.0, unit: '배',
-      keys: [['w', 's'], ['o', 'l']] },
-    { id: 't', name: '템포',   lo: 0.6, hi: 1.8, unit: '배속',
-      keys: [['e', 'd'], ['p', ';']] },
+    { id: 'h', name: 'PITCH',   lo: -12, hi: 12,  v: 0.5,
+      fmt: function (x) { return (x > 0 ? '+' : '') + Math.round(x) + ' st'; } },
+    { id: 'd', name: 'DENSITY', lo: 0.4, hi: 2.2, v: 0.5,
+      fmt: function (x) { return x.toFixed(2) + '×'; } },
+    { id: 't', name: 'TEMPO',   lo: 0.5, hi: 2.0, v: 0.5,
+      fmt: function (x) { return x.toFixed(2) + '×'; } },
   ];
-
-  var data = null, labels = null, player = null, muted = true;
+  var data = null, labels = null, player = null;
   var mine = null, alpha = 2, seed = 101, baseSec = 0.25, MAXSEC = 1, LO = 40, HI = 90;
-  var playing = false, anchorStep = 0, anchorMs = 0, raf = 0;
-  var inSince = 0, solved = false, lastMs = 0, lastKey = '';
+  var playing = false, anchorStep = 0, anchorMs = 0, lastKey = '';
+  var real = function (a) { return a.lo + a.v * (a.hi - a.lo); };
 
-  AX.forEach(function (a) { a.p = [0.5, 0.5]; a.held = [false, false]; a.dir = [1, 1]; a.tgt = 0.5; a.key = [0, 0]; });
-  var val = function (a) { return (a.p[0] + a.p[1]) / 2; };
-  var real = function (a) { return a.lo + val(a) * (a.hi - a.lo); };
-  var okAx = function (a) { return Math.abs(val(a) - a.tgt) <= TOL; };
-  var allOk = function () { return AX.every(okAx); };
-
-  // ── UI 만들기 ──────────────────────────────────────────────────────
-  AX.forEach(function (a, i) {
+  // ── 로터리 노브 — 세로 드래그로 돌린다(실제 기기와 같은 조작) ───────
+  AX.forEach(function (a) {
     var el = document.createElement('div');
-    el.className = 'ax'; el.id = 'ax_' + a.id;
+    el.className = 'kb'; el.id = 'kb_' + a.id;
     el.innerHTML =
-      '<div class="ax__hd"><span class="ax__name">' + a.name + '</span>' +
-      '<span class="ax__st" id="st_' + a.id + '"></span></div>' +
-      '<div class="track"><i class="band" id="bd_' + a.id + '"></i>' +
-      '<i class="cur" id="cu_' + a.id + '"></i></div>' +
-      '<div class="grip">' +
-      '<div class="g g--1" id="g_' + a.id + '_0"><label>1번 ' + a.keys[0].join('/').toUpperCase() + '</label>' +
-      '<input type="range" min="0" max="1000" value="500" id="s_' + a.id + '_0"></div>' +
-      '<div class="g g--2" id="g_' + a.id + '_1"><label>2번 ' + a.keys[1].join('/').toUpperCase() + '</label>' +
-      '<input type="range" min="0" max="1000" value="500" id="s_' + a.id + '_1"></div></div>';
-    $('axes').appendChild(el);
-    [0, 1].forEach(function (k) {
-      var s = $('s_' + a.id + '_' + k);
-      s.addEventListener('input', function () { a.p[k] = +s.value / 1000; });
-      // 잡고 있는 동안만 드리프트가 멈춘다 — 이것이 "붙잡는다" 의 구현이다
-      ['pointerdown', 'touchstart'].forEach(function (e) {
-        s.addEventListener(e, function () { a.held[k] = true; mark(a, k); });
-      });
-      ['pointerup', 'pointercancel', 'touchend', 'blur', 'mouseleave'].forEach(function (e) {
-        s.addEventListener(e, function () { a.held[k] = false; mark(a, k); });
-      });
-    });
-  });
-  function mark(a, k) { $('g_' + a.id + '_' + k).classList.toggle('held', a.held[k]); }
+      '<svg viewBox="0 0 100 100" aria-hidden="true">' +
+      '<circle cx="50" cy="50" r="41" fill="none" stroke="#333d2c" stroke-width="7"' +
+      ' stroke-linecap="round" stroke-dasharray="193 300" transform="rotate(135 50 50)"/>' +
+      '<circle id="arc_' + a.id + '" cx="50" cy="50" r="41" fill="none" stroke="#8fd14f"' +
+      ' stroke-width="7" stroke-linecap="round" stroke-dasharray="0 300"' +
+      ' transform="rotate(135 50 50)"/>' +
+      '<circle cx="50" cy="50" r="30" fill="#232a1f" stroke="#3d4a34"/>' +
+      '<line id="ind_' + a.id + '" x1="50" y1="50" x2="50" y2="24" stroke="#e8efe2"' +
+      ' stroke-width="4" stroke-linecap="round"/></svg>' +
+      '<div class="kb__n">' + a.name + '</div>' +
+      '<div class="kb__v" id="kv_' + a.id + '">–</div>';
+    $('knobs').appendChild(el);
 
-  // ── 키보드 — 노트북에서 두 사람이 동시에 조작하는 유일한 방법 ──────
-  // 마우스는 하나뿐이라 포인터만으로는 둘이 동시에 붙잡을 수 없다(태블릿 제외).
-  // 키를 **누르고 있는 동안만** 그 손잡이가 움직이고 드리프트가 멎는다.
-  // 즉 어떤 손잡이도 "세워 둘" 수 없다 — 계속 눌러 줘야 한다.
-  var down = Object.create(null);
-  window.addEventListener('keydown', function (e) {
-    var k = e.key.toLowerCase();
-    if (KEYMAP[k]) { down[k] = true; e.preventDefault(); }
-  });
-  window.addEventListener('keyup', function (e) { down[e.key.toLowerCase()] = false; });
-  window.addEventListener('blur', function () { down = Object.create(null); });
-  var KEYMAP = Object.create(null);
-  AX.forEach(function (a, ai) {
-    a.keys.forEach(function (pair, k) {
-      KEYMAP[pair[0]] = { ai: ai, k: k, d: +1 };
-      KEYMAP[pair[1]] = { ai: ai, k: k, d: -1 };
+    var drag = null;
+    el.addEventListener('pointerdown', function (e) {
+      drag = { y: e.clientY, v: a.v };
+      el.setPointerCapture(e.pointerId);
+      el.classList.add('on');
+      e.preventDefault();
     });
+    el.addEventListener('pointermove', function (e) {
+      if (!drag) return;
+      a.v = Math.max(0, Math.min(1, drag.v + (drag.y - e.clientY) / 180));
+      apply();
+    });
+    ['pointerup', 'pointercancel'].forEach(function (t) {
+      el.addEventListener(t, function () { drag = null; el.classList.remove('on'); });
+    });
+    el.addEventListener('wheel', function (e) {
+      a.v = Math.max(0, Math.min(1, a.v - e.deltaY / 1200));
+      apply(); e.preventDefault();
+    }, { passive: false });
   });
+
+  function paintKnob(a) {
+    $('arc_' + a.id).setAttribute('stroke-dasharray', (193 * a.v) + ' 300');
+    $('ind_' + a.id).setAttribute('transform', 'rotate(' + (-135 + 270 * a.v) + ' 50 50)');
+    $('kv_' + a.id).textContent = a.fmt(real(a));
+  }
+
+  // ── MATERIAL (α) — 지각 축이 아니므로 노브가 아니라 선택기다 ────────
+  function buildMats() {
+    $('mats').innerHTML = '';
+    data.banks.forEach(function (b, i) {
+      var btn = document.createElement('button');
+      btn.className = 'led' + (i === alpha ? ' on' : '');
+      btn.textContent = b.K;
+      btn.title = 'α=' + b.alpha + ' · 고리 ' + b.K + '개';
+      btn.addEventListener('click', function () {
+        alpha = i; lastKey = '';
+        [].forEach.call($('mats').children, function (c, j) { c.classList.toggle('on', j === i); });
+        apply(true);
+      });
+      $('mats').appendChild(btn);
+    });
+  }
 
   // ── 생성 ───────────────────────────────────────────────────────────
   function bits(s, n) {
@@ -189,8 +206,8 @@
   function build() {
     var G = window.GenerationAlgo1, b = data.banks[alpha], T = b.T;
     var sh = Math.round(real(AX[0])), dn = real(AX[1]);
-    var key = sh + '|' + dn.toFixed(2) + '|' + seed;
-    if (mine && key === lastKey) { mine.sec = baseSec / real(AX[2]); return; }  // 템포는 재생성 불필요
+    var key = alpha + '|' + sh + '|' + dn.toFixed(2) + '|' + seed;
+    if (mine && key === lastKey) { mine.sec = baseSec / real(AX[2]); return false; }
     lastKey = key;
     var cyc = Object.keys(b.cycles).map(function (k, i) {
       return { cycle_idx: i, note_labels_0idx: b.cycles[k] };
@@ -206,16 +223,17 @@
     });
     mine = { notes: r.notes.map(function (n) { return [n[0], n[1] + sh, n[2]]; }),
              T: T, sec: baseSec / real(AX[2]) };
+    return true;
   }
 
-  // ── 소리 — 끊지 않고 현재 위치부터 잇는다 ──────────────────────────
+  // ── 재생 — 끊지 않고 현재 위치부터 잇는다 ──────────────────────────
   function posStep() {
     return playing ? anchorStep + (performance.now() - anchorMs) / 1000 / mine.sec : anchorStep;
   }
   function schedule() {
     var p = posStep() % mine.T;
     anchorStep = p; anchorMs = performance.now();
-    if (muted || !mine) return;
+    if (!playing) return;
     var out = [];
     for (var lap = 0; lap < 2; lap++)
       for (var i = 0; i < mine.notes.length; i++) {
@@ -227,109 +245,59 @@
     player.play(out, { gain: 0.7 });
   }
 
-  // ── 매 프레임: 드리프트 → 생성 → 그리기 → 유지 판정 ────────────────
-  function frame(ms) {
-    var dt = Math.min(0.1, (ms - lastMs) / 1000); lastMs = ms;
-    // 키가 눌린 손잡이는 그 방향으로 움직이고, 그동안 드리프트하지 않는다
-    AX.forEach(function (a) { a.key = [0, 0]; });
-    for (var kk in down) {
-      if (!down[kk]) continue;
-      var m = KEYMAP[kk];
-      if (m) AX[m.ai].key[m.k] += m.d;
-    }
-    AX.forEach(function (a) {
-      [0, 1].forEach(function (k) {
-        if (a.key[k]) {
-          a.p[k] = Math.max(0, Math.min(1, a.p[k] + a.key[k] * KEYRATE * dt));
-          $('s_' + a.id + '_' + k).value = Math.round(a.p[k] * 1000);
-          return;
-        }
-        if (a.held[k]) return;
-        // 손잡이마다 **독립적인** 방향. 반대 방향으로 흘리면 평균이 상쇄돼
-        // 값이 전혀 안 움직인다(1차 구현에서 실측 0.500 → 0.500 이었다).
-        a.p[k] += a.dir[k] * DRIFT * dt;
-        if (a.p[k] < 0) { a.p[k] = 0; a.dir[k] = 1; }
-        if (a.p[k] > 1) { a.p[k] = 1; a.dir[k] = -1; }
-        $('s_' + a.id + '_' + k).value = Math.round(a.p[k] * 1000);
-      });
-    });
-    var before = mine && mine.notes.length;
-    build();
-    if (playing && mine.notes.length !== before) schedule();
-    render(ms);
-    raf = requestAnimationFrame(frame);
-  }
-
-  function render(ms) {
-    AX.forEach(function (a) {
-      [0, 1].forEach(function (k) {
-        $('g_' + a.id + '_' + k).classList.toggle('held', a.held[k] || !!a.key[k]);
-      });
-    });
-    AX.forEach(function (a) {
-      var v = val(a);
-      $('bd_' + a.id).style.left = ((a.tgt - TOL) * 100) + '%';
-      $('bd_' + a.id).style.width = (TOL * 2 * 100) + '%';
-      $('cu_' + a.id).style.left = 'calc(' + (v * 100) + '% - 2px)';
-      $('st_' + a.id).textContent = real(a).toFixed(a.id === 'h' ? 0 : 2) + ' ' + a.unit
-        + (okAx(a) ? ' ✓' : '');
-      $('ax_' + a.id).classList.toggle('in', okAx(a));
-    });
-    if (allOk()) {
-      if (!inSince) inSince = ms;
-      var held = Math.min(HOLD_MS, ms - inSince);
-      $('hold').textContent = '유지 ' + (held / 1000).toFixed(1) + ' / 5.0초';
-      if (held >= HOLD_MS && !solved) win();
-    } else {
-      inSince = 0;
-      $('hold').textContent = '유지 0.0 / 5.0초';
-    }
+  function apply(force) {
+    var changed = build();
+    AX.forEach(paintKnob);
+    if (playing && (changed || force)) schedule();
     draw();
   }
 
+  // ── 화면 ───────────────────────────────────────────────────────────
   function draw() {
-    var W = cv.width, H = cv.height, pad = 14;
+    if (!mine) return;
+    var W = cv.width, H = cv.height, pad = 12;
     cx.clearRect(0, 0, W, H);
-    var css = getComputedStyle(document.documentElement);
     var xs = (W - pad * 2) / MAXSEC, ys = (H - pad * 2) / (HI - LO);
-    cx.fillStyle = css.getPropertyValue(allOk() ? '--accent' : '--ghost').trim();
-    cx.globalAlpha = allOk() ? 0.92 : 0.75;
+    var p = posStep() % mine.T;
     for (var i = 0; i < mine.notes.length; i++) {
       var n = mine.notes[i];
+      // 재생 머리가 지나는 음은 밝게 — 소리를 꺼도 "지금 여기가 울린다" 가 보인다
+      var near = playing && n[0] <= p && n[2] > p;
+      cx.fillStyle = near ? '#ffb84d' : '#5f8f45';
+      cx.globalAlpha = near ? 1 : 0.78;
       cx.fillRect(pad + n[0] * mine.sec * xs, pad + (HI - n[1]) * ys,
-                  Math.max(2.5, (n[2] - n[0]) * mine.sec * xs - 1.2), Math.max(3.5, ys * 1.2));
+                  Math.max(2, (n[2] - n[0]) * mine.sec * xs - 1), Math.max(3, ys * 1.25));
     }
     cx.globalAlpha = 1;
     if (playing) {
-      cx.fillStyle = css.getPropertyValue('--warm').trim();
-      cx.fillRect(pad + (posStep() % mine.T) * mine.sec * xs, 0, 3, H);
+      cx.fillStyle = '#ffb84d';
+      cx.fillRect(pad + p * mine.sec * xs, 0, 2.5, H);
     }
-    $('badge').textContent = '음 ' + mine.notes.length + '개 · '
-      + (mine.T * mine.sec).toFixed(1) + '초 · 고리 ' + data.banks[alpha].K + '개';
+    $('hud').textContent = mine.notes.length + ' NOTES · '
+      + (mine.T * mine.sec).toFixed(1) + 's LOOP · ' + data.banks[alpha].K + ' CYCLES';
   }
 
-  function win() {
-    solved = true;
-    $('won').classList.add('on');
-    seed = Math.floor(Math.random() * 1e6);      // 같은 설정, 새로 뽑은 음 — 보상이자 이 연구의 주장
-    lastKey = '';
-    setTimeout(function () { $('won').classList.remove('on'); newGame(true); }, 1900);
-  }
-  function newGame(keepAlpha) {
-    if (!keepAlpha) alpha = Math.floor(Math.random() * data.banks.length);
-    AX.forEach(function (a) {
-      do { a.tgt = 0.12 + Math.random() * 0.76; } while (Math.abs(a.tgt - val(a)) < 0.25);
-      a.dir = [Math.random() < 0.5 ? -1 : 1, Math.random() < 0.5 ? -1 : 1];
-    });
-    inSince = 0; solved = false;
+  function frame() {
+    if (mine) {
+      draw();
+      var p = posStep() % mine.T, act = 0;
+      for (var i = 0; i < mine.notes.length; i++)
+        if (mine.notes[i][0] <= p && mine.notes[i][2] > p) act++;
+      $('lvl').style.width = Math.min(100, act * 11) + '%';
+    }
+    requestAnimationFrame(frame);
   }
 
-  $('newg').addEventListener('click', function () { newGame(false); });
-  $('snd').addEventListener('click', function () {
-    muted = !muted;
-    this.textContent = muted ? '🔇 소리 켜기' : '🔊 소리 끄기';
-    if (muted) { playing = false; if (player) player.stop(); }
-    else { playing = true; anchorMs = performance.now(); schedule(); }
+  $('go').addEventListener('click', function () {
+    playing = !playing;
+    this.textContent = playing ? '■ STOP' : '▶ PLAY';
+    this.classList.toggle('playing', playing);
+    if (playing) { anchorMs = performance.now(); schedule(); }
+    else { anchorStep = posStep() % mine.T; if (player) player.stop(); draw(); }
+  });
+  $('dice').addEventListener('click', function () {
+    seed = Math.floor(Math.random() * 1e6); lastKey = '';   // 설정 그대로, 음만 새로
+    apply(true);
   });
 
   Promise.all([
@@ -338,20 +306,24 @@
   ]).then(function (r) {
     data = r[0]; labels = r[1].labels;
     baseSec = (data.step_ms || 250) / 1000;
-    MAXSEC = data.banks[0].T * baseSec / 0.6;
+    MAXSEC = data.banks[0].T * baseSec / AX[2].lo;      // 가장 느릴 때 길이에 x축을 고정
+    buildMats();
     build();
-    var p = mine.notes.map(function (n) { return n[1]; });
-    LO = Math.min.apply(null, p) - 16; HI = Math.max.apply(null, p) + 16;
-    newGame(false);
-    lastMs = performance.now();
-    raf = requestAnimationFrame(frame);
-  }).catch(function (e) { $('badge').textContent = '불러오기 실패 — ' + e.message; });
+    var ps = mine.notes.map(function (n) { return n[1]; });
+    LO = Math.min.apply(null, ps) - 16;
+    HI = Math.max.apply(null, ps) + 16;
+    $('matInfo').textContent = '숫자 = 고리 수';
+    apply(true);
+    requestAnimationFrame(frame);
+  }).catch(function (e) { $('hud').textContent = 'LOAD FAILED — ' + e.message; });
 
-  window.__duet = {
-    ax: AX, val: val, allOk: allOk,
-    grab: function (ai, k, v) { AX[ai].held[k] = true; AX[ai].p[k] = v; },
-    release: function (ai, k) { AX[ai].held[k] = false; },
-    step: function () { frame(performance.now()); },   // rAF 가 죽은 환경용 진단 훅
+  window.__live = {
+    ax: AX, real: real,
+    set: function (i, v) { AX[i].v = v; apply(); },
+    mat: function (i) { alpha = i; lastKey = ''; apply(true); },
+    dice: function () { $('dice').click(); },
+    info: function () { return { notes: mine.notes.length, loopSec: mine.T * mine.sec,
+                                K: data.banks[alpha].K, playing: playing }; },
   };
 })();
 </script>
