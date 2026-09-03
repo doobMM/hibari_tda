@@ -3,63 +3,60 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
 <title>hibari LIVE — 실시간 생성 계기판</title>
 <!--
-  duet.html — 실시간 생성 악기 (2026-09-03, 6판)
+  duet.html — 실시간 생성 악기 (2026-09-03, 7판)
+  (파일명은 배포 배선 때문에 유지한다. 내용은 악기다.)
 
-  게임을 접은 이유 (사용자 판정)
-  ──────────────────────────────
-  5판(조인트 손잡이 + 드리프트 + 키보드)을 실제로 해 보고 세 검사 전부 실패:
-    · 혼자서 이길 수 없다  · 둘이 해도 어렵다  · 소리를 끄면 뭘 할지 모르겠다
-  → 목표·유지 타이머·승리 조건을 **전부 제거**한다.
-    이길 것이 없으면 못 이길 일도 없다. 남는 것은 조작 그 자체다.
-  (파일명 duet.html 은 배포 배선이 걸려 있어 유지한다. 내용은 악기다.)
+  7판이 더한 것
+  ─────────────
+  ① 롤이 항상 꽉 찬다 — x축을 **현재 루프 길이**로 정규화한다.
+     6판은 "가장 느린 템포" 기준으로 고정해 템포를 가로 길이로 보여 줬는데,
+     기본 설정에서 오른쪽 60%가 비었다. 템포는 HUD 숫자로 옮긴다.
+  ② LENGTH 노브 — 음 길이(레가토↔스타카토). 생성 후 후처리라 확실히 살아 있다.
+  ③ **MOTIF** — 롤을 문질러 자기 음을 심는다. 심은 음은 **반드시 들어간다**.
+     그 시점의 생성 밀도를 낮춰 자리를 비워 주므로, 덧칠이 아니라 실제로 곡을 바꾼다.
+     ⚠ 정직하게: 이건 위상 조건부 생성(연구의 RePaint)이 아니라 **자리 양보 + 합치기**다.
+       Algorithm 1 은 모티브 제약을 받지 않으므로 여기서 흉내내지 않는다.
+  ④ **SHARE** — 설정과 모티브를 URL 에 담는다. 서로 만든 조각을 링크로 비교할 수 있다.
 
-  6판 = 계기판
-  ────────────
-  · 정답 없음, 실패 없음. **계속 도는 루프**를 노브로 실시간으로 주무른다.
-  · 실제 전자악기처럼 로터리 노브(끌어서 돌림) · 재료 선택기 · 리샘플 · 레벨 미터.
-  · 노브는 계측으로 **살아 있음이 확인된 셋**만 쓴다 (높낮이·밀도·템포).
-    α 는 지각 축이 아니므로 노브가 아니라 MATERIAL 선택기로 둔다.
-  · 소리를 꺼도 전부 보인다 — 롤·레벨·노브가 즉시 반응하고,
-    재생 머리가 지나는 음은 밝게 빛난다.
-
-  남긴 것: 5판의 **끊기지 않는 재생**. 노브를 돌려도 처음으로 돌아가지 않는다.
-  소리 정책: 자동 재생 없음 · 기본 정지.
+  유지: 끊기지 않는 재생(노브를 돌려도 처음으로 안 돌아감) · 자동 재생 없음.
+  노브는 계측으로 살아 있음이 확인된 것만 쓴다. α 는 지각 축이 아니라 MATERIAL 선택기다.
 -->
 <style>
  :root{--bg:#11140f;--panel:#1b2018;--panel2:#232a1f;--line:#333d2c;--fg:#e8efe2;
-       --dim:#93a487;--led:#8fd14f;--led2:#c9a0dc;--warm:#ffb84d}
+       --dim:#93a487;--led:#8fd14f;--led2:#c9a0dc;--warm:#ffb84d;--mot:#4fd1c9}
  *{box-sizing:border-box}
  body{margin:0;background:var(--bg);color:var(--fg);line-height:1.5;
       font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans KR",sans-serif}
  .wrap{max-width:900px;margin:0 auto;padding:18px 12px 50px}
  h1{font-size:clamp(16px,3.8vw,20px);margin:0 0 2px;font-weight:700;letter-spacing:.06em}
  .sub{color:var(--dim);font-size:12.5px;margin:0 0 14px}
-
  .rack{background:var(--panel);border:1px solid var(--line);border-radius:14px;
        padding:12px;box-shadow:inset 0 1px 0 #ffffff10}
  .screen{background:#0b0e09;border:1px solid var(--line);border-radius:9px;
          overflow:hidden;position:relative}
- canvas{display:block;width:100%;height:auto}
+ canvas{display:block;width:100%;height:auto;cursor:crosshair;touch-action:none}
  .hud{position:absolute;left:9px;top:7px;font-size:11px;color:var(--dim);
-      font-variant-numeric:tabular-nums;letter-spacing:.03em}
-
- .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:12px}
- .knobs{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}
+      font-variant-numeric:tabular-nums;letter-spacing:.03em;pointer-events:none}
+ .hint{position:absolute;right:9px;top:7px;font-size:11px;color:var(--mot);
+       pointer-events:none;letter-spacing:.02em}
+ .row{display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin-top:12px}
+ .knobs{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-top:12px}
+ @media(max-width:520px){.knobs{grid-template-columns:repeat(2,1fr)}}
  .kb{background:var(--panel2);border:1px solid var(--line);border-radius:11px;
-     padding:10px 8px 8px;text-align:center;touch-action:none;cursor:ns-resize;
+     padding:9px 6px 7px;text-align:center;touch-action:none;cursor:ns-resize;
      user-select:none;-webkit-user-select:none}
  .kb.on{border-color:var(--led)}
- .kb svg{width:100%;max-width:92px;height:auto;display:block;margin:0 auto}
- .kb__n{font-size:11px;letter-spacing:.12em;color:var(--dim);margin-top:5px}
- .kb__v{font-size:15px;font-weight:700;font-variant-numeric:tabular-nums;margin-top:1px}
-
- button{font:inherit;font-size:13.5px;padding:10px 14px;min-height:46px;border-radius:9px;
+ .kb svg{width:100%;max-width:82px;height:auto;display:block;margin:0 auto}
+ .kb__n{font-size:10.5px;letter-spacing:.11em;color:var(--dim);margin-top:5px}
+ .kb__v{font-size:14.5px;font-weight:700;font-variant-numeric:tabular-nums;margin-top:1px}
+ button{font:inherit;font-size:13.5px;padding:10px 13px;min-height:46px;border-radius:9px;
         border:1px solid var(--line);background:var(--panel2);color:var(--fg);cursor:pointer;
         letter-spacing:.04em}
  button:hover{border-color:var(--dim)}
- button.go{background:var(--led);color:#12210a;border-color:var(--led);font-weight:800;min-width:98px}
+ button.go{background:var(--led);color:#12210a;border-color:var(--led);font-weight:800;min-width:96px}
  button.go.playing{background:var(--warm);border-color:var(--warm);color:#2a1b05}
-
+ button.mot{border-color:var(--mot);color:var(--mot)}
+ button.mot.on{background:var(--mot);color:#06231f;font-weight:800}
  .mat{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
  .mat__l{font-size:11px;letter-spacing:.12em;color:var(--dim);margin-right:2px}
  #mats{display:flex;gap:6px;flex-wrap:wrap}
@@ -67,27 +64,31 @@
       background:var(--panel2);color:var(--dim);font-size:11.5px;font-weight:700;
       display:grid;place-items:center;cursor:pointer;padding:0;min-height:36px}
  .led.on{background:var(--led2);border-color:var(--led2);color:#1a0f22}
-
- .meter{flex:1 1 140px;min-width:110px;height:14px;border-radius:7px;background:#0b0e09;
+ .meter{flex:1 1 120px;min-width:100px;height:14px;border-radius:7px;background:#0b0e09;
         border:1px solid var(--line);overflow:hidden}
  .meter i{display:block;height:100%;width:0;
           background:linear-gradient(90deg,var(--led),var(--warm));transition:width .09s linear}
  .tag{font-size:11px;color:var(--dim);letter-spacing:.1em}
  .note{font-size:12px;color:var(--dim);margin-top:14px;line-height:1.75}
  .note b{color:var(--fg)}
+ .toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--led);
+        color:#12210a;font-weight:700;padding:10px 18px;border-radius:9px;font-size:13.5px;
+        opacity:0;pointer-events:none;transition:opacity .2s}
+ .toast.on{opacity:1}
 </style>
 
 <div class="wrap">
 <h1>hibari LIVE</h1>
 <p class="sub">
   정답도 실패도 없습니다. 루프가 계속 돌고, 노브를 돌리면 <b>그 자리에서</b> 음악이 바뀝니다.
-  노브는 위아래로 끌면 돌아갑니다 (휠도 됩니다).
+  <b>MOTIF</b> 를 켜고 화면을 문지르면 자기 음을 심을 수 있습니다.
 </p>
 
 <div class="rack">
   <div class="screen">
-    <canvas id="cv" width="1720" height="430"></canvas>
+    <canvas id="cv" width="1720" height="440"></canvas>
     <div class="hud" id="hud">LOADING…</div>
+    <div class="hint" id="hint"></div>
   </div>
 
   <div class="knobs" id="knobs"></div>
@@ -99,22 +100,32 @@
     <span class="meter"><i id="lvl"></i></span>
   </div>
 
+  <div class="row">
+    <button class="mot" id="mot" type="button">✎ MOTIF</button>
+    <button id="motClr" type="button">지우기</button>
+    <button id="share" type="button">⧉ SHARE</button>
+    <span class="tag" id="motInfo">모티브 0음</span>
+  </div>
+
   <div class="row mat">
     <span class="mat__l">MATERIAL</span>
     <span id="mats"></span>
-    <span class="tag" id="matInfo"></span>
+    <span class="tag">숫자 = 고리 수</span>
   </div>
 </div>
 
 <p class="note">
-  세 노브는 <b>실제로 소리를 바꾸는 것만</b> 남겼습니다 — 40회 반복 계측에서 방향이 없거나
+  네 노브는 <b>실제로 소리를 바꾸는 것만</b> 남겼습니다 — 40회 반복 계측에서 방향이 없거나
   아무 일도 하지 않던 축(구조 α · 온도 · 음역 가중)은 노브에서 뺐습니다.
-  α 는 대신 <b>MATERIAL</b> 선택기로 두었습니다. 소리의 방향을 바꾸지는 못하지만
-  바탕이 되는 위상 구조를 갈아 끼웁니다 (숫자 = 그 구조의 고리 수).<br>
-  <b>RESAMPLE</b> 은 설정을 그대로 두고 음만 새로 뽑습니다 — 이 파이프라인이 확률적이기 때문이고,
-  이 연구가 하려는 말이기도 합니다: <b>구조는 지키고 음은 새로 짓는다.</b>
+  α 는 <b>MATERIAL</b> 선택기로 두어 바탕 위상 구조를 갈아 끼웁니다.<br>
+  <b>MOTIF</b> — 심은 음은 반드시 들어가고, 그 시점의 생성 밀도를 낮춰 자리를 비웁니다.
+  덧칠이 아니라 곡이 실제로 바뀝니다. (다만 이것은 위상 조건부 생성이 아니라 자리 양보입니다.)<br>
+  <b>SHARE</b> — 설정과 모티브가 주소에 담깁니다. 링크를 주고받으면 같은 조각을 들을 수 있습니다.
+  <b>RESAMPLE</b> 은 설정을 그대로 두고 음만 새로 뽑습니다 — 구조는 지키고 음은 새로 짓습니다.
 </p>
 </div>
+
+<div class="toast" id="toast"></div>
 
 <script src="./hibari_dashboard/public/js/generation-algo1.js"></script>
 <script src="./hibari_dashboard/public/js/audio-playback.js"></script>
@@ -123,19 +134,23 @@
   var $ = function (id) { return document.getElementById(id); };
   var cv = $('cv'), cx = cv.getContext('2d');
   var AX = [
-    { id: 'h', name: 'PITCH',   lo: -12, hi: 12,  v: 0.5,
+    { id: 'h', k: 'p', name: 'PITCH',   lo: -12, hi: 12,  v: 0.5,
       fmt: function (x) { return (x > 0 ? '+' : '') + Math.round(x) + ' st'; } },
-    { id: 'd', name: 'DENSITY', lo: 0.4, hi: 2.2, v: 0.5,
+    { id: 'd', k: 'd', name: 'DENSITY', lo: 0.4, hi: 2.2, v: 0.5,
       fmt: function (x) { return x.toFixed(2) + '×'; } },
-    { id: 't', name: 'TEMPO',   lo: 0.5, hi: 2.0, v: 0.5,
+    { id: 't', k: 't', name: 'TEMPO',   lo: 0.5, hi: 2.0, v: 0.5,
+      fmt: function (x) { return x.toFixed(2) + '×'; } },
+    { id: 'g', k: 'g', name: 'LENGTH',  lo: 0.4, hi: 3.0, v: 0.23,
       fmt: function (x) { return x.toFixed(2) + '×'; } },
   ];
   var data = null, labels = null, player = null;
-  var mine = null, alpha = 2, seed = 101, baseSec = 0.25, MAXSEC = 1, LO = 40, HI = 90;
+  var mine = null, alpha = 2, seed = 101, baseSec = 0.25, LO = 40, HI = 90;
   var playing = false, anchorStep = 0, anchorMs = 0, lastKey = '';
+  var motif = Object.create(null), motifOn = false, painting = 0;
   var real = function (a) { return a.lo + a.v * (a.hi - a.lo); };
+  var T0 = 120;                                  // 뱅크 루프 길이(로드 시 갱신)
 
-  // ── 로터리 노브 — 세로 드래그로 돌린다(실제 기기와 같은 조작) ───────
+  // ── 로터리 노브 ────────────────────────────────────────────────────
   AX.forEach(function (a) {
     var el = document.createElement('div');
     el.className = 'kb'; el.id = 'kb_' + a.id;
@@ -152,13 +167,10 @@
       '<div class="kb__n">' + a.name + '</div>' +
       '<div class="kb__v" id="kv_' + a.id + '">–</div>';
     $('knobs').appendChild(el);
-
     var drag = null;
     el.addEventListener('pointerdown', function (e) {
-      drag = { y: e.clientY, v: a.v };
-      el.setPointerCapture(e.pointerId);
-      el.classList.add('on');
-      e.preventDefault();
+      drag = { y: e.clientY, v: a.v }; el.setPointerCapture(e.pointerId);
+      el.classList.add('on'); e.preventDefault();
     });
     el.addEventListener('pointermove', function (e) {
       if (!drag) return;
@@ -169,33 +181,55 @@
       el.addEventListener(t, function () { drag = null; el.classList.remove('on'); });
     });
     el.addEventListener('wheel', function (e) {
-      a.v = Math.max(0, Math.min(1, a.v - e.deltaY / 1200));
-      apply(); e.preventDefault();
+      a.v = Math.max(0, Math.min(1, a.v - e.deltaY / 1200)); apply(); e.preventDefault();
     }, { passive: false });
   });
-
   function paintKnob(a) {
     $('arc_' + a.id).setAttribute('stroke-dasharray', (193 * a.v) + ' 300');
     $('ind_' + a.id).setAttribute('transform', 'rotate(' + (-135 + 270 * a.v) + ' 50 50)');
     $('kv_' + a.id).textContent = a.fmt(real(a));
   }
 
-  // ── MATERIAL (α) — 지각 축이 아니므로 노브가 아니라 선택기다 ────────
-  function buildMats() {
-    $('mats').innerHTML = '';
-    data.banks.forEach(function (b, i) {
-      var btn = document.createElement('button');
-      btn.className = 'led' + (i === alpha ? ' on' : '');
-      btn.textContent = b.K;
-      btn.title = 'α=' + b.alpha + ' · 고리 ' + b.K + '개';
-      btn.addEventListener('click', function () {
-        alpha = i; lastKey = '';
-        [].forEach.call($('mats').children, function (c, j) { c.classList.toggle('on', j === i); });
-        apply(true);
-      });
-      $('mats').appendChild(btn);
-    });
+  // ── 모티브 — 롤을 문질러 심는다 ────────────────────────────────────
+  var PAD = 12;
+  function cellFrom(e) {
+    var r = cv.getBoundingClientRect();
+    var x = (e.clientX - r.left) / r.width * cv.width;
+    var y = (e.clientY - r.top) / r.height * cv.height;
+    var st = Math.floor((x - PAD) / ((cv.width - PAD * 2) / T0));
+    var pi = Math.round(HI - (y - PAD) / ((cv.height - PAD * 2) / (HI - LO)));
+    if (st < 0 || st >= T0 || pi < LO || pi > HI) return null;
+    return st + ':' + pi;
   }
+  function motifCount() { return Object.keys(motif).length; }
+  function paintCell(e) {
+    var c = cellFrom(e);
+    if (!c) return;
+    if (painting === 1) motif[c] = 1; else delete motif[c];
+    $('motInfo').textContent = '모티브 ' + motifCount() + '음';
+    lastKey = ''; apply(true);
+  }
+  cv.addEventListener('pointerdown', function (e) {
+    if (!motifOn) return;
+    var c = cellFrom(e);
+    painting = (c && motif[c]) ? 2 : 1;         // 이미 있으면 지우기 모드
+    cv.setPointerCapture(e.pointerId); paintCell(e); e.preventDefault();
+  });
+  cv.addEventListener('pointermove', function (e) { if (motifOn && painting) paintCell(e); });
+  ['pointerup', 'pointercancel'].forEach(function (t) {
+    cv.addEventListener(t, function () { painting = 0; });
+  });
+  $('mot').addEventListener('click', function () {
+    motifOn = !motifOn;
+    this.classList.toggle('on', motifOn);
+    $('hint').textContent = motifOn ? '문질러서 음을 심으세요 (다시 문지르면 지워집니다)' : '';
+    cv.style.cursor = motifOn ? 'crosshair' : 'default';
+  });
+  $('motClr').addEventListener('click', function () {
+    motif = Object.create(null);
+    $('motInfo').textContent = '모티브 0음';
+    lastKey = ''; apply(true);
+  });
 
   // ── 생성 ───────────────────────────────────────────────────────────
   function bits(s, n) {
@@ -205,15 +239,22 @@
   }
   function build() {
     var G = window.GenerationAlgo1, b = data.banks[alpha], T = b.T;
-    var sh = Math.round(real(AX[0])), dn = real(AX[1]);
-    var key = alpha + '|' + sh + '|' + dn.toFixed(2) + '|' + seed;
+    var sh = Math.round(real(AX[0])), dn = real(AX[1]), gl = real(AX[3]);
+    var key = alpha + '|' + sh + '|' + dn.toFixed(2) + '|' + gl.toFixed(2) + '|' + seed
+            + '|' + Object.keys(motif).sort().join(',');
     if (mine && key === lastKey) { mine.sec = baseSec / real(AX[2]); return false; }
     lastKey = key;
+
+    // 모티브가 있는 시점은 생성 밀도를 낮춰 **자리를 비운다** — 덧칠이 아니다
+    var perStep = new Int32Array(T);
+    for (var mk in motif) perStep[+mk.split(':')[0]]++;
+
     var cyc = Object.keys(b.cycles).map(function (k, i) {
       return { cycle_idx: i, note_labels_0idx: b.cycles[k] };
     });
     var base = G.buildHibariInstLen(T), len = new Int32Array(T);
-    for (var i = 0; i < T; i++) len[i] = Math.max(0, Math.round(base[i] * dn));
+    for (var i = 0; i < T; i++)
+      len[i] = Math.max(0, Math.round(base[i] * dn) - perStep[i]);
     var rng = G.makeRng(seed);
     var r = G.algorithm1({
       nodePool: new G.NodePool({ labels: labels, numModules: 65, temperature: 1.0, rng: rng }),
@@ -221,8 +262,16 @@
       instLen: len, overlap: { T: T, K: b.K, values: bits(b.om_bits, T * b.K) },
       maxResample: 50, rng: rng,
     });
-    mine = { notes: r.notes.map(function (n) { return [n[0], n[1] + sh, n[2]]; }),
-             T: T, sec: baseSec / real(AX[2]) };
+    var ns = r.notes.map(function (n) {
+      var d = Math.max(1, Math.round((n[2] - n[0]) * gl));      // LENGTH — 레가토↔스타카토
+      return [n[0], n[1] + sh, Math.min(T, n[0] + d)];
+    });
+    var mnotes = [];
+    for (var mk2 in motif) {                                    // 심은 음은 반드시 들어간다
+      var q = mk2.split(':'), st = +q[0], pi = +q[1];
+      mnotes.push([st, pi, Math.min(T, st + Math.max(1, Math.round(2 * gl)))]);
+    }
+    mine = { notes: ns.concat(mnotes), gen: ns, mot: mnotes, T: T, sec: baseSec / real(AX[2]) };
     return true;
   }
 
@@ -244,7 +293,6 @@
     player = player || new window.PianoPlayer();
     player.play(out, { gain: 0.7 });
   }
-
   function apply(force) {
     var changed = build();
     AX.forEach(paintKnob);
@@ -252,31 +300,32 @@
     draw();
   }
 
-  // ── 화면 ───────────────────────────────────────────────────────────
+  // ── 화면 — x축은 **현재 루프 길이**로 정규화한다(항상 꽉 참) ────────
   function draw() {
     if (!mine) return;
-    var W = cv.width, H = cv.height, pad = 12;
+    var W = cv.width, H = cv.height;
     cx.clearRect(0, 0, W, H);
-    var xs = (W - pad * 2) / MAXSEC, ys = (H - pad * 2) / (HI - LO);
+    var xs = (W - PAD * 2) / mine.T, ys = (H - PAD * 2) / (HI - LO);
     var p = posStep() % mine.T;
-    for (var i = 0; i < mine.notes.length; i++) {
-      var n = mine.notes[i];
-      // 재생 머리가 지나는 음은 밝게 — 소리를 꺼도 "지금 여기가 울린다" 가 보인다
-      var near = playing && n[0] <= p && n[2] > p;
-      cx.fillStyle = near ? '#ffb84d' : '#5f8f45';
-      cx.globalAlpha = near ? 1 : 0.78;
-      cx.fillRect(pad + n[0] * mine.sec * xs, pad + (HI - n[1]) * ys,
-                  Math.max(2, (n[2] - n[0]) * mine.sec * xs - 1), Math.max(3, ys * 1.25));
+    function bar(n, col, alp, th) {
+      cx.fillStyle = col; cx.globalAlpha = alp;
+      cx.fillRect(PAD + n[0] * xs, PAD + (HI - n[1]) * ys,
+                  Math.max(2, (n[2] - n[0]) * xs - 1), Math.max(3, ys * th));
+    }
+    for (var i = 0; i < mine.gen.length; i++) {
+      var n = mine.gen[i], near = playing && n[0] <= p && n[2] > p;
+      bar(n, near ? '#ffb84d' : '#5f8f45', near ? 1 : 0.78, 1.25);
+    }
+    for (var j = 0; j < mine.mot.length; j++) {                 // 심은 음은 다른 색
+      var m = mine.mot[j], nm = playing && m[0] <= p && m[2] > p;
+      bar(m, nm ? '#ffffff' : '#4fd1c9', 1, 1.6);
     }
     cx.globalAlpha = 1;
-    if (playing) {
-      cx.fillStyle = '#ffb84d';
-      cx.fillRect(pad + p * mine.sec * xs, 0, 2.5, H);
-    }
+    if (playing) { cx.fillStyle = '#ffb84d'; cx.fillRect(PAD + p * xs, 0, 2.5, H); }
     $('hud').textContent = mine.notes.length + ' NOTES · '
-      + (mine.T * mine.sec).toFixed(1) + 's LOOP · ' + data.banks[alpha].K + ' CYCLES';
+      + (mine.T * mine.sec).toFixed(1) + 's LOOP · ' + data.banks[alpha].K + ' CYCLES'
+      + (mine.mot.length ? ' · ' + mine.mot.length + ' MOTIF' : '');
   }
-
   function frame() {
     if (mine) {
       draw();
@@ -288,6 +337,66 @@
     requestAnimationFrame(frame);
   }
 
+  // ── 공유 — 설정과 모티브를 주소에 담는다 ───────────────────────────
+  function toHash() {
+    var q = AX.map(function (a) { return a.k + a.v.toFixed(3); }).join('_')
+          + '_a' + alpha + '_s' + seed
+          + '_m' + Object.keys(motif).map(function (c) {
+              var x = c.split(':');
+              return (+x[0]).toString(36) + '.' + (+x[1]).toString(36);
+            }).join('-');
+    return '#' + q;
+  }
+  function fromHash() {
+    var h = location.hash.slice(1);
+    if (!h) return false;
+    h.split('_').forEach(function (tok) {
+      var k = tok[0], v = tok.slice(1);
+      if (k === 'a') alpha = Math.max(0, Math.min(data.banks.length - 1, +v || 0));
+      else if (k === 's') seed = +v || 101;
+      else if (k === 'm') {
+        motif = Object.create(null);
+        if (v) v.split('-').forEach(function (pr) {
+          var q = pr.split('.');
+          if (q.length === 2) motif[parseInt(q[0], 36) + ':' + parseInt(q[1], 36)] = 1;
+        });
+      } else {
+        AX.forEach(function (a) { if (a.k === k) a.v = Math.max(0, Math.min(1, +v)); });
+      }
+    });
+    return true;
+  }
+  $('share').addEventListener('click', function () {
+    var url = location.origin + location.pathname + toHash();
+    history.replaceState(null, '', toHash());
+    var done = function () { toast('링크를 복사했습니다 — 붙여넣어 공유하세요'); };
+    if (navigator.clipboard) navigator.clipboard.writeText(url).then(done, function () {
+      toast('주소창의 주소를 복사하세요');
+    });
+    else toast('주소창의 주소를 복사하세요');
+  });
+  var tid = 0;
+  function toast(m) {
+    $('toast').textContent = m; $('toast').classList.add('on');
+    clearTimeout(tid); tid = setTimeout(function () { $('toast').classList.remove('on'); }, 2200);
+  }
+
+  function buildMats() {
+    $('mats').innerHTML = '';
+    data.banks.forEach(function (b, i) {
+      var btn = document.createElement('button');
+      btn.className = 'led' + (i === alpha ? ' on' : '');
+      btn.textContent = b.K;
+      btn.title = 'α=' + b.alpha + ' · 고리 ' + b.K + '개';
+      btn.addEventListener('click', function () {
+        alpha = i; lastKey = '';
+        [].forEach.call($('mats').children, function (c, j) { c.classList.toggle('on', j === i); });
+        apply(true);
+      });
+      $('mats').appendChild(btn);
+    });
+  }
+
   $('go').addEventListener('click', function () {
     playing = !playing;
     this.textContent = playing ? '■ STOP' : '▶ PLAY';
@@ -296,8 +405,7 @@
     else { anchorStep = posStep() % mine.T; if (player) player.stop(); draw(); }
   });
   $('dice').addEventListener('click', function () {
-    seed = Math.floor(Math.random() * 1e6); lastKey = '';   // 설정 그대로, 음만 새로
-    apply(true);
+    seed = Math.floor(Math.random() * 1e6); lastKey = ''; apply(true);
   });
 
   Promise.all([
@@ -306,13 +414,14 @@
   ]).then(function (r) {
     data = r[0]; labels = r[1].labels;
     baseSec = (data.step_ms || 250) / 1000;
-    MAXSEC = data.banks[0].T * baseSec / AX[2].lo;      // 가장 느릴 때 길이에 x축을 고정
+    T0 = data.banks[0].T;
+    fromHash();
     buildMats();
     build();
-    var ps = mine.notes.map(function (n) { return n[1]; });
+    var ps = mine.gen.map(function (n) { return n[1]; });
     LO = Math.min.apply(null, ps) - 16;
     HI = Math.max.apply(null, ps) + 16;
-    $('matInfo').textContent = '숫자 = 고리 수';
+    $('motInfo').textContent = '모티브 ' + motifCount() + '음';
     apply(true);
     requestAnimationFrame(frame);
   }).catch(function (e) { $('hud').textContent = 'LOAD FAILED — ' + e.message; });
@@ -322,8 +431,15 @@
     set: function (i, v) { AX[i].v = v; apply(); },
     mat: function (i) { alpha = i; lastKey = ''; apply(true); },
     dice: function () { $('dice').click(); },
-    info: function () { return { notes: mine.notes.length, loopSec: mine.T * mine.sec,
-                                K: data.banks[alpha].K, playing: playing }; },
+    plant: function (st, pi) { motif[st + ':' + pi] = 1; lastKey = ''; apply(true); },
+    clear: function () { $('motClr').click(); },
+    hash: toHash,
+    info: function () {
+      return { notes: mine.notes.length, gen: mine.gen.length, mot: mine.mot.length,
+               loopSec: +(mine.T * mine.sec).toFixed(2), K: data.banks[alpha].K,
+               avgLen: +(mine.gen.reduce(function (s, n) { return s + n[2] - n[0]; }, 0)
+                         / Math.max(1, mine.gen.length)).toFixed(2) };
+    },
   };
 })();
 </script>
