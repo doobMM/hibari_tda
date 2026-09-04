@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="ko" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>hibari+ — 원곡과 생성곡 9트랙</title>
+<link rel="stylesheet" href="../../hibari_dashboard/public/css/tokens.css">
+<style>
+  body { margin:0; background:var(--surface-base); color:var(--text-primary);
+         font-family:'Noto Sans KR',system-ui,sans-serif; line-height:1.65; }
+  .wrap { max-width:760px; margin:0 auto; padding:32px 18px 80px; }
+  a { color:var(--accent-teal); }
+  h1 { font-size:clamp(22px,4.6vw,30px); margin:0 0 6px; letter-spacing:-0.01em; }
+  .sub { color:var(--text-secondary); font-size:15px; margin:0 0 22px; }
+  .note { border-left:3px solid var(--accent-amber); background:var(--accent-amber-dim);
+          padding:12px 14px; border-radius:0 8px 8px 0; font-size:14px;
+          color:var(--text-secondary); margin:18px 0 26px; }
+  ul { list-style:none; padding:0; margin:0; }
+  .trk { background:var(--surface-overlay); border:1px solid var(--border-hairline);
+         border-radius:10px; padding:14px 16px; margin-bottom:14px; }
+  .trk__head { display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; }
+  .tag { font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--accent-teal);
+         background:var(--accent-teal-dim); border:1px solid var(--accent-teal-border);
+         border-radius:999px; padding:2px 10px; }
+  .trk__cfg { font-family:'JetBrains Mono',monospace; font-size:12px;
+              color:var(--text-tertiary); margin:6px 0 2px; word-break:break-word; }
+  .trk__js { font-family:'JetBrains Mono',monospace; font-size:12.5px;
+             color:var(--text-secondary); margin-bottom:10px; }
+  .seed { color:var(--text-tertiary); font-size:11.5px; }
+  audio { width:100%; min-height:44px; }
+  footer { margin-top:34px; font-size:13px; color:var(--text-tertiary); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <p style="margin:0 0 14px"><a href="../../../">← 처음으로</a></p>
+  <h1>원곡과 생성곡, 나란히 듣기</h1>
+  <p class="sub">사카모토 류이치 <b>hibari</b> 원곡(v0)과, 같은 곡의 위상 구조로 생성한
+     8트랙. <b>맨 위 v0 부터 들으신 뒤</b> 아래로 내려가시면 설정이 바뀔 때
+     소리가 어떻게 달라지는지 비교됩니다. 자동 재생은 하지 않습니다.</p>
+
+  <div class="note">
+    ⚠ 각 줄의 JS 값은 <b>그 파일 하나를 만들 때 나온 1회 산출값</b>입니다(시드 1개).
+    논문의 대표값(20시드 평균)과 다르며, 트랙 간 우열의 근거로 쓸 수 없습니다.
+    그리고 <b>JS 가 낮다 = 원곡에 가깝다</b>는 뜻이지 "더 좋다"는 뜻이 아닙니다 —
+    수치가 가장 낮은 v5(신경망)는 청취에서 <b>원곡 모사</b>로 들립니다.
+    출처: 같은 폴더의 <code>metadata.json</code> (2026-04-20 렌더).
+  </div>
+
+  <ul>
+      <li class="trk">
+        <div class="trk__head"><span class="tag">v0</span><b>원곡 비교 기준</b></div>
+        <div class="trk__cfg">original midi render</div>
+        <div class="trk__js"><span class="seed">비교 기준</span></div>
+        <audio controls preload="none" src="./v0_hibari_original.ogg"></audio>
+      </li>
+      <li class="trk">
+        <div class="trk__head"><span class="tag">v1</span><b>Baseline: frequency distance + binary OM</b></div>
+        <div class="trk__cfg">metric=frequency, alpha=0.5, overlap=binary, gap=0</div>
+        <div class="trk__js">0.03352 <span class="seed">시드 1002</span></div>
+        <audio controls preload="none" src="./v1_algo1_frequency_binary.ogg"></audio>
+      </li>
+      <li class="trk">
+        <div class="trk__head"><span class="tag">v2</span><b>+DFT distance (§4.1)</b></div>
+        <div class="trk__cfg">metric=dft, alpha=0.5, ow=0.3, dw=1.0, overlap=binary</div>
+        <div class="trk__js">0.01445 <span class="seed">시드 2002</span></div>
+        <audio controls preload="none" src="./v2_algo1_dft_binary.ogg"></audio>
+      </li>
+      <li class="trk">
+        <div class="trk__head"><span class="tag">v3</span><b>+per-cycle τ continuous OM (§5.7)</b></div>
+        <div class="trk__cfg">metric=dft, alpha=0.5, overlap=continuous-&gt;per-cycle tau</div>
+        <div class="trk__js">0.01437 <span class="seed">시드 9004</span></div>
+        <audio controls preload="none" src="./v3_algo1_dft_percycle_tau_alpha05.ogg"></audio>
+      </li>
+      <li class="trk">
+        <div class="trk__head"><span class="tag">v4</span><b>+α=0.25 Phase 2 최저 Algo1 (§5.8.1)</b></div>
+        <div class="trk__cfg">metric=dft, alpha=0.25, K=14, overlap=continuous-&gt;per-cycle tau</div>
+        <div class="trk__js">0.01065 <span class="seed">시드 7204</span></div>
+        <audio controls preload="none" src="./v4_algo1_dft_percycle_alpha025.ogg"></audio>
+      </li>
+      <li class="trk">
+        <div class="trk__head"><span class="tag">v5</span><b>Algo2 FC-cont 본 연구 최저 (§5.8.2)</b></div>
+        <div class="trk__cfg">FC, metric=dft, alpha=0.5, overlap=continuous</div>
+        <div class="trk__js">0.00022 <span class="seed">시드 6111</span></div>
+        <audio controls preload="none" src="./v5_algo2_fc_cont_dft_alpha05.ogg"></audio>
+      </li>
+      <li class="trk">
+        <div class="trk__head"><span class="tag">v6</span><b>§6 블록 단위 best global trial (§6.6)</b></div>
+        <div class="trk__cfg">metric=dft, alpha=0.25, block_len=32, m=0, P3 + best-of-10</div>
+        <div class="trk__js">0.01479 <span class="seed">시드 9309</span></div>
+        <audio controls preload="none" src="./v6_block_p3_bestof10_m0.ogg"></audio>
+      </li>
+      <li class="trk">
+        <div class="trk__head"><span class="tag">vD</span><b>위상은 유지하고 <b>음역을 일부러 다르게</b> 쓴 변주. 원곡과 가장 다르게 들린다.</b></div>
+        <div class="trk__cfg">Tonnetz · Transformer · note 재분배(scale_major) + 시간 재배치</div>
+        <div class="trk__js"><span class="seed">JS 미기재 — metadata.json 에 없다</span></div>
+        <audio controls preload="none" src="./vD_tonnetz_transformer.ogg"></audio>
+      </li>
+      <li class="trk">
+        <div class="trk__head"><span class="tag">vH</span><b>레거시 Complex 가중 모드 산출물.</b></div>
+        <div class="trk__cfg">Tonnetz · Complex(r_c=0.1) · per-cycle τ · α=0.25</div>
+        <div class="trk__js"><span class="seed">JS 미기재 — metadata.json 에 없다</span></div>
+        <audio controls preload="none" src="./vH_tonnetz_complex_legacy.ogg"></audio>
+      </li>
+  </ul>
+
+  <footer>
+    렌더링: UprightPiano KW SF2 · 44.1 kHz · 서스테인 페달 + Reverb + Chorus.
+    설정·길이 상세는 <a href="./README.md">README.md</a>, 원본 수치는
+    <a href="./metadata.json">metadata.json</a>.
+  </footer>
+</div>
+</body>
+</html>
