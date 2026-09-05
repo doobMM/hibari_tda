@@ -426,7 +426,13 @@
     var sh = Math.round(real(AX[0])), dn = real(AX[1]), gl = real(AX[3]);
     var key = alpha + '|' + sh + '|' + dn.toFixed(2) + '|' + gl.toFixed(2) + '|' + seed
             + '|' + Object.keys(motif).sort().join(',');
-    if (mine && key === lastKey) { mine.sec = baseSec / real(AX[2]); return false; }
+    var sec = baseSec / real(AX[2]);            // 템포는 key 에 없다 — 음이 아니라 재생속도라서
+    if (mine && key === lastKey) {
+      if (Math.abs(mine.sec - sec) < 1e-9) return false;
+      // ⚠ 템포만 바뀐 경우에도 **재예약해야** 한다. 예약된 오디오는 옛 속도로 돌고 있다.
+      reanchor(); mine.sec = sec; return true;
+    }
+    reanchor();                                 // 새 mine 으로 갈아 끼우기 **전에** 위치 고정
     lastKey = key;
 
     // 모티브가 있는 시점은 생성 밀도를 낮춰 **자리를 비운다** — 덧칠이 아니다
@@ -455,7 +461,7 @@
       var q = mk2.split(':'), st = +q[0], pi = +q[1];
       mnotes.push([st, pi, Math.min(T, st + Math.max(1, Math.round(2 * gl)))]);
     }
-    mine = { notes: ns.concat(mnotes), gen: ns, mot: mnotes, T: T, sec: baseSec / real(AX[2]) };
+    mine = { notes: ns.concat(mnotes), gen: ns, mot: mnotes, T: T, sec: sec };
     return true;
   }
 
@@ -463,9 +469,18 @@
   function posStep() {
     return playing ? anchorStep + (performance.now() - anchorMs) / 1000 / mine.sec : anchorStep;
   }
+  /* sec(스텝당 초)을 바꾸기 **전에** 반드시 부른다.
+   * posStep 은 흘러간 실시간을 sec 으로 나눈다. sec 을 먼저 바꾸면 **이미 지나간 시간까지**
+   * 새 속도로 다시 환산돼 위치가 튄다. 그 튄 위치에서 이어 붙이면 소리가 건너뛰거나
+   * 통째로 빈다 — 사용자가 "건드리면 멈춘다"고 느낀 원인 중 하나다. */
+  function reanchor() {
+    if (playing && mine) { anchorStep = posStep() % mine.T; anchorMs = performance.now(); }
+  }
+  var reTid = 0;
   function schedule() {
     var p = posStep() % mine.T;
     anchorStep = p; anchorMs = performance.now();
+    clearTimeout(reTid);
     if (!playing) return;
     var out = [];
     for (var lap = 0; lap < 2; lap++)
@@ -476,6 +491,10 @@
       }
     player = player || new window.PianoPlayer();
     player.play(out, { gain: 0.7 });
+    /* 위에서 **두 바퀴만** 예약한다. 그냥 두면 두 바퀴 뒤에 그냥 끝난다(예전엔 그랬다).
+     * 한 바퀴가 끝나는 시점에 다시 이어 붙여 항상 앞으로 두 바퀴가 남아 있게 한다. */
+    reTid = setTimeout(function () { if (playing) schedule(); },
+                       Math.max(250, (mine.T - p) * mine.sec * 1000));
   }
   function apply(force) {
     var changed = build();
@@ -587,7 +606,8 @@
     this.textContent = playing ? '■ STOP' : '▶ PLAY';
     this.classList.toggle('playing', playing);
     if (playing) { anchorMs = performance.now(); schedule(); }
-    else { anchorStep = posStep() % mine.T; if (player) player.stop(); draw(); }
+    else { anchorStep = posStep() % mine.T; clearTimeout(reTid);
+           if (player) player.stop(); draw(); }
   });
   $('dice').addEventListener('click', function () {
     seed = Math.floor(Math.random() * 1e6); lastKey = ''; apply(true);
@@ -627,6 +647,9 @@
     },
     h0now: function () { return tzH0(tzWeights(mine ? posStep() % mine.T : 0)); },
     h0at: function (st) { return tzH0(tzWeights(st)); },
+    pos: function () { return { step: posStep(), mod: posStep() % mine.T,
+                                sec: mine.sec, T: mine.T, playing: playing,
+                                anchorStep: anchorStep }; },
     info: function () {
       return { notes: mine.notes.length, gen: mine.gen.length, mot: mine.mot.length,
                loopSec: +(mine.T * mine.sec).toFixed(2), K: data.banks[alpha].K,
