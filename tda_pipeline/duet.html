@@ -18,6 +18,23 @@
        Algorithm 1 은 모티브 제약을 받지 않으므로 여기서 흉내내지 않는다.
   ④ **SHARE** — 설정과 모티브를 URL 에 담는다. 서로 만든 조각을 링크로 비교할 수 있다.
 
+  8판이 더한 것 (2026-09-05)
+  ─────────────
+  ⑤ **TONNETZ (H0)** — 지금 울리는 음들이 Tonnetz 격자 위에서 **몇 덩어리로
+     갈라지는지**를 실시간으로 읽는다. Bergomi & Barate (2020, J. Math. Music)
+     의 설계를 빌렸다 — 복합체는 **고정**(12 음이름의 Tonnetz, 위상적으로 원환면),
+     여과는 **꼭짓점 위 높이함수**(그 순간 울리는 세기), 차수는 **H0**.
+
+     ⚠ 이건 **계기이지 생성기가 아니다.**
+       생성은 그대로 **H1 중첩행렬**이 한다 — 이 연구 설계의 핵심이고 바꾸지 않는다.
+       이 창은 H1 이 만들어 낸 음을 H0 으로 **읽기만** 한다. 둘은 다른 대상이다:
+         · H1 (생성) — note 거리행렬의 Vietoris-Rips 에서 나온 **고리**. 곡 전체 구조.
+         · H0 (계기) — 고정 Tonnetz 위 **연결성분**. 지금 이 순간의 화성 응집도.
+       H0 이 무엇을 보여 주든 H1 파이프라인의 근거가 되거나 반증이 되지 않는다.
+
+     왜 고정 복합체인가: 매 프레임 PH 를 다시 돌 수 있기 때문이다. 우리 H1 경로는
+     설정마다 PH 를 새로 돌아야 해서 α 6단계를 미리 구워 뱅크로 들고 있다.
+
   유지: 끊기지 않는 재생(노브를 돌려도 처음으로 안 돌아감) · 자동 재생 없음.
   노브는 계측으로 살아 있음이 확인된 것만 쓴다. α 는 지각 축이 아니라 MATERIAL 선택기다.
 -->
@@ -34,6 +51,10 @@
        padding:12px;box-shadow:inset 0 1px 0 #ffffff10}
  .screen{background:#0b0e09;border:1px solid var(--line);border-radius:9px;
          overflow:hidden;position:relative}
+ .screen+.screen{margin-top:10px}
+ .tzlegend{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;
+           font-size:11px;color:var(--dim);margin:8px 2px 0}
+ .tzlegend b{color:var(--fg);font-weight:600}
  canvas{display:block;width:100%;height:auto;cursor:crosshair;touch-action:none}
  .hud{position:absolute;left:9px;top:7px;font-size:11px;color:var(--dim);
       font-variant-numeric:tabular-nums;letter-spacing:.03em;pointer-events:none}
@@ -91,6 +112,17 @@
     <div class="hint" id="hint"></div>
   </div>
 
+  <div class="screen">
+    <canvas id="tz" width="700" height="430"></canvas>
+    <div class="hud" id="tzhud">TONNETZ H0</div>
+  </div>
+  <div class="tzlegend">
+    <span><b>TONNETZ</b> — 지금 울리는 음이름이 5도·3도 격자에서 몇 덩어리로 갈라지나</span>
+    <span>점 크기 = 세기 · 색 = 덩어리 · 굵은 선 = 이어진 곳</span>
+    <span>Σ지속 = 막대 길이의 합 (화성이 얼마나 뭉쳐 있나)</span>
+    <span><b>읽기 전용 계기입니다</b> — 생성은 H1 중첩행렬이 합니다</span>
+  </div>
+
   <div class="knobs" id="knobs"></div>
 
   <div class="row">
@@ -123,6 +155,25 @@
   <b>SHARE</b> — 설정과 모티브가 주소에 담깁니다. 링크를 주고받으면 같은 조각을 들을 수 있습니다.
   <b>RESAMPLE</b> 은 설정을 그대로 두고 음만 새로 뽑습니다 — 구조는 지키고 음은 새로 짓습니다.
 </p>
+
+<p class="note">
+  <b>TONNETZ 창</b>은 지금 울리는 음이름을 <b>5도·3도 격자</b> 위에 올리고,
+  그것이 <b>몇 덩어리로 갈라지는지</b>(H<sub>0</sub>)를 실시간으로 읽습니다.
+  가까운 음끼리 울리면 한 덩어리로 이어지고, 멀리 떨어진 음이 함께 울리면 갈라집니다.
+  오른쪽 작은 막대는 각 덩어리가 <b>얼마나 센 음에서 태어나 얼마나 약해질 때까지 버티는지</b>
+  — 지속구간입니다. 소리를 꺼도 보입니다.<br>
+  ⚠ <b>이건 계기이지 생성기가 아닙니다.</b> 음을 만드는 것은 여전히
+  <b>H<sub>1</sub> 중첩행렬</b>입니다 — 곡 전체에서 찾아낸 <b>고리</b> 구조이고, 이 연구의 뼈대입니다.
+  이 창은 그렇게 만들어진 음을 <b>H<sub>0</sub>(연결성분)으로 읽기만</b> 합니다.
+  둘은 다른 대상을 봅니다: H<sub>1</sub> 은 곡 전체의 구조, H<sub>0</sub> 은 지금 이 순간의 화성 응집도.
+  <b>이 창이 무엇을 보여 주든 H<sub>1</sub> 파이프라인의 근거도 반증도 되지 않습니다.</b>
+  (설계 출처: Bergomi &amp; Baratè, <i>J. Math. Music</i> 2020 — 복합체를 고정하고 여과를
+  꼭짓점 함수로 두면 매 프레임 다시 계산할 수 있습니다.)<br>
+  ⚠ 실측 한계: hibari 는 음이름이 7개(diatonic)뿐이라 울리는 음이 거의 항상 이어져 있습니다 —
+  120스텝 중 <b>108스텝에서 덩어리가 1개</b>였습니다. 갈라지는 순간(10%)이 오히려 드문 사건입니다.
+  실제로 계속 움직이는 값은 <b>Σ지속</b>(실측 1~5)과 점의 크기·색입니다.
+  음이름이 12개인 solari·aqua 라면 덩어리 수도 훨씬 자주 갈릴 것으로 예상하지만, 아직 재지 않았습니다.
+</p>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -133,6 +184,7 @@
 (function () {
   var $ = function (id) { return document.getElementById(id); };
   var cv = $('cv'), cx = cv.getContext('2d');
+  var tz = $('tz'), tcx = tz.getContext('2d');
   var AX = [
     { id: 'h', k: 'p', name: 'PITCH',   lo: -12, hi: 12,  v: 0.5,
       fmt: function (x) { return (x > 0 ? '+' : '') + Math.round(x) + ' st'; } },
@@ -192,6 +244,138 @@
 
   // ── 모티브 — 롤을 문질러 심는다 ────────────────────────────────────
   var PAD = 12;
+
+  /* ── TONNETZ (H0) — 읽기 전용 계기 ───────────────────────────────────
+   * Bergomi & Barate (2020, J. Math. Music) 의 설계를 빌렸다. 우리 H1 경로와
+   * **정반대**로 짜여 있고, 그래서 매 프레임 다시 돌 수 있다:
+   *
+   *            우리 H1 (생성)                 여기 H0 (계기)
+   *   복합체    매번 새로 짓는다 (VR)          **고정** (Tonnetz)
+   *   여과      rate 파라미터                  꼭짓점 위 높이함수
+   *   차수      H1 (고리)                      H0 (연결성분)
+   *
+   * 복합체: 12 음이름. 이웃은 ±3(단3도) ±4(장3도) ±7(완전5도) — 각 점이 6이웃,
+   * 전체는 위상적으로 원환면이다. 삼각형이 장3화음/단3화음이 된다.
+   * 여과: f(pc) = 지금 울리는 세기. **위쪽 레벨집합** {f >= a} 를 a 를 내리며 훑는다.
+   *       센 음이 먼저 태어나고, 약한 음이 붙으며 덩어리가 합쳐진다.
+   *       합칠 때 **먼저 태어난(=더 센) 쪽이 산다** (elder rule).
+   * 읽는 값: beta0 = 지금 울림이 화성적으로 몇 덩어리로 갈라지나 + 각 덩어리의 지속구간.
+   *
+   * ⚠ 생성에는 일절 쓰이지 않는다. 생성은 H1 중첩행렬이 한다.
+   */
+  var TZ_NB = [3, 4, 7, 5, 8, 9];                 // ±3 ±4 ±7 (mod 12)
+  // 격자 기준점을 F(5) 로 잡으면 아래 줄이 **다이아토닉 5도 사슬** F C G D A E B 가 된다.
+  // hibari 는 pitch class 가 7개(diatonic)라 이렇게 두어야 울림이 한 줄에 다 들어온다.
+  // 이건 **표시용 기준점**일 뿐이다 — Tonnetz 는 원환면이라 어디를 원점으로 잡아도
+  // 위상은 같고, H0 값도 바뀌지 않는다.
+  var TZ_ORIGIN = 5, TZ_COLS = 7, TZ_ROWS = 3, TZ_PC = [];
+  for (var _y = 0; _y < TZ_ROWS; _y++)
+    for (var _x = 0; _x < TZ_COLS; _x++)
+      TZ_PC.push((TZ_ORIGIN + 7 * _x + 4 * _y) % 12);
+  var PCNAME = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+  var COMPCOL = ['#8fd14f', '#c9a0dc', '#ffb84d', '#4fd1c9', '#f2777a', '#7aa2f7'];
+
+  function tzWeights(p) {                          // 지금 울리는 음이름별 세기
+    var w = new Float64Array(12);
+    if (!mine) return w;
+    for (var i = 0; i < mine.notes.length; i++) {
+      var n = mine.notes[i];
+      if (n[0] <= p && n[2] > p) w[((n[1] % 12) + 12) % 12] += 1;
+    }
+    return w;
+  }
+
+  function tzH0(w) {                               // 위쪽 레벨집합 여과의 H0
+    var ord = [], i, k;
+    for (i = 0; i < 12; i++) if (w[i] > 0) ord.push(i);
+    ord.sort(function (a, b) { return w[b] - w[a]; });
+    var par = new Int8Array(12), birth = new Float64Array(12),
+        added = new Uint8Array(12), bars = [];
+    function find(x) { while (par[x] !== x) { par[x] = par[par[x]]; x = par[x]; } return x; }
+    for (k = 0; k < ord.length; k++) {
+      var v = ord[k];
+      par[v] = v; birth[v] = w[v]; added[v] = 1;
+      for (var j = 0; j < 6; j++) {
+        var u = (v + TZ_NB[j]) % 12;
+        if (!added[u]) continue;
+        var ru = find(u), rv = find(v);
+        if (ru === rv) continue;
+        var yg = birth[ru] < birth[rv] ? ru : rv, od = (yg === ru) ? rv : ru;
+        bars.push([birth[yg], w[v]]);               // 나중에 태어난 쪽이 여기서 죽는다
+        par[yg] = od;
+      }
+    }
+    var lab = new Int8Array(12), seen = {}, nc = 0;
+    for (i = 0; i < 12; i++) lab[i] = -1;
+    for (k = 0; k < ord.length; k++) {
+      var r = find(ord[k]);
+      if (!(r in seen)) { seen[r] = nc++; bars.push([birth[r], 0]); }
+      lab[ord[k]] = seen[r];
+    }
+    return { lab: lab, bars: bars, beta0: nc, n: ord.length };
+  }
+
+  function drawTZ() {
+    var W = tz.width, H = tz.height;
+    tcx.clearRect(0, 0, W, H);
+    var w = tzWeights(mine ? posStep() % mine.T : 0), h0 = tzH0(w), i;
+    var mx = 0; for (i = 0; i < 12; i++) if (w[i] > mx) mx = w[i];
+
+    // 캔버스 폭 700 은 모바일 축소율을 위한 값이다 — 320px 화면에서 0.46배라
+    // 20px 글자가 9px 쯤으로 남는다. 900 이면 7px 이 되어 읽히지 않았다.
+    var px = 50, py = 54;                           // 행마다 0.5칸 밀어 삼각 격자로
+    var sx = (W - px * 2 - 120) / (TZ_COLS - 1 + 0.5 * (TZ_ROWS - 1));
+    var sy = (H - py * 2) / (TZ_ROWS - 1);
+    function pos(x, y) { return [px + (x + 0.5 * y) * sx, H - py - y * sy]; }
+    var col = function (pc) { return COMPCOL[h0.lab[pc] % COMPCOL.length]; };
+
+    for (var y = 0; y < TZ_ROWS; y++) for (var x = 0; x < TZ_COLS; x++) {
+      var a = pos(x, y), pa = TZ_PC[y * TZ_COLS + x];
+      var L = [[x + 1, y], [x, y + 1], [x + 1, y - 1]];   // 5도 · 장3도 · 단3도
+      for (var l = 0; l < 3; l++) {
+        var bx = L[l][0], by = L[l][1];
+        if (bx >= TZ_COLS || by < 0 || by >= TZ_ROWS) continue;
+        var b = pos(bx, by), pb = TZ_PC[by * TZ_COLS + bx];
+        var on = w[pa] > 0 && w[pb] > 0 && h0.lab[pa] === h0.lab[pb];
+        tcx.strokeStyle = on ? col(pa) : '#2a3324';
+        tcx.lineWidth = on ? 2.8 : 1;
+        tcx.beginPath(); tcx.moveTo(a[0], a[1]); tcx.lineTo(b[0], b[1]); tcx.stroke();
+      }
+    }
+    for (y = 0; y < TZ_ROWS; y++) for (x = 0; x < TZ_COLS; x++) {
+      var q = pos(x, y), pc = TZ_PC[y * TZ_COLS + x], lit = w[pc] > 0;
+      tcx.beginPath();
+      tcx.arc(q[0], q[1], lit ? 12 + 9 * (w[pc] / (mx || 1)) : 8, 0, 6.2832);
+      tcx.fillStyle = lit ? col(pc) : '#20281c'; tcx.fill();
+      tcx.fillStyle = lit ? '#0b0e09' : '#5d6b52';
+      tcx.font = (lit ? 'bold ' : '') + '20px ui-monospace,monospace';
+      tcx.textAlign = 'center'; tcx.textBaseline = 'middle';
+      tcx.fillText(PCNAME[pc], q[0], q[1]);
+    }
+
+    // H0 지속구간 막대 — 이게 없으면 그냥 '연결성분 개수'지 지속homology 가 아니다
+    var bw = 92, bx0 = W - bw - 18, by0 = 48;
+    tcx.fillStyle = '#5d6b52'; tcx.font = '15px ui-monospace,monospace';
+    tcx.textAlign = 'left'; tcx.textBaseline = 'alphabetic';
+    tcx.fillText('H0 지속구간', bx0, by0 - 14);
+    var bars = h0.bars.slice().sort(function (a, b) {
+      return (b[0] - b[1]) - (a[0] - a[1]); }).slice(0, 8);
+    for (i = 0; i < bars.length; i++) {
+      var d = bars[i][1] / (mx || 1), t = bars[i][0] / (mx || 1);
+      tcx.fillStyle = COMPCOL[i % COMPCOL.length]; tcx.globalAlpha = 0.85;
+      tcx.fillRect(bx0 + bw * d, by0 + i * 13, Math.max(3, bw * (t - d)), 9);
+    }
+    tcx.globalAlpha = 1;
+
+    // beta0 은 hibari(diatonic 7음)에서 120스텝 중 108스텝이 1 이다 — 거의 안 움직인다.
+    // 실제로 변하는 값은 **총지속**(막대 길이의 합, 실측 1~5)이라 같이 띄운다.
+    var tot = 0;
+    for (i = 0; i < h0.bars.length; i++) tot += h0.bars[i][0] - h0.bars[i][1];
+    $('tzhud').textContent = h0.n
+      ? 'TONNETZ H0 · ' + h0.beta0 + ' 덩어리 · 울림 ' + h0.n
+        + ' 음이름 · Σ지속 ' + tot.toFixed(0)
+      : 'TONNETZ H0 · 울림 없음';
+  }
   function cellFrom(e) {
     var r = cv.getBoundingClientRect();
     var x = (e.clientX - r.left) / r.width * cv.width;
@@ -322,6 +506,7 @@
     }
     cx.globalAlpha = 1;
     if (playing) { cx.fillStyle = '#ffb84d'; cx.fillRect(PAD + p * xs, 0, 2.5, H); }
+    drawTZ();
     $('hud').textContent = mine.notes.length + ' NOTES · '
       + (mine.T * mine.sec).toFixed(1) + 's LOOP · ' + data.banks[alpha].K + ' CYCLES'
       + (mine.mot.length ? ' · ' + mine.mot.length + ' MOTIF' : '');
@@ -434,6 +619,14 @@
     plant: function (st, pi) { motif[st + ':' + pi] = 1; lastKey = ''; apply(true); },
     clear: function () { $('motClr').click(); },
     hash: toHash,
+    h0: function (pcs) {                      // 검사용 — 음이름 배열의 H0
+      var w = new Float64Array(12);
+      (pcs || []).forEach(function (x) { w[((x % 12) + 12) % 12] += 1; });
+      var r = tzH0(w);
+      return { beta0: r.beta0, n: r.n, bars: r.bars, lab: Array.from(r.lab) };
+    },
+    h0now: function () { return tzH0(tzWeights(mine ? posStep() % mine.T : 0)); },
+    h0at: function (st) { return tzH0(tzWeights(st)); },
     info: function () {
       return { notes: mine.notes.length, gen: mine.gen.length, mot: mine.mot.length,
                loopSec: +(mine.T * mine.sec).toFixed(2), K: data.banks[alpha].K,
