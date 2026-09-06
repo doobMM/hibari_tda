@@ -1,0 +1,495 @@
+<!doctype html>
+<html lang="ko" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>설계도 — 이 연구는 수학적으로 어떻게 짜여 있나</title>
+<!--
+  math.html — 파이프라인의 수학 설계를 **개입 지점 중심**으로 보여 준다.
+
+  목적: 사용자가 "어디를 건드리면 무엇이 바뀌는지" 알 수 있게 하는 것.
+  그래서 순서를 논문(방법→결과)이 아니라 **손잡이 순**으로 잡았다.
+
+  ⚠ 수치·정의는 전부 코드와 JSON 에서 확인해 옮겼다. 어림잡아 쓴 것은 없다.
+    · α 의 정의: musical_metrics.py:329 compute_hybrid_distance
+    · 뽑기 규칙: generation.py:341 _sample_note_at_time
+    · K·zero_rows·OM: mobile_tonnetz/data/om_bank.json (실행 시 불러온다)
+    · note 23개: hibari_dashboard/data/notes_metadata.json (실행 시 불러온다)
+    · 거리 함수 비교: docs/step3_data/t9_best_metric_summary.json
+-->
+<link rel="stylesheet" href="./hibari_dashboard/public/css/tokens.css">
+<style>
+  body{margin:0;background:var(--surface-base);color:var(--text-primary);
+       font-family:'Noto Sans KR',system-ui,sans-serif;line-height:1.72}
+  .wrap{max-width:820px;margin:0 auto;padding:34px 18px 90px}
+  a{color:var(--accent-teal)}
+  h1{font-size:clamp(23px,4.8vw,33px);margin:0 0 8px;letter-spacing:-.01em;line-height:1.3}
+  h2{font-size:clamp(18px,3.4vw,23px);margin:52px 0 10px;letter-spacing:-.01em}
+  h2 .n{font-family:'JetBrains Mono',monospace;color:var(--accent-teal);
+        font-size:.72em;margin-right:9px}
+  h3{font-size:16px;margin:26px 0 6px}
+  p{margin:0 0 12px}
+  .lede{font-size:17px;color:var(--text-secondary);margin-bottom:26px}
+  .box{background:var(--surface-overlay);border:1px solid var(--border-hairline);
+       border-radius:10px;padding:16px 18px;margin:18px 0}
+  .warn{border-left:3px solid var(--accent-amber);background:var(--accent-amber-dim);
+        border-radius:0 10px 10px 0;padding:13px 16px;margin:16px 0;font-size:14.5px;
+        color:var(--text-secondary)}
+  .warn b,.box b{color:var(--text-primary)}
+  .eq{font-family:'JetBrains Mono',monospace;background:var(--surface-canvas);
+      border:1px solid var(--border-hairline);border-radius:8px;padding:13px 16px;
+      margin:14px 0;font-size:14px;overflow-x:auto;white-space:pre;color:var(--text-primary)}
+  .cap{font-family:'JetBrains Mono',monospace;font-size:12px;
+       color:var(--text-tertiary);margin-top:7px}
+  table{border-collapse:collapse;width:100%;font-size:14px;margin:14px 0}
+  th,td{border-bottom:1px solid var(--border-hairline);padding:7px 9px;text-align:left;
+        vertical-align:top}
+  th{color:var(--text-tertiary);font-weight:600;font-size:12.5px;white-space:nowrap}
+  td.m,th.m{font-family:'JetBrains Mono',monospace;font-variant-numeric:tabular-nums}
+  .scroll{overflow-x:auto}
+  svg{display:block;max-width:100%;height:auto;margin:6px auto}
+  .live{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--text-secondary)}
+  .dead{color:#b5563f;font-weight:600}
+  .alive{color:var(--accent-teal);font-weight:600}
+  .half{color:var(--accent-amber);font-weight:600}
+  .toc{background:var(--surface-overlay);border:1px solid var(--border-hairline);
+       border-radius:10px;padding:14px 18px;margin:22px 0 6px;font-size:14.5px}
+  .toc ol{margin:6px 0 0;padding-left:22px}
+  .toc li{margin:2px 0}
+  footer{margin-top:60px;padding-top:18px;border-top:1px solid var(--border-hairline);
+         font-size:13px;color:var(--text-tertiary)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<p style="margin:0 0 16px"><a href="../">← 처음으로</a> · <a href="./tour.html">투어</a> · <a href="./duet.html">LIVE 계기판</a></p>
+
+<h1>설계도 — 어디를 건드리면 무엇이 바뀌나</h1>
+<p class="lede">
+  이 연구는 <b>곡을 점 23개로 바꾸고</b>, 점 사이에 <b>자를 대고</b>, 자의 눈금을 늘려 가며
+  생기는 <b>고리</b>를 찾습니다. 그 고리들의 <b>출석부</b>가 새 음악의 설계도입니다.<br>
+  아래는 그 여섯 단계와, <b>각 단계에서 당신이 돌릴 수 있는 손잡이</b>입니다.
+</p>
+
+<div class="toc">
+  <b>순서</b>
+  <ol>
+    <li>곡을 점으로 — note 23개</li>
+    <li>점 사이의 거리 — 자가 넷 있다</li>
+    <li>자 둘을 섞는다 — <b>α</b></li>
+    <li>눈금을 늘린다 — 여과(filtration)</li>
+    <li>고리가 태어나고 죽는다 — <b>H₁</b></li>
+    <li>출석부 — 중첩행렬</li>
+    <li>음을 뽑는 규칙 — 여기가 전부다</li>
+    <li><b>개입 지점 한눈에</b></li>
+  </ol>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════ -->
+<h2><span class="n">01</span>곡을 점으로 — note 23개</h2>
+
+<p>
+  악보를 <b>8분음표 격자</b>로 자릅니다. 그러면 곡은 <b>(음높이, 길이)</b> 짝의 나열이 됩니다.
+  같은 짝은 같은 점입니다. 긴 음은 짧은 음을 <b>붙임줄로 이은 것</b>으로 봅니다 —
+  그래야 종류가 폭발하지 않습니다.
+</p>
+<div class="eq">note = (pitch, duration)          hibari → 서로 다른 note <b>23개</b></div>
+<div id="notes" class="box live">note 목록을 불러오는 중…</div>
+
+<div class="box">
+  <b>손잡이 ⓪ — 어떤 곡을 넣는가.</b> 이게 나머지 전부를 결정합니다. 실측:
+  <div class="scroll"><table>
+    <tr><th>곡</th><th class="m">고유 note</th><th class="m">음이름 수</th><th class="m">고리 K</th><th class="m">출석부 밀도<br><span style="font-weight:400">(전곡)</span></th></tr>
+    <tr><td>hibari</td><td class="m">23</td><td class="m">7 (온음계)</td><td class="m">14</td><td class="m">34.1%</td></tr>
+    <tr><td>solari</td><td class="m">34</td><td class="m">12</td><td class="m">25</td><td class="m">4.3%</td></tr>
+    <tr><td>aqua</td><td class="m">51</td><td class="m">12</td><td class="m">82</td><td class="m">1.3%</td></tr>
+  </table></div>
+  <p style="margin:8px 0 0;font-size:14px;color:var(--text-secondary)">
+    <b>어휘가 넓어질수록 고리는 많아지고 출석부는 텅 빕니다.</b> 이 방향이 이 방법의 한계선을
+    그립니다 — 점이 수천 개인 대상(예: 언어의 어휘)에서는 출석부가 사실상 비어 버립니다.
+  </p>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════ -->
+<h2><span class="n">02</span>점 사이의 거리 — 자가 넷 있다</h2>
+
+<p>두 note가 얼마나 <b>가까운가</b>. 이 질문의 답이 하나가 아닙니다. 자를 넷 준비해 뒀습니다.</p>
+
+<div class="scroll"><table>
+  <tr><th>자</th><th>무엇을 재나</th><th>두 음이 가깝다는 뜻</th></tr>
+  <tr><td><b>frequency</b></td><td>곡에서 함께 나오는 빈도</td><td>이 곡에서 자주 붙어 다닌다</td></tr>
+  <tr><td><b>Tonnetz</b></td><td>5도·3도 격자 위 걸음 수</td><td>화성적으로 이웃이다</td></tr>
+  <tr><td><b>voice&nbsp;leading</b></td><td>성부가 움직이는 반음 수</td><td>손가락을 조금만 옮기면 된다</td></tr>
+  <tr><td><b>DFT</b></td><td>음이름 집합의 푸리에 계수 크기 차</td><td>울림의 <i>스펙트럼</i>이 닮았다</td></tr>
+</table></div>
+
+<div class="figure"></div>
+<svg viewBox="0 0 700 172" role="img" aria-label="같은 두 음이 자에 따라 다르게 측정된다">
+  <g font-family="'JetBrains Mono',monospace" font-size="12">
+    <text x="8" y="16" fill="#7c937a">같은 두 음(E 와 B♭)을 네 자로 재면 —</text>
+    <g id="rulers">
+      <g transform="translate(0,34)">
+        <text x="8" y="12" fill="#48603f">frequency</text>
+        <line x1="120" y1="8" x2="660" y2="8" stroke="#d7e3c8" stroke-width="1.5"/>
+        <circle cx="130" cy="8" r="6" fill="#6cc24a"/><circle cx="240" cy="8" r="6" fill="#3a8f3d"/>
+        <text x="250" y="12" fill="#7c937a">가깝다 — 자주 함께 나온다</text>
+      </g>
+      <g transform="translate(0,66)">
+        <text x="8" y="12" fill="#48603f">Tonnetz</text>
+        <line x1="120" y1="8" x2="660" y2="8" stroke="#d7e3c8" stroke-width="1.5"/>
+        <circle cx="130" cy="8" r="6" fill="#6cc24a"/><circle cx="600" cy="8" r="6" fill="#3a8f3d"/>
+        <text x="330" y="12" fill="#7c937a">멀다 — 격자에서 여러 걸음</text>
+      </g>
+      <g transform="translate(0,98)">
+        <text x="8" y="12" fill="#48603f">voice lead</text>
+        <line x1="120" y1="8" x2="660" y2="8" stroke="#d7e3c8" stroke-width="1.5"/>
+        <circle cx="130" cy="8" r="6" fill="#6cc24a"/><circle cx="420" cy="8" r="6" fill="#3a8f3d"/>
+        <text x="430" y="12" fill="#7c937a">중간 — 6반음</text>
+      </g>
+      <g transform="translate(0,130)">
+        <text x="8" y="12" fill="#48603f">DFT</text>
+        <line x1="120" y1="8" x2="660" y2="8" stroke="#d7e3c8" stroke-width="1.5"/>
+        <circle cx="130" cy="8" r="6" fill="#6cc24a"/><circle cx="300" cy="8" r="6" fill="#3a8f3d"/>
+        <text x="310" y="12" fill="#7c937a">가깝다 — 스펙트럼이 닮았다</text>
+      </g>
+    </g>
+  </g>
+</svg>
+<div class="cap">※ 위치는 개념 설명용입니다. 실제 값은 곡마다 계산됩니다.</div>
+
+<h3>어느 자가 맞나 — 곡마다 다릅니다</h3>
+<p>같은 파이프라인을 5곡에 돌리고 <b>같은 시드로 짝지어</b> 20회씩 비교했습니다.</p>
+<div class="scroll"><table>
+  <tr><th>곡</th><th>최적 자</th><th class="m">음고 JS ↓</th><th class="m">2위와의 p</th><th>판정</th></tr>
+  <tr><td>hibari</td><td><b>DFT</b></td><td class="m">0.0216</td><td class="m">7.8e-06</td><td class="alive">뚜렷</td></tr>
+  <tr><td>Bach 푸가</td><td><b>Tonnetz</b></td><td class="m">0.0130</td><td class="m">1.3e-18</td><td class="alive">뚜렷</td></tr>
+  <tr><td>Ravel 파반느</td><td><b>Tonnetz</b></td><td class="m">0.0156</td><td class="m">1.1e-16</td><td class="alive">뚜렷</td></tr>
+  <tr><td>solari</td><td>frequency</td><td class="m">0.0131</td><td class="m">2.3e-03</td><td class="half">약함</td></tr>
+  <tr><td>aqua</td><td>—</td><td class="m">0.0086 ≈ 0.0088</td><td class="m">0.69</td><td class="dead">판별 불가</td></tr>
+</table></div>
+
+<div class="warn">
+  ⚠ <b>남는 것과 사라진 것을 갈라 둡니다.</b>
+  <b>남는 것</b> = "곡마다 최적 도구가 다르다"는 <i>관찰</i>.
+  <b>철회한 것</b> = "어떤 곡 성격이 어떤 자를 부른다"는 <i>설명</i> — 사후 해석이었고,
+  2026년 8월 재산출에서 5곡 중 3곡의 최적 자가 바뀌면서 근거가 사라졌습니다.
+</div>
+
+<div class="warn">
+  ⚠ <b>frequency 와 DFT 는 엄밀히는 거리(metric)가 아닙니다.</b>
+  frequency 는 동일성·삼각부등식을, DFT 는 동일성을 위반합니다 —
+  <i>다른 두 note 의 거리가 0 일 수 있다</i>는 뜻입니다.
+  그래도 지속 호몰로지를 돌릴 수 있는 근거는 Heo·Choi·Jung (2025) Thm 3.4
+  (<i>path-representable</i>)에 있습니다. 거리 공리 대신 더 약한 조건이면 충분합니다.
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════ -->
+<h2><span class="n">03</span>자 둘을 섞는다 — α</h2>
+
+<p>둘 중 하나를 고르는 대신, <b>섞습니다.</b> 섞는 비율이 α 입니다.</p>
+<div class="eq">d<sub>α</sub>(a,b) = α · d<sub>빈도</sub>(a,b)  +  (1 − α) · d<sub>음악</sub>(a,b)
+
+     α = 0  →  순수 음악적 거리 (hibari 는 DFT)
+     α = 1  →  순수 빈도 거리
+     정본   →  <b>α = 0.25</b>   (빈도 25% + DFT 75%)</div>
+<div class="cap">두 행렬은 각각 [0,1] 로 정규화한 뒤 섞습니다. · musical_metrics.py:329</div>
+
+<p>
+  <b>α 를 돌리면 고리의 개수 자체가 바뀝니다.</b> 자를 바꾸면 무엇이 "가깝다"인지가 바뀌고,
+  그러면 어떤 고리가 생기는지가 통째로 달라지기 때문입니다. LIVE 계기판의
+  <b>MATERIAL</b> 버튼이 바로 이 α 입니다.
+</p>
+<div id="alphas" class="box live">α 뱅크를 불러오는 중…</div>
+
+<div class="warn">
+  ⚠ <b>α 는 손잡이로 쓸 수 없습니다 (2026-09-05 계측).</b>
+  눈금 6 × 시드 60 으로 상호정보량을 재니, α 는 <b>유의하게 반응하지만(p=0.0002)
+  방향이 없습니다(ρ = −0.22)</b>. 값이 오르내리기만 해서 "더 복잡하게"라는 지시를
+  따라갈 수 없습니다. 그래서 계기판에서 노브가 아니라 <b>선택 버튼</b>으로 뒀습니다.
+  <br>반면 밀도·높낮이·음길이는 세 개 모두 천장의 98~100%, ρ = 0.99 로 방향이 있습니다.
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════ -->
+<h2><span class="n">04</span>눈금을 늘린다 — 여과</h2>
+
+<p>
+  거리가 정해지면 이제 <b>문턱 s</b> 를 하나 잡습니다. <b>거리가 s 이하인 점들을 이어 붙입니다.</b>
+  s 를 0 에서부터 키우면 점들이 점점 이어지며 도형이 자랍니다.
+  이 <b>자라는 도형들의 열</b>이 여과(filtration)이고, 여기서 쓰는 방식이
+  <b>Vietoris–Rips</b> 입니다 — <i>서로 다 가까운 점들의 묶음</i>을 하나의 조각으로 봅니다.
+</p>
+
+<svg viewBox="0 0 700 190" role="img" aria-label="문턱 s 를 키우면 고리가 생겼다가 메워진다">
+  <g font-family="'JetBrains Mono',monospace" font-size="12" fill="#48603f">
+    <g transform="translate(20,20)">
+      <text x="46" y="0" fill="#7c937a">s 작다</text>
+      <circle cx="20" cy="30" r="5" fill="#3a8f3d"/><circle cx="90" cy="24" r="5" fill="#3a8f3d"/>
+      <circle cx="112" cy="88" r="5" fill="#3a8f3d"/><circle cx="52" cy="118" r="5" fill="#3a8f3d"/>
+      <circle cx="4" cy="76" r="5" fill="#3a8f3d"/>
+      <text x="10" y="152">점만 있다 · 고리 0</text>
+    </g>
+    <g transform="translate(250,20)">
+      <text x="40" y="0" fill="#7c937a">s 중간</text>
+      <polygon points="20,30 90,24 112,88 52,118 4,76" fill="none" stroke="#6cc24a" stroke-width="2.4"/>
+      <circle cx="20" cy="30" r="5" fill="#3a8f3d"/><circle cx="90" cy="24" r="5" fill="#3a8f3d"/>
+      <circle cx="112" cy="88" r="5" fill="#3a8f3d"/><circle cx="52" cy="118" r="5" fill="#3a8f3d"/>
+      <circle cx="4" cy="76" r="5" fill="#3a8f3d"/>
+      <text x="6" y="152" fill="#2c6e2f" font-weight="600">고리가 생겼다 · H₁ = 1</text>
+    </g>
+    <g transform="translate(480,20)">
+      <text x="40" y="0" fill="#7c937a">s 크다</text>
+      <polygon points="20,30 90,24 112,88 52,118 4,76" fill="#cfe8bd" stroke="#6cc24a" stroke-width="2.4"/>
+      <circle cx="20" cy="30" r="5" fill="#3a8f3d"/><circle cx="90" cy="24" r="5" fill="#3a8f3d"/>
+      <circle cx="112" cy="88" r="5" fill="#3a8f3d"/><circle cx="52" cy="118" r="5" fill="#3a8f3d"/>
+      <circle cx="4" cy="76" r="5" fill="#3a8f3d"/>
+      <text x="14" y="152">속이 메워졌다 · 고리 죽음</text>
+    </g>
+  </g>
+</svg>
+
+<h3>시간을 섞는 또 하나의 손잡이 — rate</h3>
+<p>
+  거리 행렬은 사실 두 조각을 더한 것입니다. <b>같은 악기 안에서</b>의 관계(intra)와
+  <b>두 악기 사이</b>의 관계(inter)입니다. 그 비중이 rate 입니다.
+</p>
+<div class="eq">w(rate) = w<sub>intra</sub> + rate × w<sub>inter</sub>        rate : 0 → 1.5</div>
+<p style="font-size:14.5px;color:var(--text-secondary)">
+  rate 를 키우면 두 성부가 서로를 더 강하게 끌어당깁니다. hibari 의 두 성부는
+  음역이 아니라 <b>위상으로</b> 나뉘어 있어서(쓰는 음 집합은 같습니다) 이 값이 실제로 구조를 바꿉니다.
+</p>
+
+<!-- ══════════════════════════════════════════════════════════════ -->
+<h2><span class="n">05</span>고리가 태어나고 죽는다 — H₁</h2>
+
+<p>
+  s 를 키우는 동안 <b>어떤 고리는 일찍 생겨 오래 버티고, 어떤 고리는 생기자마자 메워집니다.</b>
+  각 고리를 <b>(태어난 s, 죽은 s)</b> 한 쌍으로 적은 것이 <b>지속 다이어그램</b>이고,
+  가로 막대로 그리면 <b>바코드</b>입니다.
+  <b>긴 막대 = 웬만해선 안 메워지는 구조</b>, 짧은 막대 = 잡음.
+</p>
+
+<svg viewBox="0 0 700 178" role="img" aria-label="지속 바코드 — 긴 막대가 곡의 구조다">
+  <g font-family="'JetBrains Mono',monospace" font-size="12">
+    <line x1="86" y1="18" x2="86" y2="150" stroke="#d7e3c8"/>
+    <line x1="86" y1="150" x2="660" y2="150" stroke="#d7e3c8"/>
+    <text x="600" y="168" fill="#7c937a">문턱 s →</text>
+    <text x="4" y="22" fill="#7c937a">고리</text>
+    <rect x="140" y="24" width="440" height="11" rx="3" fill="#3a8f3d"/>
+    <text x="590" y="34" fill="#2c6e2f" font-weight="600">구조</text>
+    <rect x="176" y="45" width="368" height="11" rx="3" fill="#58a83c"/>
+    <rect x="212" y="66" width="286" height="11" rx="3" fill="#6cc24a"/>
+    <rect x="290" y="87" width="120" height="11" rx="3" fill="#9ed37e"/>
+    <rect x="330" y="108" width="42" height="11" rx="3" fill="#c3e3ae"/>
+    <rect x="392" y="129" width="24" height="11" rx="3" fill="#c3e3ae"/>
+    <text x="430" y="139" fill="#7c937a">← 짧은 것은 잡음</text>
+  </g>
+</svg>
+<div class="cap">hibari 정본 설정(DFT · α=0.25)에서 살아남는 고리는 <b>K = 14</b> 개입니다.</div>
+
+<div class="box">
+  <b>고리 하나 = note 몇 개의 묶음</b>입니다. 예를 들어 <span class="live">[0, 1, 2, 6, 8, 9]</span> 는
+  "0·1·2·6·8·9번 note 가 원을 이루며 서로 이어져 있다"는 뜻입니다.
+  <div id="cycles" class="live" style="margin-top:8px">고리 목록을 불러오는 중…</div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════ -->
+<h2><span class="n">06</span>출석부 — 중첩행렬</h2>
+
+<p>
+  여기서 <b>시간이 돌아옵니다.</b> 곡을 시점 순서대로 훑으며, 각 시점마다
+  <b>어느 고리가 지금 켜져 있는가</b>를 적습니다. 이 <b>시점 × 고리</b> 표가
+  <b>중첩행렬(Overlap Matrix)</b>이고, <b>이것이 새 음악의 설계도</b>입니다.
+</p>
+<div class="eq">OM[t, c] = 1   시점 t 에 고리 c 가 활성
+           0   아니면
+
+먼저 연속값으로 재고 → 고리마다 다른 문턱 τ<sub>c</sub> 로 0/1 을 정한다 (per-cycle τ)</div>
+
+<div class="box">
+  <div id="om" style="min-height:120px">출석부를 불러오는 중…</div>
+  <div class="cap" id="omcap"></div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════ -->
+<h2><span class="n">07</span>음을 뽑는 규칙 — 여기가 전부다</h2>
+
+<p>
+  Algorithm 1 은 놀랄 만큼 짧습니다. 시점을 하나씩 지나가며 이렇게 합니다.
+</p>
+<div class="eq">시점 j 에서 음을 하나 뽑는다:
+
+  ① 켜진 고리가 <b>하나도 없으면</b>
+       → 예비 주머니에서 뽑되, <b>이웃 시점에 이미 쓴 음을 피한다</b>
+
+  ② 켜진 고리가 <b>있으면</b>
+       → 켜진 고리들의 <b>교집합</b>에서 <b>균등하게</b> 하나 뽑는다
+       → 교집합이 <b>비어 있으면</b> 예비 주머니로
+
+  ③ 그 시점에 이미 있는 음이면 다시 뽑는다 (최대 50회)</div>
+<div class="cap">generation.py:341 <code>_sample_note_at_time</code></div>
+
+<p>
+  <b>교집합</b>이 핵심입니다. 여러 고리가 동시에 켜져 있으면, <b>그 고리들이 공유하는 note</b>
+  중에서만 뽑습니다. 그래서 생성된 곡은 음이 매번 달라도 <b>같은 뼈대</b>를 갖습니다.
+  <b>구조는 지키고 음은 새로 짓는</b> 것이 여기서 나옵니다.
+</p>
+
+<div class="warn">
+  ⚠ <b>온도와 음역 손잡이가 죽어 있는 이유가 정확히 여기 있습니다.</b>
+  그 둘은 <b>예비 주머니</b> 안에서만 작동합니다. 그런데 hibari 정본 출석부는
+  <b>빈 행이 0개</b>이고 교집합도 비지 않아서, <b>주머니를 한 번도 뽑지 않습니다.</b>
+  40회 반복 계측에서 온도 1.0↔5.0 의 출력이 <b>비트 단위로 동일</b>했습니다.
+  <br>거꾸로 빈 행이 많은 출석부(α = 0 은 120중 65)에서는 <b>같은 손잡이가 살아납니다</b> —
+  다만 그건 <b>위상 구조가 무너진 자리</b>라(고리가 1개뿐) 쓸 수 있는 설정이 아닙니다.
+</div>
+
+<h3>이 규칙을 바꾸면 무슨 일이 생기나 — 실제로 해봤습니다</h3>
+<p style="font-size:14.5px;color:var(--text-secondary)">
+  ②의 "<b>균등하게</b>"를 "곡에서 자주 나오는 음에 가중치를 주어"로 바꿔 봤습니다
+  (시드 30개씩). 음고 분포는 <b>6.2% 좋아졌지만</b>(Welch p=0.015, 비교 3개 Holm 보정 후 p=0.031),
+  <b>협화도가 0.672 → 0.662 로 떨어졌습니다</b>(Welch p=0.048).
+  <b>이득과 손실이 거의 같은 크기입니다.</b> 그리고 블라인드 청취에서
+  <b>원래 규칙(균등)이 선택</b>됐습니다. 그래서 채택하지 않았습니다.
+  <b>지표가 좋아진다고 더 좋게 들리지 않습니다.</b>
+</p>
+<div class="warn">
+  ⚠ 위 두 p 값은 <code>qmc_sampling_results.json</code> 에 저장된 평균·표준편차·n(=30)에서
+  <b>제가 다시 계산한 값</b>입니다. 원 실험은 유의성 검정 결과를 저장하지 않았습니다.
+  프로젝트 노트에 적혀 있던 값(Holm 후 0.046 · 협화도 0.024)은 <b>재현되지 않았습니다</b> —
+  노트 쪽이 틀렸다고 보고 여기서는 재계산값을 씁니다.
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════ -->
+<h2><span class="n">08</span>개입 지점 한눈에</h2>
+
+<div class="scroll"><table>
+  <tr><th>손잡이</th><th>어느 단계</th><th>무엇이 바뀌나</th><th>지금 값</th><th>계측 상태</th></tr>
+  <tr><td><b>곡</b></td><td>①</td><td>점 개수 · 고리 수 · 출석부 밀도 전부</td><td class="m">hibari</td><td class="alive">가장 큰 손잡이</td></tr>
+  <tr><td><b>거리 함수</b></td><td>②</td><td>무엇이 "가깝다"인지</td><td class="m">DFT</td><td class="alive">곡마다 다름</td></tr>
+  <tr><td><b>α</b></td><td>③</td><td>고리 개수 K (1~58)</td><td class="m">0.25</td><td class="half">반응하나 방향 없음</td></tr>
+  <tr><td><b>rate</b></td><td>④</td><td>두 성부의 결합 세기</td><td class="m">0 → 1.5</td><td>미계측</td></tr>
+  <tr><td><b>w<sub>o</sub></b> (옥타브)</td><td>②</td><td>옥타브 차이를 얼마나 볼 것인가</td><td class="m">0.3</td><td class="alive">JS −18.8%</td></tr>
+  <tr><td><b>τ<sub>c</sub></b></td><td>⑥</td><td>고리를 언제 "켜졌다"고 볼지</td><td class="m">고리마다</td><td class="alive">JS +48.6%</td></tr>
+  <tr><td><b>밀도</b></td><td>⑦ 후처리</td><td>음 개수 (83 → 451)</td><td class="m">0.4~2.2×</td><td class="alive">ρ = 0.99</td></tr>
+  <tr><td><b>높낮이</b></td><td>⑦ 후처리</td><td>전체 이조 (±12반음)</td><td class="m">±12</td><td class="alive">ρ = 0.99</td></tr>
+  <tr><td><b>음 길이</b></td><td>⑦ 후처리</td><td>레가토 ↔ 스타카토</td><td class="m">0.4~3.0×</td><td class="alive">ρ = 0.99</td></tr>
+  <tr><td><b>템포</b></td><td>재생</td><td>재생 배속 (음은 그대로)</td><td class="m">0.5~2.0×</td><td class="alive">자명</td></tr>
+  <tr><td><b>온도</b></td><td>⑦ 주머니</td><td>—</td><td class="m">1.0</td><td class="dead">정본에서 무효</td></tr>
+  <tr><td><b>음역 tilt</b></td><td>⑦ 주머니</td><td>—</td><td class="m">0</td><td class="dead">정본에서 무효</td></tr>
+</table></div>
+
+<div class="box">
+  <b>패턴 하나가 보입니다.</b> 확실히 살아 있는 손잡이 넷(밀도·높낮이·음길이·템포)은
+  전부 <b>생성이 끝난 뒤에 붙는 후처리</b>입니다. 위상 구조 안쪽에 있는 손잡이
+  (α·온도·음역)는 죽었거나 방향이 없습니다.
+  <br><b>이건 실패가 아니라 이 방법의 성질입니다</b> — 위상 구조는 "조금씩 돌리는" 종류의
+  대상이 아니라, 바꾸면 통째로 다른 것이 되는 종류의 대상입니다.
+</div>
+
+<h3>이미 재보고 막힌 곳 (다시 밟지 않도록)</h3>
+<ul style="font-size:14.5px;color:var(--text-secondary)">
+  <li><b>지표로 선호를 예측하지 못했습니다.</b> 거리·협화도·역동성 세 계열 모두
+      n≈20 청취에서 실패했습니다. "지표가 좋다 ≠ 더 좋게 들린다."</li>
+  <li><b>가장 복잡한 모델이 이기지 않았습니다.</b> 정본 설정(DFT · gap0 · N=10)에서
+      <b>FC 0.000348</b> &lt; Transformer 0.000818 (Welch <b>p = 1.7e-04</b>) 이고,
+      LSTM 은 0.1696 으로 <b>FC 의 487배</b> 나쁩니다. 파라미터가 많다고 좋아지지 않습니다.
+      <span style="color:var(--text-tertiary)">(단 이 순위는 설정에 딸려 있습니다 —
+      gap=3 조건에서는 <b>순위가 뒤집혀</b> Transformer 0.00276 이 FC 0.00354 를 이깁니다.)</span></li>
+  <li><b>수치 최저가 최고가 아닙니다.</b> 신경망(FC)이 JS = 0.00035 로 가장 낮지만
+      청취에서 <b>원곡 모사</b>로 들립니다. 규칙 기반 Algorithm 1(0.00902)이 더 낫게 들립니다.</li>
+  <li><b>온도는 한때 반응하는 척했습니다.</b> 주머니를 섞는 코드가 난수를 소비해
+      음의 96%가 바뀌었지만 <b>방향은 0</b>이었습니다. 셔플을 지우는 것이 수정이었습니다.</li>
+</ul>
+
+<footer>
+  수치 출처 — <code>docs/step3_data/</code> 의 JSON 원본, <code>om_bank.json</code>(이 페이지가 직접 읽습니다),
+  <code>musical_metrics.py:329</code>, <code>generation.py:341</code>.<br>
+  이 페이지의 표와 그림에 쓰인 값은 전부 그 파일들에서 옮겼습니다. 어림잡은 값은 없습니다.
+</footer>
+
+</div>
+
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var PC = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+
+  Promise.all([
+    fetch('./hibari_dashboard/data/notes_metadata.json').then(function (r) { return r.json(); }),
+    fetch('./mobile_tonnetz/data/om_bank.json').then(function (r) { return r.json(); }),
+  ]).then(function (res) {
+    var meta = res[0], bank = res[1];
+
+    // ── ① note 23개 ──
+    var ls = meta.labels;
+    $('notes').innerHTML = '<b>실제 ' + ls.length + '개</b> '
+      + '<span style="color:var(--text-tertiary)">— 음이름+옥타브, '
+      + '<sup style="color:var(--accent-teal)">위첨자</sup>는 길이(8분음표 몇 개)</span><br>'
+      + ls.map(function (l) {
+          return '<span title="MIDI pitch ' + l.pitch + ' · 곡에서 ' + l.count + '회">'
+               + PC[l.pc] + (Math.floor(l.pitch / 12) - 1)
+               + '<sup style="color:var(--accent-teal)">' + l.dur + '</sup></span>';
+        }).join('&nbsp; ')
+      + '<br><span style="color:var(--text-tertiary)">쓰이는 음이름은 '
+      + new Set(ls.map(function (l) { return l.pc; })).size
+      + '개뿐입니다 — 온음계(diatonic)라서 그렇습니다.</span>';
+
+    // ── ③ α 뱅크 ──
+    var rows = bank.banks.map(function (b) {
+      return '<tr><td class="m">' + b.alpha.toFixed(2) + '</td><td class="m">' + b.K
+           + '</td><td class="m">' + b.zero_rows + ' / ' + b.T + '</td><td>'
+           + (b.K === 1 ? '<span class="dead">구조 붕괴</span>'
+              : b.zero_rows > 0 ? '<span class="half">빈 행 있음 — 주머니가 열린다</span>'
+              : '<span class="alive">빈 행 0 — 주머니를 안 쓴다</span>') + '</td></tr>';
+    }).join('');
+    $('alphas').innerHTML =
+      '<b>실측 — α 를 돌리면 고리 수가 이렇게 변합니다</b>'
+      + '<div class="scroll"><table><tr><th class="m">α</th><th class="m">고리 K</th>'
+      + '<th class="m">빈 행</th><th>뽑기 경로</th></tr>' + rows + '</table></div>'
+      + '<span style="color:var(--text-tertiary)">양 끝에서 구조가 무너집니다 — '
+      + 'α=0 은 고리가 1개로 붕괴하고, α=0.95 는 58개로 흩어집니다.</span>';
+
+    // ── ⑤ 고리 목록 (정본 α=0.25) ──
+    var b25 = bank.banks[2];
+    $('cycles').innerHTML = '정본(α=' + b25.alpha + ') 의 고리 ' + b25.K + '개 — '
+      + b25.cycles.map(function (c) { return '[' + c.join(',') + ']'; }).join(' ');
+
+    // ── ⑥ 출석부 그림 (진짜 데이터) ──
+    var T = b25.T, K = b25.K, bits = b25.om_bits;
+    var cw = 5, ch = 11, W = T * cw + 60, H = K * ch + 26;
+    var s = ['<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="중첩행렬 — 시점 × 고리">'];
+    s.push('<g font-family="\'JetBrains Mono\',monospace" font-size="9" fill="#7c937a">');
+    for (var c = 0; c < K; c++) {
+      s.push('<text x="0" y="' + (c * ch + 9) + '">고리' + String(c).padStart(2, ' ') + '</text>');
+      for (var t = 0; t < T; t++)
+        if (bits.charCodeAt(t * K + c) === 49)
+          s.push('<rect x="' + (36 + t * cw) + '" y="' + (c * ch + 1) + '" width="'
+                 + (cw - 1) + '" height="' + (ch - 3) + '" fill="#3a8f3d"/>');
+    }
+    s.push('<text x="36" y="' + (K * ch + 18) + '">시점 0</text>');
+    s.push('<text x="' + (36 + T * cw - 60) + '" y="' + (K * ch + 18) + '">' + T + '</text>');
+    s.push('</g></svg>');
+    $('om').innerHTML = s.join('');
+
+    var zero = 0;
+    for (var j = 0; j < T; j++) {
+      var any = 0;
+      for (var k = 0; k < K; k++) any += bits.charCodeAt(j * K + k) === 49 ? 1 : 0;
+      if (!any) zero++;
+    }
+    var on = 0;
+    for (var i = 0; i < bits.length; i++) on += bits.charCodeAt(i) === 49 ? 1 : 0;
+    $('omcap').innerHTML = '진짜 데이터입니다 — hibari <b>30초 조각</b>(α=0.25) · 시점 ' + T + ' × 고리 ' + K
+      + ' · 켜진 칸 ' + on + '개(' + (100 * on / (T * K)).toFixed(1) + '%) · '
+      + '<b>빈 행 ' + zero + '개</b>. 빈 행이 0 이라 예비 주머니 경로가 한 번도 열리지 않습니다.'
+      + '<br>※ 위 ①의 34.1% 는 <b>전곡</b>(T=1088) 기준이라 이 값과 다릅니다 — 같은 곡의 다른 구간입니다.';
+  }).catch(function (e) {
+    ['notes', 'alphas', 'cycles', 'om'].forEach(function (id) {
+      if ($(id)) $(id).textContent = '데이터를 불러오지 못했습니다 (' + e + ').';
+    });
+  });
+})();
+</script>
+</body>
+</html>
