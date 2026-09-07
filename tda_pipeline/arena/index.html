@@ -1,0 +1,494 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>파종장 — 사람이 찾는다</title>
+<!--
+  arena/index.html — Foldit 구조. 사람이 탐색하고, 적합도는 **다른 사람들**이다.
+
+  왜 이 구조인가
+  ─────────────
+  우리에겐 쓸 수 있는 적합도 함수가 없다. 거리·협화도·역동성 세 계열이
+  모두 n≈20 청취에서 선호 예측에 실패했다. Foldit 은 Rosetta 에너지가
+  "좋지만 불완전"해서 사람이 그 틈을 메우는 구조지만, 우리는 그것조차 없다.
+  → **점수를 계산하지 않고 측정한다.** 적합도 = 다른 사람들의 선호(Elo).
+    그러면 우리가 답하지 못한 질문("무엇이 좋게 들리나")이 곧 데이터가 된다.
+
+  Honing (2021) 의 규칙을 그대로 따른다:
+    "정답을 맞힌 것에 보상하지 말고, **참여 자체**에 보상하라.
+     그리고 참여자가 관여하고 있다고 느끼게 하라."
+  → 투표자에게 **점수를 매기지 않는다.** 맞고 틀림이 없다. 선호에는 정답이 없다.
+    되돌려 주는 것은 "당신이 무엇을 움직였는가"뿐이다.
+
+  탐색은 **이어받기**가 한다. 남의 조각을 열어 조금 바꿔 다시 심으면 자손이 된다.
+  그 계보가 곧 사람들이 그린 탐색 경로이고, 이 페이지의 연구 산출물이다.
+
+  유전자 = duet.html 의 SHARE 해시와 같은 형식. 새 규약을 만들지 않는다.
+  ⚠ 지금은 저장이 이 브라우저(localStorage)뿐이다. 서버는 `Store` 한 곳만 바꾸면 된다.
+-->
+<link rel="stylesheet" href="../hibari_dashboard/public/css/tokens.css">
+<style>
+ :root{--bg:#11140f;--panel:#1b2018;--panel2:#232a1f;--line:#333d2c;--fg:#e8efe2;
+       --dim:#93a487;--led:#8fd14f;--warm:#ffb84d;--a:#8fd14f;--b:#c9a0dc}
+ *{box-sizing:border-box}
+ body{margin:0;background:var(--bg);color:var(--fg);line-height:1.6;
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans KR",sans-serif}
+ .wrap{max-width:880px;margin:0 auto;padding:16px 12px 60px}
+ h1{font-size:clamp(17px,4vw,22px);margin:0 0 2px;letter-spacing:.05em}
+ .sub{color:var(--dim);font-size:12.5px;margin:0 0 14px}
+ a{color:var(--led)}
+ .tabs{display:flex;gap:6px;margin-bottom:14px}
+ .tabs button{flex:1;padding:11px 8px;border-radius:10px;border:1px solid var(--line);
+   background:var(--panel);color:var(--dim);font-size:13.5px;font-weight:600;cursor:pointer;
+   min-height:44px;font-family:inherit}
+ .tabs button.on{background:var(--led);border-color:var(--led);color:#16210d}
+ .rack{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px}
+ .pane{display:none} .pane.on{display:block}
+ button{font-family:inherit}
+ .duel{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+ .side{background:#0b0e09;border:2px solid var(--line);border-radius:11px;padding:10px;
+   cursor:pointer;transition:border-color .12s,transform .08s}
+ .side:active{transform:scale(.99)}
+ .side.playing{border-color:var(--warm)}
+ .side h3{margin:0 0 6px;font-size:15px;letter-spacing:.08em}
+ .side.A h3{color:var(--a)} .side.B h3{color:var(--b)}
+ .side canvas{display:block;width:100%;height:auto;border-radius:6px;background:#080b06}
+ .side .pick{margin-top:9px;width:100%;padding:12px;border-radius:9px;border:0;
+   font-size:14px;font-weight:700;cursor:pointer;min-height:44px}
+ .side.A .pick{background:var(--a);color:#16210d}
+ .side.B .pick{background:var(--b);color:#241634}
+ .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:11px}
+ .row button{padding:9px 13px;border-radius:9px;border:1px solid var(--line);
+   background:var(--panel2);color:var(--fg);font-size:13px;cursor:pointer;min-height:40px}
+ .row button.go{background:var(--led);border-color:var(--led);color:#16210d;font-weight:700}
+ .tag{color:var(--dim);font-size:12px}
+ .fb{margin-top:11px;padding:10px 12px;border-radius:9px;background:var(--panel2);
+   border-left:3px solid var(--led);font-size:13.5px;min-height:42px}
+ .fb b{color:var(--led)}
+ table{width:100%;border-collapse:collapse;font-size:13px}
+ th,td{padding:7px 6px;border-bottom:1px solid var(--line);text-align:left}
+ th{color:var(--dim);font-size:11.5px;font-weight:600}
+ td.m,th.m{font-family:ui-monospace,monospace;font-variant-numeric:tabular-nums}
+ .mini{padding:5px 9px;border-radius:7px;border:1px solid var(--line);
+   background:var(--panel2);color:var(--fg);font-size:12px;cursor:pointer;min-height:32px}
+ .mini.fork{border-color:var(--led);color:var(--led)}
+ .knobs{display:grid;grid-template-columns:repeat(auto-fit,minmax(112px,1fr));gap:9px;margin:4px 0 12px}
+ .kn{background:#0b0e09;border:1px solid var(--line);border-radius:10px;padding:9px;text-align:center}
+ .kn label{display:block;font-size:11px;color:var(--dim);letter-spacing:.08em;margin-bottom:5px}
+ .kn input{width:100%;margin:0}
+ .kn .v{font-family:ui-monospace,monospace;font-size:13px;color:var(--led);margin-top:4px}
+ .mats{display:flex;gap:5px;flex-wrap:wrap;margin:2px 0 12px}
+ .mats button{padding:7px 11px;border-radius:8px;border:1px solid var(--line);
+   background:var(--panel2);color:var(--dim);font-size:12px;cursor:pointer;min-height:36px}
+ .mats button.on{background:var(--led);border-color:var(--led);color:#16210d;font-weight:700}
+ .gate{position:fixed;inset:0;background:#0b0e09ee;display:flex;align-items:center;
+   justify-content:center;z-index:50;padding:20px}
+ .gate .card{max-width:420px;text-align:center}
+ .gate h2{font-size:19px;margin:0 0 10px}
+ .gate p{color:var(--dim);font-size:14px;margin:0 0 18px}
+ .gate button{padding:14px 26px;border-radius:11px;border:0;background:var(--led);
+   color:#16210d;font-size:15px;font-weight:700;cursor:pointer}
+ .note{color:var(--dim);font-size:12px;margin-top:16px;line-height:1.7}
+ .note b{color:var(--fg)}
+ @media(max-width:520px){ .duel{grid-template-columns:1fr} }
+</style>
+</head>
+<body>
+
+<div class="gate" id="gate"><div class="card">
+  <h2>🌱 파종장</h2>
+  <p>여기서는 <b>당신이 더 나은 음악을 찾습니다.</b><br>
+     기계가 점수를 매기지 않습니다 — 사람들이 매깁니다.<br><br>
+     <b>소리가 필요합니다.</b> 이어폰을 쓰시면 좋습니다.</p>
+  <button id="enter">소리 켜고 시작</button>
+</div></div>
+
+<div class="wrap">
+  <h1>🌱 파종장</h1>
+  <p class="sub">사람이 찾고, 사람이 고릅니다 · <a href="../duet.html">계기판</a> · <a href="../math.html">설계도</a></p>
+
+  <div class="tabs">
+    <button data-p="duel" class="on">⚔ 겨루기</button>
+    <button data-p="sow">🌱 심기</button>
+    <button data-p="ladder">🏆 사다리</button>
+  </div>
+
+  <div class="rack">
+    <!-- ── 겨루기 ────────────────────────────────────────────────── -->
+    <div class="pane on" id="p-duel">
+      <div class="duel">
+        <div class="side A" id="sideA">
+          <h3>A</h3><canvas id="cvA" width="620" height="150"></canvas>
+          <button class="pick" data-w="A">A 가 좋다</button>
+        </div>
+        <div class="side B" id="sideB">
+          <h3>B</h3><canvas id="cvB" width="620" height="150"></canvas>
+          <button class="pick" data-w="B">B 가 좋다</button>
+        </div>
+      </div>
+      <div class="row">
+        <button id="replay" class="go">▶ 다시 듣기</button>
+        <button id="playA">A 만</button>
+        <button id="playB">B 만</button>
+        <button id="skip">둘 다 별로 — 넘기기</button>
+      </div>
+      <div class="fb" id="fb">두 조각을 차례로 들려 드립니다. <b>정답은 없습니다</b> — 끌리는 쪽을 고르세요.</div>
+    </div>
+
+    <!-- ── 심기 ──────────────────────────────────────────────────── -->
+    <div class="pane" id="p-sow">
+      <canvas id="cvS" width="1200" height="200" style="display:block;width:100%;height:auto;
+        border-radius:8px;background:#080b06;margin-bottom:10px"></canvas>
+      <div class="knobs" id="knobs"></div>
+      <div class="mats" id="mats"></div>
+      <div class="row">
+        <button id="sPlay" class="go">▶ 들어보기</button>
+        <button id="sDice">🎲 음만 다시</button>
+        <button id="sow" style="background:var(--warm);border-color:var(--warm);color:#2a1b05;font-weight:700">🌱 심기</button>
+      </div>
+      <div class="fb" id="sfb">노브를 돌려 마음에 드는 것을 만든 뒤 <b>심기</b>를 누르세요. 다른 사람들이 겨루게 됩니다.</div>
+    </div>
+
+    <!-- ── 사다리 ────────────────────────────────────────────────── -->
+    <div class="pane" id="p-ladder">
+      <div class="fb" id="lfb"></div>
+      <div style="overflow-x:auto;margin-top:10px">
+        <table id="ladder"><tbody></tbody></table>
+      </div>
+    </div>
+  </div>
+
+  <p class="note">
+    <b>규칙은 셋뿐입니다.</b> ① 마음에 드는 것을 <b>심습니다</b>.
+    ② 남의 것 둘을 듣고 <b>고릅니다</b>. ③ 좋은 것을 <b>이어받아</b> 조금 바꿔 다시 심습니다.<br>
+    점수는 조각에 붙지 <b>당신에게 붙지 않습니다.</b> 잘 고르고 못 고르고가 없습니다 — 취향에는 정답이 없으니까요.<br>
+    ⚠ 지금은 <b>이 브라우저에만</b> 저장됩니다(시험판). 여러 사람이 함께 겨루려면 서버가 붙어야 합니다.
+  </p>
+</div>
+
+<script src="../hibari_dashboard/public/js/generation-algo1.js"></script>
+<script src="../hibari_dashboard/public/js/audio-playback.js"></script>
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+
+  // ── 저장 — 서버로 바꿀 때 이 객체 하나만 갈아 끼운다 ──────────────────
+  var Store = {
+    key: 'arena.v1',
+    load: function () {
+      try { return JSON.parse(localStorage.getItem(this.key)) || null; } catch (e) { return null; }
+    },
+    save: function (s) {
+      try { localStorage.setItem(this.key, JSON.stringify(s)); } catch (e) {}
+    },
+  };
+
+  var AX = [
+    { k: 'p', name: 'PITCH',   lo: -12, hi: 12,  step: 1,    fmt: function (x) { return (x > 0 ? '+' : '') + x + ' st'; } },
+    { k: 'd', name: 'DENSITY', lo: 0.4, hi: 2.2, step: 0.02, fmt: function (x) { return x.toFixed(2) + '×'; } },
+    { k: 't', name: 'TEMPO',   lo: 0.5, hi: 2.0, step: 0.02, fmt: function (x) { return x.toFixed(2) + '×'; } },
+    { k: 'g', name: 'LENGTH',  lo: 0.4, hi: 3.0, step: 0.02, fmt: function (x) { return x.toFixed(2) + '×'; } },
+  ];
+  var bank = null, labels = null, player = null, S = null, draft = null;
+  var cur = null, phase = 0, tid = 0;
+
+  // ── 유전자 ↔ 문자열 (duet.html SHARE 해시와 같은 형식) ────────────────
+  function gStr(g) {
+    return 'p' + g.p + '_d' + g.d.toFixed(2) + '_t' + g.t.toFixed(2)
+         + '_g' + g.g.toFixed(2) + '_a' + g.a + '_s' + g.s;
+  }
+  function bits(s, n) {
+    var v = new Int8Array(n);
+    for (var i = 0; i < n; i++) v[i] = s.charCodeAt(i) === 49 ? 1 : 0;
+    return v;
+  }
+  /** duet.html build() 과 같은 순서. 딴 경로를 만들지 않는다. */
+  function render(g) {
+    var G = window.GenerationAlgo1, b = bank.banks[g.a], T = b.T;
+    var cyc = b.cycles.map(function (c, i) { return { cycle_idx: i, note_labels_0idx: c }; });
+    var base = G.buildHibariInstLen(T), len = new Int32Array(T);
+    for (var i = 0; i < T; i++) len[i] = Math.max(0, Math.round(base[i] * g.d));
+    var rng = G.makeRng(g.s);
+    var r = G.algorithm1({
+      nodePool: new G.NodePool({ labels: labels, numModules: 65, temperature: 1.0, rng: rng }),
+      cycleManager: new G.CycleSetManager({ cycles: cyc, K: b.K }),
+      instLen: len, overlap: { T: T, K: b.K, values: bits(b.om_bits, T * b.K) },
+      maxResample: 50, rng: rng,
+    });
+    var ns = r.notes.map(function (n) {
+      var d = Math.max(1, Math.round((n[2] - n[0]) * g.g));
+      return [n[0], n[1] + g.p, Math.min(T, n[0] + d)];
+    });
+    return { notes: ns, T: T, sec: 0.25 / g.t };
+  }
+
+  function draw(cv, piece, col) {
+    var cx = cv.getContext('2d'), W = cv.width, H = cv.height, P = 6;
+    cx.clearRect(0, 0, W, H);
+    if (!piece.notes.length) return;
+    var LO = 40, HI = 90;
+    var xs = (W - P * 2) / piece.T, ys = (H - P * 2) / (HI - LO);
+    cx.fillStyle = col;
+    for (var i = 0; i < piece.notes.length; i++) {
+      var n = piece.notes[i];
+      cx.fillRect(P + n[0] * xs, P + (HI - n[1]) * ys,
+                  Math.max(1.5, (n[2] - n[0]) * xs - 1), Math.max(2.5, ys * 1.3));
+    }
+  }
+  function play(piece, gain) {
+    player = player || new window.PianoPlayer();
+    player.play(piece.notes.map(function (n) {
+      return [n[0] * piece.sec, n[1], n[2] * piece.sec];
+    }), { gain: gain || 0.7 });
+  }
+  function stop() { if (player) player.stop(); }
+
+  // ── Elo ─────────────────────────────────────────────────────────────
+  function elo(ra, rb, sa) {
+    var e = 1 / (1 + Math.pow(10, (rb - ra) / 400));
+    return Math.round(ra + 24 * (sa - e));
+  }
+
+  // ── 짝짓기 — 실력이 비슷한 둘을 붙여야 정보가 나온다 ──────────────────
+  function pair() {
+    var ps = S.pieces.slice().sort(function (a, b) { return b.elo - a.elo; });
+    if (ps.length < 2) return null;
+    var i = Math.floor(Math.random() * ps.length), j;
+    if (Math.random() < 0.2) {                        // 20% 는 완전 무작위 (탐색)
+      do { j = Math.floor(Math.random() * ps.length); } while (j === i);
+    } else {                                          // 80% 는 이웃 순위 (활용)
+      var lo = Math.max(0, i - 3), hi = Math.min(ps.length - 1, i + 3);
+      do { j = lo + Math.floor(Math.random() * (hi - lo + 1)); } while (j === i);
+    }
+    return [ps[i], ps[j]];
+  }
+
+  function newDuel() {
+    var p = pair();
+    if (!p) { $('fb').textContent = '겨룰 조각이 모자랍니다. 먼저 심어 주세요.'; return; }
+    cur = { A: p[0], B: p[1], rA: render(p[0].genome), rB: render(p[1].genome) };
+    draw($('cvA'), cur.rA, '#8fd14f');
+    draw($('cvB'), cur.rB, '#c9a0dc');
+    sequence();
+  }
+  /** A 6초 → B 6초 → 고르세요. 결정 마비를 줄인다. */
+  function sequence() {
+    clearTimeout(tid); stop();
+    phase = 0; mark();
+    play(cur.rA);
+    tid = setTimeout(function () {
+      phase = 1; mark(); stop(); play(cur.rB);
+      tid = setTimeout(function () { phase = 2; mark(); stop(); }, 6000);
+    }, 6000);
+  }
+  function mark() {
+    $('sideA').classList.toggle('playing', phase === 0);
+    $('sideB').classList.toggle('playing', phase === 1);
+    if (phase < 2) $('fb').innerHTML = (phase === 0 ? 'A' : 'B') + ' 를 듣는 중…';
+    else $('fb').innerHTML = '<b>어느 쪽이 끌리시나요?</b> 정답은 없습니다.';
+  }
+
+  function vote(w) {
+    if (!cur) return;
+    clearTimeout(tid); stop();
+    var A = cur.A, B = cur.B, before = rankOf(w === 'A' ? A : B);
+    var ea = A.elo, eb = B.elo;
+    A.elo = elo(ea, eb, w === 'A' ? 1 : 0);
+    B.elo = elo(eb, ea, w === 'B' ? 1 : 0);
+    (w === 'A' ? A : B).wins++; (w === 'A' ? B : A).losses++;
+    S.votes++;
+    S.votedIds[(w === 'A' ? A : B).id] = 1;
+    Store.save(S);
+    var won = w === 'A' ? A : B, after = rankOf(won);
+    // ⚠ 투표자를 채점하지 않는다. 되돌려 주는 것은 "당신이 무엇을 움직였는가" 뿐이다.
+    var msg = '당신의 표로 <b>' + won.name + '</b> 이(가) ';
+    msg += (after < before) ? '<b>' + (before - after) + '계단 올랐습니다</b> (지금 ' + (after + 1) + '위).'
+                            : '<b>' + (after + 1) + '위</b>를 지켰습니다.';
+    if (S.mine[won.id]) msg += ' — <b>당신이 심은 조각입니다.</b>';
+    msg += ' · 지금까지 ' + S.votes + '표';
+    $('fb').innerHTML = msg;
+    setTimeout(newDuel, 1400);
+  }
+  function rankOf(p) {
+    return S.pieces.slice().sort(function (a, b) { return b.elo - a.elo; })
+            .findIndex(function (x) { return x.id === p.id; });
+  }
+
+  // ── 심기 ────────────────────────────────────────────────────────────
+  function buildKnobs() {
+    $('knobs').innerHTML = AX.map(function (a) {
+      return '<div class="kn"><label>' + a.name + '</label>'
+           + '<input type="range" id="k_' + a.k + '" min="' + a.lo + '" max="' + a.hi
+           + '" step="' + a.step + '"><div class="v" id="kv_' + a.k + '"></div></div>';
+    }).join('');
+    AX.forEach(function (a) {
+      $('k_' + a.k).addEventListener('input', function () {
+        draft[a.k] = +this.value; paintSow(true);
+      });
+    });
+    $('mats').innerHTML = bank.banks.map(function (b, i) {
+      return '<button data-m="' + i + '">고리 ' + b.K + '</button>';
+    }).join('');
+    $('mats').addEventListener('click', function (e) {
+      var m = e.target.getAttribute('data-m');
+      if (m === null) return;
+      draft.a = +m; paintSow(true);
+    });
+  }
+  function paintSow(regen) {
+    AX.forEach(function (a) {
+      $('k_' + a.k).value = draft[a.k];
+      $('kv_' + a.k).textContent = a.fmt(draft[a.k]);
+    });
+    [].forEach.call($('mats').children, function (b, i) { b.classList.toggle('on', i === draft.a); });
+    if (regen) draft._r = render(draft);
+    draw($('cvS'), draft._r, '#ffb84d');
+  }
+
+  // ── 사다리 ──────────────────────────────────────────────────────────
+  function paintLadder() {
+    var ps = S.pieces.slice().sort(function (a, b) { return b.elo - a.elo; });
+    var kids = {};
+    S.pieces.forEach(function (p) { if (p.parent) kids[p.parent] = (kids[p.parent] || 0) + 1; });
+    var mine = S.pieces.filter(function (p) { return S.mine[p.id]; });
+    var mw = mine.reduce(function (s, p) { return s + p.wins; }, 0);
+    var md = mine.reduce(function (s, p) { return s + p.wins + p.losses; }, 0);
+    var mk = mine.reduce(function (s, p) { return s + (kids[p.id] || 0); }, 0);
+    /* ⚠ "당신이 고른 것 중 N개가 상위권" 은 표가 쌓이면 자동으로 전부가 된다 —
+     * 속 빈 칭찬이다. **고른 개수 대비 몇 개인지**를 같이 보여 줘야 정보가 된다. */
+    var picked = Object.keys(S.votedIds).length;
+    var top = ps.slice(0, 10).filter(function (p) { return S.votedIds[p.id]; }).length;
+    var bits = [];
+    bits.push('투표 <b>' + S.votes + '표</b>');
+    if (picked) bits.push('당신이 고른 <b>' + picked + '개</b> 중 <b>' + top + '개</b>가 상위 10위');
+    if (mine.length) {
+      bits.push('심은 조각 <b>' + mine.length + '개</b>'
+                + (md ? ' (' + md + '번 겨뤄 ' + mw + '승)' : ' (아직 안 겨룸)'));
+      if (mk) bits.push('갈라져 나온 자손 <b>' + mk + '개</b>');
+    } else {
+      bits.push('<span class="tag">아직 심은 것이 없습니다 — 🌱 심기 에서 하나 만들어 보세요</span>');
+    }
+    $('lfb').innerHTML = bits.join(' · ');
+    $('ladder').querySelector('tbody').innerHTML =
+      '<tr><th class="m">#</th><th>조각</th><th class="m">점수</th><th class="m">전적</th>'
+      + '<th class="m">자손</th><th></th></tr>'
+      + ps.slice(0, 30).map(function (p, i) {
+          return '<tr><td class="m">' + (i + 1) + '</td>'
+            + '<td>' + p.name + (S.mine[p.id] ? ' <span class="tag">(내 것)</span>' : '')
+            + (p.parent ? ' <span class="tag">← ' + (byId(p.parent) || {}).name + '</span>' : '') + '</td>'
+            + '<td class="m">' + p.elo + '</td>'
+            + '<td class="m">' + p.wins + '–' + p.losses + '</td>'
+            + '<td class="m">' + (kids[p.id] || 0) + '</td>'
+            + '<td><button class="mini" data-play="' + p.id + '">▶</button> '
+            + '<button class="mini fork" data-fork="' + p.id + '">이어받기</button></td></tr>';
+        }).join('');
+  }
+  function byId(id) { return S.pieces.filter(function (p) { return p.id === id; })[0]; }
+
+  // ── 이름 — 사람이 부를 수 있어야 사다리가 읽힌다 ──────────────────────
+  /* 이름은 id 의 순수 함수여야 한다 — 어느 브라우저에서 봐도 같은 조각은 같은 이름이다.
+   * 낱말 16×16 (=256) 로는 48개만 심어도 이름이 겹쳤다(실측 4건). 뒷낱말을 겹쳐
+   * 합성명사로 만들어 16³ = 4096 으로 넓힌다. "얕은 이끼자리" 처럼 읽힌다. */
+  var W1 = ['이른', '늦은', '젖은', '마른', '흐린', '맑은', '깊은', '얕은',
+            '먼', '작은', '긴', '짧은', '느린', '고요한', '무거운', '서늘한'];
+  var W2 = ['새벽', '언덕', '물결', '들판', '골목', '숲', '눈', '비',
+            '바람', '모래', '재', '연기', '그늘', '빛', '돌', '이끼'];
+  var W3 = ['자리', '결', '빛', '소리', '그림자', '냄새', '길', '끝',
+            '가', '무늬', '층', '무리', '자국', '틈', '살', '켜'];
+  function nameFor(id) {
+    var h = 0; for (var i = 0; i < id.length; i++) h = (h * 131 + id.charCodeAt(i)) & 0x7fffffff;
+    return W1[h % 16] + ' ' + W2[(h >> 4) % 16] + W3[(h >> 8) % 16];
+  }
+  function mkPiece(genome, parent) {
+    var id = gStr(genome);
+    return { id: id, name: nameFor(id), genome: genome, elo: 1500, wins: 0, losses: 0,
+             parent: parent || null, born: Date.now() };
+  }
+
+  // ── 부팅 ────────────────────────────────────────────────────────────
+  Promise.all([
+    fetch('../mobile_tonnetz/data/om_bank.json').then(function (r) { return r.json(); }),
+    fetch('../hibari_dashboard/data/notes_metadata.json').then(function (r) { return r.json(); }),
+    fetch('./data/seeds.json').then(function (r) { return r.json(); }),
+  ]).then(function (res) {
+    bank = res[0]; labels = res[1].labels;
+    S = Store.load();
+    if (!S) {
+      S = { pieces: [], votes: 0, mine: {}, votedIds: {} };
+      res[2].seeds.forEach(function (s) {
+        S.pieces.push(mkPiece({ p: s.p, d: s.d, t: s.t, g: s.g, a: s.a, s: s.s }, null));
+      });
+      Store.save(S);
+    }
+    draft = { p: 0, d: 1.0, t: 1.0, g: 1.0, a: 2, s: 101 };
+    buildKnobs(); paintSow(true); paintLadder();
+
+    $('enter').addEventListener('click', function () {
+      $('gate').style.display = 'none';
+      player = new window.PianoPlayer();
+      newDuel();
+    });
+  }).catch(function (e) {
+    $('gate').innerHTML = '<div class="card"><h2>데이터를 불러오지 못했습니다</h2><p>' + e + '</p></div>';
+  });
+
+  // ── 이벤트 ──────────────────────────────────────────────────────────
+  document.querySelector('.tabs').addEventListener('click', function (e) {
+    var p = e.target.getAttribute('data-p'); if (!p) return;
+    clearTimeout(tid); stop();
+    [].forEach.call(this.children, function (b) { b.classList.toggle('on', b.getAttribute('data-p') === p); });
+    ['duel', 'sow', 'ladder'].forEach(function (k) { $('p-' + k).classList.toggle('on', k === p); });
+    if (p === 'ladder') paintLadder();
+    if (p === 'duel' && cur) sequence();
+  });
+  document.querySelector('.duel').addEventListener('click', function (e) {
+    var w = e.target.getAttribute('data-w'); if (w) vote(w);
+  });
+  $('replay').addEventListener('click', sequence);
+  $('playA').addEventListener('click', function () { clearTimeout(tid); stop(); phase = 0; mark(); play(cur.rA); });
+  $('playB').addEventListener('click', function () { clearTimeout(tid); stop(); phase = 1; mark(); play(cur.rB); });
+  $('skip').addEventListener('click', function () { clearTimeout(tid); stop(); newDuel(); });
+
+  $('sPlay').addEventListener('click', function () { stop(); play(draft._r); });
+  $('sDice').addEventListener('click', function () {
+    draft.s = 1000 + Math.floor(Math.random() * 899000); paintSow(true); stop(); play(draft._r);
+  });
+  $('sow').addEventListener('click', function () {
+    var p = mkPiece({ p: draft.p, d: draft.d, t: draft.t, g: draft.g, a: draft.a, s: draft.s },
+                    draft._parent || null);
+    if (byId(p.id)) { $('sfb').innerHTML = '이미 같은 조각이 있습니다 — <b>' + byId(p.id).name + '</b>.'; return; }
+    S.pieces.push(p); S.mine[p.id] = 1; Store.save(S);
+    $('sfb').innerHTML = '<b>' + p.name + '</b> 을(를) 심었습니다'
+      + (p.parent ? ' — <b>' + (byId(p.parent) || {}).name + '</b> 의 자손입니다.' : '.')
+      + ' 이제 다른 사람들이 겨루게 됩니다.';
+    draft._parent = null;
+    paintLadder();
+  });
+  $('ladder').addEventListener('click', function (e) {
+    var pl = e.target.getAttribute('data-play'), fk = e.target.getAttribute('data-fork');
+    if (pl) { stop(); play(render(byId(pl).genome)); }
+    if (fk) {
+      var src = byId(fk);
+      draft = JSON.parse(JSON.stringify(src.genome));
+      draft._parent = fk;
+      document.querySelector('.tabs button[data-p="sow"]').click();
+      paintSow(true);
+      $('sfb').innerHTML = '<b>' + src.name + '</b> 을(를) 이어받았습니다. '
+        + '조금 바꿔서 다시 심어 보세요 — 더 나아지면 자손이 부모를 이깁니다.';
+    }
+  });
+
+  window.__arena = {
+    state: function () { return S; },
+    seedVotes: function (n) {                     // 시험용 — 무작위 투표로 사다리를 채운다
+      for (var i = 0; i < n; i++) { var p = pair(); if (!p) break;
+        var w = Math.random() < 0.5 ? 'A' : 'B';
+        cur = { A: p[0], B: p[1] }; vote(w); clearTimeout(tid); }
+      return S.votes;
+    },
+  };
+})();
+</script>
+</body>
+</html>
