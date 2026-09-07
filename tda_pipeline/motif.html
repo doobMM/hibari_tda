@@ -1,0 +1,349 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>모티브 — 치면 자란다</title>
+<!--
+  motif.html — 사람은 "고리 7번"이 뭔지 모른다. 하지만 자기가 친 가락은 안다.
+  그래서 **고리를 직접 고르게 하지 않고, 친 가락과 닮은 고리를 찾아 준다.**
+
+  왜 실제 음높이로 맞추는가 (만들기 전에 쟀다)
+  ──────────────────────────────────────
+  hibari 는 음이름이 7개뿐이라 음이름으로 맞추면 금방 포화된다. 무작위 모티브 300개 실측:
+
+              모티브 3음   4음    5음    6음      1등이 되어 본 고리
+    음이름(7)   0.55    0.56   0.48   0.29  →  6음에서 4/14 로 **붕괴**
+    음높이(17)  0.46    0.54   0.59   0.63  →  전 구간 14/14
+
+  음이름으로 맞추면 많이 칠수록 고리가 구별되지 않는다. **음높이로 맞춘다.**
+  (이 계측을 안 하고 지었으면 "많이 칠수록 반응이 죽는" 악기가 나왔을 것이다.)
+
+  닮음의 정의 — 사람이 읽을 수 있어야 한다
+  ─────────────────────────────────
+    닮음(고리) = (그 고리의 음 중 내가 친 음높이에 있는 것) / (그 고리의 음 수)
+  화면에는 "4/6" 으로 그대로 보여 준다. 지표가 아니라 셈이다.
+
+  즉각성 (AI Academy 의 규칙)
+  ────────────────────────
+    · 칸을 누르면 **그 자리에서 소리가 난다.** 반주는 다음 바퀴에 따라온다 (루퍼 페달처럼).
+    · 탭 전용 플레이어를 따로 둔다 — `PianoPlayer.play()` 가 매번 `stop()` 을 부르므로
+      한 인스턴스로 하면 탭이 루프를 끊는다.
+    · 자체 완결 한 파일 · 캔버스 · 바닐라 JS · 설명 없이 바로 시작.
+
+  ⚠ 정직하게: 고리(H₁)는 미리 계산된 것을 쓴다. 브라우저에서 위상수학을 다시 풀지 않는다.
+    당신이 바꾸는 것은 **어느 고리에서 음을 뽑을 것인가**이고, 그건 실제로 곡을 바꾼다.
+-->
+<link rel="stylesheet" href="./hibari_dashboard/public/css/tokens.css">
+<style>
+ :root{--bg:#11140f;--panel:#1b2018;--panel2:#232a1f;--line:#333d2c;--fg:#e8efe2;
+       --dim:#93a487;--me:#4fd1c9;--gen:#5f8f45;--warm:#ffb84d;--led:#8fd14f}
+ *{box-sizing:border-box}
+ body{margin:0;background:var(--bg);color:var(--fg);line-height:1.6;
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans KR",sans-serif}
+ .wrap{max-width:900px;margin:0 auto;padding:16px 12px 60px}
+ h1{font-size:clamp(17px,4vw,22px);margin:0 0 2px;letter-spacing:.04em}
+ .sub{color:var(--dim);font-size:12.5px;margin:0 0 12px}
+ a{color:var(--led)}
+ .rack{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px}
+ .screen{background:#0b0e09;border:1px solid var(--line);border-radius:10px;
+         overflow:hidden;position:relative}
+ canvas{display:block;width:100%;height:auto;touch-action:none;cursor:crosshair}
+ .hint{position:absolute;right:10px;top:8px;font-size:11.5px;color:var(--me);
+       font-family:ui-monospace,monospace;pointer-events:none}
+ .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:11px}
+ button{font-family:inherit;padding:10px 15px;border-radius:9px;border:1px solid var(--line);
+        background:var(--panel2);color:var(--fg);font-size:13.5px;cursor:pointer;min-height:44px}
+ button.go{background:var(--led);border-color:var(--led);color:#16210d;font-weight:700}
+ button.go.on{background:var(--warm);border-color:var(--warm);color:#2a1b05}
+ .tag{color:var(--dim);font-size:12px;font-family:ui-monospace,monospace}
+ .lamps{display:flex;gap:5px;flex-wrap:wrap;margin-top:12px}
+ .lamp{flex:1 1 58px;min-width:58px;border:1px solid var(--line);border-radius:8px;
+       padding:6px 4px;text-align:center;font-family:ui-monospace,monospace;
+       background:#0b0e09;transition:background .15s,border-color .15s}
+ .lamp .n{font-size:10.5px;color:var(--dim)}
+ .lamp .s{font-size:13px;font-weight:700;color:#3b4a33}
+ .lamp.on{border-color:var(--led);background:rgba(143,209,79,.13)}
+ .lamp.on .s{color:var(--led)}
+ .fb{margin-top:12px;padding:11px 13px;border-radius:9px;background:var(--panel2);
+     border-left:3px solid var(--me);font-size:13.5px;min-height:44px}
+ .fb b{color:var(--me)}
+ .note{color:var(--dim);font-size:12px;margin-top:16px;line-height:1.75}
+ .note b{color:var(--fg)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>모티브 — 치면 자란다</h1>
+  <p class="sub">칸을 누르면 소리가 나고, 그 가락과 <b>닮은 고리</b>가 깨어나 나머지를 채웁니다 ·
+     <a href="./math.html">설계도</a> · <a href="../">처음으로</a></p>
+
+  <div class="rack">
+    <div class="screen">
+      <canvas id="cv" width="1320" height="440"></canvas>
+      <div class="hint" id="hint">칸을 눌러 보세요</div>
+    </div>
+
+    <div class="row">
+      <button class="go" id="go">▶ 재생</button>
+      <button id="undo">↶ 되돌리기</button>
+      <button id="clear">비우기</button>
+      <button id="dice">🎲 반주만 다시</button>
+      <span class="tag">느리게</span>
+      <input type="range" id="ms" min="140" max="420" step="10" value="260" style="width:120px">
+      <span class="tag" id="msv">260ms</span>
+    </div>
+
+    <div class="lamps" id="lamps"></div>
+    <div class="fb" id="fb">아무 칸이나 눌러 보세요. 누르는 즉시 소리가 납니다.</div>
+  </div>
+
+  <p class="note">
+    <b>닮음은 이렇게 셉니다</b> — 각 고리가 가진 음 중에서 <b>당신이 친 음높이</b>에 있는 것이
+    몇 개인지. 화면의 <b>4/6</b> 이 그 뜻입니다. 가장 닮은 고리들이 켜지고, 그 고리들의
+    <b>공통 음</b>에서 반주가 뽑힙니다.<br>
+    <b>왜 음높이로 세나</b> — 음이름(7개)으로 세면 대여섯 음만 쳐도 모든 고리가 비슷해집니다.
+    무작위 모티브 300개로 재보니 음이름은 6음에서 <b>1등 고리가 14개 중 4개</b>로 무너졌고,
+    음높이는 <b>14개 전부</b>가 1등이 되었습니다. 그래서 음높이로 셉니다.<br>
+    ⚠ 고리(H₁)는 <b>미리 계산된 것</b>을 씁니다. 브라우저에서 위상수학을 다시 풀지는 않습니다.
+    당신이 바꾸는 것은 <b>어느 고리에서 음을 뽑을지</b>이고, 그건 실제로 곡을 바꿉니다.
+  </p>
+</div>
+
+<script src="./hibari_dashboard/public/js/generation-algo1.js"></script>
+<script src="./hibari_dashboard/public/js/audio-playback.js"></script>
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var T = 16, MS = 260;                     // 16 스텝 루프
+  var bank = null, labels = null, PIT = [], CYC = [], CPIT = [];
+  var mine = [], gen = [], score = [], onIdx = [];
+  var loopP = null, tapP = null, playing = false, anchorMs = 0, anchorStep = 0, reTid = 0;
+  var seed = 101, expo = null;
+
+  var sec = function () { return MS / 1000; };
+  function pos() {
+    return playing ? anchorStep + (performance.now() - anchorMs) / 1000 / sec() : anchorStep;
+  }
+
+  function bits(s, n) {
+    var v = new Int8Array(n);
+    for (var i = 0; i < n; i++) v[i] = s.charCodeAt(i) === 49 ? 1 : 0;
+    return v;
+  }
+
+  /* 닮음 = 그 고리의 음 중 내가 친 음높이에 있는 것의 비율.
+   * **음이름이 아니라 음높이**로 센다 — 위 주석의 계측 근거. */
+  function rescore() {
+    var mset = {};
+    mine.forEach(function (m) { mset[m[1]] = 1; });
+    score = CPIT.map(function (ps) {
+      var hit = 0;
+      for (var i = 0; i < ps.length; i++) if (mset[ps[i]]) hit++;
+      return { hit: hit, of: ps.length, r: ps.length ? hit / ps.length : 0 };
+    });
+    /* 가장 닮은 **상위 N개**를 켠다. 비율 문턱으로 자르면 안 된다 —
+     * 실측: 1~4음일 때 문턱을 넘는 고리가 하나뿐이라 중첩행렬 창이 통째로 비고,
+     * 반주가 구조를 **0% 따르는**(= 전부 자유추출) 상태가 됐다.
+     * 그리고 순위는 **맞은 개수 우선**이다. 3/7 은 1/4 보다 내 가락을 더 많이 담고 있다. */
+    if (!mine.length) { onIdx = score.map(function (_, i) { return i; }); return; }
+    var TOP = 5;
+    onIdx = score.map(function (s, i) { return i; }).sort(function (a, b) {
+      return (score[b].hit - score[a].hit) || (score[b].r - score[a].r) || (a - b);
+    }).slice(0, TOP).sort(function (a, b) { return a - b; });
+  }
+
+  /** 켜진 고리들로만 반주를 만든다. duet.html 과 같은 생성 경로. */
+  function regen() {
+    var G = window.GenerationAlgo1, b = bank.banks[2], K = b.K;
+    var raw = bits(b.om_bits, b.T * K), vals = new Int8Array(T * K);
+    var live = {}; onIdx.forEach(function (i) { live[i] = 1; });
+    for (var t = 0; t < T; t++)
+      for (var k = 0; k < K; k++) vals[t * K + k] = live[k] ? raw[(t % b.T) * K + k] : 0;
+    var cyc = b.cycles.map(function (c, i) { return { cycle_idx: i, note_labels_0idx: c }; });
+    var base = G.buildHibariInstLen(T), len = new Int32Array(T);
+    // 내가 친 음이 있는 시점은 반주를 비켜 준다 — 덧칠이 아니라 자리 양보
+    var per = new Int32Array(T);
+    mine.forEach(function (m) { per[m[0]]++; });
+    for (var i = 0; i < T; i++) len[i] = Math.max(0, base[i] - per[i]);
+    var cm = new G.CycleSetManager({ cycles: cyc, K: K }), ov = { T: T, K: K, values: vals };
+    expo = G.poolExposure({ cycleManager: cm, overlap: ov });
+    var rng = G.makeRng(seed);
+    var r = G.algorithm1({
+      nodePool: new G.NodePool({ labels: labels, numModules: 65, temperature: 1.0, rng: rng }),
+      cycleManager: cm, instLen: len, overlap: ov, maxResample: 50, rng: rng,
+    });
+    gen = r.notes.map(function (n) { return [n[0] % T, n[1], Math.min(T, n[2])]; })
+                 .filter(function (n) { return n[2] > n[0]; });
+  }
+
+  function allNotes() {
+    return gen.map(function (n) { return [n[0], n[1], n[2], 0]; })
+      .concat(mine.map(function (m) { return [m[0], m[1], Math.min(T, m[0] + 2), 1]; }));
+  }
+
+  // ── 소리 ────────────────────────────────────────────────────────────
+  function schedule() {
+    clearTimeout(reTid);
+    if (!playing) return;
+    var p = pos() % T; anchorStep = p; anchorMs = performance.now();
+    var out = [], ns = allNotes();
+    for (var lap = 0; lap < 2; lap++)
+      for (var i = 0; i < ns.length; i++) {
+        var n = ns[i], off = lap * T - p;
+        if (n[2] + off <= 0) continue;
+        out.push([Math.max(0, n[0] + off) * sec(), n[1], (n[2] + off) * sec()]);
+      }
+    loopP = loopP || new window.PianoPlayer();
+    loopP.play(out, { gain: 0.55 });
+    reTid = setTimeout(schedule, (T - p) * MS);       // 한 바퀴 끝에 이어 붙인다
+  }
+  /** 탭은 **전용 플레이어**로 낸다. 안 그러면 play() 안의 stop() 이 루프를 끊는다. */
+  function blip(pitch) {
+    tapP = tapP || new window.PianoPlayer();
+    tapP.play([[0, pitch, 0.42]], { gain: 0.85 });
+  }
+
+  // ── 그림 ────────────────────────────────────────────────────────────
+  function draw() {
+    var cv = $('cv'), cx = cv.getContext('2d'), W = cv.width, H = cv.height;
+    var PAD = 34, cw = (W - PAD) / T, ch = (H - 18) / PIT.length;
+    cx.clearRect(0, 0, W, H);
+    var NAME = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+    for (var r = 0; r < PIT.length; r++) {                       // 격자 + 음이름
+      var y = 9 + r * ch;
+      cx.fillStyle = r % 2 ? '#0e1309' : '#111710';
+      cx.fillRect(PAD, y, W - PAD, ch - 1);
+      cx.fillStyle = '#5d6b52'; cx.font = '11px ui-monospace,monospace';
+      cx.textAlign = 'right'; cx.textBaseline = 'middle';
+      var p = PIT[PIT.length - 1 - r];
+      cx.fillText(NAME[p % 12] + (Math.floor(p / 12) - 1), PAD - 6, y + ch / 2);
+    }
+    cx.strokeStyle = '#1e2718'; cx.lineWidth = 1;
+    for (var t = 0; t <= T; t++) {
+      cx.beginPath(); cx.moveTo(PAD + t * cw, 9); cx.lineTo(PAD + t * cw, H - 9);
+      cx.strokeStyle = t % 4 === 0 ? '#2c3a24' : '#1a2215'; cx.stroke();
+    }
+    var now = playing ? pos() % T : -1;
+    function cell(n, col, alpha) {
+      var r = PIT.length - 1 - PIT.indexOf(n[1]); if (r < 0) return;
+      cx.globalAlpha = alpha; cx.fillStyle = col;
+      cx.fillRect(PAD + n[0] * cw + 1, 9 + r * ch + 1,
+                  Math.max(3, (n[2] - n[0]) * cw - 2), ch - 3);
+      cx.globalAlpha = 1;
+    }
+    gen.forEach(function (n) {
+      var live = playing && n[0] <= now && n[2] > now;
+      cell(n, live ? '#ffb84d' : '#4d7538', live ? 1 : 0.9);
+    });
+    mine.forEach(function (m) {
+      var n = [m[0], m[1], Math.min(T, m[0] + 2)];
+      var live = playing && n[0] <= now && n[2] > now;
+      cell(n, live ? '#ffffff' : '#4fd1c9', 1);
+    });
+    if (playing) { cx.fillStyle = '#ffb84d'; cx.fillRect(PAD + now * cw, 0, 2, H); }
+    requestAnimationFrame(draw);
+  }
+
+  function paintLamps() {
+    $('lamps').innerHTML = score.map(function (s, i) {
+      var on = onIdx.indexOf(i) >= 0;
+      return '<div class="lamp' + (on ? ' on' : '') + '"><div class="n">고리 ' + (i + 1)
+           + '</div><div class="s">' + s.hit + '/' + s.of + '</div></div>';
+    }).join('');
+    var f;
+    if (!mine.length) {
+      f = '아무 칸이나 눌러 보세요. <b>누르는 즉시 소리가 납니다.</b>';
+    } else {
+      f = '당신이 친 <b>' + mine.length + '음</b>이 <b>고리 ' + onIdx.length + '개</b>를 깨웠습니다'
+        + ' (' + onIdx.map(function (i) { return i + 1; }).join(', ') + ').';
+      if (expo) {
+        var fol = 1 - expo.ratio;
+        f += ' 반주의 <b>' + (fol * 100).toFixed(0) + '%</b> 가 그 고리들에서 나옵니다'
+           + (expo.rows ? ' — 나머지 ' + expo.rows + '/' + expo.T
+                        + ' 스텝은 깨어난 고리가 없어 자유롭게 뽑습니다.' : '.');
+      }
+    }
+    $('fb').innerHTML = f;
+  }
+
+  function apply() { rescore(); regen(); paintLamps(); if (playing) schedule(); }
+
+  // ── 입력 ────────────────────────────────────────────────────────────
+  var painting = false, last = '';
+  function hit(ev) {
+    var cv = $('cv'), r = cv.getBoundingClientRect();
+    var PAD = 34, cw = (cv.width - PAD) / T, ch = (cv.height - 18) / PIT.length;
+    var x = (ev.clientX - r.left) / r.width * cv.width;
+    var y = (ev.clientY - r.top) / r.height * cv.height;
+    var t = Math.floor((x - PAD) / cw), row = Math.floor((y - 9) / ch);
+    if (t < 0 || t >= T || row < 0 || row >= PIT.length) return null;
+    return [t, PIT[PIT.length - 1 - row]];
+  }
+  function put(ev) {
+    var c = hit(ev); if (!c) return;
+    var key = c[0] + ':' + c[1]; if (key === last) return;
+    last = key;
+    var at = mine.findIndex(function (m) { return m[0] === c[0] && m[1] === c[1]; });
+    if (at >= 0) { mine.splice(at, 1); }              // 다시 누르면 지운다
+    else { mine.push(c); blip(c[1]); }                 // ← 즉시 소리
+    apply();
+  }
+  var cv = $('cv');
+  cv.addEventListener('pointerdown', function (e) {
+    painting = true; last = ''; cv.setPointerCapture(e.pointerId); put(e);
+  });
+  cv.addEventListener('pointermove', function (e) { if (painting) put(e); });
+  ['pointerup', 'pointercancel'].forEach(function (k) {
+    cv.addEventListener(k, function () { painting = false; last = ''; });
+  });
+
+  $('go').addEventListener('click', function () {
+    playing = !playing;
+    this.textContent = playing ? '■ 정지' : '▶ 재생';
+    this.classList.toggle('on', playing);
+    if (playing) { anchorMs = performance.now(); schedule(); }
+    else { anchorStep = pos() % T; clearTimeout(reTid); if (loopP) loopP.stop(); }
+  });
+  $('undo').addEventListener('click', function () { mine.pop(); apply(); });
+  $('clear').addEventListener('click', function () { mine = []; apply(); });
+  $('dice').addEventListener('click', function () {
+    seed = Math.floor(Math.random() * 1e6); regen(); paintLamps(); if (playing) schedule();
+  });
+  $('ms').addEventListener('input', function () {
+    var t = pos(); MS = +this.value; $('msv').textContent = MS + 'ms';
+    anchorStep = t; anchorMs = performance.now();     // sec 바꾸기 전에 재기준
+    if (playing) schedule();
+  });
+
+  // ── 부팅 ────────────────────────────────────────────────────────────
+  Promise.all([
+    fetch('./mobile_tonnetz/data/om_bank.json').then(function (r) { return r.json(); }),
+    fetch('./hibari_dashboard/data/notes_metadata.json').then(function (r) { return r.json(); }),
+  ]).then(function (res) {
+    bank = res[0]; labels = res[1].labels;
+    PIT = labels.map(function (l) { return l.pitch; })
+                .filter(function (v, i, a) { return a.indexOf(v) === i; })
+                .sort(function (a, b) { return a - b; });
+    CYC = bank.banks[2].cycles;
+    CPIT = CYC.map(function (c) {
+      return c.map(function (i) { return labels[i] ? labels[i].pitch : -1; })
+              .filter(function (v) { return v >= 0; });
+    });
+    apply(); draw();
+  }).catch(function (e) { $('fb').textContent = '데이터를 불러오지 못했습니다: ' + e; });
+
+  window.__motif = {
+    tap: function (t, p) { var a = mine.findIndex(function (m) { return m[0] === t && m[1] === p; });
+      if (a >= 0) mine.splice(a, 1); else mine.push([t, p]); apply(); return mine.length; },
+    info: function () {
+      return { mine: mine.length, gen: gen.length, on: onIdx.slice(),
+               scores: score.map(function (s) { return s.hit + '/' + s.of; }),
+               follow: expo ? +(1 - expo.ratio).toFixed(3) : null,
+               pitches: PIT.length, playing: playing, pos: +pos().toFixed(2) };
+    },
+  };
+})();
+</script>
+</body>
+</html>

@@ -121,9 +121,10 @@ jobs:
             test -f "_site/$f" || { echo "빠짐: $f"; exit 1; }
             echo "  OK $f"
           done
-          # vineyard · mobile_tonnetz 는 랜딩에서 뺐다(2026-09-07 사용자 판단: 직관적이지 않음).
-          # 파일은 저장소에 남아 있고 직접 URL 로는 열린다.
-          for L in duet.html arena/; do
+          # ⚠ 이 목록은 **랜딩에 실제로 걸린 것만** 적는다. 링크를 빼면 여기도 같이 빼야 한다.
+          #   2026-09-07: duet.html 을 랜딩에서 뺐는데 여기를 안 고쳐 배포가 빨갛게 떴다.
+          #   (실제 배포는 branch 빌드가 하므로 사이트 자체는 멀쩡했다 — 그래서 더 늦게 알았다.)
+          for L in phase.html arena/; do
             grep -q "$L" _site/index.html || { echo "랜딩에 링크 없음: $L"; exit 1; }
             echo "  OK 랜딩 링크 $L"
           done
