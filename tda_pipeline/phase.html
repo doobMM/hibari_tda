@@ -1,0 +1,396 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>위상 — 두 손이 어긋난다</title>
+<!--
+  phase.html — hibari 가 실제로 쓰는 **modular operation** 을 손잡이로 만든 악기.
+
+  이게 왜 이 연구의 축인가 (history/WK5 의 원 분석에서)
+  ──────────────────────────────────────────────────
+  hibari 는 59개 튜플 = 32스텝(4마디) 짜리 모듈 하나를 두 성부가 반복한다.
+    · inst 1 : 시작 0,  주기 **32** 스텝 — 33회, 어긋남 없음
+    · inst 2 : 시작 33, 주기 **33** 스텝 — 32회, 매 모듈 **1스텝씩 밀린다**
+  원 노트북의 실측: 밀림량 집합이 `{0.03125}` = 정확히 1/32. 오차가 아니라 설계다.
+  두 성부는 lcm(32,33) = 1056 스텝, 즉 **33 모듈 만에** 다시 만난다.
+  그래서 곡이 중반을 축으로 대칭이다 — 위상차가 0 → 16 → 0 으로 갔다 온다.
+
+  ⇒ 여기서는 그 (p, q) 를 사람이 정한다.
+     (32,33) 이면 hibari 의 구조. (32,34) 면 2스텝씩 밀려 16모듈에 한 바퀴.
+     (16,17) 이면 훨씬 빨리 돈다. (32,32) 면 아예 어긋나지 않는다.
+     **같은 재료로 다른 위상 순환이 나온다** — 사용자가 원한 "다른 형태로 나타나는 구조".
+
+  무엇이 실제로 바뀌는가 (정직하게)
+  ────────────────────────────
+  ✔ 두 성부의 정렬이 바뀐다 → **어떤 음들이 동시에 울리는지**가 바뀐다 → 화음이 바뀐다.
+    화음은 이 연구에서 중첩행렬의 근거이므로, 이건 껍데기가 아니라 재료의 변화다.
+  ✘ 브라우저에서 PH 를 다시 돌지는 않는다. 고리(H₁)는 미리 계산된 것을 쓴다.
+    즉 "새 위상구조를 계산한다"가 아니라 "**있는 고리들로 새 위상 순환을 만든다**"이다.
+
+  고리 선택 — 사용자 요청("어떤 고리인지 선택할 수 있어야 하지 않을까?")
+  ────────────────────────────────────────────────────────────
+  중첩행렬의 열(고리)을 끄면 그 고리는 어느 시점에도 활성이 아니게 된다.
+  Algorithm 1 은 활성 고리들의 **교집합**에서 뽑으므로, 끄고 켜는 것이 곧
+  "어떤 음들에서 뽑을 것인가"를 정하는 일이다. 개수가 아니라 **정체**를 고른다.
+-->
+<link rel="stylesheet" href="./hibari_dashboard/public/css/tokens.css">
+<style>
+ :root{--bg:#11140f;--panel:#1b2018;--panel2:#232a1f;--line:#333d2c;--fg:#e8efe2;
+       --dim:#93a487;--v1:#8fd14f;--v2:#c9a0dc;--warm:#ffb84d}
+ *{box-sizing:border-box}
+ body{margin:0;background:var(--bg);color:var(--fg);line-height:1.6;
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans KR",sans-serif}
+ .wrap{max-width:900px;margin:0 auto;padding:18px 12px 60px}
+ h1{font-size:clamp(17px,4vw,22px);margin:0 0 2px;letter-spacing:.05em}
+ .sub{color:var(--dim);font-size:12.5px;margin:0 0 14px}
+ a{color:var(--v1)}
+ .rack{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px}
+ .screen{background:#0b0e09;border:1px solid var(--line);border-radius:10px;overflow:hidden;
+         position:relative}
+ .screen+.screen{margin-top:10px}
+ canvas{display:block;width:100%;height:auto}
+ .hud{position:absolute;left:10px;top:8px;font-size:11.5px;color:var(--dim);
+      font-family:ui-monospace,monospace;font-variant-numeric:tabular-nums;pointer-events:none}
+ .per{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:14px 0 6px}
+ .pk{background:#0b0e09;border:1px solid var(--line);border-radius:11px;padding:11px 13px}
+ .pk h3{margin:0 0 2px;font-size:12px;letter-spacing:.1em;font-weight:700}
+ .pk.v1 h3{color:var(--v1)} .pk.v2 h3{color:var(--v2)}
+ .pk .big{font-family:ui-monospace,monospace;font-size:27px;line-height:1.1}
+ .pk input{width:100%;margin:7px 0 0}
+ .pk .cap{font-size:11px;color:var(--dim);font-family:ui-monospace,monospace}
+ .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:12px}
+ button{font-family:inherit;padding:10px 15px;border-radius:9px;border:1px solid var(--line);
+        background:var(--panel2);color:var(--fg);font-size:13.5px;cursor:pointer;min-height:44px}
+ button.go{background:var(--v1);border-color:var(--v1);color:#16210d;font-weight:700}
+ button.go.on{background:var(--warm);border-color:var(--warm);color:#2a1b05}
+ .tag{color:var(--dim);font-size:12px;font-family:ui-monospace,monospace}
+ .rings{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin:12px 0 2px}
+ .rings button{padding:6px 10px;min-height:34px;font-size:12px;
+   font-family:ui-monospace,monospace;color:var(--dim)}
+ .rings button.on{background:var(--v1);border-color:var(--v1);color:#16210d;font-weight:700}
+ .meet{margin-top:12px;padding:11px 13px;border-radius:9px;background:var(--panel2);
+   border-left:3px solid var(--warm);font-size:13.5px}
+ .meet b{color:var(--warm)}
+ .note{color:var(--dim);font-size:12px;margin-top:16px;line-height:1.75}
+ .note b{color:var(--fg)}
+ .preset{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+ .preset button{padding:6px 11px;min-height:34px;font-size:12px}
+ @media(max-width:560px){ .per{grid-template-columns:1fr} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>위상 — 두 손이 어긋난다</h1>
+  <p class="sub">hibari 가 실제로 쓰는 구조입니다 · <a href="./math.html">설계도</a> · <a href="../">처음으로</a></p>
+
+  <div class="rack">
+    <div class="screen">
+      <canvas id="ring" width="900" height="330"></canvas>
+      <div class="hud" id="hud">멈춤</div>
+    </div>
+
+    <div class="screen">
+      <canvas id="roll" width="1400" height="190"></canvas>
+      <div class="hud" id="rhud"></div>
+    </div>
+
+    <div class="per">
+      <div class="pk v1">
+        <h3>왼손 주기</h3>
+        <div class="big" id="pv">32</div>
+        <input type="range" id="p" min="6" max="48" step="1" value="32">
+        <div class="cap" id="pc">스텝마다 처음으로 돌아온다</div>
+      </div>
+      <div class="pk v2">
+        <h3>오른손 주기</h3>
+        <div class="big" id="qv">33</div>
+        <input type="range" id="q" min="6" max="48" step="1" value="33">
+        <div class="cap" id="qc"></div>
+      </div>
+    </div>
+
+    <div class="meet" id="meet"></div>
+
+    <div class="preset">
+      <span class="tag">가져오기</span>
+      <button data-pq="32,33">hibari (32,33)</button>
+      <button data-pq="32,32">어긋나지 않음 (32,32)</button>
+      <button data-pq="32,34">두 배로 빨리 (32,34)</button>
+      <button data-pq="16,17">짧은 순환 (16,17)</button>
+      <button data-pq="12,19">서로 소 (12,19)</button>
+    </div>
+
+    <div class="rings" id="cyc"><span class="tag">쓸 고리</span></div>
+
+    <div class="row">
+      <button class="go" id="go">▶ 재생</button>
+      <button id="dice">🎲 음만 다시</button>
+      <span class="tag">한 스텝</span>
+      <input type="range" id="ms" min="90" max="400" step="10" value="220" style="width:130px">
+      <span class="tag" id="msv">220ms</span>
+    </div>
+  </div>
+
+  <p class="note">
+    <b>hibari 는 이렇게 만들어진 곡입니다.</b> 4마디짜리 모듈 하나를 두 손이 반복하는데,
+    <b>왼손은 32스텝마다, 오른손은 33스텝마다</b> 처음으로 돌아갑니다. 그래서 한 모듈이 지날 때마다
+    오른손이 <b>한 스텝씩 뒤로 밀립니다.</b> 33모듈이 지나야 둘이 다시 만납니다 —
+    곡이 중간을 기준으로 대칭인 이유입니다.<br>
+    두 주기를 바꾸면 <b>같은 재료로 다른 순환</b>이 만들어집니다. 어긋나는 속도도, 다시 만나는 시점도,
+    그 사이에 생기는 화음도 달라집니다.<br>
+    <b>쓸 고리</b>를 끄고 켜면 음을 뽑아 오는 자리가 바뀝니다 — 고리 <i>개수</i>가 아니라
+    <i>어떤</i> 고리인지를 고르는 것입니다.<br>
+    ⚠ 정직하게: 고리(H₁)는 <b>미리 계산된 것</b>을 씁니다. 브라우저에서 위상수학을 다시 풀지는 않습니다.
+    여기서 새로 생기는 것은 <b>두 성부가 만드는 위상 순환</b>이고, 그것이 화음을 바꿉니다.
+  </p>
+</div>
+
+<script src="./hibari_dashboard/public/js/generation-algo1.js"></script>
+<script src="./hibari_dashboard/public/js/audio-playback.js"></script>
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var bank = null, labels = null, player = null;
+  var P = 32, Q = 33, MS = 220, seed = 101, on = null;   // on = 고리 on/off
+  var mod = null, expo = null;        // 현재 모듈 (음 리스트, 0..P-1 스텝) · 풀 노출도
+  var playing = false, anchorMs = 0, anchorStep = 0, reTid = 0, raf = 0;
+
+  var gcd = function (a, b) { return b ? gcd(b, a % b) : a; };
+  var lcm = function (a, b) { return a / gcd(a, b) * b; };
+
+  function bits(s, n) {
+    var v = new Int8Array(n);
+    for (var i = 0; i < n; i++) v[i] = s.charCodeAt(i) === 49 ? 1 : 0;
+    return v;
+  }
+
+  /* 모듈 하나를 만든다. 중첩행렬의 앞 P 스텝을 쓰고, **꺼진 고리의 열은 0 으로** 만든다.
+   * Algorithm 1 은 활성 고리들의 교집합에서 뽑으므로, 열을 끄는 것이 곧
+   * "그 고리의 음들을 후보에서 뺀다"가 된다. duet.html 과 같은 생성 경로다. */
+  function buildModule() {
+    var G = window.GenerationAlgo1, b = bank.banks[2], K = b.K;   // α=0.25 정본
+    var raw = bits(b.om_bits, b.T * K);
+    var vals = new Int8Array(P * K);
+    for (var t = 0; t < P; t++)
+      for (var k = 0; k < K; k++)
+        vals[t * K + k] = on[k] ? raw[(t % b.T) * K + k] : 0;
+    var cyc = b.cycles.map(function (c, i) { return { cycle_idx: i, note_labels_0idx: c }; });
+    var base = G.buildHibariInstLen(P), len = new Int32Array(P);
+    for (var i = 0; i < P; i++) len[i] = Math.max(0, base[i]);
+    var rng = G.makeRng(seed);
+    var cm = new G.CycleSetManager({ cycles: cyc, K: K });
+    var ov = { T: P, K: K, values: vals };
+    /* ⚠ 고리를 끄면 그 시점의 OM 행이 전부 0 이 될 수 있다. 그러면 Algorithm 1 은
+     * 교집합이 아니라 **예비 주머니에서 자유롭게** 뽑는다 — 구조를 따르지 않는다.
+     * 그 비율을 재서 화면에 띄운다. 안 띄우면 사용자가 "구조를 고르고 있다"고
+     * 착각하는데 실제로는 구조를 끄고 있는 것이 된다. */
+    expo = G.poolExposure({ cycleManager: cm, overlap: ov });
+    var r = G.algorithm1({
+      nodePool: new G.NodePool({ labels: labels, numModules: 65, temperature: 1.0, rng: rng }),
+      cycleManager: cm, instLen: len, overlap: ov,
+      maxResample: 50, rng: rng,
+    });
+    // 모듈 밖으로 새는 꼬리는 잘라 낸다 — 주기 반복이 깨지지 않게
+    mod = r.notes.map(function (n) { return [n[0] % P, n[1], Math.min(P, n[2])]; })
+                 .filter(function (n) { return n[2] > n[0]; });
+  }
+
+  /** 창 [from, to) 스텝에 울릴 음을 두 성부 몫으로 모은다. */
+  function window_(from, to) {
+    var out = [];
+    [[P, 0], [Q, 1]].forEach(function (vp) {
+      var per = vp[0], voice = vp[1];
+      var k0 = Math.floor(from / per);
+      for (var k = k0; k * per < to; k++) {
+        var base = k * per;
+        for (var i = 0; i < mod.length; i++) {
+          var n = mod[i], s = base + n[0], e = base + n[2];
+          if (e <= from || s >= to) continue;
+          out.push([s, n[1], e, voice]);
+        }
+      }
+    });
+    return out;
+  }
+
+  function pos() {
+    return playing ? anchorStep + (performance.now() - anchorMs) / 1000 / (MS / 1000) : anchorStep;
+  }
+  var LOOP = function () { return lcm(P, Q); };
+
+  /* 앞으로 WIN 스텝치를 예약하고, 그 절반쯤에서 다시 이어 붙인다.
+   * (PianoPlayer.play 가 매번 stop 을 부르므로 롤링 윈도우로 갈 수밖에 없다) */
+  var WIN = 64;
+  function schedule() {
+    clearTimeout(reTid);
+    if (!playing || !mod) return;
+    var p0 = pos();
+    anchorStep = p0; anchorMs = performance.now();
+    var ns = window_(p0, p0 + WIN).map(function (n) {
+      return [Math.max(0, n[0] - p0) * (MS / 1000), n[1], (n[2] - p0) * (MS / 1000)];
+    });
+    player = player || new window.PianoPlayer();
+    player.play(ns, { gain: 0.62 });
+    reTid = setTimeout(schedule, WIN * 0.5 * MS);
+  }
+
+  // ── 그림 ────────────────────────────────────────────────────────────
+  function drawRing() {
+    var cv = $('ring'), cx = cv.getContext('2d'), W = cv.width, H = cv.height;
+    cx.clearRect(0, 0, W, H);
+    var t = pos(), cy = H / 2, R = Math.min(H * 0.40, 128);
+    [[P, W * 0.29, '#8fd14f', '왼손'], [Q, W * 0.71, '#c9a0dc', '오른손']].forEach(function (v) {
+      var per = v[0], cxp = v[1], col = v[2], nm = v[3];
+      cx.strokeStyle = '#26301f'; cx.lineWidth = 1;
+      for (var i = 0; i < per; i++) {                       // 눈금 = 스텝
+        var a = -Math.PI / 2 + i / per * Math.PI * 2;
+        cx.beginPath();
+        cx.moveTo(cxp + Math.cos(a) * (R - 7), cy + Math.sin(a) * (R - 7));
+        cx.lineTo(cxp + Math.cos(a) * R, cy + Math.sin(a) * R);
+        cx.stroke();
+      }
+      cx.strokeStyle = '#33402a'; cx.lineWidth = 1.5;
+      cx.beginPath(); cx.arc(cxp, cy, R, 0, 6.2832); cx.stroke();
+      var ang = -Math.PI / 2 + (t % per) / per * Math.PI * 2;
+      cx.strokeStyle = col; cx.lineWidth = 2.5;
+      cx.beginPath(); cx.moveTo(cxp, cy);
+      cx.lineTo(cxp + Math.cos(ang) * R, cy + Math.sin(ang) * R); cx.stroke();
+      cx.fillStyle = col;
+      cx.beginPath(); cx.arc(cxp + Math.cos(ang) * R, cy + Math.sin(ang) * R, 7, 0, 6.2832); cx.fill();
+      cx.font = 'bold 13px ui-monospace,monospace'; cx.textAlign = 'center';
+      cx.fillText(nm + ' ' + per, cxp, cy + R + 26);
+      cx.fillStyle = '#5d6b52'; cx.font = '11px ui-monospace,monospace';
+      cx.fillText(Math.floor(t / per) + ' 바퀴째', cxp, cy + R + 43);
+    });
+    // 가운데 — 위상차
+    var d = ((t % Q) - (t % P) + Q) % Q;
+    var near = Math.min(d, Q - d) < 0.6;
+    cx.textAlign = 'center';
+    cx.fillStyle = near ? '#ffb84d' : '#7c937a';
+    cx.font = (near ? 'bold ' : '') + '15px ui-monospace,monospace';
+    cx.fillText(near ? '지금 겹칩니다' : '어긋남 ' + d.toFixed(1), W / 2, cy - 8);
+    cx.fillStyle = '#5d6b52'; cx.font = '11px ui-monospace,monospace';
+    cx.fillText('스텝', W / 2, cy + 10);
+  }
+
+  function drawRoll() {
+    var cv = $('roll'), cx = cv.getContext('2d'), W = cv.width, H = cv.height, PAD = 8;
+    cx.clearRect(0, 0, W, H);
+    if (!mod) return;
+    var t = pos(), L = LOOP(), span = Math.min(L, 160);          // 보이는 창
+    var from = Math.floor(t / span) * span;
+    var xs = (W - PAD * 2) / span, LO = 40, HI = 90, ys = (H - PAD * 2) / (HI - LO);
+    var ns = window_(from, from + span);
+    for (var i = 0; i < ns.length; i++) {
+      var n = ns[i], live = n[0] <= t && n[2] > t;
+      cx.fillStyle = live ? '#ffb84d' : (n[3] ? '#7d5f96' : '#5f8f45');
+      cx.globalAlpha = live ? 1 : 0.85;
+      cx.fillRect(PAD + (n[0] - from) * xs, PAD + (HI - n[1]) * ys,
+                  Math.max(1.5, (n[2] - n[0]) * xs - 1), Math.max(3, ys * 1.4));
+    }
+    cx.globalAlpha = 1;
+    cx.fillStyle = '#ffb84d';
+    cx.fillRect(PAD + (t - from) * xs, 0, 2, H);
+    var sounding = ns.filter(function (n) { return n[0] <= t && n[2] > t; }).length;
+    $('rhud').textContent = '창 ' + from + '–' + (from + span) + ' 스텝 · 지금 울리는 음 ' + sounding;
+  }
+
+  function frame() { if (mod) { drawRing(); drawRoll(); } raf = requestAnimationFrame(frame); }
+
+  // ── 표시 갱신 ───────────────────────────────────────────────────────
+  function refresh(regen) {
+    $('pv').textContent = P; $('qv').textContent = Q;
+    $('p').value = P; $('q').value = Q;
+    var drift = Q - P, L = LOOP(), mods = L / P;
+    $('pc').textContent = P + '스텝마다 처음으로';
+    $('qc').textContent = Q + '스텝마다 처음으로';
+    var s;
+    if (drift === 0) {
+      s = '두 손이 <b>어긋나지 않습니다</b> — 늘 같이 갑니다. 위상 음악이 아니라 그냥 겹친 반복입니다.';
+    } else {
+      s = '한 모듈이 지날 때마다 오른손이 <b>' + Math.abs(drift) + '스텝씩 '
+        + (drift > 0 ? '뒤로' : '앞으로') + '</b> 밀립니다. '
+        + '<b>' + mods + '모듈</b>(= ' + L + '스텝, ' + (L * MS / 1000).toFixed(0) + '초) 만에 다시 만납니다.';
+      if (P === 32 && Q === 33) s += ' — <b>이게 hibari 입니다.</b>';
+    }
+    if (regen) buildModule();
+    if (expo) {
+      var follow = 1 - expo.ratio;
+      s += '<br><span style="color:' + (follow > 0.8 ? 'var(--v1)' : 'var(--warm)') + '">'
+         + '구조를 따르는 시점 <b>' + (follow * 100).toFixed(0) + '%</b>'
+         + (expo.rows ? ' — 나머지 ' + expo.rows + '/' + expo.T
+                      + ' 스텝은 켜진 고리가 없어 <b>자유롭게 뽑습니다</b>' : ' (전 구간)')
+         + '</span>';
+    }
+    $('meet').innerHTML = s;
+    if (playing) schedule();
+    $('hud').textContent = playing ? '재생 중 · 한 스텝 ' + MS + 'ms' : '멈춤';
+  }
+
+  // ── 부팅 ────────────────────────────────────────────────────────────
+  Promise.all([
+    fetch('./mobile_tonnetz/data/om_bank.json').then(function (r) { return r.json(); }),
+    fetch('./hibari_dashboard/data/notes_metadata.json').then(function (r) { return r.json(); }),
+  ]).then(function (res) {
+    bank = res[0]; labels = res[1].labels;
+    var K = bank.banks[2].K;
+    on = new Array(K).fill(true);
+    var html = '<span class="tag">쓸 고리</span>';
+    for (var i = 0; i < K; i++) html += '<button class="on" data-c="' + i + '">' + (i + 1) + '</button>';
+    html += '<button data-all="1" style="color:var(--warm)">전부</button>';
+    $('cyc').innerHTML = html;
+    refresh(true);
+    frame();
+  }).catch(function (e) { $('hud').textContent = '데이터 로드 실패: ' + e; });
+
+  // ── 조작 ────────────────────────────────────────────────────────────
+  $('p').addEventListener('input', function () { P = +this.value; refresh(true); });
+  $('q').addEventListener('input', function () { Q = +this.value; refresh(false); });
+  $('ms').addEventListener('input', function () {
+    var t = pos(); MS = +this.value; $('msv').textContent = MS + 'ms';
+    anchorStep = t; anchorMs = performance.now();      // sec 을 바꾸기 전에 재기준
+    refresh(false);
+  });
+  $('cyc').addEventListener('click', function (e) {
+    var c = e.target.getAttribute('data-c'), all = e.target.getAttribute('data-all');
+    if (all) { var any = on.some(function (x) { return !x; }); on = on.map(function () { return any; }); }
+    else if (c !== null) on[+c] = !on[+c];
+    else return;
+    [].forEach.call(this.querySelectorAll('[data-c]'), function (b, i) { b.classList.toggle('on', on[i]); });
+    if (!on.some(function (x) { return x; })) {            // 전부 끄면 뽑을 데가 없다
+      $('meet').innerHTML = '<b>고리를 하나도 안 쓰면</b> 뽑을 음이 없습니다. 하나 이상 켜 주세요.';
+      return;
+    }
+    refresh(true);
+  });
+  document.querySelector('.preset').addEventListener('click', function (e) {
+    var v = e.target.getAttribute('data-pq'); if (!v) return;
+    var a = v.split(','); P = +a[0]; Q = +a[1]; refresh(true);
+  });
+  $('dice').addEventListener('click', function () {
+    seed = Math.floor(Math.random() * 1e6); refresh(true);
+  });
+  $('go').addEventListener('click', function () {
+    playing = !playing;
+    this.textContent = playing ? '■ 정지' : '▶ 재생';
+    this.classList.toggle('on', playing);
+    if (playing) { anchorMs = performance.now(); schedule(); }
+    else { anchorStep = pos(); clearTimeout(reTid); if (player) player.stop(); }
+    $('hud').textContent = playing ? '재생 중 · 한 스텝 ' + MS + 'ms' : '멈춤';
+  });
+
+  window.__phase = {
+    set: function (p, q) { P = p; Q = q; refresh(true); },
+    info: function () {
+      return { P: P, Q: Q, drift: Q - P, loop: LOOP(), modules: LOOP() / P,
+               notesInModule: mod ? mod.length : 0, pos: +pos().toFixed(2),
+               cyclesOn: on.filter(Boolean).length, playing: playing };
+    },
+    win: function (a, b) { return window_(a, b).length; },
+    toggle: function (i) { on[i] = !on[i]; refresh(true); return on.filter(Boolean).length; },
+  };
+})();
+</script>
+</body>
+</html>
