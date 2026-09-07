@@ -121,7 +121,9 @@ jobs:
             test -f "_site/$f" || { echo "빠짐: $f"; exit 1; }
             echo "  OK $f"
           done
-          for L in vineyard/ mobile_tonnetz/ duet.html; do
+          # vineyard · mobile_tonnetz 는 랜딩에서 뺐다(2026-09-07 사용자 판단: 직관적이지 않음).
+          # 파일은 저장소에 남아 있고 직접 URL 로는 열린다.
+          for L in duet.html arena/; do
             grep -q "$L" _site/index.html || { echo "랜딩에 링크 없음: $L"; exit 1; }
             echo "  OK 랜딩 링크 $L"
           done
