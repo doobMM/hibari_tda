@@ -89,34 +89,47 @@
   addEventListener('resize', fit); fit();
 
   // ── 소리 ───────────────────────────────────────────────────────────
-  /** 창 [a, b) 스텝 사이에 되돌아올 메아리를 전부 모은다. */
+  /** 창 [a, b) 스텝 사이에 되돌아올 메아리를 전부 모은다.
+   * ⚠ velocity 는 **MIDI [1,127]** 이다. 예전엔 0.12~1.0 을 넘겨서 기본값(80) 대비
+   *   약 80배 작게 울렸다 — "첫 탭 뒤로는 소리가 작게 들린다"의 진짜 원인. */
   function firings(a, b) {
     var out = [];
     for (var i = 0; i < drops.length; i++) {
       var d = drops[i];
       var k = Math.max(1, Math.ceil((a - d.at) / d.per));     // 첫 탭은 이미 났다
       for (; d.at + k * d.per < b; k++) {
-        if (k > d.life) break;                                // 스무 번쯤 울고 스러진다
-        out.push([(d.at + k * d.per - a) * (MS / 1000), d.pitch,
-                  (d.at + k * d.per - a) * (MS / 1000) + 1.5,
-                  Math.max(0.12, 1 - k / d.life)]);
+        if (k > d.life) break;
+        var t = (d.at + k * d.per - a) * (MS / 1000);
+        out.push([t, d.pitch, t + 2.2, Math.round(96 * Math.pow(1 - k / d.life, 0.6))]);
       }
     }
     return out;
   }
+  /* 앞으로 HZ 스텝치를 **덧붙인다**(끊지 않는다). `play()` 는 매번 `stop()` 을 불러
+   * 울리던 메아리를 전부 죽였다 — 탭할 때마다 앞의 물방울이 조용해지니
+   * "점끼리 어떻게 상호작용하는지 안 드러난다"가 됐다. */
+  var HZ = 40, schedTo = 0;                                   // 앞으로 예약해 둔 스텝
   function schedule() {
     clearTimeout(reTid);
-    var a = now(), ns = firings(a, a + W / (MS / 1000));
-    if (ns.length) {
-      loopP = loopP || new window.PianoPlayer();
-      loopP.play(ns, { gain: 0.5 });
+    var a = now(), to = a + HZ;
+    if (schedTo < a) schedTo = a;
+    if (to > schedTo) {
+      var ns = firings(schedTo, to).map(function (n) {
+        return [n[0] + (schedTo - a) * (MS / 1000), n[1],
+                n[2] + (schedTo - a) * (MS / 1000), n[3]];
+      });
+      if (ns.length) {
+        loopP = loopP || new window.PianoPlayer();
+        loopP.add(ns, { gain: 0.85 });
+      }
+      schedTo = to;
     }
-    reTid = setTimeout(schedule, W * 1000 * 0.9);
+    reTid = setTimeout(schedule, HZ * MS * 0.4);
   }
   /** 탭은 **전용 플레이어**로 즉시. 한 인스턴스면 탭이 울림을 끊는다. */
   function blip(pitch) {
     tapP = tapP || new window.PianoPlayer();
-    tapP.play([[0, pitch, 1.4]], { gain: 0.9 });
+    tapP.play([[0, pitch, 2.2, 104]], { gain: 0.9 });
   }
 
   // ── 탭 ─────────────────────────────────────────────────────────────
@@ -134,7 +147,7 @@
   }
   cv.addEventListener('pointerdown', drop);
   document.getElementById('clr').addEventListener('click', function () {
-    drops = []; if (loopP) loopP.stop(); say.style.opacity = 1; schedule();
+    drops = []; if (loopP) loopP.stop(); schedTo = 0; say.style.opacity = 1; schedule();
   });
 
   // ── 그림 ───────────────────────────────────────────────────────────

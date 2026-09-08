@@ -62,32 +62,11 @@
       this._rafId = null;
     }
 
-    /**
-     * 재생.
-     * @param {Array} notes — [[startSec, pitch, endSec, vel?], ...]  (vel ∈ [1, 127])
-     * @param {object} [opts]
-     *    opts.onProgress(t, totalSec)
-     *    opts.onEnd()
-     *    opts.gain  — master gain (기본 0.8)
-     *    opts.velocityScale  — default 0.18 (softer for many concurrent notes)
-     */
-    play(notes, opts = {}) {
-      this._ensureCtx();
-      this.stop();  // 기존 스케줄 리셋
-      this._stopped = false;
-      this.isPlaying = true;
-      if (opts.gain != null) this.master.gain.value = opts.gain;
-
-      const velScale = opts.velocityScale || 0.18;
-      const t0 = this.ctx.currentTime + 0.08;
-      this._t0 = t0;
-
-      let maxEnd = 0;
-      for (const n of notes) {
-        const s = n[0], p = n[1], e = n[2];
-        const vel = n[3] != null ? n[3] : 80;
-        if (!(e > s) || p < 21 || p > 108) continue;
-        if (e > maxEnd) maxEnd = e;
+    /** 음 하나를 스케줄한다. `play()` 와 `add()` 가 공유한다 (동작 동일). */
+    _voice(n, t0, velScale) {
+      const s = n[0], p = n[1], e = n[2];
+      const vel = n[3] != null ? n[3] : 80;
+      if (!(e > s) || p < 21 || p > 108) return;
 
         const freq = 440 * Math.pow(2, (p - 69) / 12);
         // 두 오실레이터 가법 합성: 기본(1x) + 약한 2nd harmonic
@@ -128,6 +107,52 @@
 
         this._nodes.push({ osc: osc1, gain });
         this._nodes.push({ osc: osc2, gain: g2 });
+    }
+
+    /**
+     * **끊지 않고 덧붙인다.** `play()` 는 매번 `stop()` 을 불러 울리던 음을 전부 죽인다 —
+     * 메아리·앰비언트처럼 **계속 쌓여야 하는** 소리에는 그 계약이 맞지 않는다.
+     * (echo.html 에서 탭할 때마다 앞서 울리던 메아리가 끊기는 증상으로 드러났다.)
+     * 같은 인스턴스에 여러 번 불러도 서로를 죽이지 않는다.
+     * @param {Array} notes — [[startSec, pitch, endSec, vel?], ...]  vel 은 **MIDI [1,127]**
+     * @param {object} [opts] opts.gain · opts.velocityScale
+     */
+    add(notes, opts = {}) {
+      this._ensureCtx();
+      this._stopped = false;
+      if (opts.gain != null) this.master.gain.value = opts.gain;
+      const velScale = opts.velocityScale || 0.18;
+      const t0 = this.ctx.currentTime + 0.02;
+      for (const n of notes) this._voice(n, t0, velScale);
+      // 이미 끝난 노드는 걷어낸다 (오래 켜 두면 무한히 쌓인다)
+      if (this._nodes.length > 400) this._nodes = this._nodes.slice(-200);
+      return t0;
+    }
+
+    /**
+     * 재생.
+     * @param {Array} notes — [[startSec, pitch, endSec, vel?], ...]  (vel ∈ [1, 127])
+     * @param {object} [opts]
+     *    opts.onProgress(t, totalSec)
+     *    opts.onEnd()
+     *    opts.gain  — master gain (기본 0.8)
+     *    opts.velocityScale  — default 0.18 (softer for many concurrent notes)
+     */
+    play(notes, opts = {}) {
+      this._ensureCtx();
+      this.stop();  // 기존 스케줄 리셋
+      this._stopped = false;
+      this.isPlaying = true;
+      if (opts.gain != null) this.master.gain.value = opts.gain;
+
+      const velScale = opts.velocityScale || 0.18;
+      const t0 = this.ctx.currentTime + 0.08;
+      this._t0 = t0;
+
+      let maxEnd = 0;
+      for (const n of notes) {
+        if (n[2] > maxEnd) maxEnd = n[2];
+        this._voice(n, t0, velScale);
       }
 
       this._dur = maxEnd;
