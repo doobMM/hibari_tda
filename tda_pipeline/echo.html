@@ -6,39 +6,77 @@
 <title>메아리</title>
 <!--
   echo.html — 손잡이가 없다. 탭 하나가 전부다.
+  들리는 음악은 **Algorithm 1 이 짓는다.** 사용자는 중첩행렬을 손으로 쓴다.
 
-  왜 이 모양인가 (CLAUDE.md 의 래칫 규칙을 통과시킨 것)
-  ──────────────────────────────────────────────
-  상호작용 페이지를 여섯 번 만들어 여섯 번 거절당했다. 4~6판(arena · phase · motif)은
-  전부 같은 병이었다 — **목표도 소유감도 없는 "샌드박스 + 설명"**. 손잡이를 주고
-  그 뜻을 글로 설명하는 물건. 착수 전 센서:
-    1. "왜 내일 또 오나?" → **탭하면 소리가 나고, 그게 자기 주기로 계속 돌아오며 쌓인다.**
-    2. 첫 조작까지 읽을 글자 → **9자** ("아무 데나 누르세요")
-    3. 조작 → 소리 → **즉시** (탭 전용 플레이어)
-    4. 설명이 필요한 손잡이 → **없다.** 비우기 하나뿐.
+  ── 작동 원리: 단추가 아니라 되먹임 회로 한 쌍 ──────────────────────────
+  Raworth, 『도넛 경제학』 여는 글:
+    "경제를 무슨 단추나 레버 몇 개로 얼마든지 통제할 수 있는 기계로 보고
+     그 단추를 찾아 헤매고 다니는 짓은 그만둘 때다. 대신 경제를 영속적으로
+     진화하는 일종의 복잡계로 보아 돌보고 관리해야 한다."
+  이 프로젝트에서 여섯 번 거절당한 판(arena · phase · motif · …)은 전부
+  **단추와 레버**였다. 손잡이를 주고 그 뜻을 글로 설명하는 물건.
+  그래서 여기엔 손잡이가 없고, 대신 **되먹임 회로 한 쌍**이 돈다.
 
-  그리고 사용자가 이 프로젝트에서 유일하게 긍정한 산출물은 **음악 자체**였다
-  ("템포가 느려서 좋다, 괴물에 어울린다"). 인터페이스가 아니다.
-  → 인터페이스를 재미있게 만들려 하지 않는다. 소리만 남기고 나머지를 지운다.
+    강화(reinforcing) : 울리는 음 → 고리가 켜짐 → 교집합에서 새 음 →
+                        그 음도 울림 → 고리가 더 켜짐 …
+    균형(balancing)   : 새 음의 잔향은 **세대마다 짧아진다**(DECAY).
+                        몇 대를 못 가 꺼진다. 사용자의 점만 자기 주기로 되돌아온다.
 
-  주기는 어디서 오나 — hibari 의 메커니즘 그대로
-  ───────────────────────────────────────
-  hibari 는 두 손이 **32 vs 33** 스텝으로 돌아 매 모듈 한 칸씩 어긋난다(history/WK5).
-  거의 같지만 다른 주기가 위상을 만든다. 그걸 **14 성부로 늘렸다**:
-    음높이 → 그 음을 품은 **가장 작은 고리** → 주기 = 30 + 고리번호
-  실측 매핑 (17 음높이 → 주기 8종):
-    낮은 음 E3·F3·C4·D4 → 31   ·   G3·A3·B3 → 33   ·   E4 → 34   ·   G4 → 35
-    B4 → 37   ·   A4·C5·E5 → 38   ·   D5·G5·A5 → 39   ·   F4 → 41
-  낮은 음이 짧은 주기, 높은 음이 긴 주기로 **저절로 갈렸다** — 내가 정한 게 아니라
-  고리 구성에서 나왔다. 두 음이 다시 만나는 데 **256~332초**로,
-  hibari 자신의 재회 주기(1056스텝 = 264초)와 같은 규모다.
+  그래서 이 화면은 조작하는 기계가 아니라 **돌보는 것**이다.
+  실측 (480스텝 = 2분, 켜진 고리 수를 30초 구간마다) —
+    점 1개 : 침묵 480/480 — 고리가 안 켜진다. 메아리만 돌아온다
+    점 2개 : 1.9 → 1.8 → 1.3 → 0.3   **서서히 사그라진다. 돌봐야 한다**
+    점 4개 : 4.0 → 3.3 → 1.7 → 2.1   유지된다
+    점 8개 : 4.5 → 4.9 → 5.3 → 5.9   자란다. 침묵 24/480, **포화 0/480**
+  방치하면 꺼지고, 점을 놓아 주면 살아난다. 폭주하지도 않는다.
+  ⚠ 균형 회로를 빼고(잔향 고정) 재 보면 점 2개나 8개나 똑같이 고리 7.5 에 고정되고
+    매 스텝 2음으로 포화한다 — **강화 회로만 있으면 사용자의 입력이 지워진다.**
 
-  ⚠ 정직하게: 고리(H₁)는 미리 계산된 것을 쓴다. 브라우저에서 위상수학을 다시 풀지 않는다.
-    여기서 새로 생기는 것은 **당신이 놓은 음들이 만드는 위상 순환**이다.
+  ── 신호 흐름 (전부 저장소의 실제 코드·데이터다) ────────────────────────
+    탭 (y)        → label_idx        23개 라벨을 음높이순으로 세로 배치
+    울리는 음 집합 → 활성도 act[c]     overlap.py:build_activation_matrix (continuous=True)
+                                       act[c] = Σ_{n∈c, 울림} rar(n) / Σ_{n∈c} rar(n)
+                                       rar(n) = 1 / (n 을 품은 고리 수)  ← 희귀한 음이 무겁다
+    act ≥ τ=0.35  → 중첩행렬 한 행     overlap.py:build_overlap_matrix
+    그 행         → 음                generation-algo1.js:algorithm1
+                                       = generation.py:_sample_note_at_time 의 JS 포팅
+                                         (T10 에서 파이썬 정본 0.00902 대비 0.00977 로 대조 완료)
+    난 음         → 다시 "울리는 음"   ← 되먹임. 여기가 회로를 닫는 곳이다.
+
+  희귀도 가중 때문에 고리 하나를 켜는 데 보통 **음 두 개**가 든다
+  (실측: 고리0 은 2개→0.43, 고리9 는 희귀음 하나로 0.39).
+  어디에 놓느냐가 어느 고리를 켜는지를 정하고, 그게 교집합을, 교집합이 음을 정한다.
+  되먹임이 돌아도 배치가 결과를 지배한다 — 실측 (점 4개, 2분) :
+    낮은 넷  → 52~67  10종 (**71 이상 0개**)    높은 넷 → 67~81  8종 (**65 이하 0개**)
+    중간 넷  → 52~67  10종                     흩어진 넷 → 16종, 전 음역
+  내가 만든 매핑이 아니라 교집합 규칙의 결과다.
+
+  ── 주기: hibari 의 modular operation 그대로 ──────────────────────────
+  hibari 는 한 모듈(32스텝)을 두 손이 **32 · 33** 스텝으로 돌아 매 모듈 한 칸씩 어긋난다
+  (history/WK5, 실측 밀림량 {0.03125} = 1/32). lcm(32,33)=1056스텝 = **264초**에 재회한다.
+  점을 놓는 순서대로 두 손에 번갈아 배정한다. 같은 손의 점은 위상이 잠기고,
+  다른 손의 점은 천천히 미끄러지다 4분 24초마다 다시 만난다 — 만나면 고리가 켜진다.
+
+  ⚠ 이전 판의 `주기 = 30 + 고리번호` 는 **위상수학이 아니었다.** 고리 배열 인덱스,
+    즉 generateBarcode 가 뱉은 순서였다. "낮은 음이 짧은 주기로 저절로 갈렸다"는
+    배열 순서의 우연을 구조로 읽은 것이다. 삭제했다.
+
+  ⚠ `getIntersectNodes` 는 이름과 달리 **교집합이 아니라 공유 가중 합집합**이다
+    (활성 고리에 한 번이라도 든 음을 전부 담되, 여러 고리가 공유한 음을 그만큼 겹쳐 담는다).
+    균등추출이 곧 공유 가중이라 따로 가중치를 넣을 곳이 없다 — 원 설계가 그렇다.
+
+  ⚠ 정직하게 남는 차이 세 가지
+    ① 고리(H₁)는 미리 계산된 것을 쓴다. 브라우저에서 위상수학을 다시 풀지 않는다.
+    ② 정본은 per-cycle τ_c 를 쓰는데 om_bank.json 에 τ_c 가 없어 평탄한 τ=0.35 를 쓴다
+       (`build_overlap_bundle` 의 문서화된 기본 threshold).
+    ③ 되먹임 때문에 `algorithm1()` 을 **한 스텝씩** 부른다. 그래서 원본의
+       `onsetChecker` 와 `instLen` 의 스텝 간 이월이 창 경계에서 끊긴다.
+       샘플링 자체(`_sampleNoteAtTime` → 교집합 균등추출)는 그대로다.
+       ⚠ 창 길이를 8 로 준다 — T=1 로 부르면 `end > length` 가림에 걸려
+         **음 길이가 전부 1 스텝으로 잘린다**(원곡 음 길이는 1·2·5·6).
 
   ⚠ `PianoPlayer.play()` 는 매번 `stop()` 을 부른다. 그래서 플레이어를 둘 둔다 —
-    탭은 `tapP` 로 즉시, 되돌아오는 메아리는 `loopP` 가 창 단위로 예약한다.
-    한 인스턴스로 하면 탭이 울림을 끊는다(3판에서 거절당한 그 증상).
+    탭은 `tapP` 로 즉시, 이어지는 소리는 `loopP` 가 창 단위로 **덧붙인다**(`add`).
 -->
 <style>
  :root{--bg:#0a0d08;--fg:#dce8d4;--dim:#5d6b52}
@@ -56,7 +94,7 @@
    font-size:12.5px;cursor:pointer;min-height:40px}
  .bar button:hover{color:var(--fg);border-color:#3a4a2e}
  .cnt{position:fixed;right:14px;bottom:18px;font-size:12px;color:var(--dim);
-      font-family:ui-monospace,monospace;pointer-events:none}
+      font-family:ui-monospace,monospace;pointer-events:none;text-align:right}
  .who{position:fixed;left:14px;top:12px;font-size:11.5px;color:#2f3a27;
       pointer-events:none;letter-spacing:.04em}
  .who a{color:#3d4b33;text-decoration:none}
@@ -70,16 +108,28 @@
 <div class="cnt" id="cnt"></div>
 
 <script src="./hibari_dashboard/public/js/audio-playback.js"></script>
+<script src="./hibari_dashboard/public/js/generation-algo1.js"></script>
 <script>
 (function () {
   var cv = document.getElementById('cv'), cx = cv.getContext('2d');
   var say = document.getElementById('say'), cnt = document.getElementById('cnt');
-  var MS = 250;                            // 한 스텝 — hibari 와 같은 느린 걸음
-  var PIT = [], PER = {}, drops = [], t0 = performance.now();
-  var loopP = null, tapP = null, reTid = 0;
-  var W = 10;                              // 예약 창 (초)
 
-  var now = function () { return (performance.now() - t0) / 1000 / (MS / 1000); }; // 스텝
+  var MS = 250;            // 한 스텝 — hibari 와 같은 느린 걸음 (8분음표)
+  var TAU = 0.35;          // overlap 이진화 임계 (CLAUDE.md 정본 threshold)
+  var SUS = 12;            // 사용자 점이 울리는 스텝 수 (주기 32 의 37.5%)
+  var RING = 10;           // 1세대 생성음의 잔향 (스텝) — 되먹임의 연료
+  var DECAY = 0.55;        // 세대마다 잔향이 줄어든다 ← **균형 회로**
+  var VOICES = 2;          // 성부 상한. hibari 원 패턴은 3~4 지만 여기선 성기게
+  var HANDS = [32, 33];    // hibari 의 두 손 (history/WK5)
+  var ECHO_LEN = 8.8;      // 메아리 울림 길이 (스텝) = 2.2초
+  var GEN_W = 8;           // algorithm1 호출 창. 음 길이(최대 6)가 잘리지 않게
+
+  var drops = [], ring = [], genQ = [], t0 = performance.now();
+  var loopP = null, tapP = null, reTid = 0, simT = 0, schedTo = 0;
+  var LAB = [], K = 0, CSET = [], RAR = {}, WSUM = [], mgr = null, pool = null;
+  var G = window.GenerationAlgo1;
+
+  var now = function () { return (performance.now() - t0) / (MS / 1000) / 1000; }; // 스텝
 
   function fit() {
     var d = Math.min(2, window.devicePixelRatio || 1);
@@ -88,40 +138,102 @@
   }
   addEventListener('resize', fit); fit();
 
-  // ── 소리 ───────────────────────────────────────────────────────────
-  /** 창 [a, b) 스텝 사이에 되돌아올 메아리를 전부 모은다.
-   * ⚠ velocity 는 **MIDI [1,127]** 이다. 예전엔 0.12~1.0 을 넘겨서 기본값(80) 대비
-   *   약 80배 작게 울렸다 — "첫 탭 뒤로는 소리가 작게 들린다"의 진짜 원인. */
-  function firings(a, b) {
-    var out = [];
+  // ── 위상 → 중첩행렬 ────────────────────────────────────────────────
+  /** 스텝 t 에 울리고 있는 label_idx 집합.
+   *  사용자의 점(자기 주기로 SUS 스텝) + 생성음의 잔향(ring). 후자가 되먹임이다. */
+  function sounding(t, withRing) {
+    var s = {};
     for (var i = 0; i < drops.length; i++) {
       var d = drops[i];
-      var k = Math.max(1, Math.ceil((a - d.at) / d.per));     // 첫 탭은 이미 났다
-      for (; d.at + k * d.per < b; k++) {
-        if (k > d.life) break;
-        var t = (d.at + k * d.per - a) * (MS / 1000);
-        out.push([t, d.pitch, t + 2.2, Math.round(96 * Math.pow(1 - k / d.life, 0.6))]);
+      if ((t - d.at) / d.per > d.life) continue;
+      var ph = (t - d.at) % d.per; if (ph < 0) ph += d.per;
+      if (ph < SUS) s[d.li] = 1;
+    }
+    if (withRing) for (var j = 0; j < ring.length; j++) if (ring[j].to > t) s[ring[j].li] = 1;
+    return s;
+  }
+  /** 중첩행렬 한 행. overlap.py 의 연속 활성도 정의를 그대로 옮겼다. */
+  function omRow(t, withRing, out, off) {
+    var s = sounding(t, withRing), f = 0;
+    for (var c = 0; c < K; c++) {
+      var acc = 0, cs = CSET[c];
+      for (var j = 0; j < cs.length; j++) if (s[cs[j]]) acc += RAR[cs[j]];
+      var on = (acc / WSUM[c]) >= TAU ? 1 : 0;
+      if (out) out[off + c] = on;
+      f += on;
+    }
+    return f;
+  }
+
+  // ── 되먹임 회로 ────────────────────────────────────────────────────
+  /** simT 부터 `to` 까지 **한 스텝씩** 나아가며 음을 짓는다.
+   *  한 스텝의 결과가 다음 스텝의 입력이 되므로 통째로 계산할 수 없다. */
+  function advance(to) {
+    var out = [];
+    if (!mgr) { simT = to; return out; }
+    for (; simT < to; simT++) {
+      var keep = [];
+      for (var i = 0; i < ring.length; i++) if (ring[i].to > simT) keep.push(ring[i]);
+      ring = keep;
+
+      var v = new Int8Array(GEN_W * K);
+      var f = omRow(simT, true, v, 0);
+      if (!f) continue;
+      for (var w = 1; w < GEN_W; w++) v.copyWithin(w * K, 0, K);   // 길이 가림 방지용 패딩
+      var il = new Int32Array(GEN_W);
+      il[0] = Math.min(VOICES, G.HIBARI_MODULE_PATTERN[((simT % 32) + 32) % 32]);
+
+      var gen = 1;                                    // 지금 울리는 잔향의 다음 세대
+      for (var r = 0; r < ring.length; r++) if (ring[r].g + 1 > gen) gen = ring[r].g + 1;
+      var life = RING * Math.pow(DECAY, gen - 1);     // ← 균형 회로
+
+      var res = G.algorithm1({ nodePool: pool, cycleManager: mgr, instLen: il,
+                               overlap: { T: GEN_W, K: K, values: v }, rng: Math.random });
+      for (var n = 0; n < res.notes.length; n++) {
+        /* ⚠ 되먹임은 **(pitch, dur) 로** 라벨을 되찾아야 한다. pitch 만으로 찾으면
+         *   음높이 57·60·64·65 는 라벨이 2~3 개라 엉뚱한 라벨이 되먹여지고,
+         *   그 라벨이 속한 **다른 고리**가 켜진다. 실제로 높은 점만 놓았는데
+         *   낮은 고리 3([1,2,3,5])·12 가 켜져 음역이 전부 열렸다. */
+        var x = res.notes[n], li = PD2L[x[1] * 100 + (x[2] - x[0])];
+        out.push([simT + x[0], x[1], simT + x[2], 84]);
+        genQ.push([simT + x[0], x[1], gen]);
+        if (li != null && life >= 1) {
+          ring.push({ li: li, to: simT + (x[2] - x[0]) + Math.round(life), g: gen });
+        }
       }
     }
     return out;
   }
-  /* 앞으로 HZ 스텝치를 **덧붙인다**(끊지 않는다). `play()` 는 매번 `stop()` 을 불러
-   * 울리던 메아리를 전부 죽였다 — 탭할 때마다 앞의 물방울이 조용해지니
-   * "점끼리 어떻게 상호작용하는지 안 드러난다"가 됐다. */
-  var HZ = 40, schedTo = 0;                                   // 앞으로 예약해 둔 스텝
+
+  // ── 소리 ───────────────────────────────────────────────────────────
+  /** 사용자의 점이 자기 주기로 되돌아오는 소리. 이게 회로의 씨앗이다. */
+  function echoes(a, b) {
+    var out = [];
+    for (var i = 0; i < drops.length; i++) {
+      var d = drops[i];
+      for (var k = Math.max(1, Math.ceil((a - d.at) / d.per)); d.at + k * d.per < b; k++) {
+        if (k > d.life) break;
+        var s = d.at + k * d.per;
+        out.push([s, d.pitch, s + ECHO_LEN, Math.round(96 * Math.pow(1 - k / d.life, 0.6))]);
+      }
+    }
+    return out;
+  }
+
+  var HZ = 8;                                   // 예약 창 8스텝 = 2초
   function schedule() {
     clearTimeout(reTid);
     var a = now(), to = a + HZ;
-    if (schedTo < a) schedTo = a;
+    if (schedTo < a) { schedTo = a; simT = Math.ceil(a); }
     if (to > schedTo) {
-      var ns = firings(schedTo, to).map(function (n) {
-        return [n[0] + (schedTo - a) * (MS / 1000), n[1],
-                n[2] + (schedTo - a) * (MS / 1000), n[3]];
-      });
-      if (ns.length) {
+      var all = echoes(schedTo, to).concat(advance(Math.ceil(to)));
+      if (all.length) {
         loopP = loopP || new window.PianoPlayer();
-        loopP.add(ns, { gain: 0.85 });
+        loopP.add(all.map(function (n) {
+          return [(n[0] - a) * (MS / 1000), n[1], (n[2] - a) * (MS / 1000), n[3]];
+        }), { gain: 0.85 });
       }
+      genQ = genQ.filter(function (g) { return g[0] > a - 3; });
       schedTo = to;
     }
     reTid = setTimeout(schedule, HZ * MS * 0.4);
@@ -133,55 +245,96 @@
   }
 
   // ── 탭 ─────────────────────────────────────────────────────────────
-  function drop(ev) {
-    var r = cv.getBoundingClientRect();
-    var x = (ev.clientX - r.left) / r.width, y = (ev.clientY - r.top) / r.height;
-    var idx = Math.min(PIT.length - 1, Math.max(0, Math.round((1 - y) * (PIT.length - 1))));
-    var pitch = PIT[idx];
-    drops.push({ x: x, y: y, pitch: pitch, per: PER[pitch] || 33,
-                 at: now(), life: 20, ring: performance.now() });
-    if (drops.length > 40) drops.shift();                     // 너무 쌓이지 않게
-    blip(pitch);
-    say.style.opacity = 0;
-    schedule();
+  var PD2L = {};                                // (pitch,dur) → label_idx — 되먹임의 역방향
+  function place(x, y) {
+    if (!LAB.length) return null;
+    var i = Math.min(LAB.length - 1, Math.max(0, Math.round((1 - y) * (LAB.length - 1))));
+    var L = LAB[i];
+    drops.push({ x: x, y: y, li: L.li, pitch: L.pitch,
+                 per: HANDS[drops.length % 2], at: now(), life: 24 });
+    if (drops.length > 40) drops.shift();
+    return L.pitch;
   }
-  cv.addEventListener('pointerdown', drop);
+  cv.addEventListener('pointerdown', function (ev) {
+    var r = cv.getBoundingClientRect();
+    var p = place((ev.clientX - r.left) / r.width, (ev.clientY - r.top) / r.height);
+    if (p == null) return;
+    blip(p); say.style.opacity = 0; schedule();
+  });
   document.getElementById('clr').addEventListener('click', function () {
-    drops = []; if (loopP) loopP.stop(); schedTo = 0; say.style.opacity = 1; schedule();
+    drops = []; ring = []; genQ = []; if (loopP) loopP.stop();
+    schedTo = 0; simT = 0; say.style.opacity = 1; schedule();
   });
 
   // ── 그림 ───────────────────────────────────────────────────────────
-  var COL = ['#8fd14f','#c9a0dc','#4fd1c9','#ffb84d','#7aa2f7','#f2a2a2','#a2f2c4','#e8d45a'];
+  var COL = ['#8fd14f', '#c9a0dc'];             // 두 손
+  function yOf(pitch) {
+    for (var m = 0; m < LAB.length; m++) if (LAB[m].pitch === pitch) return m;
+    return -1;
+  }
   function frame() {
-    // 변환(setTransform)이 이미 dpr 을 먹었으므로 여기선 **CSS 픽셀**로 그린다.
-    // 예전 식(cv.width / (cv.width/innerWidth))은 창이 0 일 때 NaN 이 됐다.
     var W2 = innerWidth, H2 = innerHeight;
     if (!W2 || !H2) { requestAnimationFrame(frame); return; }
-    cx.fillStyle = 'rgba(10,13,8,0.20)'; cx.fillRect(0, 0, W2, H2);   // 잔상
-    var t = now(), tm = performance.now();
-    for (var i = 0; i < drops.length; i++) {
-      var d = drops[i], px = d.x * W2, py = d.y * H2;
-      var col = COL[(d.per - 30) % COL.length];
+    cx.fillStyle = 'rgba(10,13,8,0.20)'; cx.fillRect(0, 0, W2, H2);
+    var t = now(), tr = Math.round(t), lit = 0;
+
+    // 지금 함께 울리며 **같은 고리를 켜고 있는** 점들을 잇는다. 설명 대신 이걸 본다.
+    if (K) {
+      var row = new Int8Array(K);
+      lit = omRow(tr, true, row, 0);
+      if (lit) {
+        var snd = sounding(tr, false);
+        cx.lineWidth = 1; cx.strokeStyle = '#dce8d4';
+        for (var c = 0; c < K; c++) {
+          if (!row[c]) continue;
+          var on = drops.filter(function (d) {
+            return snd[d.li] && CSET[c].indexOf(d.li) >= 0; });
+          for (var i = 0; i < on.length; i++) for (var j = i + 1; j < on.length; j++) {
+            cx.globalAlpha = 0.16;
+            cx.beginPath();
+            cx.moveTo(on[i].x * W2, on[i].y * H2);
+            cx.lineTo(on[j].x * W2, on[j].y * H2); cx.stroke();
+          }
+        }
+      }
+    }
+
+    // 알고리즘이 낸 음 — 그 음높이의 줄에 빛. 세대가 깊을수록 흐리다(잔향이 짧아진다).
+    for (var q = 0; q < genQ.length; q++) {
+      var dt = t - genQ[q][0]; if (dt < 0 || dt > 3) continue;
+      var yi = yOf(genQ[q][1]); if (yi < 0) continue;
+      var gy = (1 - yi / (LAB.length - 1)) * H2;
+      var g = (1 - dt / 3) * Math.pow(0.62, genQ[q][2] - 1);
+      cx.globalAlpha = 0.30 * g; cx.fillStyle = '#dce8d4';
+      cx.fillRect(0, gy - 0.5, W2, 1);
+      cx.globalAlpha = 0.85 * g;
+      cx.beginPath();
+      cx.arc(W2 * (0.5 + 0.42 * Math.sin(genQ[q][0] * 1.7)), gy, 2.6, 0, 6.2832);
+      cx.fill();
+    }
+
+    // 사용자의 점 — 부풀다가 터진다. 부푼 정도 = 다음 울림까지의 진행률.
+    for (var i2 = 0; i2 < drops.length; i2++) {
+      var d = drops[i2], px = d.x * W2, py = d.y * H2;
+      var col = COL[HANDS.indexOf(d.per)] || COL[0];
       var since = (t - d.at) % d.per, k = Math.floor((t - d.at) / d.per);
       var alive = Math.max(0, 1 - k / d.life);
       if (alive <= 0) continue;
-      // 다음 울림까지의 진행 — 원이 차오르다 터진다
-      var frac = since / d.per;
-      cx.globalAlpha = 0.10 * alive;
-      cx.strokeStyle = col; cx.lineWidth = 1;
-      cx.beginPath(); cx.arc(px, py, 8 + frac * 34, 0, 6.2832); cx.stroke();
-      if (since < 0.9) {                                    // 방금 울렸다 → 파문
-        var g = 1 - since / 0.9;
-        cx.globalAlpha = 0.55 * g * alive; cx.lineWidth = 2.4;
-        cx.beginPath(); cx.arc(px, py, 10 + (1 - g) * 110, 0, 6.2832); cx.stroke();
+      cx.globalAlpha = 0.10 * alive; cx.strokeStyle = col; cx.lineWidth = 1;
+      cx.beginPath(); cx.arc(px, py, 8 + (since / d.per) * 34, 0, 6.2832); cx.stroke();
+      if (since < SUS) {                                   // 울리는 중 → 파문
+        var g2 = 1 - since / SUS;
+        cx.globalAlpha = 0.5 * g2 * alive; cx.lineWidth = 2.4;
+        cx.beginPath(); cx.arc(px, py, 10 + (1 - g2) * 110, 0, 6.2832); cx.stroke();
       }
-      cx.globalAlpha = (0.35 + 0.55 * (since < 0.9 ? 1 : 0)) * alive;
+      cx.globalAlpha = (0.35 + 0.5 * (since < SUS ? 1 : 0)) * alive;
       cx.fillStyle = col;
-      cx.beginPath(); cx.arc(px, py, since < 0.9 ? 7 : 4.5, 0, 6.2832); cx.fill();
+      cx.beginPath(); cx.arc(px, py, since < SUS ? 7 : 4.5, 0, 6.2832); cx.fill();
     }
     cx.globalAlpha = 1;
+
     var live = drops.filter(function (d) { return (t - d.at) / d.per < d.life; }).length;
-    cnt.textContent = live ? live + ' 개가 울리는 중' : '';
+    cnt.textContent = live ? live + ' 점 · 고리 ' + lit : '';
     requestAnimationFrame(frame);
   }
 
@@ -190,39 +343,44 @@
     fetch('./mobile_tonnetz/data/om_bank.json').then(function (r) { return r.json(); }),
     fetch('./hibari_dashboard/data/notes_metadata.json').then(function (r) { return r.json(); }),
   ]).then(function (res) {
-    var b = res[0].banks[2], L = res[1].labels;               // α=0.25 정본
-    /* 음높이 → 그 음을 품은 **가장 작은 고리** → 주기 30+k.
-     * 가장 작은 고리가 그 음을 가장 특징적으로 규정한다. */
-    var p2c = {};
-    b.cycles.forEach(function (c, k) {
-      c.forEach(function (i) {
-        if (i < L.length) (p2c[L[i].pitch] = p2c[L[i].pitch] || []).push(k);
-      });
+    var b = res[0].banks[2], labels = res[1].labels;         // banks[2] = α=0.25 정본
+    K = b.K;
+    CSET = b.cycles.map(function (c) {
+      return c.filter(function (v, i) { return c.indexOf(v) === i; });
     });
-    PIT = Object.keys(p2c).map(Number).sort(function (a, b) { return a - b; });
-    PIT.forEach(function (p) {
-      var k = p2c[p].reduce(function (a, x) {
-        return b.cycles[x].length < b.cycles[a].length ? x : a;
-      }, p2c[p][0]);
-      PER[p] = 30 + k;
+    // 희귀도 rar(n) = 1 / (n 을 품은 고리 수) — overlap.py:build_activation_matrix
+    CSET.forEach(function (c) { c.forEach(function (v) { RAR[v] = (RAR[v] || 0) + 1; }); });
+    Object.keys(RAR).forEach(function (v) { RAR[v] = 1 / RAR[v]; });
+    WSUM = CSET.map(function (c) {
+      return c.reduce(function (a, v) { return a + (RAR[v] || 1); }, 0);
     });
+    // 세로축 = 23개 라벨을 음높이순으로. 되먹임은 pitch → label_idx 로 되돌린다.
+    LAB = labels.map(function (e) { return { li: e.label_idx, pitch: e.pitch, dur: e.dur }; })
+                .sort(function (p, q) { return p.pitch - q.pitch || p.dur - q.dur; });
+    labels.forEach(function (e) { PD2L[e.pitch * 100 + e.dur] = e.label_idx; });
+    mgr = new G.CycleSetManager({
+      cycles: b.cycles.map(function (c, i) { return { cycle_idx: i, note_labels_0idx: c }; }),
+      K: K });
+    pool = new G.NodePool({ labels: labels, numModules: 65, temperature: 1.0,
+                            rng: Math.random });
     frame(); schedule();
-  }).catch(function (e) { say.textContent = '데이터를 불러오지 못했습니다'; });
+  }).catch(function () { say.textContent = '데이터를 불러오지 못했습니다'; });
 
+  // 검증용 — 브라우저 콘솔에서 규칙이 실제로 도는지 본다.
   window.__echo = {
-    drop: function (xf, yf) {
-      var idx = Math.min(PIT.length - 1, Math.max(0, Math.round((1 - yf) * (PIT.length - 1))));
-      drops.push({ x: xf, y: yf, pitch: PIT[idx], per: PER[PIT[idx]],
-                   at: now(), life: 20, ring: performance.now() });
-      schedule(); return drops.length;
+    drop: function (xf, yf) { place(xf, yf); schedule(); return drops.length; },
+    row: function () { var r = new Int8Array(K), f = omRow(Math.round(now()), true, r, 0);
+                       return { active: f, row: Array.from(r), ring: ring.length }; },
+    run: function (steps) {                    // 되먹임을 n 스텝 돌려 본다 (소리 없이)
+      var a = simT, got = advance(simT + (steps || 120));
+      var p = Array.from(new Set(got.map(function (x) { return x[1]; })))
+                   .sort(function (u, w) { return u - w; });
+      return { from: a, to: simT, notes: got.length, pitches: p,
+               generations: Array.from(new Set(genQ.map(function (g) { return g[2]; }))).sort() };
     },
-    info: function () {
-      return { drops: drops.length, pitches: PIT.length,
-               periods: PIT.map(function (p) { return PER[p]; }),
-               distinctPeriods: PIT.map(function (p) { return PER[p]; })
-                                   .filter(function (v, i, a) { return a.indexOf(v) === i; }).sort(),
-               step: now().toFixed(1), windowFirings: firings(now(), now() + 40).length };
-    },
+    info: function () { return { drops: drops.length, labels: LAB.length, K: K,
+                                 hands: drops.map(function (d) { return d.per; }),
+                                 ring: ring.length }; },
   };
 })();
 </script>
