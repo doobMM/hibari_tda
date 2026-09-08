@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>메아리</title>
+<!--
+  echo.html — 손잡이가 없다. 탭 하나가 전부다.
+
+  왜 이 모양인가 (CLAUDE.md 의 래칫 규칙을 통과시킨 것)
+  ──────────────────────────────────────────────
+  상호작용 페이지를 여섯 번 만들어 여섯 번 거절당했다. 4~6판(arena · phase · motif)은
+  전부 같은 병이었다 — **목표도 소유감도 없는 "샌드박스 + 설명"**. 손잡이를 주고
+  그 뜻을 글로 설명하는 물건. 착수 전 센서:
+    1. "왜 내일 또 오나?" → **탭하면 소리가 나고, 그게 자기 주기로 계속 돌아오며 쌓인다.**
+    2. 첫 조작까지 읽을 글자 → **9자** ("아무 데나 누르세요")
+    3. 조작 → 소리 → **즉시** (탭 전용 플레이어)
+    4. 설명이 필요한 손잡이 → **없다.** 비우기 하나뿐.
+
+  그리고 사용자가 이 프로젝트에서 유일하게 긍정한 산출물은 **음악 자체**였다
+  ("템포가 느려서 좋다, 괴물에 어울린다"). 인터페이스가 아니다.
+  → 인터페이스를 재미있게 만들려 하지 않는다. 소리만 남기고 나머지를 지운다.
+
+  주기는 어디서 오나 — hibari 의 메커니즘 그대로
+  ───────────────────────────────────────
+  hibari 는 두 손이 **32 vs 33** 스텝으로 돌아 매 모듈 한 칸씩 어긋난다(history/WK5).
+  거의 같지만 다른 주기가 위상을 만든다. 그걸 **14 성부로 늘렸다**:
+    음높이 → 그 음을 품은 **가장 작은 고리** → 주기 = 30 + 고리번호
+  실측 매핑 (17 음높이 → 주기 8종):
+    낮은 음 E3·F3·C4·D4 → 31   ·   G3·A3·B3 → 33   ·   E4 → 34   ·   G4 → 35
+    B4 → 37   ·   A4·C5·E5 → 38   ·   D5·G5·A5 → 39   ·   F4 → 41
+  낮은 음이 짧은 주기, 높은 음이 긴 주기로 **저절로 갈렸다** — 내가 정한 게 아니라
+  고리 구성에서 나왔다. 두 음이 다시 만나는 데 **256~332초**로,
+  hibari 자신의 재회 주기(1056스텝 = 264초)와 같은 규모다.
+
+  ⚠ 정직하게: 고리(H₁)는 미리 계산된 것을 쓴다. 브라우저에서 위상수학을 다시 풀지 않는다.
+    여기서 새로 생기는 것은 **당신이 놓은 음들이 만드는 위상 순환**이다.
+
+  ⚠ `PianoPlayer.play()` 는 매번 `stop()` 을 부른다. 그래서 플레이어를 둘 둔다 —
+    탭은 `tapP` 로 즉시, 되돌아오는 메아리는 `loopP` 가 창 단위로 예약한다.
+    한 인스턴스로 하면 탭이 울림을 끊는다(3판에서 거절당한 그 증상).
+-->
+<style>
+ :root{--bg:#0a0d08;--fg:#dce8d4;--dim:#5d6b52}
+ *{box-sizing:border-box}
+ html,body{height:100%}
+ body{margin:0;background:var(--bg);color:var(--fg);overflow:hidden;
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans KR",sans-serif}
+ canvas{display:block;width:100vw;height:100vh;touch-action:none;cursor:crosshair}
+ .say{position:fixed;left:0;right:0;top:44%;text-align:center;pointer-events:none;
+      font-size:clamp(19px,4.4vw,27px);letter-spacing:.05em;color:#8fd14f;
+      transition:opacity .7s;text-shadow:0 0 30px #0a0d08}
+ .bar{position:fixed;left:14px;bottom:14px;display:flex;gap:8px;align-items:center}
+ .bar button{font-family:inherit;padding:9px 14px;border-radius:9px;
+   border:1px solid #24301c;background:#12180e;color:var(--dim);
+   font-size:12.5px;cursor:pointer;min-height:40px}
+ .bar button:hover{color:var(--fg);border-color:#3a4a2e}
+ .cnt{position:fixed;right:14px;bottom:18px;font-size:12px;color:var(--dim);
+      font-family:ui-monospace,monospace;pointer-events:none}
+ .who{position:fixed;left:14px;top:12px;font-size:11.5px;color:#2f3a27;
+      pointer-events:none;letter-spacing:.04em}
+ .who a{color:#3d4b33;text-decoration:none}
+</style>
+</head>
+<body>
+<canvas id="cv"></canvas>
+<div class="say" id="say">아무 데나 누르세요</div>
+<div class="who">hibari · <a href="../">처음으로</a></div>
+<div class="bar"><button id="clr">비우기</button></div>
+<div class="cnt" id="cnt"></div>
+
+<script src="./hibari_dashboard/public/js/audio-playback.js"></script>
+<script>
+(function () {
+  var cv = document.getElementById('cv'), cx = cv.getContext('2d');
+  var say = document.getElementById('say'), cnt = document.getElementById('cnt');
+  var MS = 250;                            // 한 스텝 — hibari 와 같은 느린 걸음
+  var PIT = [], PER = {}, drops = [], t0 = performance.now();
+  var loopP = null, tapP = null, reTid = 0;
+  var W = 10;                              // 예약 창 (초)
+
+  var now = function () { return (performance.now() - t0) / 1000 / (MS / 1000); }; // 스텝
+
+  function fit() {
+    var d = Math.min(2, window.devicePixelRatio || 1);
+    cv.width = Math.round(innerWidth * d); cv.height = Math.round(innerHeight * d);
+    cx.setTransform(d, 0, 0, d, 0, 0);
+  }
+  addEventListener('resize', fit); fit();
+
+  // ── 소리 ───────────────────────────────────────────────────────────
+  /** 창 [a, b) 스텝 사이에 되돌아올 메아리를 전부 모은다. */
+  function firings(a, b) {
+    var out = [];
+    for (var i = 0; i < drops.length; i++) {
+      var d = drops[i];
+      var k = Math.max(1, Math.ceil((a - d.at) / d.per));     // 첫 탭은 이미 났다
+      for (; d.at + k * d.per < b; k++) {
+        if (k > d.life) break;                                // 스무 번쯤 울고 스러진다
+        out.push([(d.at + k * d.per - a) * (MS / 1000), d.pitch,
+                  (d.at + k * d.per - a) * (MS / 1000) + 1.5,
+                  Math.max(0.12, 1 - k / d.life)]);
+      }
+    }
+    return out;
+  }
+  function schedule() {
+    clearTimeout(reTid);
+    var a = now(), ns = firings(a, a + W / (MS / 1000));
+    if (ns.length) {
+      loopP = loopP || new window.PianoPlayer();
+      loopP.play(ns, { gain: 0.5 });
+    }
+    reTid = setTimeout(schedule, W * 1000 * 0.9);
+  }
+  /** 탭은 **전용 플레이어**로 즉시. 한 인스턴스면 탭이 울림을 끊는다. */
+  function blip(pitch) {
+    tapP = tapP || new window.PianoPlayer();
+    tapP.play([[0, pitch, 1.4]], { gain: 0.9 });
+  }
+
+  // ── 탭 ─────────────────────────────────────────────────────────────
+  function drop(ev) {
+    var r = cv.getBoundingClientRect();
+    var x = (ev.clientX - r.left) / r.width, y = (ev.clientY - r.top) / r.height;
+    var idx = Math.min(PIT.length - 1, Math.max(0, Math.round((1 - y) * (PIT.length - 1))));
+    var pitch = PIT[idx];
+    drops.push({ x: x, y: y, pitch: pitch, per: PER[pitch] || 33,
+                 at: now(), life: 20, ring: performance.now() });
+    if (drops.length > 40) drops.shift();                     // 너무 쌓이지 않게
+    blip(pitch);
+    say.style.opacity = 0;
+    schedule();
+  }
+  cv.addEventListener('pointerdown', drop);
+  document.getElementById('clr').addEventListener('click', function () {
+    drops = []; if (loopP) loopP.stop(); say.style.opacity = 1; schedule();
+  });
+
+  // ── 그림 ───────────────────────────────────────────────────────────
+  var COL = ['#8fd14f','#c9a0dc','#4fd1c9','#ffb84d','#7aa2f7','#f2a2a2','#a2f2c4','#e8d45a'];
+  function frame() {
+    // 변환(setTransform)이 이미 dpr 을 먹었으므로 여기선 **CSS 픽셀**로 그린다.
+    // 예전 식(cv.width / (cv.width/innerWidth))은 창이 0 일 때 NaN 이 됐다.
+    var W2 = innerWidth, H2 = innerHeight;
+    if (!W2 || !H2) { requestAnimationFrame(frame); return; }
+    cx.fillStyle = 'rgba(10,13,8,0.20)'; cx.fillRect(0, 0, W2, H2);   // 잔상
+    var t = now(), tm = performance.now();
+    for (var i = 0; i < drops.length; i++) {
+      var d = drops[i], px = d.x * W2, py = d.y * H2;
+      var col = COL[(d.per - 30) % COL.length];
+      var since = (t - d.at) % d.per, k = Math.floor((t - d.at) / d.per);
+      var alive = Math.max(0, 1 - k / d.life);
+      if (alive <= 0) continue;
+      // 다음 울림까지의 진행 — 원이 차오르다 터진다
+      var frac = since / d.per;
+      cx.globalAlpha = 0.10 * alive;
+      cx.strokeStyle = col; cx.lineWidth = 1;
+      cx.beginPath(); cx.arc(px, py, 8 + frac * 34, 0, 6.2832); cx.stroke();
+      if (since < 0.9) {                                    // 방금 울렸다 → 파문
+        var g = 1 - since / 0.9;
+        cx.globalAlpha = 0.55 * g * alive; cx.lineWidth = 2.4;
+        cx.beginPath(); cx.arc(px, py, 10 + (1 - g) * 110, 0, 6.2832); cx.stroke();
+      }
+      cx.globalAlpha = (0.35 + 0.55 * (since < 0.9 ? 1 : 0)) * alive;
+      cx.fillStyle = col;
+      cx.beginPath(); cx.arc(px, py, since < 0.9 ? 7 : 4.5, 0, 6.2832); cx.fill();
+    }
+    cx.globalAlpha = 1;
+    var live = drops.filter(function (d) { return (t - d.at) / d.per < d.life; }).length;
+    cnt.textContent = live ? live + ' 개가 울리는 중' : '';
+    requestAnimationFrame(frame);
+  }
+
+  // ── 부팅 ───────────────────────────────────────────────────────────
+  Promise.all([
+    fetch('./mobile_tonnetz/data/om_bank.json').then(function (r) { return r.json(); }),
+    fetch('./hibari_dashboard/data/notes_metadata.json').then(function (r) { return r.json(); }),
+  ]).then(function (res) {
+    var b = res[0].banks[2], L = res[1].labels;               // α=0.25 정본
+    /* 음높이 → 그 음을 품은 **가장 작은 고리** → 주기 30+k.
+     * 가장 작은 고리가 그 음을 가장 특징적으로 규정한다. */
+    var p2c = {};
+    b.cycles.forEach(function (c, k) {
+      c.forEach(function (i) {
+        if (i < L.length) (p2c[L[i].pitch] = p2c[L[i].pitch] || []).push(k);
+      });
+    });
+    PIT = Object.keys(p2c).map(Number).sort(function (a, b) { return a - b; });
+    PIT.forEach(function (p) {
+      var k = p2c[p].reduce(function (a, x) {
+        return b.cycles[x].length < b.cycles[a].length ? x : a;
+      }, p2c[p][0]);
+      PER[p] = 30 + k;
+    });
+    frame(); schedule();
+  }).catch(function (e) { say.textContent = '데이터를 불러오지 못했습니다'; });
+
+  window.__echo = {
+    drop: function (xf, yf) {
+      var idx = Math.min(PIT.length - 1, Math.max(0, Math.round((1 - yf) * (PIT.length - 1))));
+      drops.push({ x: xf, y: yf, pitch: PIT[idx], per: PER[PIT[idx]],
+                   at: now(), life: 20, ring: performance.now() });
+      schedule(); return drops.length;
+    },
+    info: function () {
+      return { drops: drops.length, pitches: PIT.length,
+               periods: PIT.map(function (p) { return PER[p]; }),
+               distinctPeriods: PIT.map(function (p) { return PER[p]; })
+                                   .filter(function (v, i, a) { return a.indexOf(v) === i; }).sort(),
+               step: now().toFixed(1), windowFirings: firings(now(), now() + 40).length };
+    },
+  };
+})();
+</script>
+</body>
+</html>
