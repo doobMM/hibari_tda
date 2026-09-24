@@ -75,6 +75,15 @@
        ⚠ 창 길이를 8 로 준다 — T=1 로 부르면 `end > length` 가림에 걸려
          **음 길이가 전부 1 스텝으로 잘린다**(원곡 음 길이는 1·2·5·6).
 
+  ── 기록 ──────────────────────────────────────────────────────────────
+  놓은 점(위치·라벨·손·시각)을 한 판이 끝날 때(비우기 · 페이지를 떠날 때) 이벤트 하나로
+  남긴다(shared/remote.js, kind='echo'). 화면에는 아무것도 더하지 않는다.
+  이름·연락처는 받지 않는다. 서버가 없으면 이 브라우저에 쌓였다가 나중에 올라간다.
+
+  ── 언어 ──────────────────────────────────────────────────────────────
+  브라우저 언어가 한국어면 한국어, 아니면 영어. `?lang=en|ko` 로 강제한다.
+  문구는 전부 20자 이내다(CLAUDE.md 센서 2).
+
   ⚠ `PianoPlayer.play()` 는 매번 `stop()` 을 부른다. 그래서 플레이어를 둘 둔다 —
     탭은 `tapP` 로 즉시, 이어지는 소리는 `loopP` 가 창 단위로 **덧붙인다**(`add`).
 -->
@@ -102,17 +111,30 @@
 </head>
 <body>
 <canvas id="cv"></canvas>
-<div class="say" id="say">아무 데나 누르세요</div>
-<div class="who">hibari · <a href="../">처음으로</a></div>
-<div class="bar"><button id="clr">비우기</button></div>
+<div class="say" id="say"></div>
+<div class="who">hibari · <a href="../" id="home"></a></div>
+<div class="bar"><button id="clr"></button></div>
 <div class="cnt" id="cnt"></div>
 
 <script src="./hibari_dashboard/public/js/audio-playback.js"></script>
 <script src="./hibari_dashboard/public/js/generation-algo1.js"></script>
+<script src="./shared/remote.js"></script>
 <script>
 (function () {
   var cv = document.getElementById('cv'), cx = cv.getContext('2d');
   var say = document.getElementById('say'), cnt = document.getElementById('cnt');
+
+  var lang = new URLSearchParams(location.search).get('lang')
+          || (/^ko\b/i.test(navigator.language || '') ? 'ko' : 'en');
+  var TX = lang === 'ko'
+    ? { title: '메아리', tap: '아무 데나 누르세요', clr: '비우기', home: '처음으로',
+        err: '데이터를 불러오지 못했습니다', cnt: function (n, k) { return n + ' 점 · 고리 ' + k; } }
+    : { title: 'Echo', tap: 'Tap anywhere', clr: 'Clear', home: 'Home',
+        err: "Couldn't load data", cnt: function (n, k) { return n + ' dots · ' + k + ' rings'; } };
+  document.documentElement.lang = lang === 'ko' ? 'ko' : 'en';
+  document.title = TX.title; say.textContent = TX.tap;
+  document.getElementById('clr').textContent = TX.clr;
+  document.getElementById('home').textContent = TX.home;
 
   var MS = 250;            // 한 스텝 — hibari 와 같은 느린 걸음 (8분음표)
   var TAU = 0.35;          // overlap 이진화 임계 (CLAUDE.md 정본 threshold)
@@ -246,15 +268,30 @@
 
   // ── 탭 ─────────────────────────────────────────────────────────────
   var PD2L = {};                                // (pitch,dur) → label_idx — 되먹임의 역방향
+  var played = [];                              // 이번 판에 놓은 점 — 끝날 때 기록으로 남긴다
   function place(x, y) {
     if (!LAB.length) return null;
     var i = Math.min(LAB.length - 1, Math.max(0, Math.round((1 - y) * (LAB.length - 1))));
     var L = LAB[i];
     drops.push({ x: x, y: y, li: L.li, pitch: L.pitch,
                  per: HANDS[drops.length % 2], at: now(), life: 24 });
+    var d = drops[drops.length - 1];
+    played.push({ x: +x.toFixed(3), y: +y.toFixed(3), li: d.li, per: d.per, at: Math.round(d.at) });
     if (drops.length > 40) drops.shift();
     return L.pitch;
   }
+  function keep() {
+    // 120점씩 끊는다 — 서버가 이벤트 하나를 8,000자까지만 받는다(점 하나 ≈ 50자)
+    for (var i = 0; i < played.length; i += 120) {
+      window.Remote.send('echo', { drops: played.slice(i, i + 120), lang: lang,
+                                   end: Math.round(now()) });
+    }
+    played = [];
+  }
+  addEventListener('pagehide', keep);
+  document.addEventListener('visibilitychange', function () {
+    if (document.visibilityState === 'hidden') { keep(); window.Remote.flush(); }
+  });
   cv.addEventListener('pointerdown', function (ev) {
     var r = cv.getBoundingClientRect();
     var p = place((ev.clientX - r.left) / r.width, (ev.clientY - r.top) / r.height);
@@ -262,6 +299,7 @@
     blip(p); say.style.opacity = 0; schedule();
   });
   document.getElementById('clr').addEventListener('click', function () {
+    keep();
     drops = []; ring = []; genQ = []; if (loopP) loopP.stop();
     schedTo = 0; simT = 0; say.style.opacity = 1; schedule();
   });
@@ -334,7 +372,7 @@
     cx.globalAlpha = 1;
 
     var live = drops.filter(function (d) { return (t - d.at) / d.per < d.life; }).length;
-    cnt.textContent = live ? live + ' 점 · 고리 ' + lit : '';
+    cnt.textContent = live ? TX.cnt(live, lit) : '';
     requestAnimationFrame(frame);
   }
 
@@ -364,7 +402,7 @@
     pool = new G.NodePool({ labels: labels, numModules: 65, temperature: 1.0,
                             rng: Math.random });
     frame(); schedule();
-  }).catch(function () { say.textContent = '데이터를 불러오지 못했습니다'; });
+  }).catch(function () { say.textContent = TX.err; });
 
   // 검증용 — 브라우저 콘솔에서 규칙이 실제로 도는지 본다.
   window.__echo = {

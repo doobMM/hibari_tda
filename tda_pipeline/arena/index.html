@@ -25,7 +25,14 @@
   그 계보가 곧 사람들이 그린 탐색 경로이고, 이 페이지의 연구 산출물이다.
 
   유전자 = duet.html 의 SHARE 해시와 같은 형식. 새 규약을 만들지 않는다.
-  ⚠ 지금은 저장이 이 브라우저(localStorage)뿐이다. 서버는 `Store` 한 곳만 바꾸면 된다.
+
+  저장 = **이벤트 기록**(shared/remote.js). 심기·표 한 번이 이벤트 하나다.
+  사다리는 씨앗 + 모든 사람의 이벤트를 시간순으로 **다시 돌려서** 만든다(Elo 재생).
+  조각 id 가 곧 유전자 문자열이라 표 이벤트만으로도 조각을 복원할 수 있다.
+  서버가 없으면 내 이벤트만으로 같은 계산을 한다 — 예전과 같은 "이 브라우저만" 모드.
+  ⚠ 예전 판(arena.v1)은 표를 **합계로만** 저장했다(누가 누구를 이겼는지 없음).
+    그래서 그 표들은 Elo 로 재생할 수 없다. 합계 그대로 `legacy` 이벤트로 한 번 올려
+    연구자가 볼 수 있게 하고, 그 판에서 심은 조각은 `sow` 로 되살린다.
 -->
 <link rel="stylesheet" href="../hibari_dashboard/public/css/tokens.css">
 <style>
@@ -163,26 +170,18 @@
     <b>규칙은 셋뿐입니다.</b> ① 마음에 드는 것을 <b>심습니다</b>.
     ② 남의 것 둘을 듣고 <b>고릅니다</b>. ③ 좋은 것을 <b>이어받아</b> 조금 바꿔 다시 심습니다.<br>
     점수는 조각에 붙지 <b>당신에게 붙지 않습니다.</b> 잘 고르고 못 고르고가 없습니다 — 취향에는 정답이 없으니까요.<br>
-    ⚠ 지금은 <b>이 브라우저에만</b> 저장됩니다(시험판). 여러 사람이 함께 겨루려면 서버가 붙어야 합니다.
+    <span id="store"></span>
   </p>
 </div>
 
 <script src="../hibari_dashboard/public/js/generation-algo1.js"></script>
 <script src="../hibari_dashboard/public/js/audio-playback.js"></script>
+<script src="../shared/remote.js"></script>
 <script>
 (function () {
   var $ = function (id) { return document.getElementById(id); };
 
-  // ── 저장 — 서버로 바꿀 때 이 객체 하나만 갈아 끼운다 ──────────────────
-  var Store = {
-    key: 'arena.v1',
-    load: function () {
-      try { return JSON.parse(localStorage.getItem(this.key)) || null; } catch (e) { return null; }
-    },
-    save: function (s) {
-      try { localStorage.setItem(this.key, JSON.stringify(s)); } catch (e) {}
-    },
-  };
+  var R = window.Remote;
 
   var AX = [
     { k: 'p', name: 'PITCH',   lo: -12, hi: 12,  step: 1,    fmt: function (x) { return (x > 0 ? '+' : '') + x + ' st'; } },
@@ -190,13 +189,24 @@
     { k: 't', name: 'TEMPO',   lo: 0.5, hi: 2.0, step: 0.02, fmt: function (x) { return x.toFixed(2) + '×'; } },
     { k: 'g', name: 'LENGTH',  lo: 0.4, hi: 3.0, step: 0.02, fmt: function (x) { return x.toFixed(2) + '×'; } },
   ];
-  var bank = null, labels = null, player = null, S = null, draft = null;
+  var bank = null, labels = null, player = null, S = null, draft = null, seeds = [], old = null;
   var cur = null, phase = 0, tid = 0;
 
   // ── 유전자 ↔ 문자열 (duet.html SHARE 해시와 같은 형식) ────────────────
   function gStr(g) {
     return 'p' + g.p + '_d' + g.d.toFixed(2) + '_t' + g.t.toFixed(2)
          + '_g' + g.g.toFixed(2) + '_a' + g.a + '_s' + g.s;
+  }
+  /** gStr 의 역. **남이 보낸 문자열**이므로 형식과 범위를 검사한다(아니면 null). */
+  var GRE = /^p(-?\d{1,2})_d(\d\.\d{2})_t(\d\.\d{2})_g(\d\.\d{2})_a(\d)_s(\d{1,9})$/;
+  function gParse(id) {
+    var m = typeof id === 'string' && GRE.exec(id);
+    if (!m) return null;
+    var g = { p: +m[1], d: +m[2], t: +m[3], g: +m[4], a: +m[5], s: +m[6] };
+    for (var i = 0; i < AX.length; i++) {
+      if (!(g[AX[i].k] >= AX[i].lo && g[AX[i].k] <= AX[i].hi)) return null;
+    }
+    return g.a < bank.banks.length ? g : null;
   }
   function bits(s, n) {
     var v = new Int8Array(n);
@@ -292,14 +302,16 @@
   function vote(w) {
     if (!cur) return;
     clearTimeout(tid); stop();
-    var A = cur.A, B = cur.B, before = rankOf(w === 'A' ? A : B);
+    var A = byId(cur.A.id), B = byId(cur.B.id);        // 사다리를 새로 받았으면 옛 객체다
+    if (!A || !B) { newDuel(); return; }
+    var before = rankOf(w === 'A' ? A : B);
     var ea = A.elo, eb = B.elo;
     A.elo = elo(ea, eb, w === 'A' ? 1 : 0);
     B.elo = elo(eb, ea, w === 'B' ? 1 : 0);
     (w === 'A' ? A : B).wins++; (w === 'A' ? B : A).losses++;
     S.votes++;
     S.votedIds[(w === 'A' ? A : B).id] = 1;
-    Store.save(S);
+    R.send('vote', { a: A.id, b: B.id, w: w });
     var won = w === 'A' ? A : B, after = rankOf(won);
     // ⚠ 투표자를 채점하지 않는다. 되돌려 주는 것은 "당신이 무엇을 움직였는가" 뿐이다.
     var msg = '당신의 표로 <b>' + won.name + '</b> 이(가) ';
@@ -406,6 +418,60 @@
              parent: parent || null, born: Date.now() };
   }
 
+  /** 씨앗 + 이벤트 → 사다리. 모두가 같은 이벤트를 받으면 모두 같은 사다리를 본다. */
+  function rebuild(events, shared) {
+    var P = {}, list = [];
+    function add(id, parent, born) {
+      if (P[id]) return P[id];
+      var g = gParse(id); if (!g) return null;
+      var p = mkPiece(g, gParse(parent) ? parent : null);
+      p.born = born; P[id] = p; list.push(p); return p;
+    }
+    seeds.forEach(function (s) { add(gStr(s), null, 0); });
+    events.slice().sort(function (x, y) { return x.t - y.t || (x.id < y.id ? -1 : 1); })
+      .forEach(function (e) {
+        var d = e.data || {};
+        if (e.kind === 'sow') { add(d.id, d.parent, e.t); return; }
+        if (e.kind !== 'vote' || (d.w !== 'A' && d.w !== 'B')) return;
+        var A = add(d.a, null, e.t), B = add(d.b, null, e.t);
+        if (!A || !B || A === B) return;
+        var ea = A.elo, eb = B.elo;
+        A.elo = elo(ea, eb, d.w === 'A' ? 1 : 0); B.elo = elo(eb, ea, d.w === 'B' ? 1 : 0);
+        (d.w === 'A' ? A : B).wins++; (d.w === 'A' ? B : A).losses++;
+      });
+    // 개인 기록 = 내가 만든 이벤트 (+ 예전 판의 합계)
+    var me = { pieces: list, votes: 0, mine: {}, votedIds: {}, shared: shared };
+    R.mine('sow').forEach(function (e) { if (e.data) me.mine[e.data.id] = 1; });
+    R.mine('vote').forEach(function (e) {
+      var d = e.data || {}; me.votes++; me.votedIds[d.w === 'A' ? d.a : d.b] = 1;
+    });
+    if (old) { me.votes += old.votes || 0; Object.assign(me.votedIds, old.votedIds || {}); }
+    return me;
+  }
+  function refresh() {
+    return R.list(['sow', 'vote']).then(function (r) { S = rebuild(r.events, r.shared); paintNote(); });
+  }
+  function paintNote() {
+    $('store').innerHTML = S.shared
+      ? '표와 조각은 <b>모두와 함께</b> 쌓입니다. 이름·연락처는 받지 않습니다.'
+      : '⚠ 지금은 <b>이 브라우저에만</b> 저장됩니다. 서버가 연결되면 그대로 올라갑니다.';
+  }
+  /** 예전 판(arena.v1) 기록을 한 번만 올린다. 지우지 않는다. */
+  function migrate() {
+    try { old = JSON.parse(localStorage.getItem('arena.v1')); } catch (e) { old = null; }
+    if (!old || !old.pieces) { old = null; return; }
+    if (old.migrated) return;
+    var seedIds = {}; seeds.forEach(function (s) { seedIds[gStr(s)] = 1; });
+    old.pieces.forEach(function (p) {
+      if (old.mine && old.mine[p.id] && !seedIds[p.id]) R.send('sow', { id: p.id, parent: p.parent });
+    });
+    R.send('legacy', { votes: old.votes, votedIds: old.votedIds, pieces: old.pieces
+      .filter(function (p) { return p.wins + p.losses > 0 || (old.mine && old.mine[p.id]); })
+      .map(function (p) { return { id: p.id, parent: p.parent, elo: p.elo, wins: p.wins, losses: p.losses }; }) });
+    old.migrated = Date.now();
+    try { localStorage.setItem('arena.v1', JSON.stringify(old)); } catch (e) {}
+  }
+
   // ── 부팅 ────────────────────────────────────────────────────────────
   Promise.all([
     fetch('../mobile_tonnetz/data/om_bank.json').then(function (r) { return r.json(); }),
@@ -413,16 +479,12 @@
     fetch('./data/seeds.json').then(function (r) { return r.json(); }),
   ]).then(function (res) {
     bank = res[0]; labels = res[1].labels;
-    S = Store.load();
-    if (!S) {
-      S = { pieces: [], votes: 0, mine: {}, votedIds: {} };
-      res[2].seeds.forEach(function (s) {
-        S.pieces.push(mkPiece({ p: s.p, d: s.d, t: s.t, g: s.g, a: s.a, s: s.s }, null));
-      });
-      Store.save(S);
-    }
+    seeds = res[2].seeds.map(function (s) { return { p: s.p, d: s.d, t: s.t, g: s.g, a: s.a, s: s.s }; });
+    migrate();
+    S = rebuild(R.mine(), false);                      // 먼저 내 것으로 그리고, 서버가 오면 다시
     draft = { p: 0, d: 1.0, t: 1.0, g: 1.0, a: 2, s: 101 };
-    buildKnobs(); paintSow(true); paintLadder();
+    buildKnobs(); paintSow(true); paintLadder(); paintNote();
+    refresh().then(paintLadder);
 
     $('enter').addEventListener('click', function () {
       $('gate').style.display = 'none';
@@ -439,7 +501,7 @@
     clearTimeout(tid); stop();
     [].forEach.call(this.children, function (b) { b.classList.toggle('on', b.getAttribute('data-p') === p); });
     ['duel', 'sow', 'ladder'].forEach(function (k) { $('p-' + k).classList.toggle('on', k === p); });
-    if (p === 'ladder') paintLadder();
+    if (p === 'ladder') { paintLadder(); refresh().then(paintLadder); }
     if (p === 'duel' && cur) sequence();
   });
   document.querySelector('.duel').addEventListener('click', function (e) {
@@ -458,7 +520,8 @@
     var p = mkPiece({ p: draft.p, d: draft.d, t: draft.t, g: draft.g, a: draft.a, s: draft.s },
                     draft._parent || null);
     if (byId(p.id)) { $('sfb').innerHTML = '이미 같은 조각이 있습니다 — <b>' + byId(p.id).name + '</b>.'; return; }
-    S.pieces.push(p); S.mine[p.id] = 1; Store.save(S);
+    S.pieces.push(p); S.mine[p.id] = 1;
+    R.send('sow', { id: p.id, parent: p.parent });
     $('sfb').innerHTML = '<b>' + p.name + '</b> 을(를) 심었습니다'
       + (p.parent ? ' — <b>' + (byId(p.parent) || {}).name + '</b> 의 자손입니다.' : '.')
       + ' 이제 다른 사람들이 겨루게 됩니다.';
@@ -482,6 +545,7 @@
   window.__arena = {
     state: function () { return S; },
     seedVotes: function (n) {                     // 시험용 — 무작위 투표로 사다리를 채운다
+      if (R.shared) return 'off';                 // 공유 기록을 가짜 표로 더럽히지 않는다
       for (var i = 0; i < n; i++) { var p = pair(); if (!p) break;
         var w = Math.random() < 0.5 ? 'A' : 'B';
         cur = { A: p[0], B: p[1] }; vote(w); clearTimeout(tid); }
