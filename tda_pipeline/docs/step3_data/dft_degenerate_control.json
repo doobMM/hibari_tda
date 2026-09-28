@@ -1,0 +1,78 @@
+{
+ "script": "experiments/run_dft_degenerate_control.py",
+ "run_at": "2026-09-28T22:56:18",
+ "config": {
+  "alpha": 0.25,
+  "octave_weight": 0.3,
+  "duration_weight": 1.0,
+  "use_decayed": false,
+  "threshold": 0.35
+ },
+ "dft_cache": {
+  "unique_rows_bytewise": 1,
+  "row": [
+   1.0,
+   1.0,
+   1.0,
+   1.0,
+   1.0,
+   1.0
+  ],
+  "all_pair_dft_terms_exactly_zero": true
+ },
+ "P1_musical_matrix": {
+  "dft_eq_octdur_bitwise": true,
+  "max_abs_diff_dft_octdur": 0.0,
+  "distinct_values_upper": 14,
+  "pairs": 253,
+  "C1_dft_eq_dw099": false,
+  "C1_max_abs_diff": 0.008333333333333304
+ },
+ "P2_P3_barcodes": {
+  "dft_vs_octdur": {
+   "n_a": 151,
+   "n_b": 151,
+   "inputs_bitwise_equal": 151,
+   "outputs_equal": 151
+  },
+  "C1_dft_vs_dw099": {
+   "n_a": 151,
+   "n_b": 151,
+   "inputs_bitwise_equal": 0,
+   "outputs_equal": 0
+  }
+ },
+ "P4_bundle": {
+  "dft_vs_octdur": {
+   "cycle_labeled": true,
+   "K_a": 14,
+   "K_b": 14,
+   "activation_binary": true,
+   "activation_continuous": true,
+   "overlap_binary": true
+  },
+  "C1_dft_vs_dw099": {
+   "cycle_labeled": true,
+   "K_a": 14,
+   "K_b": 14,
+   "activation_binary": true,
+   "activation_continuous": true,
+   "overlap_binary": true
+  }
+ },
+ "P5_headline_algo1": {
+  "recorded_js_mean": 0.009022575394067426,
+  "dft_js_mean": 0.009022575394067426,
+  "octdur_js_mean": 0.009022575394067426,
+  "dft_vs_octdur_max_abs_diff": 0.0,
+  "dft_vs_recorded_all_js_max_abs_diff": 0.0
+ },
+ "verdict": {
+  "P1": true,
+  "P2": true,
+  "P3": true,
+  "P4": true,
+  "P5": true,
+  "C1_detects_difference": true
+ }
+}

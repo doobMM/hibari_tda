@@ -39,3 +39,4 @@
 - `tonnetz`, `voice_leading`은 수치적으로 metric 조건을 충족.
 - `frequency`는 현재 파이프라인 거리행렬(인접도 역수 refine) 기준에서 metric이 아님.
 - `dft` 구현은 단일 pitch-class indicator의 DFT magnitude를 사용하므로, 같은 octave/duration의 서로 다른 pitch class 쌍에서 0거리가 발생해 동일성이 깨짐.
+  - ⚠ 2026-09-28 추가: 이 관찰의 **결론이 이어지지 않았다.** 0거리는 일부 쌍이 아니라 **모든** pitch class 쌍에서 난다 — DFT 항 ≡ 0, 거리 = 옥타브·길이. `project_dft_degenerate_audit_0928.md`

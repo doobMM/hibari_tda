@@ -58,7 +58,7 @@
 
 | 곡 | PC 수 | 최적 거리 | 2위와 구별 | 최적 모델 | 비고 |
 |---|---|---|---|---|---|
-| hibari | 7 (diatonic) | **DFT** 0.0216 | p=7.8e-06 | FC | 스펙트럼 구조 포착, entropy 0.974 |
+| hibari | 7 (diatonic) | **DFT** 0.0216 | p=7.8e-06 | FC | ⚠ 'DFT' = 옥타브·길이 + 빈도 하이브리드 (DFT 항 ≡ 0, 아래). entropy 0.974 |
 | Bach Fugue | 12 (chromatic) | **Tonnetz** 0.0130 | p=1.3e-18 | — | 대위법인데 Tonnetz (freq 대비 −56.5%) |
 | Ravel Pavane | 12 (N=49) | **Tonnetz** 0.0156 ★변경 | p=1.1e-16 | FC | ~~frequency 최적~~ 뒤집힘. "N 크면 빈도 유리" 해석 철회 |
 | solari | 12 (chromatic) | frequency 0.0131 ★변경 | p=2.3e-03 | Transformer | ⚠ 대조 팔이 종전값 재현 실패 → 인덱스 수정에 귀속 불가 |
@@ -66,17 +66,16 @@
 
 **남는 것**: 곡마다 최적 도구가 다르다는 *관찰*. **사라진 것**: 어떤 곡 성격이 어떤 거리를 부르는지에 대한 *설명* (사후 해석이었다).
 
-⚠ **2026-09-28 — 이 파이프라인의 "DFT 거리"에는 DFT 가 없다.** `musical_metrics._build_dft_cache` 는
-음높이 류 하나를 원-핫으로 FFT 하는데, 한 점짜리 신호의 |f̂(k)| 는 **모든 음높이 류에서 1** 이다.
-그래서 두 음 사이 DFT 항은 **항상 0** 이고 `dft_note_distance` = `ow·|옥타브 차| + dw·|길이 차|/max 길이` 다
-(정본 행렬과 오차 0, 253쌍 중 서로 다른 값 14개). 위 표의 **수치는 유효**하지만 "스펙트럼 구조 포착"·
-"7-PC maximal evenness" 같은 **해석은 근거가 없다** — hibari 의 최적 거리는 "옥타브·길이 + 빈도 하이브리드" 로 읽어야 한다.
-전체 해석 감사는 별도 작업 (`docs/lenia_spec.md` §10-1).
+⚠ **2026-09-28 — "DFT" 거리 = `0.3·|옥타브 차| + |길이 차|/max 길이`.** 단일 음의 |DFT| 는 전조 불변량이라
+모든 음높이 류에서 `[1,1,1,1,1,1]` (비트 동일) → DFT 항 ≡ 0. 바코드 151개·고리·OM·헤드라인 JS 20개까지 **비트 동일**
+(`experiments/run_dft_degenerate_control.py` → `dft_degenerate_control.json`, 양성 대조 dw=0.99 는 151/151 달라짐).
+**수치는 유효, 스펙트럼·온음계·maximal evenness 해석은 무효.** Tonnetz·voice_leading 은 음높이 류 정보가 있다(0/33 쌍이 0).
+출처: `df92e8f`(2026-04-02 플러그인 커밋) — 교수님 원본 `util.py` 의 DFT 는 마디의 **복소** 스펙트럼 차라 이 문제가 없다.
 
 ### hibari 현재 최적 설정
 
 ```
-거리 함수: DFT (w_o=0.3, w_d=1.0)
+거리 함수: DFT (w_o=0.3, w_d=1.0)   ⚠ 실제로는 옥타브·길이 거리 — DFT 항 ≡ 0 (위 「핵심 발견」 아래 경고)
 Hybrid α: 0.25 (§6.8 확정, DFT α-hybrid grid)
 모드: timeflow (Complex는 Tonnetz 한정 유효 — §6.9 Task 34b 확정)
 Lag: **lag=1 만 쓴다 (`use_decayed=False`)** — 감쇄 lag 을 쓰지 않는다.

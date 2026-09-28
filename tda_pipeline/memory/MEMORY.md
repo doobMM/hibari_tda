@@ -1,5 +1,6 @@
 # MEMORY Index
 
+- 2026-09-28: `project_dft_degenerate_audit_0928.md` — ⚠ 'DFT' 거리는 단일 음 |DFT| 가 전부 1 이라 DFT 항 ≡ 0 → 옥타브·길이 거리. 바코드·헤드라인 JS 까지 비트 동일. 스펙트럼 해석 무효.
 - 2026-04-26: `project_codebase_flow_review_0426.md` — 핵심 코드 플로우/위계/알고리즘 리뷰 HTML 문서 작성.
 - 2026-04-26: `project_jarvis_dashboard_guide_0426.md` — Jarvis 코드 점검 인터페이스 15쪽 HTML 설명서 작성.
 - 2026-04-17: `project_data_integrity_0417.md` — 논문-JSON 정합성 전수 검증 결과.
