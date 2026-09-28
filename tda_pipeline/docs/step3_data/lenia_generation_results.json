@@ -1,0 +1,915 @@
+{
+ "script": "tools/verify_lenia.mjs",
+ "run": 2,
+ "run_at": "2026-09-28T13:41:12.880Z",
+ "rule": {
+  "T": 25,
+  "u_max_generation": 0.688,
+  "u_max_original": 1,
+  "read_threshold": 0.5,
+  "derivation": {
+   "T": "정본 이진 scale OM 의 고리별 최소 지속 길이(전반부 0~543) 중앙값 12.5 × 2",
+   "u_max_generation": "원곡 양의 연속 활성도 95% 분위 (전반부 0~543)",
+   "exact_special_case": "T=1, u_max=1 이면 OM = [U ≥ τ_c] = 헤드라인 OM (build_percycle_overlap 과 같이 >=)"
+  }
+ },
+ "page_arm_in_code": "echo_over",
+ "fixture": [
+  {
+   "T": 1,
+   "u_max": 1,
+   "agreement": 1
+  },
+  {
+   "T": 25,
+   "u_max": 1,
+   "agreement": 1
+  },
+  {
+   "T": 25,
+   "u_max": 0.688,
+   "agreement": 1
+  }
+ ],
+ "harness": {
+  "점 1": {
+   "reproduced": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "recorded": [
+    0,
+    0,
+    0,
+    0
+   ]
+  },
+  "점 2": {
+   "reproduced": [
+    1.9,
+    1.8,
+    1.3,
+    0.3
+   ],
+   "recorded": [
+    1.9,
+    1.8,
+    1.3,
+    0.3
+   ]
+  },
+  "점 4": {
+   "reproduced": [
+    4,
+    3.3,
+    1.7,
+    2.1
+   ],
+   "recorded": [
+    4,
+    3.3,
+    1.7,
+    2.1
+   ]
+  },
+  "점 8": {
+   "reproduced": [
+    4.5,
+    4.9,
+    5.3,
+    5.9
+   ],
+   "recorded": [
+    4.5,
+    4.9,
+    5.3,
+    5.9
+   ]
+  }
+ },
+ "arms": {
+  "echo": {
+   "점 1": {
+    "segments": [
+     0,
+     0,
+     0,
+     0
+    ],
+    "silence": 480,
+    "saturation": 0,
+    "notes": 0,
+    "pitches": []
+   },
+   "점 2": {
+    "segments": [
+     1.9,
+     1.8,
+     1.3,
+     0.3
+    ],
+    "silence": 336,
+    "saturation": 0,
+    "notes": 288,
+    "pitches": [
+     52,
+     53,
+     55,
+     57,
+     59,
+     60,
+     62,
+     64,
+     65,
+     67
+    ]
+   },
+   "점 4": {
+    "segments": [
+     4,
+     3.3,
+     1.7,
+     2.1
+    ],
+    "silence": 228,
+    "saturation": 0,
+    "notes": 504,
+    "pitches": [
+     52,
+     53,
+     55,
+     57,
+     59,
+     60,
+     62,
+     64,
+     65,
+     67
+    ]
+   },
+   "점 8": {
+    "segments": [
+     4.5,
+     4.9,
+     5.3,
+     5.9
+    ],
+    "silence": 24,
+    "saturation": 0,
+    "notes": 912,
+    "pitches": [
+     52,
+     53,
+     55,
+     57,
+     59,
+     60,
+     62,
+     64,
+     65,
+     67,
+     69,
+     71,
+     72,
+     74,
+     76,
+     79,
+     81
+    ]
+   }
+  },
+  "tauc": {
+   "점 1": {
+    "segments": [
+     0,
+     0,
+     0,
+     0
+    ],
+    "silence": 480,
+    "saturation": 0,
+    "notes": 0,
+    "pitches": []
+   },
+   "점 2": {
+    "segments": [
+     0,
+     0,
+     0,
+     0
+    ],
+    "silence": 480,
+    "saturation": 0,
+    "notes": 0,
+    "pitches": []
+   },
+   "점 4": {
+    "segments": [
+     1.6,
+     1.4,
+     1.3,
+     0.4
+    ],
+    "silence": 326,
+    "saturation": 0,
+    "notes": 308,
+    "pitches": [
+     53,
+     55,
+     57,
+     59,
+     60,
+     62,
+     64,
+     65,
+     67,
+     69,
+     71,
+     72,
+     74,
+     79,
+     81
+    ]
+   },
+   "점 8": {
+    "segments": [
+     4.4,
+     3.5,
+     4.1,
+     4.7
+    ],
+    "silence": 60,
+    "saturation": 0,
+    "notes": 840,
+    "pitches": [
+     52,
+     53,
+     55,
+     57,
+     59,
+     60,
+     62,
+     64,
+     65,
+     67,
+     69,
+     71,
+     72,
+     74,
+     76,
+     79,
+     81
+    ]
+   }
+  },
+  "lenia_noover": {
+   "점 1": {
+    "segments": [
+     0,
+     0,
+     0,
+     0
+    ],
+    "silence": 480,
+    "saturation": 0,
+    "notes": 0,
+    "pitches": []
+   },
+   "점 2": {
+    "segments": [
+     0,
+     0,
+     0,
+     0
+    ],
+    "silence": 480,
+    "saturation": 0,
+    "notes": 0,
+    "pitches": []
+   },
+   "점 4": {
+    "segments": [
+     0,
+     0,
+     0,
+     0
+    ],
+    "silence": 480,
+    "saturation": 0,
+    "notes": 0,
+    "pitches": []
+   },
+   "점 8": {
+    "segments": [
+     2.1,
+     4.7,
+     5,
+     5
+    ],
+    "silence": 56,
+    "saturation": 0,
+    "notes": 848,
+    "pitches": [
+     53,
+     62,
+     64,
+     67,
+     69,
+     71,
+     72,
+     74,
+     76,
+     79,
+     81
+    ]
+   }
+  },
+  "lenia": {
+   "점 1": {
+    "segments": [
+     0,
+     0,
+     0,
+     0
+    ],
+    "silence": 480,
+    "saturation": 0,
+    "notes": 0,
+    "pitches": []
+   },
+   "점 2": {
+    "segments": [
+     0,
+     0,
+     0,
+     0
+    ],
+    "silence": 480,
+    "saturation": 0,
+    "notes": 0,
+    "pitches": []
+   },
+   "점 4": {
+    "segments": [
+     0,
+     0,
+     0,
+     0
+    ],
+    "silence": 480,
+    "saturation": 0,
+    "notes": 0,
+    "pitches": []
+   },
+   "점 8": {
+    "segments": [
+     1.2,
+     3.1,
+     3.8,
+     3.8
+    ],
+    "silence": 56,
+    "saturation": 0,
+    "notes": 848,
+    "pitches": [
+     53,
+     62,
+     64,
+     67,
+     69,
+     71,
+     72,
+     74,
+     76,
+     79,
+     81
+    ]
+   }
+  },
+  "tauc_over": {
+   "점 1": {
+    "segments": [
+     0,
+     0,
+     0,
+     0
+    ],
+    "silence": 480,
+    "saturation": 0,
+    "notes": 0,
+    "pitches": []
+   },
+   "점 2": {
+    "segments": [
+     0,
+     0,
+     0,
+     0
+    ],
+    "silence": 480,
+    "saturation": 0,
+    "notes": 0,
+    "pitches": []
+   },
+   "점 4": {
+    "segments": [
+     1,
+     0.8,
+     0.9,
+     0.1
+    ],
+    "silence": 317,
+    "saturation": 0,
+    "notes": 326,
+    "pitches": [
+     53,
+     55,
+     57,
+     59,
+     62,
+     64,
+     65,
+     67,
+     69,
+     71,
+     72,
+     74,
+     76,
+     79,
+     81
+    ]
+   },
+   "점 8": {
+    "segments": [
+     2.9,
+     2.9,
+     3.2,
+     3.1
+    ],
+    "silence": 48,
+    "saturation": 0,
+    "notes": 864,
+    "pitches": [
+     53,
+     55,
+     57,
+     59,
+     62,
+     64,
+     65,
+     67,
+     69,
+     71,
+     72,
+     74,
+     76,
+     79,
+     81
+    ]
+   }
+  },
+  "echo_over": {
+   "점 1": {
+    "segments": [
+     0,
+     0,
+     0,
+     0
+    ],
+    "silence": 480,
+    "saturation": 0,
+    "notes": 0,
+    "pitches": []
+   },
+   "점 2": {
+    "segments": [
+     0.8,
+     1,
+     1.1,
+     0.3
+    ],
+    "silence": 341,
+    "saturation": 0,
+    "notes": 278,
+    "pitches": [
+     52,
+     53,
+     55,
+     57,
+     59,
+     60,
+     62,
+     64,
+     65,
+     67
+    ]
+   },
+   "점 4": {
+    "segments": [
+     2.1,
+     2.1,
+     1.4,
+     1
+    ],
+    "silence": 243,
+    "saturation": 0,
+    "notes": 474,
+    "pitches": [
+     52,
+     53,
+     55,
+     57,
+     59,
+     60,
+     62,
+     64,
+     65,
+     67
+    ]
+   },
+   "점 8": {
+    "segments": [
+     2.7,
+     2.9,
+     3,
+     3.6
+    ],
+    "silence": 34,
+    "saturation": 0,
+    "notes": 892,
+    "pitches": [
+     52,
+     53,
+     55,
+     57,
+     59,
+     60,
+     62,
+     64,
+     65,
+     67,
+     69,
+     71,
+     72,
+     74,
+     76,
+     79,
+     81
+    ]
+   }
+  }
+ },
+ "verdict": {
+  "echo": {
+   "G1": null,
+   "G2": true,
+   "G3": true,
+   "growth_8": 0.113,
+   "G3_detail": {
+    "pitches": {
+     "영역0": [
+      52,
+      53,
+      55,
+      57,
+      59,
+      60,
+      62,
+      64,
+      65,
+      67
+     ],
+     "영역1": [
+      67,
+      69,
+      71,
+      72,
+      74,
+      76,
+      79,
+      81
+     ],
+     "영역2": [],
+     "영역3": [
+      52,
+      53,
+      55,
+      57,
+      59,
+      60,
+      62,
+      64,
+      65,
+      67,
+      69
+     ]
+    },
+    "silent_regions": 1,
+    "mean_jaccard_sounding": 0.362
+   }
+  },
+  "tauc": {
+   "G1": false,
+   "G2": false,
+   "G3": true,
+   "growth_8": 0.146,
+   "G3_detail": {
+    "pitches": {
+     "영역0": [
+      53,
+      55,
+      57,
+      59,
+      60,
+      62,
+      64,
+      65,
+      67,
+      69,
+      71,
+      72,
+      74,
+      76,
+      79,
+      81
+     ],
+     "영역1": [
+      67,
+      69,
+      71,
+      72,
+      74,
+      76,
+      79,
+      81
+     ],
+     "영역2": [],
+     "영역3": [
+      52,
+      53,
+      55,
+      57,
+      59,
+      60,
+      62,
+      64,
+      65,
+      67,
+      69
+     ]
+    },
+    "silent_regions": 1,
+    "mean_jaccard_sounding": 0.402
+   }
+  },
+  "lenia_noover": {
+   "G1": true,
+   "G2": false,
+   "G3": false,
+   "growth_8": 0,
+   "G3_detail": {
+    "pitches": {
+     "영역0": [],
+     "영역1": [
+      67,
+      69,
+      71,
+      72,
+      74,
+      76,
+      79,
+      81
+     ],
+     "영역2": [],
+     "영역3": [
+      52,
+      57,
+      59,
+      60,
+      62,
+      64,
+      69
+     ]
+    },
+    "silent_regions": 2,
+    "mean_jaccard_sounding": 0.071
+   }
+  },
+  "lenia": {
+   "G1": true,
+   "G2": false,
+   "G3": false,
+   "growth_8": 0,
+   "G3_detail": {
+    "pitches": {
+     "영역0": [],
+     "영역1": [
+      67,
+      69,
+      71,
+      72,
+      74,
+      76,
+      79,
+      81
+     ],
+     "영역2": [],
+     "영역3": [
+      57,
+      59,
+      60,
+      69
+     ]
+    },
+    "silent_regions": 2,
+    "mean_jaccard_sounding": 0.091
+   }
+  },
+  "tauc_over": {
+   "G1": true,
+   "G2": false,
+   "G3": false,
+   "growth_8": -0.031,
+   "G3_detail": {
+    "pitches": {
+     "영역0": [
+      53,
+      55,
+      57,
+      59,
+      62,
+      64,
+      65,
+      67,
+      69,
+      71,
+      72,
+      74,
+      76,
+      81
+     ],
+     "영역1": [
+      67,
+      69,
+      71,
+      72,
+      74,
+      76,
+      79,
+      81
+     ],
+     "영역2": [],
+     "영역3": [
+      52,
+      53,
+      55,
+      57,
+      59,
+      60,
+      62,
+      64,
+      65,
+      67,
+      69,
+      72,
+      74,
+      81
+     ]
+    },
+    "silent_regions": 1,
+    "mean_jaccard_sounding": 0.504
+   }
+  },
+  "echo_over": {
+   "G1": false,
+   "G2": true,
+   "G3": true,
+   "growth_8": 0.2,
+   "G3_detail": {
+    "pitches": {
+     "영역0": [
+      52,
+      53,
+      55,
+      57,
+      59,
+      60,
+      62,
+      64,
+      65,
+      67
+     ],
+     "영역1": [
+      67,
+      69,
+      71,
+      72,
+      74,
+      76,
+      79,
+      81
+     ],
+     "영역2": [],
+     "영역3": [
+      52,
+      53,
+      55,
+      57,
+      59,
+      60,
+      62,
+      64,
+      65,
+      67,
+      69
+     ]
+    },
+    "silent_regions": 1,
+    "mean_jaccard_sounding": 0.362
+   }
+  }
+ },
+ "robust": {
+  "echo": {
+   "G2_pass": 20,
+   "n": 20,
+   "g8_median": 0.038,
+   "g8_p10": -0.107,
+   "g8_p90": 0.167,
+   "level8_median": 5.3
+  },
+  "tauc": {
+   "G2_pass": 0,
+   "n": 20,
+   "g8_median": 0.047,
+   "g8_p10": -0.07,
+   "g8_p90": 0.125,
+   "level8_median": 4.3
+  },
+  "lenia_noover": {
+   "G2_pass": 0,
+   "n": 20,
+   "g8_median": 0,
+   "g8_p10": 0,
+   "g8_p90": 0.163,
+   "level8_median": 5
+  },
+  "lenia": {
+   "G2_pass": 0,
+   "n": 20,
+   "g8_median": 0.065,
+   "g8_p10": -0.143,
+   "g8_p90": 0.187,
+   "level8_median": 3.3
+  },
+  "tauc_over": {
+   "G2_pass": 0,
+   "n": 20,
+   "g8_median": 0.1,
+   "g8_p10": -0.067,
+   "g8_p90": 0.192,
+   "level8_median": 3.1
+  },
+  "echo_over": {
+   "G2_pass": 20,
+   "n": 20,
+   "g8_median": 0.094,
+   "g8_p10": -0.061,
+   "g8_p90": 0.214,
+   "level8_median": 3.4
+  }
+ },
+ "page_arm_decision": {
+  "rule_as_registered_N1": "echo",
+  "chosen_power_corrected": "echo_over",
+  "g1_discriminates_at_20_seeds": false,
+  "rule": "lenia 가 통과면 lenia, 아니면 echo_over → tauc_over → lenia_noover → tauc 중 처음 통과, 전부 실패면 echo",
+  "correction": "G1 은 N=1 이라 판별력이 없음을 20시드로 확인 → G2(20시드 중 19 이상) · G3 로 판정",
+  "user_decision": "처음부터 생성에도 참여 (2026-09-28)",
+  "chosen_uses_lenia_growth_window": true
+ },
+ "G1prime": {
+  "arm": "echo_over",
+  "first_peak_after_trough": {
+   "lag": 12,
+   "value": 0.604
+  },
+  "shuffle_q95": 0.055,
+  "periodic": true
+ },
+ "particles": {
+  "arm": "echo_over",
+  "params": {
+   "kHome": 6,
+   "kBind": 3,
+   "kRep": 0.00002,
+   "r0": 0.05,
+   "gamma": 0.86
+  },
+  "max_displacement": 0.1333,
+  "mean_displacement": 0.0244,
+  "bound": 0.15
+ }
+}

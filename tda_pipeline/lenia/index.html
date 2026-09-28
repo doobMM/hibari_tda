@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>별자리</title>
+<!--
+  lenia/index.html — 별자리. 손잡이가 없다. 탭 하나가 전부다.
+  명세: docs/lenia_spec.md  ·  규칙·회로·입자: ./lenia-core.js (검증: tools/verify_lenia.mjs)
+
+  화면에 보이는 것은 전부 실제 상태다 — 장식용 시뮬레이션을 따로 돌리지 않는다.
+    점 23개     hibari 의 음. 자리 = PH 가 찾은 고리 골격(14개 고리의 변)에서의 거리를 2D 로 펼친 것
+                (SMACOF). ⚠ 명세의 원래 기본값이던 "DFT 거리 지도"는 쓰지 않는다 — 이 파이프라인의
+                DFT 항은 단일 음에서 항상 0 이라 23개 음이 7개 점으로 겹친다 (export_lenia_data.py).
+    닫힌 곡선   고리 14개. PH 원 변 목록에서 복원한 순회 순서 그대로 (= 호몰로지 대표 고리).
+                밝기 = Lenia 상태 A_c, 색 = 성장 부호 — 자라는 중 따뜻함 / 줄어드는 중 차가움.
+    모이는 점   켜진 고리의 구성원이 무게중심 쪽으로 끌린다(제자리 스프링). 위치가 곧 상태다.
+    어두운 두 점 12·13번 음 (F4). 어느 고리에도 없다 — 울리지만 고리를 켜지 못한다.
+
+  소리 = echo.html 과 같은 되먹임 회로 + 중첩행렬만 Lenia 성장 규칙으로 (설정: LeniaCore.PAGE_ARM)
+    배포 설정 `echo_over` = echo.html 의 규칙(τ=0.35 평탄) + Lenia 성장 창의 **과밀** 쪽
+                            (고리의 음이 원곡 95% 분위 0.688 보다 꽉 차면 그 고리는 줄어든다)
+    ⚠ 명세가 사전등록한 `lenia`(헤드라인 τ_c · 관성 T=25)는 **점 2·4개로 고리가 켜지지 않는다**
+      (20시드 중 0). τ_c 와 T 는 원곡의 조밀한 결에 맞춘 값이라 성긴 점에 옮겨지지 않았다.
+      tools/verify_lenia.mjs 헤더에 1~3회차 판정을 모두 남겼다. 들어 보려면 ?rule=lenia
+    다른 설정: ?rule=echo · tauc · lenia_noover · lenia · tauc_over · echo_over
+  echo.html 은 한 글자도 고치지 않았다 — 나란히 들어 볼 대조군이다.
+
+  화면용 완화: 규칙이 T=1 이면 고리가 한 스텝에 켜지고 꺼진다. 눈이 따라가도록 **밝기와 입자만**
+  0.25초 시상수로 완화한다. 소리(엔진)에는 영향이 없다.
+
+  ⚠ `PianoPlayer.play()` 는 매번 `stop()` 을 부른다 → 탭 전용 플레이어를 따로 둔다 (echo.html 과 같다).
+-->
+<style>
+ :root{--bg:#0a0d08;--fg:#dce8d4;--dim:#5d6b52}
+ *{box-sizing:border-box}
+ html,body{height:100%}
+ body{margin:0;background:var(--bg);color:var(--fg);overflow:hidden;
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans KR",sans-serif}
+ canvas{display:block;width:100vw;height:100vh;touch-action:none;cursor:crosshair}
+ .say{position:fixed;left:0;right:0;bottom:16%;text-align:center;pointer-events:none;
+      font-size:clamp(18px,4.2vw,25px);letter-spacing:.05em;color:#8fd14f;
+      transition:opacity .7s;text-shadow:0 0 30px #0a0d08}
+ .bar{position:fixed;left:14px;bottom:14px;display:flex;gap:8px;align-items:center}
+ .bar button{font-family:inherit;padding:10px 15px;border-radius:9px;
+   border:1px solid #24301c;background:#12180e;color:var(--dim);
+   font-size:12.5px;cursor:pointer;min-height:44px;min-width:44px}
+ .bar button:hover{color:var(--fg);border-color:#3a4a2e}
+ .cnt{position:fixed;right:14px;bottom:18px;font-size:12px;color:var(--dim);
+      font-family:ui-monospace,monospace;pointer-events:none;text-align:right}
+ .who{position:fixed;left:14px;top:12px;font-size:11.5px;color:#2f3a27;
+      pointer-events:none;letter-spacing:.04em}
+ .who a{color:#3d4b33;text-decoration:none;pointer-events:auto}
+</style>
+</head>
+<body>
+<canvas id="cv"></canvas>
+<div class="say" id="say">점을 눌러 보세요</div>
+<div class="who">hibari · <a href="../../">처음으로</a></div>
+<div class="bar"><button id="clr">비우기</button></div>
+<div class="cnt" id="cnt"></div>
+
+<script src="../hibari_dashboard/public/js/audio-playback.js"></script>
+<script src="../hibari_dashboard/public/js/generation-algo1.js"></script>
+<script src="./lenia-core.js"></script>
+<script>
+(function () {
+  var cv = document.getElementById('cv'), cx = cv.getContext('2d');
+  var say = document.getElementById('say'), cnt = document.getElementById('cnt');
+  var MS = 250, HZ = 8;                 // 한 스텝 250ms (hibari 의 8분음표) · 예약 창 8스텝 = 2초
+  var LC = window.LeniaCore, G = window.GenerationAlgo1;
+  var D = null, eng = null, P = null, XY = null, ISO = {}, BR = null, RULE = null;
+  var loopP = null, tapP = null, reTid = 0, schedTo = 0, genQ = [], t0 = performance.now();
+  var now = function () { return (performance.now() - t0) / MS; };            // 스텝 (소수)
+
+  var HAND = ['#8fd14f', '#c9a0dc'];    // 두 손 32 · 33
+  var WARM = [232, 212, 90], COOL = [111, 159, 216];
+
+  // ── 화면 ↔ 정규화 좌표 ───────────────────────────────────────────
+  var W = 0, H = 0, S = 1, OX = 0, OY = 0;
+  function fit() {
+    var d = Math.min(2, window.devicePixelRatio || 1);
+    W = innerWidth; H = innerHeight;
+    cv.width = Math.round(W * d); cv.height = Math.round(H * d);
+    cx.setTransform(d, 0, 0, d, 0, 0);
+    S = Math.min(W, H) * 0.74; OX = (W - S) / 2; OY = (H - S) / 2 - H * 0.03;
+    cx.fillStyle = '#0a0d08'; cx.fillRect(0, 0, W, H);
+  }
+  addEventListener('resize', fit); fit();
+  var sx = function (x) { return OX + x * S; }, sy = function (y) { return OY + y * S; };
+
+  // ── 소리 ─────────────────────────────────────────────────────────
+  /* 앞으로 HZ 스텝치를 **덧붙인다**(끊지 않는다). 회로는 엔진이 한 스텝씩 돌린다. */
+  function schedule() {
+    clearTimeout(reTid);
+    if (!eng) return;
+    var a = now(), to = a + HZ;
+    if (schedTo < a) { schedTo = a; if (eng.simT < Math.ceil(a)) eng.simT = Math.ceil(a); }
+    if (to > schedTo) {
+      var gen = eng.advance(Math.ceil(to));
+      var all = eng.echoes(schedTo, to).concat(gen.map(function (n) { return [n[0], n[1], n[2], n[3]]; }));
+      if (all.length) {
+        loopP = loopP || new window.PianoPlayer();
+        loopP.add(all.map(function (n) {
+          return [(n[0] - a) * (MS / 1000), n[1], (n[2] - a) * (MS / 1000), n[3]];
+        }), { gain: 0.85 });
+      }
+      for (var i = 0; i < gen.length; i++) genQ.push({ t: gen[i][0], li: gen[i][5], g: gen[i][4] });
+      genQ = genQ.filter(function (q) { return q.t > a - 3; });
+      eng.prune(Math.floor(a) - 4);
+      schedTo = to;
+    }
+    reTid = setTimeout(schedule, HZ * MS * 0.4);
+  }
+  /** 탭은 **전용 플레이어**로 즉시. 한 인스턴스면 탭이 울림을 끊는다. */
+  function blip(pitch) {
+    tapP = tapP || new window.PianoPlayer();
+    tapP.play([[0, pitch, 2.2, 104]], { gain: 0.9 });
+  }
+
+  // ── 탭 — 보이는 자리에서 가장 가까운 음 ─────────────────────────────
+  function nearest(px, py) {
+    var best = 0, bd = Infinity;
+    for (var i = 0; i < P.x.length; i++) {
+      var dd = (sx(P.x[i]) - px) * (sx(P.x[i]) - px) + (sy(P.y[i]) - py) * (sy(P.y[i]) - py);
+      if (dd < bd) { bd = dd; best = i; }
+    }
+    return best;
+  }
+  function place(li) {
+    var d = eng.addDrop(li, now());
+    blip(d.pitch); say.style.opacity = 0; schedule();
+    return d;
+  }
+  cv.addEventListener('pointerdown', function (ev) {
+    if (!eng) return;
+    var r = cv.getBoundingClientRect();
+    place(nearest(ev.clientX - r.left, ev.clientY - r.top));
+  });
+  document.getElementById('clr').addEventListener('click', function () {
+    if (!eng) return;
+    eng.clear(Math.ceil(now())); genQ = []; if (loopP) loopP.stop(); schedTo = 0;
+    say.style.opacity = 1; schedule();
+  });
+
+  // ── 그림 ─────────────────────────────────────────────────────────
+  function loop(pts) {                  // 닫힌 Catmull-Rom — 고리를 고리 모양으로
+    var n = pts.length;
+    cx.beginPath(); cx.moveTo(pts[0][0], pts[0][1]);
+    for (var i = 0; i < n; i++) {
+      var p0 = pts[(i - 1 + n) % n], p1 = pts[i], p2 = pts[(i + 1) % n], p3 = pts[(i + 2) % n];
+      cx.bezierCurveTo(p1[0] + (p2[0] - p0[0]) / 6, p1[1] + (p2[1] - p0[1]) / 6,
+                       p2[0] - (p3[0] - p1[0]) / 6, p2[1] - (p3[1] - p1[1]) / 6, p2[0], p2[1]);
+    }
+    cx.closePath();
+  }
+  var lastF = performance.now();
+  function frame() {
+    requestAnimationFrame(frame);
+    var tn = performance.now(), dt = Math.min(0.05, (tn - lastF) / 1000); lastF = tn;
+    draw(dt);
+  }
+  /** 한 프레임. 실제 루프(frame)와 검증 훅(__lenia.render)이 같은 이 함수를 부른다. */
+  function draw(dt) {
+    if (!eng || !W) return;
+    var t = now(), ti = Math.floor(t);
+    var sn = eng.snap[ti] || { A: new Float32Array(D.K), g: new Int8Array(D.K), s: {}, f: 0 };
+    var ease = 1 - Math.exp(-dt / 0.25);                                         // 화면용 완화 (소리와 무관)
+    for (var e0 = 0; e0 < D.K; e0++) BR[e0] += (sn.A[e0] - BR[e0]) * ease;
+
+    LC.physicsStep(P, BR, D.cycles, LC.PHYS, dt);
+
+    cx.fillStyle = 'rgba(10,13,8,0.24)'; cx.fillRect(0, 0, W, H);              // 잔상
+
+    // 고리 — 밝기 = A, 색 = 성장 부호. 쉬고 있어도 골격은 희미하게 보인다 (지도).
+    for (var c = 0; c < D.K; c++) {
+      var tr = D.traversal[c] || D.cycles[c], a = BR[c];
+      var col = sn.g[c] > 0 ? WARM : COOL;
+      cx.lineWidth = 1 + 1.6 * a;
+      cx.strokeStyle = 'rgba(' + col[0] + ',' + col[1] + ',' + col[2] + ',' + (0.07 + 0.75 * a).toFixed(3) + ')';
+      loop(tr.map(function (v) { return [sx(P.x[v]), sy(P.y[v])]; }));
+      cx.stroke();
+    }
+
+    // 알고리즘이 낸 음 — 그 음의 점에서 작은 물결. 세대가 깊을수록 흐리다 (잔향이 짧아진다).
+    for (var q = 0; q < genQ.length; q++) {
+      var e = genQ[q], dt2 = t - e.t;
+      if (dt2 < 0 || dt2 > 3 || e.li == null) continue;
+      var k = (1 - dt2 / 3) * Math.pow(0.62, e.g - 1);
+      cx.globalAlpha = 0.55 * k; cx.strokeStyle = '#dce8d4'; cx.lineWidth = 1.2;
+      cx.beginPath(); cx.arc(sx(P.x[e.li]), sy(P.y[e.li]), 5 + dt2 * 9, 0, 6.2832); cx.stroke();
+    }
+    cx.globalAlpha = 1;
+
+    // 사용자의 점 — 음 위에서 부풀다 터진다. 부푼 정도 = 다음 울림까지.
+    var live = 0;
+    for (var i = 0; i < eng.drops.length; i++) {
+      var d = eng.drops[i], kk = Math.floor((t - d.at) / d.per);
+      var alive = Math.max(0, 1 - kk / d.life); if (alive <= 0) continue; live++;
+      var since = ((t - d.at) % d.per + d.per) % d.per, px = sx(P.x[d.li]), py = sy(P.y[d.li]);
+      var hc = HAND[eng.HANDS.indexOf(d.per)] || HAND[0];
+      cx.globalAlpha = 0.16 * alive; cx.strokeStyle = hc; cx.lineWidth = 1;
+      cx.beginPath(); cx.arc(px, py, 9 + (since / d.per) * 30, 0, 6.2832); cx.stroke();
+      if (since < eng.SUS) {
+        var g2 = 1 - since / eng.SUS;
+        cx.globalAlpha = 0.45 * g2 * alive; cx.lineWidth = 2.2;
+        cx.beginPath(); cx.arc(px, py, 10 + (1 - g2) * 80, 0, 6.2832); cx.stroke();
+      }
+    }
+    cx.globalAlpha = 1;
+
+    // 음 23개 — 울리는 음은 밝다. 고립 음(고리 없음)은 어둡다.
+    for (var n = 0; n < P.x.length; n++) {
+      var on = !!sn.s[n], r = on ? 4.6 : 2.8;
+      cx.fillStyle = ISO[n] ? '#2c3526' : (on ? '#eef6e6' : '#6b7a5f');
+      cx.beginPath(); cx.arc(sx(P.x[n]), sy(P.y[n]), r, 0, 6.2832); cx.fill();
+    }
+
+    cnt.textContent = live ? live + ' 점 · 고리 ' + sn.f : '';
+  }
+
+  // ── 부팅 ─────────────────────────────────────────────────────────
+  fetch('./hibari.json').then(function (r) { return r.json(); }).then(function (data) {
+    D = data; XY = D.layout.coords;
+    D.isolated_notes.forEach(function (i) { ISO[i] = 1; });
+    P = { x: Float64Array.from(XY.map(function (p) { return p[0]; })),
+          y: Float64Array.from(XY.map(function (p) { return p[1]; })),
+          hx: Float64Array.from(XY.map(function (p) { return p[0]; })),
+          hy: Float64Array.from(XY.map(function (p) { return p[1]; })),
+          vx: new Float64Array(XY.length), vy: new Float64Array(XY.length) };
+    var want = new URLSearchParams(location.search).get('rule');
+    RULE = LC.arm(want, D) ? want : LC.PAGE_ARM;                                 // 설정 이름은 lenia-core.js 와 같다
+    var arm = LC.arm(RULE, D);
+    BR = new Float64Array(D.K);
+    eng = new LC.Engine({ data: D, G: G, tau: arm.tau, T: arm.T, uMax: arm.uMax });
+    requestAnimationFrame(frame); schedule();
+  }).catch(function () { say.textContent = '데이터를 불러오지 못했습니다'; });
+
+  // 검증용 — 콘솔에서 규칙이 실제로 도는지 본다.
+  window.__lenia = {
+    drop: function (li) { return place(li).per; },
+    info: function () {
+      var sn = eng && eng.snap[Math.floor(now())];
+      return { drops: eng ? eng.drops.length : 0, simT: eng ? eng.simT : 0, K: D ? D.K : 0,
+               active: sn ? sn.f : 0, A: sn ? Array.from(sn.A).map(function (v) { return +v.toFixed(2); }) : [],
+               hands: eng ? eng.drops.map(function (d) { return d.per; }) : [], ring: eng ? eng.ring.length : 0,
+               rule: RULE, arm: D && RULE ? { T: LC.arm(RULE, D).T, uMax: LC.arm(RULE, D).uMax,
+                                             tau0: LC.arm(RULE, D).tau[0] } : null,
+               layout: D ? D.layout.chosen : null };
+    },
+    /** 미리보기 창이 가려져 requestAnimationFrame 이 멈춘 환경에서 그리기·입자를 직접 n 프레임 돌린다. */
+    render: function (n, dt) { for (var i = 0; i < (n || 1); i++) draw(dt || 1 / 60); return window.__lenia.maxDisp(); },
+    maxDisp: function () {
+      var m = 0; for (var i = 0; i < P.x.length; i++) m = Math.max(m, Math.hypot(P.x[i] - P.hx[i], P.y[i] - P.hy[i]));
+      return +m.toFixed(4);
+    },
+  };
+})();
+</script>
+</body>
+</html>
