@@ -1,0 +1,358 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>두 손의 파도</title>
+<!--
+  두 손의 파도 — 종달새와 문어 2판. 칸이 생명을 담는 오토마타.  명세: docs/tonnetz_lenia_spec.md §9
+  엔진 waves-core.js (검증 tools/verify_waves.mjs 가 같은 파일을 돌린다). 이 파일은 그림·소리·손가락.
+
+  ── 앞으로와 거꾸로가 같은 식을 쓴다 ─────────────────────────────────────
+  사용자의 설계  timeflow = intra + rate × inter  (한 손 안의 흐름 + rate × 두 손 사이의 흐름)
+    앞으로 : 칸 사이 전도 = 그 rate 에서 PH 가 보는 두 음의 거리. 가까운 음끼리 파도가 잘 건너간다.
+    거꾸로 : rate = 종달새(오른손)와 문어(왼손) 사이의 거리. 멀면 0 — 각자 제 흐름. 붙이면 1.5.
+             생명체를 옮기는 것이 filtration 매개변수를 쓸어 보는 일이다.
+    발견   : 아래 띠 = hibari 의 H₁ 바코드(가로 = rate). 목소리에서 고리가 켜지면 그 막대의 지금 rate 칸이 채워진다.
+             41개 중 13개는 rate 0 에서만 산다 — 두 손을 떼어 놓아야만 들린다.
+
+  ── 칸의 규칙 (확률 흥분성 매질 = 배치 위의 Markov 연쇄) ──────────────────
+  쉼 → 켜짐 → 불응 6스텝 → 쉼 (한 마디). 켜진 이웃의 전도 합이 문턱을 넘으면 켜질 확률이 오른다.
+  켜진 고리의 변은 더 잘 통하고(강화), 켤 때마다 피로가 쌓인다(균형).
+
+  ── 두 손 ─────────────────────────────────────────────────────────────
+  종달새(누르기) = 오른손: 제 모듈 32 안에서 한 마디마다 동심 파문.
+  문어(긋기)     = 왼손 : 제 모듈 33 안에서 한 마디마다 한 방향으로만 쏘고 방향을 돌린다 → 열린 끝이 말려 나선 팔.
+  둘의 박은 모듈마다 한 칸씩 어긋난다 (hibari 의 위상 어긋남). 목소리는 제 손의 리듬으로 운다 — 음은 Algorithm 1.
+-->
+<style>
+ :root{--bg:#05070a;--fg:#e6e2d6;--dim:#6b7270;--line:#1b2226}
+ *{box-sizing:border-box}
+ html,body{height:100%}
+ body{margin:0;background:var(--bg);color:var(--fg);overflow:hidden;
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans KR",sans-serif}
+ canvas#cv{display:block;width:100vw;height:100vh;touch-action:none;cursor:crosshair}
+ .say{position:fixed;left:0;right:0;top:12%;text-align:center;pointer-events:none;
+      font-size:clamp(18px,4.2vw,25px);letter-spacing:.06em;color:#f3d98b;transition:opacity .9s;text-shadow:0 0 24px #05070a}
+ .bar{position:fixed;left:12px;top:40px;display:flex;gap:8px}
+ .bar button{font-family:inherit;min-height:44px;min-width:44px;padding:0 14px;border-radius:10px;
+   border:1px solid var(--line);background:#0b0f12;color:var(--dim);font-size:13px;cursor:pointer}
+ .bar button:hover{color:var(--fg);border-color:#33403f}
+ .who{position:fixed;left:14px;top:12px;font-size:11.5px;color:#39423f;pointer-events:none;letter-spacing:.04em}
+ .who a{color:#4a5552;text-decoration:none;pointer-events:auto}
+ .cnt{position:fixed;right:16px;bottom:106px;font-size:12px;color:#5a6562;pointer-events:none;
+      font-family:ui-monospace,Menlo,monospace;text-align:right;line-height:1.5}
+</style>
+</head>
+<body>
+<canvas id="cv" role="img" aria-label="화성 격자의 칸들이 파도처럼 켜지고 꺼진다. 누르면 종달새가, 그으면 문어가 생기고, 둘 사이의 거리가 rate 다. 아래 띠에 찾은 고리가 채워진다."></canvas>
+<div class="say" id="say">눌러서 깨우세요</div>
+<div class="who">hibari · <a href="../">처음으로</a> · <a href="./tonnetz.html">1판</a></div>
+<div class="bar"><button id="clr">비우기</button></div>
+<div class="cnt" id="cnt"></div>
+
+<script src="../hibari_dashboard/public/js/generation-algo1.js"></script>
+<script src="./waves-core.js"></script>
+<script>
+(function () {
+  'use strict';
+  var cv = document.getElementById('cv'), g = cv.getContext('2d');
+  var say = document.getElementById('say'), cnt = document.getElementById('cnt');
+  var TW = window.TonnetzWaves, W = TW.W, H = TW.H;
+  var SILENT = /[?&]silent/.test(location.search);
+
+  var SEC = 60 / 66 / 2, LOOK = 0.2;
+  var ZT = 0.07, ZS = 0.13, Z0 = 50;      // 땅 높이(음역 지형) · 불꽃 높이(음높이)
+  var BARH = 86;                           // 바코드 띠 높이
+  var OPTS = {};                          // 매질 상수는 waves-core.js 의 DEF (검증과 같은 값)
+  var KEY = 'hibari-waves-found-v2';
+
+  var data = null, L = null, geo = null, ac = null, bus = null, live = 0;
+  var running = false, nextT = 0, t0a = 0, lastSf = 0, virt = 0;
+  var sparks = [], flashT = new Float32Array(288), fireT = new Float32Array(288).fill(-99), srcFire = {};
+  var foundSaved = null;
+
+  function hue(pc) { return (40 + ((pc * 7) % 12) * 28) % 360; }
+  var DIA = { 0: 1, 2: 1, 4: 1, 5: 1, 7: 1, 9: 1, 11: 1 };
+
+  // ── 소리 (1판과 같다) ───────────────────────────────────────────────────
+  function audio() {
+    if (SILENT) return;
+    if (ac) { if (ac.state === 'suspended') ac.resume(); return; }
+    var AC = window.AudioContext || window.webkitAudioContext; ac = new AC();
+    var comp = ac.createDynamicsCompressor(); comp.threshold.value = -16; comp.ratio.value = 3.5; comp.connect(ac.destination);
+    var lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 5200; lp.connect(comp);
+    bus = ac.createGain(); bus.gain.value = 0.62; bus.connect(lp);
+    var conv = ac.createConvolver(); conv.buffer = impulse(3.4);
+    var wet = ac.createGain(); wet.gain.value = 0.36; bus.connect(conv); conv.connect(wet); wet.connect(comp);
+  }
+  function impulse(sec) {
+    var n = Math.floor(ac.sampleRate * sec), b = ac.createBuffer(2, n, ac.sampleRate);
+    for (var ch = 0; ch < 2; ch++) { var d = b.getChannelData(ch), prev = 0;
+      for (var i = 0; i < n; i++) { var x = (Math.random() * 2 - 1) * Math.exp(-i / (ac.sampleRate * 0.85)) * (1 - i / n); prev = prev * 0.6 + x * 0.4; d[i] = prev; } }
+    return b;
+  }
+  var PART = [[1, 1], [2.0008, 0.36], [3.0027, 0.12]];
+  function voice(p, when, dur, vel) {
+    if (live > 42 || !ac) return;
+    live++;
+    var f = 440 * Math.pow(2, (p - 69) / 12), out = ac.createGain(); out.connect(bus);
+    var tau = Math.max(0.8, Math.min(3.6, 3.6 - (p - 40) * 0.06)), end = when + Math.max(0.15, dur);
+    out.gain.setValueAtTime(0, when); out.gain.linearRampToValueAtTime(vel, when + 0.006);
+    out.gain.setTargetAtTime(vel * 0.0005, when + 0.006, tau / 4); out.gain.setTargetAtTime(0, end, 0.3);
+    for (var k = 0; k < PART.length; k++) {
+      var o = ac.createOscillator(), gk = ac.createGain();
+      o.type = k ? 'sine' : 'triangle'; o.frequency.value = f * PART[k][0];
+      gk.gain.value = PART[k][1] * (k ? Math.max(0.15, 1 - (p - 48) / 50) : 0.8);
+      o.connect(gk); gk.connect(out); o.start(when); o.stop(end + 1.8);
+      if (k === 0) o.onended = function () { live--; };
+    }
+  }
+
+  // ── 시계 ────────────────────────────────────────────────────────────────
+  function now() { return ac ? ac.currentTime : performance.now() / 1000 + virt; }
+  function start() { if (running) return; running = true; t0a = now() + 0.05 - L.state.t * SEC; nextT = t0a + L.state.t * SEC; }
+  function pump() {
+    if (!running || (!ac && !SILENT)) return;
+    var t = now();
+    if (nextT < t - 1) { t0a += (t + 0.05 - nextT); nextT = t + 0.05; }
+    while (nextT < t + LOOK) { onStep(L.step(), nextT); nextT += SEC; }
+  }
+  setInterval(pump, 25);
+  document.addEventListener('visibilitychange', function () {
+    if (document.hidden) running = false; else if (L && L.state.srcs.length) start();
+  });
+  function onStep(ev, when) {
+    ev.fired.forEach(function (n) { fireT[n] = when; });
+    var nv = Math.max(1, ev.voices.length), sc = 1 / Math.sqrt(nv);
+    ev.voices.forEach(function (v) {
+      srcFire[v.id] = when;
+      v.notes.forEach(function (q, i) {
+        voice(q[0], when + i * 0.004, q[1] * SEC, (i ? 0.2 : 0.3) * sc);
+        sparks.push({ t: when, p: q[0], node: q[2], dur: q[1] * SEC, hand: v.hand });
+        flashT[q[2]] = when;
+      });
+    });
+    if (ev.found.length) { save(); }
+    if (sparks.length > 240) sparks.splice(0, sparks.length - 240);
+  }
+  function save() { try { localStorage.setItem(KEY, Array.prototype.join.call(L.state.found, '')); } catch (e) {} }
+  function load() {
+    try { var s = localStorage.getItem(KEY); if (s && s.length === L.state.found.length) for (var i = 0; i < s.length; i++) L.state.found[i] = s.charCodeAt(i) === 49 ? 1 : 0; } catch (e) {}
+  }
+
+  // ── 카메라 ──────────────────────────────────────────────────────────────
+  var cam = { phi: 1.02, D: 34, z0: 0.8, F: 1, ox: 0, oy: 0, yaw: 0, base: 0 };
+  var dpr = 1, VW = 0, VH = 0;
+  function wrapd(d, P) { return d - P * Math.round(d / P); }
+  function fit() {
+    dpr = Math.min(2, window.devicePixelRatio || 1); VW = innerWidth; VH = innerHeight;
+    cv.width = Math.round(VW * dpr); cv.height = Math.round(VH * dpr); g.setTransform(dpr, 0, 0, dpr, 0, 0);
+    cam.base = cam.yaw = VH > VW * 1.05 ? Math.PI / 2 : 0; cam.F = 1; cam.ox = 0; cam.oy = 0;
+    var pts = [], ztop = (84 - Z0) * ZS;
+    [[0, 0], [W, 0], [0, H], [W, H]].forEach(function (c) { [0, ztop].forEach(function (z) { var p = raw(c[0], c[1], z); if (p) pts.push(p); }); });
+    var x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9;
+    pts.forEach(function (p) { x0 = Math.min(x0, p[0]); x1 = Math.max(x1, p[0]); y0 = Math.min(y0, p[1]); y1 = Math.max(y1, p[1]); });
+    var mx = 14, top = 64, bot = BARH + 18;
+    cam.F = Math.min((VW - 2 * mx) / (x1 - x0), (VH - top - bot) / (y1 - y0));
+    cam.ox = VW / 2 - cam.F * (x0 + x1) / 2; cam.oy = top + (VH - top - bot) / 2 - cam.F * (y0 + y1) / 2;
+  }
+  function raw(x, y, z) {
+    var X = x - W / 2, Y = y - H / 2, c = Math.cos(cam.yaw), s = Math.sin(cam.yaw);
+    var Xr = X * c + Y * s, Yr = -X * s + Y * c, Zr = z - cam.z0, sp = Math.sin(cam.phi), cp = Math.cos(cam.phi);
+    var vy = Yr + cam.D * cp, vz = Zr - cam.D * sp, yc = vy * sp + vz * cp, zc = vy * cp - vz * sp;
+    if (zc < 0.5) return null;
+    return [cam.ox + cam.F * Xr / zc, cam.oy - cam.F * yc / zc, cam.F / zc];
+  }
+  function ground(sx, sy) {
+    var a = (sx - cam.ox) / cam.F, b = -(sy - cam.oy) / cam.F, sp = Math.sin(cam.phi), cp = Math.cos(cam.phi);
+    var dx = a, dy = b * sp + cp, dz = b * cp - sp; if (dz > -1e-3) return null;
+    var s = -(cam.z0 + cam.D * sp) / dz, Xr = s * dx, Yr = -cam.D * cp + s * dy, c = Math.cos(cam.yaw), sn = Math.sin(cam.yaw);
+    return { x: Xr * c - Yr * sn + W / 2, y: Xr * sn + Yr * c + H / 2 };
+  }
+  function nearestNode(x, y) {
+    var best = -1, bd = 1e9;
+    for (var i = 0; i < geo.nodes.length; i++) { var n = geo.nodes[i], dx = wrapd(n.x - x, W), dy = wrapd(n.y - y, H), d = dx * dx + dy * dy; if (d < bd) { bd = d; best = i; } }
+    return best;
+  }
+  function edgeFade(x, y) { var o = Math.max(0, -x, x - W, -y, y - H); return Math.max(0, 1 - o / 0.7); }
+  function zOf(n) { return (L.terrain[n] - Z0) * ZT; }
+
+  // ── 그림 ────────────────────────────────────────────────────────────────
+  var HEXR = 1 / Math.sqrt(3), GHOST = [[0, 0], [W, 0], [-W, 0], [0, H], [0, -H], [W, H], [-W, -H], [W, -H], [-W, H]];
+  function dot(x, y, r, col) { g.fillStyle = col; g.beginPath(); g.arc(x, y, Math.max(0.4, r), 0, 6.2832); g.fill(); }
+  function glow(x, y, r, col) { var gr = g.createRadialGradient(x, y, 0, x, y, Math.max(1, r)); gr.addColorStop(0, col); gr.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = gr; g.beginPath(); g.arc(x, y, Math.max(1, r), 0, 6.2832); g.fill(); }
+  function drawCells(t) {
+    var S = L.state, order = [];
+    for (var i = 0; i < geo.nodes.length; i++) for (var gh = 0; gh < GHOST.length; gh++) {
+      var x = geo.nodes[i].x + GHOST[gh][0], y = geo.nodes[i].y + GHOST[gh][1], ef = edgeFade(x, y);
+      if (ef > 0) order.push([i, x, y, ef]);
+    }
+    order.sort(function (a, b) { return cam.portrait ? a[1] - b[1] : a[2] - b[2]; });
+    for (var o = 0; o < order.length; o++) {
+      var i2 = order[o][0], x2 = order[o][1], y2 = order[o][2], ef2 = order[o][3], n = geo.nodes[i2], z = zOf(i2);
+      g.beginPath();
+      for (var k = 0; k < 6; k++) {
+        var a = k * Math.PI / 3, p = raw(x2 + HEXR * 0.93 * Math.cos(a), y2 + HEXR * 0.93 * Math.sin(a), z);
+        if (!p) break; if (k) g.lineTo(p[0], p[1]); else g.moveTo(p[0], p[1]);
+      }
+      g.closePath();
+      var d = DIA[n.pc], h = hue(n.pc), age = t - fireT[i2];
+      // 파면이 선으로 읽히게: 켜진 순간 가장 밝고 3스텝 안에 사그라진다
+      var litv = age >= 0 && age < 3 * SEC ? Math.pow(1 - age / (3 * SEC), 1.8) : 0;
+      var fat = S.fat[i2] / 10, hgt = (L.terrain[i2] - 52) / 29;
+      var fill;
+      if (litv > 0.02) {                           // 켜진 칸 — 어느 손의 파도인지(종달새 금 · 문어 산호) + 음이름 기운
+        var hh = S.org[i2] === 2 ? 345 : 44, mixh = hh + 0.25 * (((h - hh + 540) % 360) - 180);
+        fill = 'hsla(' + mixh + ',' + (78 - fat * 25) + '%,' + (10 + litv * (d ? 58 : 34)) + '%,' + ef2 + ')';
+      } else {                                     // 바탕 — 어둡게, 음이름 색은 옅게, 높은 음역일수록 조금 밝게
+        fill = 'hsla(' + h + ',' + (d ? 24 : 8) + '%,' + (d ? 5.5 + 3.5 * hgt : 3.2 + 1.5 * hgt) + '%,' + (ef2 * (d ? 0.92 : 0.7)) + ')';
+      }
+      g.fillStyle = fill;
+      g.fill();
+      g.strokeStyle = 'rgba(160,190,170,' + (0.05 * ef2) + ')'; g.lineWidth = 1; g.stroke();
+      if (litv > 0.55) { var c0 = raw(x2, y2, z); if (c0) glow(c0[0], c0[1], c0[2] * 0.95, (S.org[i2] === 2 ? 'rgba(255,140,168,' : 'rgba(255,214,120,') + (litv - 0.55) * 1.2 * ef2 + ')'); }
+    }
+  }
+  function drawSources(t) {
+    var S = L.state, pair = null, best = Infinity;
+    S.srcs.forEach(function (a) { if (a.hand !== 1) return; S.srcs.forEach(function (b) { if (b.hand !== 2) return;
+      var A = geo.nodes[a.node], B = geo.nodes[b.node], dx = wrapd(B.x - A.x, W), dy = wrapd(B.y - A.y, H), dd = Math.hypot(dx, dy);
+      if (dd < best) { best = dd; pair = [a, b, dx, dy]; } }); });
+    if (pair && S.rate > 0.001) {                 // 두 손을 잇는 선 — 밝기 = rate
+      var A0 = geo.nodes[pair[0].node], p1 = raw(A0.x, A0.y, zOf(pair[0].node) + 0.6), p2 = raw(A0.x + pair[2], A0.y + pair[3], zOf(pair[1].node) + 0.6);
+      if (p1 && p2) { g.strokeStyle = 'rgba(255,230,200,' + (0.12 + 0.3 * S.rate / 1.5) + ')'; g.lineWidth = 1 + 2 * S.rate / 1.5;
+        g.setLineDash([4, 6]); g.beginPath(); g.moveTo(p1[0], p1[1]); g.lineTo(p2[0], p2[1]); g.stroke(); g.setLineDash([]); }
+    }
+    S.srcs.forEach(function (s) {
+      var n = geo.nodes[s.node], held = drag && drag.src === s && drag.moved;
+      var x = held ? drag.x : n.x, y = held ? drag.y : n.y, z = held ? 1.6 : zOf(s.node) + 0.6;
+      var p = raw(x, y, z), b = raw(x, y, held ? 0 : zOf(s.node)); if (!p || !b) return;
+      var lark = s.hand === 1, col = lark ? '255,214,120' : '255,146,172', since = t - (srcFire[s.id] || -9);
+      var pulse = since >= 0 && since < 0.5 ? 1 - since / 0.5 : 0, lifeA = 0.35 + 0.65 * Math.min(1, s.life / 6);
+      g.strokeStyle = 'rgba(' + col + ',' + 0.25 * lifeA + ')'; g.lineWidth = 1; g.beginPath(); g.moveTo(b[0], b[1]); g.lineTo(p[0], p[1]); g.stroke();
+      glow(p[0], p[1], p[2] * (0.7 + 0.5 * pulse), 'rgba(' + col + ',' + (0.5 + 0.4 * pulse) * lifeA + ')');
+      dot(p[0], p[1], p[2] * 0.1, 'rgba(255,250,235,' + 0.95 * lifeA + ')');
+      if (!lark) {                                   // 문어: 지금 쏘는 방향
+        var dd = TW.buildGeo ? s.dir % 6 : 0, ang = [30, 210, 90, 270, -30, 150][dd] * Math.PI / 180;
+        var q = raw(x + 0.55 * Math.cos(ang), y + 0.55 * Math.sin(ang), z);
+        if (q) { g.strokeStyle = 'rgba(' + col + ',' + 0.7 * lifeA + ')'; g.lineWidth = 2; g.beginPath(); g.moveTo(p[0], p[1]); g.lineTo(q[0], q[1]); g.stroke(); }
+      }
+    });
+  }
+  function drawSparks(t) {
+    for (var i = 0; i < sparks.length; i++) {
+      var s = sparks[i], age = t - s.t; if (age < 0 || age > s.dur + 1.2) continue;
+      var n = geo.nodes[s.node], z = (s.p - Z0) * ZS, zb = zOf(s.node);
+      var a = age < s.dur ? 1 - 0.35 * age / Math.max(0.2, s.dur) : 0.65 * (1 - (age - s.dur) / 1.2);
+      var top = raw(n.x, n.y, z), bot = raw(n.x, n.y, zb); if (!top || !bot) continue;
+      g.strokeStyle = 'hsla(' + hue(s.p % 12) + ',70%,70%,' + a * 0.25 + ')'; g.lineWidth = 1;
+      g.beginPath(); g.moveTo(bot[0], bot[1]); g.lineTo(top[0], top[1]); g.stroke();
+      glow(top[0], top[1], top[2] * 0.18, 'hsla(' + hue(s.p % 12) + ',90%,72%,' + a * 0.6 + ')');
+      dot(top[0], top[1], top[2] * 0.03, 'rgba(255,255,245,' + a + ')');
+    }
+  }
+  // 바코드 — 가로 rate 0~1.5, 막대 = 고리가 사는 rate 구간(흐림), 찾은 칸(밝음), 지금 rate(세로선)
+  var BORDER = null;
+  function drawBarcode() {
+    var S = L.state, K = L.K, x0 = 16, x1 = VW - 16, y0 = VH - BARH - 10, bh = BARH / K, rx = function (r) { return x0 + (x1 - x0) * r / 1.5; };
+    if (!BORDER) {                                   // 태어나는 rate 순으로 쌓는다
+      BORDER = []; for (var k = 0; k < K; k++) BORDER.push(k);
+      BORDER.sort(function (a, b) { return (L.vines[a].rates[0][0] - L.vines[b].rates[0][0]) || (L.vines[b].n_rates - L.vines[a].n_rates); });
+    }
+    g.fillStyle = 'rgba(5,7,10,0.85)'; g.fillRect(x0 - 6, y0 - 6, x1 - x0 + 12, BARH + 12);
+    var ri = Math.round(S.rate * 100), nFound = 0, nCells = 0;
+    for (var j = 0; j < K; j++) {
+      var k2 = BORDER[j], y = y0 + j * bh, al = L.alive[k2], any = false;
+      for (var r = 0; r <= 150; r++) {
+        if (!al[r]) continue; nCells++;
+        var f = S.found[k2 * 151 + r]; if (f) { nFound++; any = true; }
+        g.fillStyle = f ? (r === ri ? 'rgba(255,244,210,1)' : 'rgba(243,217,139,0.85)') : 'rgba(120,140,130,0.16)';
+        g.fillRect(rx(r / 100) - (r === 0 ? 1.5 : 0), y, Math.max(1, (x1 - x0) / 150 + (r === 0 ? 3 : 0)), Math.max(1, bh - 0.4));
+      }
+      if (al[ri] && S.srcs.length) { g.fillStyle = 'rgba(255,255,255,0.10)'; g.fillRect(x0, y, x1 - x0, Math.max(1, bh - 0.4)); }
+    }
+    g.strokeStyle = 'rgba(255,240,210,0.8)'; g.lineWidth = 1.5; g.beginPath(); g.moveTo(rx(S.rate), y0 - 4); g.lineTo(rx(S.rate), y0 + BARH + 2); g.stroke();
+    return [nFound, nCells];
+  }
+
+  function draw(t) {
+    g.fillStyle = '#05070a'; g.fillRect(0, 0, VW, VH);
+    if (!L) return;
+    cam.portrait = Math.abs(cam.base - Math.PI / 2) < 1e-6;
+    cam.yaw = cam.base + 0.07 * Math.sin(t / 21);
+    drawCells(t);
+    drawSparks(t);
+    drawSources(t);
+    var fc = drawBarcode();
+    cnt.textContent = (L.state.srcs.length ? 'rate ' + L.state.rate.toFixed(2) + ' · ' : '') + (fc[0] ? '찾은 칸 ' + fc[0] + '/' + fc[1] : '');
+    sparks = sparks.filter(function (s) { return t - s.t < s.dur + 1.3; });
+  }
+  function frame() { requestAnimationFrame(frame); draw(now()); }
+
+  // ── 손가락 ──────────────────────────────────────────────────────────────
+  var drag = null, hinted = 0;
+  function pick(sx, sy) {
+    var best = null, bd = 30 * 30;
+    L.state.srcs.forEach(function (s) { var n = geo.nodes[s.node], p = raw(n.x, n.y, zOf(s.node) + 0.6); if (!p) return;
+      var d = (p[0] - sx) * (p[0] - sx) + (p[1] - sy) * (p[1] - sy); if (d < bd) { bd = d; best = s; } });
+    return best;
+  }
+  function pt(ev) { var r = cv.getBoundingClientRect(); return [ev.clientX - r.left, ev.clientY - r.top]; }
+  function play(n, vel) {
+    var li = L.note[n], p = li >= 0 ? L.labels[li].pitch : 60 + geo.nodes[n].pc;
+    voice(p, now() + 0.005, 1.3, vel || 0.4); sparks.push({ t: now(), p: p, node: n, dur: 0.8, hand: 0 }); flashT[n] = now();
+  }
+  cv.addEventListener('pointerdown', function (ev) {
+    if (!L) return; audio();
+    var s = pt(ev), src = pick(s[0], s[1]), gp = ground(s[0], s[1]);
+    if (s[1] > VH - BARH - 20) return;              // 바코드 띠는 누르지 않는다
+    drag = { src: src, sx: s[0], sy: s[1], moved: false, x: gp ? gp.x : 0, y: gp ? gp.y : 0, x0: gp ? gp.x : 0, y0: gp ? gp.y : 0 };
+    cv.setPointerCapture(ev.pointerId);
+  });
+  cv.addEventListener('pointermove', function (ev) {
+    if (!drag) return;
+    var s = pt(ev); if (!drag.moved && Math.hypot(s[0] - drag.sx, s[1] - drag.sy) > 10) drag.moved = true;
+    var gp = ground(s[0], s[1]); if (gp) { drag.x = gp.x; drag.y = gp.y; }
+  });
+  cv.addEventListener('pointerup', function () {
+    if (!drag) return;
+    var d = drag; drag = null;
+    var n = nearestNode(d.x, d.y), n0 = nearestNode(d.x0, d.y0);
+    if (d.src) {                                    // 옮기기 → rate 가 바뀐다 · 그냥 누르면 수명을 채운다
+      if (d.moved) L.moveSource(d.src, n); else L.source(d.src.node, d.src.hand);
+      play(d.src.node, 0.32); return;
+    }
+    if (d.moved) {                                  // 긋기 → 문어 (쏘는 첫 방향 = 그은 방향)
+      var dx = wrapd(d.x - d.x0, W), dy = wrapd(d.y - d.y0, H), ang = Math.atan2(dy, dx) * 180 / Math.PI;
+      var dirs = [30, 210, 90, 270, -30, 150], best = 0, bd = 999;
+      dirs.forEach(function (a, i) { var df = Math.abs(((ang - a) % 360 + 540) % 360 - 180); if (df < bd) { bd = df; best = i; } });
+      if (L.source(n0, 2, best)) { play(n0, 0.36); begin(); }
+      return;
+    }
+    if (L.source(n, 1)) { play(n, 0.42); begin(); } else play(n, 0.3);   // 누르기 → 종달새
+  });
+  function begin() {
+    say.style.opacity = 0; start();
+    if (!hinted) { hinted = 1; setTimeout(function () {
+      if (!L.state.srcs.some(function (s) { return s.hand === 2; })) { say.textContent = '그으면 문어'; say.style.opacity = 1;
+        setTimeout(function () { say.style.opacity = 0; }, 3600); } }, 12000); }
+  }
+  document.getElementById('clr').addEventListener('click', function () {
+    L = TW.create(data, Object.assign({ seed: (Date.now() % 1e9) | 0 }, OPTS)); geo = L.geo; load();
+    sparks = []; running = false; lastSf = 0; fireT.fill(-99); say.textContent = '눌러서 깨우세요'; say.style.opacity = 1;
+  });
+
+  addEventListener('resize', fit);
+  fetch('./tonnetz.json').then(function (r) { return r.json(); }).then(function (d) {
+    data = d; L = TW.create(d, Object.assign({ seed: (Date.now() % 1e9) | 0 }, OPTS)); geo = L.geo; load(); fit();
+  }).catch(function () { say.textContent = '데이터를 불러오지 못했습니다'; });
+  fit(); requestAnimationFrame(frame);
+
+  window.__tw = { get L() { return L; }, cam: cam, raw: raw, ground: ground, nearestNode: nearestNode, now: now,
+    advance: function (sec, fps) { var n2 = Math.round(sec * (fps || 20)); for (var i = 0; i < n2; i++) { virt += sec / n2; pump(); draw(now()); } },
+    tapAt: function (n, hand, dir) { var s = L.source(n, hand || 1, dir || 0); if (s) begin(); return s; } };
+})();
+</script>
+</body>
+</html>

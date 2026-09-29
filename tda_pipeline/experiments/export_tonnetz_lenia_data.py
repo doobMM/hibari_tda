@@ -62,18 +62,41 @@ W = ACT.mean(0)
 inter = suite.compute_inter_weights(data['adn_i'][1][1], data['adn_i'][2][1], num_chords=data['num_chords'], lag=1)
 oor = suite.compute_out_of_reach(inter, power=-2)
 MUS = np.asarray(suite.metric_distance_matrix(data['notes_label'], METRIC, OW, DW), float)
-trav, rate = {}, 0.0
+# 정본 번들과 **같은 루프**(rate += 0.01, r = round(rate, 2))로 rate 마다 바코드를 모은다.
+# 이 profile 하나로 ① 순회 순서 ② 고리마다 살아 있는 rate 구간(vine) ③ rate 격자 위 거리 행렬을 뽑는다.
+from overlap import group_rBD_by_homology, label_cycles_from_persistence
+trav, profile, DGRID, rate = {}, [], {}, 0.0
 while rate <= 1.5 + 1e-10:
-    fd = suite.compute_distance_matrix(data['intra'] + round(rate, 2) * inter, data['notes_dict'], oor, num_notes=N).values
-    bd = suite.generate_barcode_numpy(mat=suite.compute_hybrid_distance(fd, MUS, alpha=ALPHA), listOfDimension=[1],
+    r = round(rate, 2)
+    fd = suite.compute_distance_matrix(data['intra'] + r * inter, data['notes_dict'], oor, num_notes=N).values
+    hd = suite.compute_hybrid_distance(fd, MUS, alpha=ALPHA)
+    if abs(r * 10 - round(r * 10)) < 1e-9: DGRID[f'{r:.1f}'] = np.round(np.asarray(hd, float), 4).tolist()
+    bd = suite.generate_barcode_numpy(mat=hd, listOfDimension=[1],
                                       exactStep=True, birthDeathSimplex=False, sortDimension=False)
+    profile.append((r, bd))
+    rate += 0.01
     for e in bd:
         if not isinstance(e, list) or len(e) < 3 or e[0] != 1: continue
         ed = parse_edges(str(e[2]).strip()); vs = frozenset(v for x in ed for v in x)
         if ed and vs not in trav:
             t = traverse_cycle(ed)
             if t is not None and set(t) == vs: trav[vs] = t
-    rate = round(rate + 0.01, 2)
+
+# ── vine: 고리마다 H₁ 생성원으로 나타나는 rate 들 (group_rBD_by_homology = 정본 번들이 쓰는 그 함수) ──
+PERS = group_rBD_by_homology(profile, dim=1)
+lab2 = label_cycles_from_persistence(PERS)
+assert [sorted(set(lab2[i])) for i in range(len(lab2))] == CY, '정본 번들과 고리 순서·집합이 다르다'
+def intervals(rs):
+    rs = sorted(set(round(x, 2) for x in rs)); out = []
+    for x in rs:
+        if out and abs(x - out[-1][1] - 0.01) < 1e-6: out[-1][1] = x
+        else: out.append([x, x])
+    return out
+VINES = []
+for i in range(len(lab2)):
+    rec = PERS[lab2[i]]
+    VINES.append({'rates': intervals([r for r, b, d in rec]), 'n_rates': len(set(round(r, 2) for r, b, d in rec)),
+                  'birth_death': [[round(r, 2), float(b), float(d)] for r, b, d in rec][:200]})
 
 # ── 순회 순서 2: 격자 국소 해밀턴 순환 (부분집합 DP) ────────────────────
 def lattice_loop(vs):
@@ -162,6 +185,8 @@ out = {
         'octopus': {'hand': 2, 'period': 33, 'ring': ring2, 'early': early(data['inst2_real'], off2, 8, 33)},
     },
     # 원곡 두 손의 음높이 빈도 — 검증 V6 이 eval_metrics 와 같은 정의로 JS 를 잰다
+    'vines': VINES,                     # 고리 i 가 살아 있는 rate 구간들 (0~1.5, 0.01 간격)
+    'dist_grid': DGRID,                 # rate 0.0~1.5 (0.1 간격) 의 23×23 음 거리 = PH 가 실제로 보는 행렬 (intra + rate·inter, Tonnetz α=0.5)
     'orig_pitch_counts': {str(k): v for k, v in sorted(Counter(p for s, p, e in list(data['inst1_real']) + list(data['inst2_real'])).items())},
     'checks': {
         'K': K,

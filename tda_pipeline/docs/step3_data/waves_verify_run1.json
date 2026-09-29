@@ -1,0 +1,166 @@
+{
+ "script": "tools/verify_waves.mjs",
+ "n_seeds": 20,
+ "steps": 660,
+ "lark": 86,
+ "generated_at": "2026-09-29T06:01:09.830Z",
+ "H0_coupled_identical_steps": "300/300",
+ "W1_phase": "32·33 주기 — 원천의 박 위상은 정의상 모듈마다 1 스텝 어긋난다 (결정적)",
+ "W2": {
+  "jaccard_rate0_vs_rate1_2": [
+   0.043478260869565216,
+   0.043478260869565216,
+   0.043478260869565216
+  ],
+  "same_rate_seed_jaccard_r0": [
+   1,
+   1,
+   1
+  ],
+  "same_rate_seed_jaccard_r1_2": [
+   1,
+   1,
+   1
+  ],
+  "found_count_r0": [
+   12,
+   12,
+   12
+  ],
+  "found_count_r1_2": [
+   12,
+   12,
+   12
+  ],
+  "prediction": "J(0 vs 1.2) ≤ 0.3, 같은 rate 시드 간 ≥ 0.6"
+ },
+ "W3": {
+  "sweep_found": [
+   24,
+   25,
+   26
+  ],
+  "best_static_found": [
+   12,
+   12,
+   12
+  ],
+  "static_found_by_rate": {
+   "0": [
+    12,
+    12,
+    12
+   ],
+   "0.4": [
+    10,
+    10,
+    10
+   ],
+   "0.8": [
+    11,
+    11,
+    11
+   ],
+   "1.2": [
+    12,
+    12,
+    12
+   ],
+   "1.5": [
+    12,
+    12,
+    12
+   ]
+  },
+  "ratio_median": 2.0833333333333335,
+  "sweep_rate_range_example": [
+   0,
+   1.3125
+  ],
+  "sweep_beats_best_static": "20/20",
+  "prediction": "sweep 중앙값 ≥ 1.5 × 가장 좋은 고정 rate"
+ },
+ "W4": {
+  "js_real_vs_shuffled": [
+   0.002693138972305022,
+   0.0032328310658247144,
+   0.004194592764184428
+  ],
+  "js_real_vs_real_seed_noise": [
+   0.002158900336902151,
+   0.002803289964781799,
+   0.003601786822611407
+  ],
+  "ratio": 1.1532274957065847,
+  "prediction": "비 ≥ 3"
+ },
+ "W5": {
+  "js_vs_hibari": [
+   0.03514883108810102,
+   0.03894821290521225,
+   0.042115715654181825
+  ],
+  "js_vs_hibari_shuffled": [
+   0.03579563770550528,
+   0.03919171390069057,
+   0.04084040783041696
+  ],
+  "open_algo1_tonnetz": 0.044,
+  "v1_closed": 0.132,
+  "corr_pitch_share_vs_cycle_membership": [
+   0.5145004073670209,
+   0.5402705646145107,
+   0.5838772613806608
+  ],
+  "notes_per_run": [
+   1036,
+   1044.5,
+   1075
+  ],
+  "mean_rate": 0.850480947161665,
+  "prediction": "JS 중앙값 0.05~0.10, 상관 < 0.9"
+ },
+ "W6": {
+  "silent_without_care": "17/20",
+  "first_silent_step": [
+   803,
+   812,
+   827
+  ],
+  "active_with_care_60s": "20/20",
+  "life_modules": 24,
+  "prediction": "방치 20/20 침묵 (수명+2모듈 안), 돌봄 20/20 계속"
+ },
+ "W7": {
+  "steps_to_identical_after_removal": [
+   "inf",
+   "inf",
+   "inf"
+  ],
+  "merged_within_320": "0/20",
+  "never": 20,
+  "all": [
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null
+  ],
+  "prediction": "320스텝 안 ≥ 15/20"
+ }
+}
