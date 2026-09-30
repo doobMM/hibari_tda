@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>hibari — 흐름 그물</title>
+<!--
+  sketch/flow.html — 시안 A 흐름 그물. 명세 docs/sketch_spec.md §5 A. 엔진 sketch/flow-core.js, 검증 tools/verify_sketch_flow.mjs
+
+  상태      웅덩이마다 물(금빛 = 오른손, 산호빛 = 왼손) · 젖은 자국 · 물길의 넓이 · 수문(rate 0~1.5) · 두 손의 모듈 자리(32 · 33) · 고리의 켜짐.
+  갱신      8분음표(HS.clock, 0.4545초)마다 engine.step():
+            ① 모듈의 리듬이 몇 음인지 정한다(화음 4 · 단음 1 · 쉼 0 — 물이 적으면 화음이 가늘다)
+            ② 울 웅덩이를 제비로 뽑는다 — 물이 있는 웅덩이에서 모듈의 방향 물길(v 다음에 u)이 닿는 곳, 그 자리의 모듈 음높이에 가까울수록
+            ③ 닿는 모든 물이 흘러든다(넷으로 갈라졌다 하나로 모인다). 닿은 웅덩이가 운다(세기 = 닿은 양). 수문으로 건넌 몫은 물빛이 바뀐다
+            ④ 물이 마른다(5.5%/스텝). 고리의 음이 다 젖어 있으면 그 고리가 켜져 덜 마르게 한다(24스텝 뒤 지치고, 쉬어야 다시)
+  소리      누른 음은 그 호출 안에서 곧바로(when 없이). 흐름의 음은 시계가 준 when 에. 화음은 여리게, 단음은 또렷이, 구절 첫 화음은 세게.
+  살리기    물을 넣는 것은 내 손뿐이다. 한 번 부으면 18~20초, 가득 차 있어도 36초 안에 멎는다(검증 P6a). 8~32스텝마다 한 번씩 부으면 5분을 산다(P6b).
+            붓기·수문·넘침은 물을 더하거나 옮길 뿐이라 많이 눌러서 멎는 길은 없다(P6c). 멎으면 아무 키나 누른다 — 두 손이 그 음의 자리에서 나란히 다시 시작한다.
+  모양      웅덩이(크기 = 물, 테두리 = 젖은 자국)와 물길(굵기 = 자주 흐른 정도, 빛 = 손)과 흐르는 물방울. 켜진 고리는 초록 닫힌 선. 고정된 그림은 없다.
+  키        A~J · Q~U = 금빛 물을 도~시에 (가운데 · 높은 옥타브대)   Z~M = 산호빛 물을 도~시에 (낮은 옥타브대)   ← → = 수문
+            그 밖의 키·빈 곳 = 어딘가에 붓는다.  화면: 아래 두 줄 건반(금빛 · 산호빛) · 웅덩이를 누르면 그 음에 금빛 · 오른쪽 위 ◀ ▶ 수문
+            ?seed=N 같은 음악 다시 · ?silent 소리 없이
+-->
+<style>
+ html,body{margin:0;height:100%;overflow:hidden;background:#f3f0e6}
+ canvas{display:block;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent}
+</style>
+</head>
+<body>
+<canvas id="c" role="application" aria-label="흐름 그물 — A부터 J까지 금빛 물, Z부터 M까지 산호빛 물을 붓습니다. 좌우 화살표는 수문."></canvas>
+<script src="./common.js"></script>
+<script src="./flow-core.js"></script>
+<script>
+(function () {
+  'use strict';
+  var TH = HS.theme, cv = document.getElementById('c'), ctx = cv.getContext('2d');
+  var FONT = 'system-ui,-apple-system,"Segoe UI","Noto Sans KR",sans-serif', DEGN = ['도', '레', '미', '파', '솔', '라', '시'], DEGPC = [0, 2, 4, 5, 7, 9, 11];
+  var GOLD = [201, 138, 18], CORAL = [210, 85, 111], COARSE = window.matchMedia && matchMedia('(pointer: coarse)').matches;
+  var H = null, E = null, clock = null, last = null, W = 0, Hh = 0, CW = 0, X0 = 0, R = {}, pos = [], hits = [], LO = 52, HI = 81;
+  var lit = [], padLit = { G: [], C: [] }, drops = [], gateLit = 0, edges = [];
+  function rgba(c, a) { return 'rgba(' + c[0] + ',' + c[1] + ',' + c[2] + ',' + a + ')'; }
+  function glow(t, ms) { return t ? Math.exp(-(performance.now() - t) / ms) : 0; }
+
+  // ── 자리: 가로 = 도~시, 세로 = 높이. 같은 높이의 긴 음은 옆에 ─────────────────────
+  function layout() {
+    var dpr = Math.min(2, window.devicePixelRatio || 1);
+    W = window.innerWidth; Hh = window.innerHeight; cv.width = W * dpr; cv.height = Hh * dpr; cv.style.width = W + 'px'; cv.style.height = Hh + 'px';
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    CW = Math.min(W, 760); X0 = (W - CW) / 2;
+    var padH = 50, head = 48; R.padG = { x: X0, y: Hh - 2 * padH - 8, w: CW, h: padH }; R.padC = { x: X0, y: Hh - padH - 4, w: CW, h: padH };
+    R.map = { x: X0, y: head, w: CW, h: Math.max(160, R.padG.y - head - 6) };
+    R.left = { x: X0 + CW - 136, y: 2, w: 44, h: 44 }; R.right = { x: X0 + CW - 46, y: 2, w: 44, h: 44 };
+    if (!H) return;
+    var colW = CW / 7, d = Math.min(14, colW * 0.26);
+    pos = H.notes.map(function (n) { var same = H.notes.filter(function (m) { return m.pitch === n.pitch && m.dur < n.dur; }).length;
+      return { x: R.map.x + (n.deg + 0.5) * colW + same * d, y: R.map.y + 22 + (HI - n.pitch) / (HI - LO) * (R.map.h - 56) - same * d * 0.5, main: !same }; });
+    hits = [{ r: R.left, code: 'ArrowLeft' }, { r: R.right, code: 'ArrowRight' }];
+    for (var g = 0; g < 7; g++) { hits.push({ r: { x: X0 + g * colW, y: R.padG.y, w: colW, h: R.padG.h }, code: 'PadG' + g }); hits.push({ r: { x: X0 + g * colW, y: R.padC.y, w: colW, h: R.padC.h }, code: 'PadC' + g }); }
+  }
+  function curve(a, b, bend) { var mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2, dx = b.x - a.x, dy = b.y - a.y, L = Math.hypot(dx, dy) || 1;
+    return { x0: a.x, y0: a.y, cx: mx - dy / L * L * bend, cy: my + dx / L * L * bend, x1: b.x, y1: b.y }; }
+  function at(c, t) { var u = 1 - t; return { x: u * u * c.x0 + 2 * u * t * c.cx + t * t * c.x1, y: u * u * c.y0 + 2 * u * t * c.cy + t * t * c.y1 }; }
+
+  // ── 누르기: 이 호출 안에서 소리가 난다 (when 없이 = 지금) ─────────────────────────────
+  function down(code) {
+    if (!E || !code) return null;
+    HS.audio.wake();
+    var r = E.press(code), now = performance.now();
+    r.notes.forEach(function (n) { HS.audio.voice(n.pitch, undefined, n.dur * HS.SEC, n.vel); lit[n.li] = now;
+      if (n.from != null && n.from >= 0) drops.push({ a: n.from, b: n.li, t: now, hand: n.hand, amt: 0.3 }); });
+    var m = /^Pad([GC])(\d)$/.exec(code); if (m) padLit[m[1]][+m[2]] = now;
+    else if (r.kind === 'pour') { var d = H.notes[r.li].deg; padLit[r.hand ? 'C' : 'G'][d] = now; }
+    if (r.kind === 'gate') gateLit = now;
+    clock.start(); draw();
+    return r;
+  }
+  // ── 스텝: 시계가 준 when 에 울린다 ───────────────────────────────────────────
+  function onStep(t, when) {
+    var o = E.step(), now = performance.now();
+    o.notes.forEach(function (n) { HS.audio.voice(n.pitch, when, n.dur * HS.SEC / clock.speed, n.vel); lit[n.li] = now + Math.max(0, (when - HS.audio.now()) * 1000);
+      (n.flows || []).forEach(function (f) { if (f.amt > 0.01) drops.push({ a: f.v, b: n.li, t: now, hand: n.hand, amt: f.amt }); }); });
+    if (drops.length > 160) drops.splice(0, drops.length - 160);
+    if (!o.alive) clock.stop();
+    last = o;
+  }
+
+  // ── 그리기 ────────────────────────────────────────────────────────────
+  function rr(r, rad) { ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(r.x + 2, r.y + 2, r.w - 4, r.h - 4, rad); else ctx.rect(r.x + 2, r.y + 2, r.w - 4, r.h - 4); }
+  function draw() {
+    if (!E || W < 40 || Hh < 40) return;                                         // 창이 가려져 폭이 0 이면 그리지 않는다
+    var S = E.state, now = performance.now(), NL = H.NL, colW = CW / 7, g, u, v;
+    ctx.fillStyle = TH.bg; ctx.fillRect(0, 0, W, Hh);
+    ctx.fillStyle = TH.paper; rr(R.map, 14); ctx.fill();
+    for (g = 0; g < 7; g += 2) { ctx.fillStyle = 'hsla(' + HS.hue(DEGPC[g]) + ',50%,60%,0.05)'; ctx.fillRect(X0 + g * colW + 2, R.map.y + 2, colW - 4, R.map.h - 4); }
+    // 물길: 바닥(방향 물길, 옅게) + 넓어진 물길(손 빛, 굵게)
+    ctx.lineCap = 'round';
+    edges.forEach(function (e) { var w0 = S.wide[0][e.v * NL + e.u], w1 = S.wide[1][e.v * NL + e.u], c = e.c;
+      ctx.beginPath(); ctx.moveTo(c.x0, c.y0); ctx.quadraticCurveTo(c.cx, c.cy, c.x1, c.y1);
+      ctx.strokeStyle = 'rgba(125,135,127,' + (0.07 + 0.05 * e.s) + ')'; ctx.lineWidth = 0.8 + 1.2 * e.s; ctx.stroke();
+      if (w0 + w1 > 0.05) { ctx.strokeStyle = rgba(w0 >= w1 ? GOLD : CORAL, Math.min(0.75, 0.15 + 0.22 * (w0 + w1))); ctx.lineWidth = 1 + 2.2 * Math.min(3, w0 + w1); ctx.stroke(); } });
+    // 켜진 고리
+    ctx.lineJoin = 'round';
+    for (var k = 0; k < H.K; k++) if (S.lit[k]) { ctx.beginPath(); H.order[k].forEach(function (li, i) { if (i) ctx.lineTo(pos[li].x, pos[li].y); else ctx.moveTo(pos[li].x, pos[li].y); }); ctx.closePath();
+      ctx.fillStyle = 'rgba(47,107,79,0.05)'; ctx.fill(); ctx.strokeStyle = 'rgba(47,107,79,' + (0.55 - 0.35 * S.tired[k]) + ')'; ctx.lineWidth = 3.2 - 1.6 * S.tired[k]; ctx.stroke(); }
+    // 흐르는 물방울
+    drops = drops.filter(function (d) { var t = (now - d.t) / 420; if (t > 1) return false; if (t < 0) return true;
+      var c = curve(pos[d.a], pos[d.b], 0.16), p = at(c, t); ctx.beginPath(); ctx.arc(p.x, p.y, 2 + 5 * Math.min(1, Math.sqrt(d.amt)), 0, 6.283);
+      ctx.fillStyle = rgba(d.hand ? CORAL : GOLD, 0.85 * (1 - t * 0.5)); ctx.fill(); return true; });
+    // 웅덩이: 물(두 빛 반원) · 젖은 자국(테두리) · 울리면 번쩍
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    H.notes.forEach(function (n) {
+      var p = pos[n.li], a0 = S.w[0][n.li], a1 = S.w[1][n.li], wt = Math.max(S.wet[0][n.li], S.wet[1][n.li]), fl = glow(lit[n.li], 360);
+      var rad = (p.main ? 7 : 4.5) + 9 * Math.sqrt(Math.min(2, a0 + a1)) + fl * 4;
+      if (fl > 0.03) { ctx.beginPath(); ctx.arc(p.x, p.y, rad + (1 - fl) * 15, 0, 6.283); ctx.strokeStyle = 'hsla(' + HS.hue(n.pc) + ',60%,42%,' + fl + ')'; ctx.lineWidth = 2; ctx.stroke(); }
+      ctx.beginPath(); ctx.arc(p.x, p.y, rad, 0, 6.283); ctx.fillStyle = TH.paper; ctx.fill();
+      var tot = a0 + a1; if (tot > 0.005) { var s = a0 / tot * 6.283;
+        ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.arc(p.x, p.y, rad, -1.571, -1.571 + s); ctx.closePath(); ctx.fillStyle = rgba(GOLD, 0.35 + 0.5 * Math.min(1, tot)); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.arc(p.x, p.y, rad, -1.571 + s, 4.712); ctx.closePath(); ctx.fillStyle = rgba(CORAL, 0.35 + 0.5 * Math.min(1, tot)); ctx.fill(); }
+      ctx.beginPath(); ctx.arc(p.x, p.y, rad, 0, 6.283); ctx.strokeStyle = wt > 0.05 ? 'rgba(47,107,79,' + (0.25 + 0.6 * wt) + ')' : TH.line; ctx.lineWidth = wt > 0.05 ? 1.2 + 1.6 * wt : 1; ctx.stroke();
+      if (p.main) { ctx.font = (fl > 0.3 ? '700 ' : '500 ') + (CW < 420 ? 10.5 : 12) + 'px ' + FONT; ctx.fillStyle = fl > 0.3 || tot > 0.05 ? TH.ink : TH.dim; ctx.fillText(n.name, p.x, p.y + rad + 9); }
+    });
+    // 머리: 글 한 줄 + 키 안내 한 줄 · 수문 ◀ ▶
+    ctx.textAlign = 'left';
+    if (!S.alive) { ctx.font = '600 15px ' + FONT; ctx.fillStyle = TH.ink; ctx.fillText(COARSE ? '아무 데나 눌러 보세요' : '아무 키나 눌러 보세요', X0 + 12, CW >= 560 ? 17 : 24); }
+    if (CW >= 560) { ctx.font = '500 11.5px ' + FONT; ctx.fillStyle = TH.dim; ctx.fillText('A~J · Q~U 금빛 물   Z~M 산호빛 물   ← → 수문', X0 + 12, 36); }
+    var gl = glow(gateLit, 400);
+    [[R.left, -1], [R.right, 1]].forEach(function (b) { var r = b[0], cx = r.x + r.w / 2, cy = r.y + r.h / 2;
+      ctx.fillStyle = TH.paper; rr(r, 10); ctx.fill(); ctx.strokeStyle = TH.line; ctx.lineWidth = 1; ctx.stroke();
+      ctx.fillStyle = TH.green; ctx.beginPath(); ctx.moveTo(cx + 6 * b[1], cy); ctx.lineTo(cx - 4 * b[1], cy - 7); ctx.lineTo(cx - 4 * b[1], cy + 7); ctx.closePath(); ctx.fill(); });
+    var gx = R.left.x + 50, gw = R.right.x - gx - 6, f = S.rate / 1.5;                          // 수문: 가운데 막대가 열린 만큼
+    ctx.fillStyle = TH.line; ctx.fillRect(gx, 22, gw, 3); ctx.fillStyle = 'rgba(47,107,79,' + (0.6 + 0.4 * gl) + ')'; ctx.fillRect(gx, 22, gw * f, 3);
+    ctx.beginPath(); ctx.arc(gx + gw * f, 23.5, 5 + 3 * gl, 0, 6.283); ctx.fill();
+    // 두 줄 건반: 금빛(가운데 옥타브) · 산호빛(낮은 옥타브)
+    ctx.textAlign = 'center';
+    [['G', R.padG, GOLD, E.entry[1]], ['C', R.padC, CORAL, E.entry[0]]].forEach(function (row) {
+      for (g = 0; g < 7; g++) { var pr = { x: X0 + g * colW, y: row[1].y, w: colW, h: row[1].h }, pg = glow(padLit[row[0]][g], 300);
+        rr(pr, 10); ctx.fillStyle = rgba(row[2], 0.18 + 0.55 * pg); ctx.fill(); ctx.strokeStyle = rgba(row[2], 0.55); ctx.lineWidth = 1; ctx.stroke();
+        ctx.font = '700 16px ' + FONT; ctx.fillStyle = TH.ink; ctx.fillText(DEGN[g], pr.x + pr.w / 2, pr.y + pr.h / 2 - (CW >= 560 ? 5 : 0));
+        if (CW >= 560) { ctx.font = '500 10px ' + FONT; ctx.fillStyle = TH.dim; ctx.fillText(H.notes[row[3][g]].name + ' · ' + (row[0] === 'G' ? HS.ROWS[1][g] : HS.ROWS[0][g]).slice(3), pr.x + pr.w / 2, pr.y + pr.h - 11); } } });
+  }
+  function frame() { draw(); requestAnimationFrame(frame); }
+
+  HS.load().then(function (D) {
+    H = HS.derive(D);
+    LO = Math.min.apply(null, H.notes.map(function (n) { return n.pitch; })); HI = Math.max.apply(null, H.notes.map(function (n) { return n.pitch; }));
+    var m = /[?&]seed=(\d+)/.exec(location.search);
+    E = HSFlow.create(H, { seed: m ? +m[1] : (Date.now() % 1000000) + 1 });
+    clock = HS.clock(onStep);
+    layout(); addEventListener('resize', function () { layout(); build(); });
+    function build() { edges = []; var NL = H.NL, mx = 0, v, u;                               // 바닥 물길 = 두 손의 방향 물길 중 쓰이는 것
+      for (v = 0; v < NL; v++) for (u = 0; u < NL; u++) mx = Math.max(mx, E.succ[0][v][u] + E.succ[1][v][u]);
+      for (v = 0; v < NL; v++) for (u = 0; u < NL; u++) { var s = (E.succ[0][v][u] + E.succ[1][v][u]) / mx; if (s > 0.2) edges.push({ v: v, u: u, s: s, c: curve(pos[v], pos[u], 0.16) }); } }
+    build();
+    HS.keys(function (code) { down(code); }, function (code) { E.release(code); });
+    ['pointerup', 'touchend'].forEach(function (tp) { cv.addEventListener(tp, function () { HS.audio.wake(); }); });   // 터치는 손을 뗄 때에야 소리가 풀린다
+    cv.addEventListener('pointerdown', function (ev) { ev.preventDefault(); var x = ev.clientX, y = ev.clientY, i;
+      for (i = 0; i < hits.length; i++) { var r = hits[i].r; if (x >= r.x && x < r.x + r.w && y >= r.y && y < r.y + r.h) { down(hits[i].code); return; } }
+      var best = -1, bd = 26; for (i = 0; i < pos.length; i++) { var dd = Math.hypot(pos[i].x - x, pos[i].y - y); if (dd < bd) { bd = dd; best = i; } }   // 웅덩이를 누르면 그 음에 금빛
+      down(best >= 0 ? 'Note' + best : 'Space'); });
+    document.addEventListener('visibilitychange', function () { if (!document.hidden && E.state.alive) clock.start(); });
+    HS.hook({ press: down, release: function (code) { return E.release(code); }, advance: function (n) { clock.advance(n); draw(); },
+              probe: function () { var p = E.probe(); p.last = last; p.calls = HS.audio.calls.length; return p; }, engine: E });
+    requestAnimationFrame(frame);
+  });
+})();
+</script>
+</body>
+</html>
