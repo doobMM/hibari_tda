@@ -82,6 +82,18 @@ while rate <= 1.5 + 1e-10:
             t = traverse_cycle(ed)
             if t is not None and set(t) == vs: trav[vs] = t
 
+# ── 음 단위 intra(손별)·inter 가중치 — 사용자의 설계 그대로, 역수(거리) 변환 전 단계 ───────────
+# weights.compute_intra_weights(한 손의 화음 전이, lag 1) · compute_inter_weights(두 손, lag 1, 양방향)
+# → refine_connectedness_fast(화음 → 음) → 대칭 전체 행렬 → 최댓값 1 로 정규화. 3판 비옥도(성장 가산)가 쓴다.
+from weights import compute_intra_weights, refine_connectedness_fast, to_upper_triangular
+def note_w(Wc):
+    up = refine_connectedness_fast(to_upper_triangular(Wc), data['notes_dict'], N).values.astype(float)
+    full = np.triu(up) + np.triu(up, 1).T
+    return (full / full.max()).round(4).tolist() if full.max() > 0 else full.tolist()
+W_INTRA_R = note_w(compute_intra_weights(data['adn_i'][1][0], num_chords=data['num_chords']))
+W_INTRA_L = note_w(compute_intra_weights(data['adn_i'][2][0], num_chords=data['num_chords']))
+W_INTER = note_w(inter)
+
 # ── vine: 고리마다 H₁ 생성원으로 나타나는 rate 들 (group_rBD_by_homology = 정본 번들이 쓰는 그 함수) ──
 PERS = group_rBD_by_homology(profile, dim=1)
 lab2 = label_cycles_from_persistence(PERS)
@@ -185,6 +197,8 @@ out = {
         'octopus': {'hand': 2, 'period': 33, 'ring': ring2, 'early': early(data['inst2_real'], off2, 8, 33)},
     },
     # 원곡 두 손의 음높이 빈도 — 검증 V6 이 eval_metrics 와 같은 정의로 JS 를 잰다
+    'note_weights': {'intra_right': W_INTRA_R, 'intra_left': W_INTRA_L, 'inter': W_INTER,
+                     'note': '음 단위 가중치(정규화). timeflow = intra(w1+w2) + rate × inter 의 재료. 3판 비옥도용'},
     'vines': VINES,                     # 고리 i 가 살아 있는 rate 구간들 (0~1.5, 0.01 간격)
     'dist_grid': DGRID,                 # rate 0.0~1.5 (0.1 간격) 의 23×23 음 거리 = PH 가 실제로 보는 행렬 (intra + rate·inter, Tonnetz α=0.5)
     'orig_pitch_counts': {str(k): v for k, v in sorted(Counter(p for s, p, e in list(data['inst1_real']) + list(data['inst2_real'])).items())},

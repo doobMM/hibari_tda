@@ -1,0 +1,311 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>살아 있는 격자</title>
+<!--
+  살아 있는 격자 — 종달새와 문어 3판.  명세: docs/tonnetz_lenia_spec.md §10.  엔진: life-core.js (검증 tools/verify_life.mjs 가 같은 파일).
+
+  ── 상태 · 갱신 규칙 (이웃만 본다) ──────────────────────────────────────────
+  상태     고운 격자의 칸마다  A = 그 손의 생명(0~1), F = 피로.  두 손 = 종달새(오른손) · 문어(왼손)
+  갱신     A ← A + ( G(K∗A) + 비옥도 + 먹이 − κF − κ'·나이 ) / T      Lenia 그대로. K∗A = 이웃과의 관계, G = 도넛(너무 적거나 많으면 준다)
+  비옥도   칸 i 의 비옥도 = Σ_{이웃 칸 j} (내 생명 j) × intra(음 j → 음 i)  +  rate × Σ_{이웃 칸 j} (다른 손의 생명 j) × inter(음 j → 음 i)
+           — 사용자의 설계 그대로(정본 경로의 가중치). **기본 끔**: 켜면 몸 속까지 채워 돌본 생명체도 무너뜨렸다(명세 §10.11).
+           지금 intra·inter 는 rate(Q E) → 그 rate 에 살아 있는 고리(아래 바코드) → 소리 통로로 닿는다.
+  피로     몸이 지고 다닌다(나이) — 칸마다 몸 안 이웃의 나이를 물려받고 조금씩 늘어난다. 늙으면 줄어든다.
+           먹이(끌기)·부르기(Z~M)·몰기(방향키)가 닿은 칸은 젊어진다 → 방치하면 몇 분 뒤 사그라지고, 돌보면 산다.
+           자리에 남는 피로는 발자국으로만 약하게(세게 하면 몰려고 돌 때 제 자국을 밟아 무너진다 — 명세 §10.6).
+  소리     손마다 제 리듬(32 · 33) · 덮은 음 → 고리 → Algorithm 1.  켜진 고리 → 아래 바코드의 지금 rate 칸.
+
+  ── 손가락과 키보드 ───────────────────────────────────────────────────────
+  누르기 종달새 · 오른쪽 누르기(또는 Shift) 문어 · 끌기 먹이 길
+  ←↑→↓ 종달새를 그쪽으로 · W A S D 문어를 그쪽으로 · Z X C V B N M 도레미파솔라시 — 그 음이 울리고 가까운 그 음 칸이 생명체를 부른다
+  Q E rate 내리기·올리기 · 1 2 하나 더
+  몰기는 끌어당김(성장 가산)이다 — 질량을 더하면 오히려 밀어내고, 세게 돌리면 무너진다. 누르고 있으면 천천히 세지고, 약해지면 쉰다.
+-->
+<style>
+ :root{--bg:#04060a;--fg:#e6e2d6;--dim:#6b7270;--line:#1b2226}
+ *{box-sizing:border-box}
+ html,body{height:100%}
+ body{margin:0;background:var(--bg);color:var(--fg);overflow:hidden;
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans KR",sans-serif}
+ canvas#cv{display:block;width:100vw;height:100vh;touch-action:none;cursor:crosshair}
+ .say{position:fixed;left:0;right:0;top:11%;text-align:center;pointer-events:none;
+      font-size:clamp(18px,4.2vw,25px);letter-spacing:.06em;color:#f3d98b;transition:opacity .9s;text-shadow:0 0 24px #04060a}
+ .who{position:fixed;left:14px;top:12px;font-size:11.5px;color:#39423f;pointer-events:none;letter-spacing:.04em}
+ .who a{color:#4a5552;text-decoration:none;pointer-events:auto}
+ .bar{position:fixed;left:12px;top:36px;display:flex;gap:8px}
+ .bar button,.pad button{font-family:inherit;min-height:44px;min-width:44px;padding:0 12px;border-radius:10px;
+   border:1px solid var(--line);background:#0b0f12;color:var(--dim);font-size:13px;cursor:pointer}
+ .bar button:hover,.pad button:hover{color:var(--fg);border-color:#33403f}
+ .keys{position:fixed;left:16px;bottom:106px;font-size:11.5px;color:#56605d;pointer-events:none;line-height:1.7;
+       font-family:ui-monospace,Menlo,monospace;transition:opacity 1s}
+ .keys b{color:#8a8f86;font-weight:500}
+ .cnt{position:fixed;right:16px;bottom:106px;font-size:12px;color:#5a6562;pointer-events:none;
+      font-family:ui-monospace,Menlo,monospace;text-align:right}
+ .pad{position:fixed;right:12px;top:36px;display:none;gap:6px}
+ @media (hover:none){ .pad{display:flex} .keys{display:none} }
+</style>
+</head>
+<body>
+<canvas id="cv" role="img" aria-label="화성 격자 위에서 Lenia 생명체가 산다. 금빛 종달새와 산호빛 문어가 칸들의 켜짐으로 움직이고, 지나간 자리에 피로가 남는다. 아래 띠에 찾은 고리가 채워진다."></canvas>
+<div class="say" id="say">눌러서 깨우세요</div>
+<div class="who">hibari · <a href="../">처음으로</a> · <a href="./tonnetz.html">1판</a> · <a href="./waves.html">2판</a></div>
+<div class="bar"><button id="clr">비우기</button></div>
+<div class="pad"><button id="rdn" aria-label="rate 내리기">rate −</button><button id="rup" aria-label="rate 올리기">rate +</button></div>
+<div class="keys" id="keys" style="opacity:0"><b>←↑→↓</b> 종달새 · <b>WASD</b> 문어 · <b>Z X C V B N M</b> 도레미파솔라시 부르기<br><b>Q E</b> rate · <b>1 2</b> 하나 더 · 누르기 종달새 · <b>Shift</b>+누르기 문어 · 끌기 먹이</div>
+<div class="cnt" id="cnt"></div>
+
+<script src="../hibari_dashboard/public/js/generation-algo1.js"></script>
+<script src="./life-core.js"></script>
+<script>
+(function () {
+  'use strict';
+  var cv = document.getElementById('cv'), g = cv.getContext('2d');
+  var say = document.getElementById('say'), cnt = document.getElementById('cnt'), keysEl = document.getElementById('keys');
+  var TL = window.TonnetzLife3, SILENT = /[?&]silent/.test(location.search);
+  var SEC = 60 / 66 / 2, LOOK = 0.2, CA_PER_BEAT = 4, ZS = 5.5, BARH = 86, KEY = 'hibari-life-found-v1';
+  var AGE_DEAD = 0.2;                               // 이 나이쯤이면 사그라진다 (방치 실측: 나이 0.19 부근에서 무너짐) — 색이 다 바래는 곳
+
+  var data = null, L = null, ac = null, bus = null, live = 0, running = false, virt = 0;
+  var nextBeat = 0, nextCA = 0, caDue = 0, sparks = [], started = false;
+
+  // ── 소리 (2판과 같다) ───────────────────────────────────────────────────
+  function audio() {
+    if (SILENT) return;
+    if (ac) { if (ac.state === 'suspended') ac.resume(); return; }
+    var AC = window.AudioContext || window.webkitAudioContext; ac = new AC();
+    var comp = ac.createDynamicsCompressor(); comp.threshold.value = -16; comp.ratio.value = 3.5; comp.connect(ac.destination);
+    var lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 5200; lp.connect(comp);
+    bus = ac.createGain(); bus.gain.value = 0.62; bus.connect(lp);
+    var conv = ac.createConvolver(); conv.buffer = impulse(3.4);
+    var wet = ac.createGain(); wet.gain.value = 0.36; bus.connect(conv); conv.connect(wet); wet.connect(comp);
+  }
+  function impulse(sec) {
+    var n = Math.floor(ac.sampleRate * sec), b = ac.createBuffer(2, n, ac.sampleRate);
+    for (var ch = 0; ch < 2; ch++) { var d = b.getChannelData(ch), prev = 0;
+      for (var i = 0; i < n; i++) { var x = (Math.random() * 2 - 1) * Math.exp(-i / (ac.sampleRate * 0.85)) * (1 - i / n); prev = prev * 0.6 + x * 0.4; d[i] = prev; } }
+    return b;
+  }
+  var PART = [[1, 1], [2.0008, 0.36], [3.0027, 0.12]];
+  function voice(p, when, dur, vel) {
+    if (live > 42 || !ac) return;
+    live++;
+    var f = 440 * Math.pow(2, (p - 69) / 12), out = ac.createGain(); out.connect(bus);
+    var tau = Math.max(0.8, Math.min(3.6, 3.6 - (p - 40) * 0.06)), end = when + Math.max(0.15, dur);
+    out.gain.setValueAtTime(0, when); out.gain.linearRampToValueAtTime(vel, when + 0.006);
+    out.gain.setTargetAtTime(vel * 0.0005, when + 0.006, tau / 4); out.gain.setTargetAtTime(0, end, 0.3);
+    for (var k = 0; k < PART.length; k++) {
+      var o = ac.createOscillator(), gk = ac.createGain();
+      o.type = k ? 'sine' : 'triangle'; o.frequency.value = f * PART[k][0];
+      gk.gain.value = PART[k][1] * (k ? Math.max(0.15, 1 - (p - 48) / 50) : 0.8);
+      o.connect(gk); gk.connect(out); o.start(when); o.stop(end + 1.8);
+      if (k === 0) o.onended = function () { live--; };
+    }
+  }
+
+  // ── 시계: 한 박(8분음표)에 CA 4스텝. CA 는 틈틈이 한 스텝씩 (한 번에 몰아 돌리면 화면이 끊긴다) ──────────
+  function now() { return ac ? ac.currentTime : performance.now() / 1000 + virt; }
+  function start() { if (running) return; running = true; nextBeat = now() + 0.05; nextCA = now(); }
+  function pump() {
+    if (!running || (!ac && !SILENT)) return;
+    var t = now();
+    if (nextBeat < t - 1) { nextBeat = t + 0.05; nextCA = t; }
+    // CA 는 박 앞에서 제 몫을 채운다 — 최대 두 스텝씩
+    for (var i = 0; i < 2 && nextCA <= t + LOOK && caDue < CA_PER_BEAT; i++) { L.caStep(); caDue++; nextCA += SEC / CA_PER_BEAT; }
+    if (nextBeat < t + LOOK && caDue >= CA_PER_BEAT) { onBeat(L.beat(), nextBeat); nextBeat += SEC; caDue = 0; }
+  }
+  setInterval(pump, 20);
+  document.addEventListener('visibilitychange', function () { if (document.hidden) running = false; else if (started) start(); });
+  function onBeat(ev, when) {
+    var nv = Math.max(1, ev.voices.length), sc = 1 / Math.sqrt(nv);
+    ev.voices.forEach(function (v) {
+      v.notes.forEach(function (q, i) {
+        voice(q[0], when + i * 0.004, q[1] * SEC, (i ? 0.2 : 0.3) * sc);
+        if (q[2] >= 0) sparks.push({ t: when, p: q[0], node: q[2], dur: q[1] * SEC, hand: v.hand });
+      });
+    });
+    if (ev.found.length) save();
+    if (sparks.length > 200) sparks.splice(0, sparks.length - 200);
+  }
+  function save() { try { localStorage.setItem(KEY, Array.prototype.join.call(L.state.found, '')); } catch (e) {} }
+  function load() { try { var s = localStorage.getItem(KEY); if (s && s.length === L.state.found.length) for (var i = 0; i < s.length; i++) L.state.found[i] = s.charCodeAt(i) === 49 ? 1 : 0; } catch (e) {} }
+
+  // ── 화면: 세계(20.78 × 12)를 화면에 맞춘다. 세로 화면이면 90° 돌린다 ───────────────
+  var VW = 0, VH = 0, dpr = 1, view = { s: 1, ox: 0, oy: 0, rot: false };
+  var img = null, off = null, offg = null;
+  function fit() {
+    dpr = Math.min(2, window.devicePixelRatio || 1); VW = innerWidth; VH = innerHeight;
+    cv.width = Math.round(VW * dpr); cv.height = Math.round(VH * dpr); g.setTransform(dpr, 0, 0, dpr, 0, 0);
+    view.rot = VH > VW * 1.1;
+    var ww = view.rot ? TL.H : TL.W, hh = view.rot ? TL.W : TL.H, top = 64, bot = BARH + 40;
+    view.s = Math.min((VW - 24) / ww, (VH - top - bot) / hh);
+    view.ox = (VW - ww * view.s) / 2; view.oy = top + (VH - top - bot - hh * view.s) / 2;
+  }
+  function toScreen(x, y) {                        // 세계 → 화면
+    return view.rot ? [view.ox + (TL.H - y) * view.s, view.oy + x * view.s] : [view.ox + x * view.s, view.oy + y * view.s];
+  }
+  function toWorld(sx, sy) {
+    var u = (sx - view.ox) / view.s, v = (sy - view.oy) / view.s;
+    return view.rot ? [v, TL.H - u] : [u, v];
+  }
+  function hue(pc) { return (40 + ((pc * 7) % 12) * 28) % 360; }
+  var DIA = { 0: 1, 2: 1, 4: 1, 5: 1, 7: 1, 9: 1, 11: 1 };
+  var BG = null;                                  // 칸마다 바탕색 (Tonnetz 음이름 옅게)
+  function drawField(t) {
+    var S = L.state, NX = L.NX, NY = L.NY;
+    if (!off) { off = document.createElement('canvas'); off.width = NX; off.height = NY; offg = off.getContext('2d'); img = offg.createImageData(NX, NY);
+      BG = new Uint8Array(NX * NY * 3);
+      for (var i = 0; i < NX * NY; i++) { var n = L.geo.nodes[L.cell[i]], h = hue(n.pc), d = DIA[n.pc], hgt = (L.terrain[L.cell[i]] - 52) / 29;
+        var c = hsl(h, d ? 0.28 : 0.1, d ? 0.045 + 0.03 * hgt : 0.022);
+        BG[i * 3] = c[0]; BG[i * 3 + 1] = c[1]; BG[i * 3 + 2] = c[2]; } }
+    var px = img.data, A0 = S.A[0], A1 = S.A[1], F0 = S.F[0], F1 = S.F[1], FD = S.food, G0 = S.G[0], G1 = S.G[1], GA = 1 / AGE_DEAD;
+    for (var j = 0; j < NX * NY; j++) {
+      var a = A0[j], b = A1[j], f = Math.min(1, (F0[j] + F1[j]) * 1.6), fd = Math.min(1, FD[j] * 3);
+      var r = BG[j * 3] + 34 * f + 60 * fd, gg = BG[j * 3 + 1] + 40 * f + 60 * fd, bb = BG[j * 3 + 2] + 58 * f + 50 * fd;
+      // 종달새 금 · 문어 산호 — 밝기는 생명의 양 (Lenia 그림처럼 빛난다). 늙을수록(나이) 잿빛으로 바랜다
+      var ga = Math.min(1, G0[j] * GA), gb = Math.min(1, G1[j] * GA);
+      r += 255 * (a * (0.95 - 0.5 * ga) + b * (1.0 - 0.55 * gb)); gg += 255 * (a * (0.78 - 0.3 * ga) + b * (0.46 - 0.02 * gb));
+      bb += 255 * (a * (0.36 + 0.14 * ga) + b * (0.55 - 0.05 * gb));
+      px[j * 4] = r > 255 ? 255 : r; px[j * 4 + 1] = gg > 255 ? 255 : gg; px[j * 4 + 2] = bb > 255 ? 255 : bb; px[j * 4 + 3] = 255;
+    }
+    offg.putImageData(img, 0, 0);
+    g.save(); g.imageSmoothingEnabled = true;
+    if (view.rot) { g.translate(view.ox + TL.H * view.s, view.oy); g.rotate(Math.PI / 2); g.drawImage(off, 0, 0, TL.W * view.s, TL.H * view.s); }
+    else g.drawImage(off, view.ox, view.oy, TL.W * view.s, TL.H * view.s);
+    g.restore();
+  }
+  function hsl(h, s, l) { h /= 360; var q = l < 0.5 ? l * (1 + s) : l + s - l * s, p = 2 * l - q;
+    var f = function (t) { t = (t + 1) % 1; return t < 1 / 6 ? p + (q - p) * 6 * t : t < 0.5 ? q : t < 2 / 3 ? p + (q - p) * (2 / 3 - t) * 6 : p; };
+    return [Math.round(f(h + 1 / 3) * 255), Math.round(f(h) * 255), Math.round(f(h - 1 / 3) * 255)]; }
+  function drawLattice() {                         // Tonnetz 칸 테두리 — 옅게
+    g.strokeStyle = 'rgba(170,190,180,0.06)'; g.lineWidth = 1; var R = 1 / Math.sqrt(3) * 0.97;
+    L.geo.nodes.forEach(function (n) { g.beginPath();
+      for (var k = 0; k < 6; k++) { var a = k * Math.PI / 3, p = toScreen(n.x + R * Math.cos(a), n.y + R * Math.sin(a)); if (k) g.lineTo(p[0], p[1]); else g.moveTo(p[0], p[1]); }
+      g.closePath(); g.stroke(); });
+  }
+  function drawSparks(t) {                         // 울린 음: 그 칸에서 음높이만큼 솟는 불꽃 (높이 = 음높이)
+    for (var i = 0; i < sparks.length; i++) {
+      var s = sparks[i], age = t - s.t; if (age < 0 || age > s.dur + 1.2) continue;
+      var n = L.geo.nodes[s.node], b = toScreen(n.x, n.y), hgt = (s.p - 50) * ZS * Math.min(1, view.s / 40);
+      var a = age < s.dur ? 1 - 0.35 * age / Math.max(0.2, s.dur) : 0.65 * (1 - (age - s.dur) / 1.2);
+      var col = s.hand === 1 ? '255,150,176' : s.hand === 0 ? '255,220,140' : '220,235,255';
+      g.strokeStyle = 'rgba(' + col + ',' + a * 0.3 + ')'; g.lineWidth = 1; g.beginPath(); g.moveTo(b[0], b[1]); g.lineTo(b[0], b[1] - hgt); g.stroke();
+      var gr = g.createRadialGradient(b[0], b[1] - hgt, 0, b[0], b[1] - hgt, 9); gr.addColorStop(0, 'rgba(' + col + ',' + a * 0.75 + ')'); gr.addColorStop(1, 'rgba(0,0,0,0)');
+      g.fillStyle = gr; g.beginPath(); g.arc(b[0], b[1] - hgt, 9, 0, 6.2832); g.fill();
+    }
+  }
+  var BORDER = null;
+  function drawBarcode() {
+    var S = L.state, K = L.K, x0 = 16, x1 = VW - 16, y0 = VH - BARH - 10, bh = BARH / K, rx = function (r) { return x0 + (x1 - x0) * r / 1.5; };
+    if (!BORDER) { BORDER = []; for (var k = 0; k < K; k++) BORDER.push(k);
+      BORDER.sort(function (a, b) { return (L.vines[a].rates[0][0] - L.vines[b].rates[0][0]) || (L.vines[b].n_rates - L.vines[a].n_rates); }); }
+    g.fillStyle = 'rgba(4,6,10,0.9)'; g.fillRect(x0 - 6, y0 - 6, x1 - x0 + 12, BARH + 12);
+    var ri = Math.round(S.rate * 100), nf = 0, nc = 0;
+    for (var j = 0; j < K; j++) { var k2 = BORDER[j], y = y0 + j * bh, al = L.alive[k2];
+      for (var r = 0; r <= 150; r++) { if (!al[r]) continue; nc++; var f = S.found[k2 * 151 + r]; if (f) nf++;
+        g.fillStyle = f ? (r === ri ? 'rgba(255,244,210,1)' : 'rgba(243,217,139,0.85)') : 'rgba(120,140,130,0.16)';
+        g.fillRect(rx(r / 100) - (r === 0 ? 1.5 : 0), y, Math.max(1, (x1 - x0) / 150 + (r === 0 ? 3 : 0)), Math.max(1, bh - 0.4)); } }
+    g.strokeStyle = 'rgba(255,240,210,0.85)'; g.lineWidth = 1.5; g.beginPath(); g.moveTo(rx(S.rate), y0 - 4); g.lineTo(rx(S.rate), y0 + BARH + 2); g.stroke();
+    return [nf, nc];
+  }
+  function draw(t) {
+    g.fillStyle = '#04060a'; g.fillRect(0, 0, VW, VH);
+    if (!L) return;
+    drawField(t); drawLattice(); drawSparks(t);
+    var fc = drawBarcode(), S = L.state;
+    cnt.textContent = (started ? 'rate ' + S.rate.toFixed(2) + ' · ' : '') + (fc[0] ? '찾은 칸 ' + fc[0] + '/' + fc[1] : '');
+    sparks = sparks.filter(function (s) { return t - s.t < s.dur + 1.3; });
+  }
+  function frame() { requestAnimationFrame(frame); draw(now()); }
+
+  // ── 키보드 — 방향키는 종달새, WASD 는 문어를 그쪽으로. 누르고 있는 동안만 ──────────
+  var held = {};
+  var DIRK = { ArrowRight: [0, 1, 0], ArrowLeft: [0, -1, 0], ArrowUp: [0, 0, -1], ArrowDown: [0, 0, 1],
+               d: [1, 1, 0], a: [1, -1, 0], w: [1, 0, -1], s: [1, 0, 1], D: [1, 1, 0], A: [1, -1, 0], W: [1, 0, -1], S: [1, 0, 1] };
+  function steerFromKeys() {
+    for (var c = 0; c < 2; c++) {
+      var sx = 0, sy = 0;
+      for (var k in held) if (held[k] && DIRK[k] && DIRK[k][0] === c) { sx += DIRK[k][1]; sy += DIRK[k][2]; }
+      if (!sx && !sy) { L.setSteer(c, null); continue; }
+      // 화면 방향 → 세계 방향 (세로 화면이면 돌린 만큼 되돌린다)
+      var wx = view.rot ? sy : sx, wy = view.rot ? -sx : sy, n = Math.hypot(wx, wy); L.setSteer(c, [wx / n, wy / n]);
+    }
+  }
+  addEventListener('keydown', function (ev) {
+    if (!L) return;
+    var k = ev.key;
+    if (DIRK[k]) { held[k] = true; steerFromKeys(); ev.preventDefault(); wake(); return; }
+    var NK = { z: 0, x: 2, c: 4, v: 5, b: 7, n: 9, m: 11 }, lk = k.toLowerCase();
+    // wake() 를 먼저 — 소리 장치는 첫 조작 안에서 만들어진다. 뒤에 부르면 첫 음이 나지 않는다
+    if (lk in NK && !ev.repeat) { wake(); callNote(NK[lk]); return; }
+    if (k === 'q' || k === 'Q') { L.setRate(L.state.rate - 0.1); wake(); }
+    if (k === 'e' || k === 'E') { L.setRate(L.state.rate + 0.1); wake(); }
+    if (k === '1' || k === '2') { var c2 = k === '1' ? 0 : 1, p = freeSpot(); if (L.spawn(c2, p[0], p[1], Math.random() * 6.28)) { wake(); chirp(p); } }
+  });
+  addEventListener('keyup', function (ev) { if (DIRK[ev.key]) { held[ev.key] = false; steerFromKeys(); } });
+  function freeSpot() {                             // 생명과 피로가 적은 곳
+    var best = [TL.W / 2, TL.H / 2], bs = 1e9;
+    for (var tries = 0; tries < 24; tries++) { var x = Math.random() * TL.W, y = Math.random() * TL.H, gx = Math.floor(x / L.DX), gy = Math.floor(y / L.DY), s = 0;
+      for (var j = -8; j <= 8; j += 4) for (var i = -8; i <= 8; i += 4) { var idx = ((gy + j + L.NY) % L.NY) * L.NX + (gx + i + L.NX) % L.NX; s += L.state.A[0][idx] + L.state.A[1][idx] + L.state.F[0][idx] + L.state.F[1][idx]; }
+      if (s < bs) { bs = s; best = [x, y]; } }
+    return best;
+  }
+  function callNote(pc) {                          // 부르기: 그 음이 곧바로 울리고, 생명체 가까운 그 음 칸이 끌어당긴다
+    var li = -1, bd = 1e9; L.labels.forEach(function (l) { if (l.pc === pc && Math.abs(l.pitch - 66) < bd) { bd = Math.abs(l.pitch - 66); li = l.li; } });
+    var pitch = li >= 0 ? L.labels[li].pitch : 60 + pc; voice(pitch, now() + 0.005, 1.1, 0.36);
+    L.call(pc, 44);
+    var n0 = -1; L.state.blobs.forEach(function (bl) { bl.forEach(function (B) { var bx = B.x * L.DX, by = B.y * L.DY, bd2 = 9;
+      L.geo.nodes.forEach(function (nd, i) { if (nd.pc !== pc) return; var dx = nd.x - bx, dy = nd.y - by; dx -= TL.W * Math.round(dx / TL.W); dy -= TL.H * Math.round(dy / TL.H);
+        var d = dx * dx + dy * dy; if (d < bd2) { bd2 = d; n0 = i; } }); }); });
+    if (n0 >= 0) sparks.push({ t: now(), p: pitch, node: n0, dur: 0.9, hand: -1 });
+  }
+  function wake() { audio(); if (!started) { started = true; say.style.opacity = 0; keysEl.style.opacity = 1; } start(); }
+  function chirp(p) {                               // 놓은 자리의 음이 곧바로 울린다
+    var gx = Math.floor(p[0] / L.DX) % L.NX, gy = Math.floor(p[1] / L.DY) % L.NY, n = L.cell[gy * L.NX + gx], li = L.note[n];
+    var pitch = li >= 0 ? L.labels[li].pitch : 60 + L.geo.nodes[n].pc;
+    voice(pitch, now() + 0.005, 1.3, 0.4); sparks.push({ t: now(), p: pitch, node: n, dur: 0.8, hand: -1 });
+  }
+
+  // ── 손가락 ──────────────────────────────────────────────────────────────
+  var drag = null, lp = 0;
+  cv.addEventListener('contextmenu', function (ev) { ev.preventDefault(); });
+  cv.addEventListener('pointerdown', function (ev) {
+    if (!L) return; var r = cv.getBoundingClientRect(), sx = ev.clientX - r.left, sy = ev.clientY - r.top;
+    if (sy > VH - BARH - 20) return;
+    drag = { sx: sx, sy: sy, moved: false, oct: ev.button === 2 || ev.shiftKey, last: toWorld(sx, sy) };
+    clearTimeout(lp); lp = setTimeout(function () { if (drag && !drag.moved) drag.oct = true; }, 480);   // 길게 누르면 문어 (터치)
+    cv.setPointerCapture(ev.pointerId);
+  });
+  cv.addEventListener('pointermove', function (ev) {
+    if (!drag) return; var r = cv.getBoundingClientRect(), sx = ev.clientX - r.left, sy = ev.clientY - r.top;
+    if (!drag.moved && Math.hypot(sx - drag.sx, sy - drag.sy) > 10) drag.moved = true;
+    if (drag.moved) { var w = toWorld(sx, sy); L.feed(((w[0] % TL.W) + TL.W) % TL.W, ((w[1] % TL.H) + TL.H) % TL.H, 0.18, 4); wake(); }
+  });
+  cv.addEventListener('pointerup', function () {
+    clearTimeout(lp); if (!drag) return; var d = drag; drag = null;
+    if (d.moved) return;
+    var w = d.last, x = ((w[0] % TL.W) + TL.W) % TL.W, y = ((w[1] % TL.H) + TL.H) % TL.H;
+    if (L.spawn(d.oct ? 1 : 0, x, y, Math.random() * 6.28)) { wake(); chirp([x, y]); }
+  });
+  document.getElementById('rdn').addEventListener('click', function () { L.setRate(L.state.rate - 0.1); wake(); });
+  document.getElementById('rup').addEventListener('click', function () { L.setRate(L.state.rate + 0.1); wake(); });
+  document.getElementById('clr').addEventListener('click', function () {
+    L = TL.create(data, { seed: (Date.now() % 1e9) | 0 }); load(); sparks = []; running = false; started = false; off = null;
+    say.style.opacity = 1; keysEl.style.opacity = 0;
+  });
+
+  addEventListener('resize', fit);
+  fetch('./tonnetz.json').then(function (r) { return r.json(); }).then(function (d) {
+    data = d; L = TL.create(d, { seed: (Date.now() % 1e9) | 0 }); load(); fit();
+  }).catch(function () { say.textContent = '데이터를 불러오지 못했습니다'; });
+  fit(); requestAnimationFrame(frame);
+
+  window.__life = { get L() { return L; }, view: view, toWorld: toWorld, now: now,
+    advance: function (sec, fps) { var n = Math.round(sec * (fps || 10)); for (var i = 0; i < n; i++) { virt += sec / n; pump(); pump(); draw(now()); } },
+    wake: wake, spawn: function (c, x, y, a) { var ok = L.spawn(c, x, y, a); if (ok) wake(); return ok; } };
+})();
+</script>
+</body>
+</html>

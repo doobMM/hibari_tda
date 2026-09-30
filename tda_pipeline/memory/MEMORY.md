@@ -8,3 +8,4 @@
 - 2026-04-18: `project_task24_postbugfix_tonnetz_0418.md` — §6.6.1 Tonnetz major_block32 post-bugfix 재실험 및 각주 재검토 플래그.
 - 2026-04-18: `project_task24b_dft_postbugfix_0418.md` — §6.6.1 DFT major_block32 post-bugfix 재실험 + Tonnetz/DFT 격차 재판정.
 - 2026-09-29: `project_tonnetz_waves_0929.md` — 시안 C 1판(행위자)·2판(흥분성 매질, 두 손 거리=rate, 바코드 채우기). 검증 명령과 남은 결정.
+- 2026-09-30: `project_tonnetz_life_0930.md` — 시안 C 3판(살아 있는 격자: Lenia 생명체·키보드·나이·국소 비옥도). 사전등록 2회차 결과, 하네스 결함 4건, 남은 결정.
