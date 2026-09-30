@@ -9,3 +9,4 @@
 - 2026-04-18: `project_task24b_dft_postbugfix_0418.md` — §6.6.1 DFT major_block32 post-bugfix 재실험 + Tonnetz/DFT 격차 재판정.
 - 2026-09-29: `project_tonnetz_waves_0929.md` — 시안 C 1판(행위자)·2판(흥분성 매질, 두 손 거리=rate, 바코드 채우기). 검증 명령과 남은 결정.
 - 2026-09-30: `project_tonnetz_life_0930.md` — 시안 C 3판(살아 있는 격자: Lenia 생명체·키보드·나이·국소 비옥도). 사전등록 2회차 결과, 하네스 결함 4건, 남은 결정.
+- 2026-09-30: `project_song_shape_0930.md` — 곡의 모양(shape/): 13곡의 시간줄을 닮은 대목끼리 닿게 접은 3차원 몸. 검사 8개 중 5개 통과, hibari 자리바꿈 짝은 사전 기준 실패(사후 78.7%). 포크 세션 충돌 교훈.

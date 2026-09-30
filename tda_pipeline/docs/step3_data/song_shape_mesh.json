@@ -1,0 +1,240 @@
+{
+ "sigma_page": 0.5,
+ "min_dens": 0.85,
+ "songs": {
+  "hibari": {
+   "T": 1084,
+   "rec80": 1,
+   "genus_by_sigma": {
+    "1": 0,
+    "0.35": 4,
+    "0.5": 0,
+    "0.65": 0,
+    "0.8": 0
+   },
+   "V": 5520,
+   "F": 11036,
+   "components": 1,
+   "boundaryEdges": 0,
+   "nonManifoldEdges": 0,
+   "ms": 282,
+   "volume": 578.2
+  },
+  "aqua": {
+   "T": 530,
+   "rec80": 0.723,
+   "genus_by_sigma": {
+    "1": 0,
+    "0.35": 55,
+    "0.5": 23.5,
+    "0.65": 0,
+    "0.8": 0
+   },
+   "V": 13898,
+   "F": 27976,
+   "components": 6,
+   "boundaryEdges": 0,
+   "nonManifoldEdges": 55,
+   "ms": 160,
+   "volume": 791.1
+  },
+  "solari": {
+   "T": 224,
+   "rec80": 0.643,
+   "genus_by_sigma": {
+    "1": 0,
+    "0.35": 7,
+    "0.5": 28.5,
+    "0.65": 1,
+    "0.8": 0
+   },
+   "V": 9282,
+   "F": 18772,
+   "components": 1,
+   "boundaryEdges": 0,
+   "nonManifoldEdges": 49,
+   "ms": 40,
+   "volume": 334.9
+  },
+  "mcml": {
+   "T": 834,
+   "rec80": 0.8,
+   "genus_by_sigma": {
+    "1": 0,
+    "0.35": 65,
+    "0.5": 6,
+    "0.65": 0,
+    "0.8": 0
+   },
+   "V": 12005,
+   "F": 24052,
+   "components": 3,
+   "boundaryEdges": 0,
+   "nonManifoldEdges": 15,
+   "ms": 127,
+   "volume": 849.1
+  },
+  "energy": {
+   "T": 692,
+   "rec80": 0.49,
+   "genus_by_sigma": {
+    "1": 0,
+    "0.35": 10.5,
+    "0.5": 106,
+    "0.65": 0,
+    "0.8": 0
+   },
+   "V": 27257,
+   "F": 55288,
+   "components": 1,
+   "boundaryEdges": 0,
+   "nonManifoldEdges": 177,
+   "ms": 143,
+   "volume": 1085.4
+  },
+  "bibo": {
+   "T": 761,
+   "rec80": 0.227,
+   "genus_by_sigma": {
+    "1": 0,
+    "0.35": 83.5,
+    "0.5": 68,
+    "0.65": 0,
+    "0.8": 0
+   },
+   "V": 23582,
+   "F": 47684,
+   "components": 3,
+   "boundaryEdges": 0,
+   "nonManifoldEdges": 130,
+   "ms": 210,
+   "volume": 1240.9
+  },
+  "flower": {
+   "T": 234,
+   "rec80": 0.06,
+   "genus_by_sigma": {
+    "1": 0,
+    "0.35": 16,
+    "0.5": 85.5,
+    "0.65": 3.5,
+    "0.8": 0
+   },
+   "V": 24209,
+   "F": 48920,
+   "components": 2,
+   "boundaryEdges": 0,
+   "nonManifoldEdges": 84,
+   "ms": 82,
+   "volume": 778.5
+  },
+  "emperor": {
+   "T": 797,
+   "rec80": 0.319,
+   "genus_by_sigma": {
+    "1": 0,
+    "0.35": 105,
+    "0.5": 48.5,
+    "0.65": 0,
+    "0.8": 0
+   },
+   "V": 19918,
+   "F": 40188,
+   "components": 2,
+   "boundaryEdges": 0,
+   "nonManifoldEdges": 83,
+   "ms": 180,
+   "volume": 1155.5
+  },
+  "tongpoo": {
+   "T": 1300,
+   "rec80": 0.572,
+   "genus_by_sigma": {
+    "1": 0,
+    "0.35": 167.5,
+    "0.5": 41.5,
+    "0.65": 0,
+    "0.8": 0
+   },
+   "V": 25182,
+   "F": 50712,
+   "components": 5,
+   "boundaryEdges": 0,
+   "nonManifoldEdges": 101,
+   "ms": 287,
+   "volume": 1790
+  },
+  "reich": {
+   "T": 4105,
+   "rec80": 0.999,
+   "genus_by_sigma": {
+    "1": 1,
+    "0.35": 28,
+    "0.5": 3,
+    "0.65": 1,
+    "0.8": 1
+   },
+   "V": 21947,
+   "F": 43924,
+   "components": 1,
+   "boundaryEdges": 0,
+   "nonManifoldEdges": 11,
+   "ms": 857,
+   "volume": 1323.9
+  },
+  "bach": {
+   "T": 1137,
+   "rec80": 0.141,
+   "genus_by_sigma": {
+    "1": 0,
+    "0.35": 74.5,
+    "0.5": 194.5,
+    "0.65": 0,
+    "0.8": 0
+   },
+   "V": 41667,
+   "F": 84800,
+   "components": 7,
+   "boundaryEdges": 0,
+   "nonManifoldEdges": 358,
+   "ms": 212,
+   "volume": 1988.7
+  },
+  "debussy": {
+   "T": 641,
+   "rec80": 0.332,
+   "genus_by_sigma": {
+    "1": 0,
+    "0.35": 56,
+    "0.5": 85,
+    "0.65": 0,
+    "0.8": 0
+   },
+   "V": 22930,
+   "F": 46460,
+   "components": 5,
+   "boundaryEdges": 0,
+   "nonManifoldEdges": 140,
+   "ms": 115,
+   "volume": 1049.2
+  },
+  "ravel": {
+   "T": 559,
+   "rec80": 0.737,
+   "genus_by_sigma": {
+    "1": 0,
+    "0.35": 26,
+    "0.5": 34.5,
+    "0.65": -0.5,
+    "0.8": 0
+   },
+   "V": 16924,
+   "F": 34108,
+   "components": 1,
+   "boundaryEdges": 0,
+   "nonManifoldEdges": 63,
+   "ms": 107,
+   "volume": 832.2
+  }
+ }
+}
