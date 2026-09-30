@@ -1,11 +1,13 @@
 ---
 name: project-sketches-1001
-description: "살리기 세 스케치 A 흐름 그물 · B 두 바퀴 · C 고리 합주 — 지어서 배포(4ad3d29), 사용자 판정 대기. 정본 intra 는 순서를 담지 않아 방향을 모듈에서 가져왔다"
+description: "살리기 세 스케치 A 흐름 그물 · B 두 바퀴 · C 고리 합주 — 지어서 배포(4ad3d29), ⛔ 사용자 거절(판 12: 한 번 누름이 연쇄를 낳는다). 정본 intra 는 순서를 담지 않아 방향을 모듈에서 가져왔다"
 metadata:
   type: project
 ---
 
 2026-10-01 커밋 4ad3d29 로 배포: `tda_pipeline/sketch/index.html` → flow.html(A) · wheels.html(B) · loops.html(C). 명세·수치 `docs/sketch_spec.md` §7.
+
+**⛔ 거절 (2026-10-01, 판 12)**: "A, B, C 다 별로야" — 한 번 클릭이 너무 많은 연쇄를 낳아 짧은 피드백을 주고받으며 다음 행동을 고를 수 없다. "아래 프로젝트들은 참고한거야?" — 참고 6개(Matrix-3D·OrigamiSimulator·differential-line·WebGL-Fluid·particle-life·MarkovJunior)는 모양에만 썼고 스케치엔 안 썼다. "모양은 그래도 마음에 들었어." 사용자가 꼽은 가장 중요한 것 = 상호작용을 통한 직관적인 음악생성 · 그 과정의 즐거움 · 수학적 근거. 실패 계급과 새 규칙(되먹임은 사람을 거쳐야 한다, 한 번 누름 = 한 가지, 누른 판/안 누른 판 센서)은 CLAUDE.md 「⛔ 상호작용 페이지」 판 12 에 있다. 다음 시안은 사용자 선택 대기.
 검증 `node tools/verify_sketch_{flow,wheels,loops}.mjs` 전부 통과 — 단 엔진 상수는 그 수치를 보며 골랐다(확증 아님). 사람 손·귀로는 아직 안 만졌다.
 
 - A: 부은 음에서 곡이 이어진다(그 손의 모듈이 그 음 자리로). 계단 0.804, 그러나 "물길 같게" 대조가 0.687 — 계단의 대부분은 모듈 음높이 끌림에서 온다.
