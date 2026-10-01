@@ -1,4 +1,7 @@
-"""잇기(③ 주고받기 + ① 몸을 연주) 의 그물 — hibari 몸 위의 자리 · 실 · 막 · 창.  → sketch/data/relay_hibari.json
+"""⛔ 2026-10-01 사용자: "모양 위에 표시하는 게 직관적이지 않은 것 같아" → 판을 모듈 시계로 바꿨다(export_relay_clock.py).
+이 스크립트와 결과(docs/step3_data/relay_net_checks.json)는 기록으로 남긴다. 페이지 자료(sketch/data/relay_hibari.json)는 지웠다.
+
+잇기(③ 주고받기 + ① 몸을 연주) 의 그물 — hibari 몸 위의 자리 · 실 · 막 · 창.  → sketch/data/relay_hibari.json
 
 자리 = 닮은 대목(맥락, song_fold.features)끼리 묶은 것(k-means). 누르면 그 자리의 대표 대목이 운다.
 실   = 두 자리 사이 링크(사슬 = 곡이 이어짐, 접촉 = 닮음 kNN)가 문턱 c 개 이상.

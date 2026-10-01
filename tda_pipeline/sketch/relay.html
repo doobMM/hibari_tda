@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>잇기</title>
+<!--
+  잇기 — 모듈 시계 위에서 hibari 와 주고받기 (2026-10-01, ③ 음 잇기 · 판 "나")
+  판     칸 = hibari 의 2박(모듈 자리 8 × 곡의 띠 4). 각도 = 모듈 안의 자리(베이스 미·파 … 시·도), 안쪽 = 곡의 처음 … 바깥 = 끝.
+         빈 칸 = 두 손이 함께 쉬는 곳. 가운데와 안쪽 빈 칸이 구멍이다. 자료: experiments/export_relay_clock.py → data/relay_clock.json, 규칙: relay-core.js.
+  한 수  칸을 누른다(또는 방향키: → 시계 방향 = 곡이 흐르는 쪽 · ← 반대 · ↑ 바깥 · ↓ 안) → 그 칸의 2박이 곧바로 울린다 →
+         hibari 가 이어진 칸 하나로 한 박 뒤에 대답한다. 줄이 앞의 칸으로 돌아와 구멍을 감으면 그 고리가 되풀이되며 노래하고, 아니면 스러진다.
+  조작   Backspace = 되돌리기 · Esc = 줄 지우기 · 1~9 = 그 고리 끄기.  자동 재생 없음 — 누르기 전엔 소리가 안 난다.  ?silent 무음.
+-->
+<style>
+ :root{--bg:#f3f0e6;--paper:#fbf9f2;--ink:#22302a;--dim:#7d877f;--line:#d6d2c2;--green:#2f6b4f;--gold:#c8912e;--coral:#c8654a}
+ *{box-sizing:border-box}
+ html,body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans KR",sans-serif;-webkit-tap-highlight-color:transparent}
+ main{max-width:640px;margin:0 auto;padding:10px 16px 28px}
+ header{display:flex;align-items:baseline;gap:10px;padding:4px 2px 2px}
+ header h1{font-size:13px;font-weight:500;color:var(--dim);letter-spacing:.08em;margin:0}
+ header a{margin-left:auto;font-size:12px;color:var(--dim);text-decoration:none}
+ #now{min-height:22px;text-align:center;font-size:15px;padding:4px 0}
+ #now .me{color:var(--coral)} #now .hb{color:#9a6a17}
+ #board{display:block;width:100%;max-width:560px;margin:0 auto;touch-action:manipulation;user-select:none;-webkit-user-select:none}
+ .tile{cursor:pointer}
+ #hint{text-align:center;font-size:14px;color:var(--dim);min-height:20px;padding:4px 0;transition:opacity .6s}
+ #bar{display:flex;align-items:center;gap:10px;padding:8px 0 4px;flex-wrap:wrap}
+ button{font:inherit;color:inherit;min-width:44px;min-height:44px;padding:0 14px;border:1px solid var(--line);border-radius:22px;background:var(--paper);cursor:pointer}
+ button:focus-visible{outline:2px solid var(--green);outline-offset:2px}
+ #rings{display:flex;gap:8px;flex-wrap:wrap}
+ #rings button{font-size:13px;padding:0 12px}
+ #legend{font-size:12.5px;color:var(--dim);line-height:1.6;padding:4px 2px}
+ #err{display:none;padding:18px;font-size:14px;color:#b4532a}
+</style>
+</head>
+<body>
+<main>
+ <header><h1>잇기 · hibari</h1><a href="./index.html">스케치</a></header>
+ <div id="now"></div>
+ <svg id="board" viewBox="-121 -121 242 242" role="img" aria-label="hibari 의 모듈 시계 — 칸을 이어 고리를 만든다">
+  <g id="tiles"></g><g id="labels"></g><g id="rings-g"></g><g id="flash"></g><g id="line"></g><g id="opts"></g><g id="dots"></g>
+ </svg>
+ <div id="hint">빛나는 칸을 누르세요 · ← → ↑ ↓</div>
+ <div id="err"></div>
+ <div id="bar"><button id="undo">되돌리기</button><div id="rings"></div></div>
+ <div id="legend"><span style="color:var(--coral)">주황</span> 내가 이은 칸 · <span style="color:#9a6a17">금빛</span> hibari 의 대답 · 가운데나 빈 칸을 한 바퀴 두르면 그 고리가 노래해요<br>안쪽 = 곡의 처음, 바깥 = 끝 · 빈 칸 = 두 손이 함께 쉬는 곳</div>
+</main>
+<script src="./common.js"></script>
+<script src="./relay-core.js"></script>
+<script>
+(function () {
+  'use strict';
+  var $ = function (s) { return document.querySelector(s); }, NS = 'http://www.w3.org/2000/svg';
+  var EIGHTH = 60 / 66 / 2, CR = 18, WD = 22, RC = ['#1D9E75', '#4a6fa5', '#8a5a9e', '#2f6b4f', '#b4532a'], DIRK = { ArrowRight: 'cw', ArrowLeft: 'ccw', ArrowUp: 'out', ArrowDown: 'in' };
+  var GLYPH = { cw: '→', ccw: '←', out: '↑', in: '↓' };
+  var D = null, B = null, E = null, tileEl = [], lit = [], flash = null, reveal = 0, clock = { on: false, when: 0 }, ringAt = {}, dirty = true;
+
+  function mk(tag, at, parent) { var e = document.createElementNS(NS, tag); for (var k in at) e.setAttribute(k, at[k]); if (parent) parent.appendChild(e); return e; }
+  function ang(s) { return -Math.PI / 2 + s * 2 * Math.PI / D.sectors; }
+  function rad(p) { return CR + (Math.floor(p / D.sectors) + 0.5) * WD; }
+  function xy(r, a) { return (r * Math.cos(a)).toFixed(2) + ' ' + (r * Math.sin(a)).toFixed(2); }
+  function cen(p) { var a = ang(p % D.sectors + 0.5), r = rad(p); return [r * Math.cos(a), r * Math.sin(a)]; }
+  function sector(p) { var s = p % D.sectors, ri = CR + Math.floor(p / D.sectors) * WD, ro = ri + WD, a0 = ang(s), a1 = ang(s + 1);
+    return 'M' + xy(ro, a0) + 'A' + ro + ' ' + ro + ' 0 0 1 ' + xy(ro, a1) + 'L' + xy(ri, a1) + 'A' + ri + ' ' + ri + ' 0 0 0 ' + xy(ri, a0) + 'Z'; }
+  function hop(p, q) { var c = cen(q), d = B.dir(p, q);                     // 같은 띠면 띠를 따라 호, 아니면 곧게
+    return d === 'cw' || d === 'ccw' ? 'A' + rad(p).toFixed(2) + ' ' + rad(p).toFixed(2) + ' 0 0 ' + (d === 'cw' ? 1 : 0) + ' ' + c[0].toFixed(2) + ' ' + c[1].toFixed(2) : 'L' + c[0].toFixed(2) + ' ' + c[1].toFixed(2); }
+  function trace(ps, closed) { var c = cen(ps[0]), d = 'M' + c[0].toFixed(2) + ' ' + c[1].toFixed(2);
+    for (var i = 1; i < ps.length; i++) d += hop(ps[i - 1], ps[i]); if (closed) d += hop(ps[ps.length - 1], ps[0]); return d; }
+  function tileName(p) { var t = D.tiles[p]; if (t.bass) return t.bass; var lo = Math.min.apply(null, t.notes.map(function (n) { return n[1]; })); return HS.noteName(lo).replace(/\d+$/, ''); }
+
+  // ── 소리 ───────────────────────────────────────────────────────────────
+  function phrase(p, when, gain) { D.tiles[p].notes.forEach(function (n) {
+    HS.audio.voice(n[1], when + n[0] * EIGHTH + Math.max(0, n[5]) / 1000, Math.min(1.6, n[2] / 1000 * 1.2), (0.10 + 0.42 * Math.pow(n[3] / 127, 1.4)) * gain); }); }
+  function light(p, when, ring) { lit.push([p, when, when + 4 * EIGHTH]); if (lit.length > 64) lit.shift(); if (ring != null) ringAt[ring] = [p, when]; }
+  function gridAfter(t) { if (!clock.on) return t; var k = Math.ceil((t - clock.when) / EIGHTH); return clock.when + k * EIGHTH; }   // 고리가 돌면 그 8분음표 격자에 맞춘다
+
+  // ── 한 수 ──────────────────────────────────────────────────────────────
+  function press(p) {
+    if (!E || !(p >= 0) || B.gone[p]) return null;
+    HS.audio.wake(); $('#hint').style.opacity = 0;
+    var r = E.press(p); if (!r) return null;
+    var now = HS.audio.now(), at = gridAfter(now + 0.005), hb = at + 2 * EIGHTH;
+    phrase(p, at, 1); light(p, at);
+    if (r.answer >= 0) { phrase(r.answer, hb, 0.85); light(r.answer, hb); }
+    reveal = performance.now() + (hb - now) * 1000;                          // hibari 의 대답은 울릴 때 보인다
+    r.events.forEach(function (ev) { if (ev.kind === 'ring' || ev.kind === 'fade') flash = { ev: ev, t: ev.who === 'hibari' ? reveal : performance.now() }; });
+    if (E.state.rings.length && !clock.on) { clock.on = true; clock.when = hb + 4 * EIGHTH; }
+    $('#now').innerHTML = '<span class="me">' + tileName(p) + '</span>' + (r.answer >= 0 ? ' → <span class="hb">' + tileName(r.answer) + '</span>' : '');
+    ringsUI(); dirty = true; return r;
+  }
+  function pump() {
+    if (!clock.on || !E) return; if (!E.state.rings.length) { clock.on = false; return; }
+    var now = HS.audio.now(); if (clock.when < now - 0.3) clock.when = now + 0.03;
+    while (clock.when < now + 0.15) { var out = E.step(), g = 0.7 / Math.sqrt(Math.max(1, out.length));
+      out.forEach(function (o) { phrase(o.place, clock.when, g); light(o.place, clock.when, o.ring); });
+      clock.when += 4 * EIGHTH; }
+  }
+  setInterval(pump, 25);
+  function ringsUI() { var box = $('#rings'); box.innerHTML = '';
+    E.state.rings.forEach(function (r, k) { var b = document.createElement('button'); b.textContent = (k + 1) + ' 고리 ' + r.places.length + '칸 ✕'; b.style.borderColor = RC[k % RC.length];
+      b.addEventListener('click', function () { E.unring(k); ringsUI(); dirty = true; }); box.appendChild(b); }); }
+
+  // ── 그리기 ─────────────────────────────────────────────────────────────
+  function build() {
+    var g = $('#tiles'), lab = $('#labels');
+    D.tiles.forEach(function (t, p) {
+      var gone = B.gone[p], e = mk('path', { d: sector(p), class: gone ? '' : 'tile', fill: gone ? 'none' : 'rgb(' + t.rgb.join(',') + ')', 'fill-opacity': 0.42,
+        stroke: gone ? '#b9b4a2' : '#fbf9f2', 'stroke-width': gone ? 0.8 : 1.4, 'stroke-dasharray': gone ? '3 3' : 'none' }, g);
+      tileEl.push(e);
+      if (gone) { var c = cen(p); mk('text', { x: c[0].toFixed(1), y: (c[1] + 2.4).toFixed(1), 'text-anchor': 'middle', 'font-size': 6.5, fill: '#9aa39b' }, lab).textContent = '쉼'; }
+      else e.addEventListener('pointerup', function (ev) { if (ev.button > 0) return; press(p); });
+    });
+    for (var s = 0; s < D.sectors; s++) { var a = ang(s + 0.5), r = CR + D.rings * WD + 8, x = r * Math.cos(a), y = r * Math.sin(a);
+      mk('text', { x: x.toFixed(1), y: (y + 2.5).toFixed(1), 'text-anchor': 'middle', 'font-size': 7, fill: '#7d877f' }, lab).textContent = D.bass_by_sector[s] || '쉼'; }
+    mk('text', { x: 0, y: 2.5, 'text-anchor': 'middle', 'font-size': 7, fill: '#9aa39b' }, lab).textContent = '한 모듈';
+  }
+  function overlay() {
+    var S = E.state, now = performance.now(), hide = now < reveal, L = $('#line'), O = $('#opts'), RG = $('#rings-g'), F = $('#flash');
+    L.innerHTML = O.innerHTML = RG.innerHTML = F.innerHTML = '';
+    S.rings.forEach(function (r, k) { mk('path', { d: trace(r.places, true), fill: 'none', stroke: RC[k % RC.length], 'stroke-width': 4, 'stroke-linejoin': 'round', 'stroke-opacity': 0.9 }, RG); });
+    var path = S.path, by = S.by, n = path.length - (hide && by[by.length - 1] === 'hibari' ? 1 : 0);
+    for (var i = 1; i < n; i++) mk('path', { d: 'M' + cen(path[i - 1]).map(function (v) { return v.toFixed(2); }).join(' ') + hop(path[i - 1], path[i]), fill: 'none',
+      stroke: by[i] === 'hibari' ? '#c8912e' : '#c8654a', 'stroke-width': 3.2, 'stroke-linecap': 'round' }, L);
+    if (flash) { var u = (now - flash.t) / 800; if (u >= 1) flash = null; else if (u >= 0) { var ev = flash.ev;
+      mk('path', { d: trace(ev.loop, true), fill: 'none', stroke: ev.kind === 'ring' ? '#c8912e' : '#9aa39b', 'stroke-width': (ev.kind === 'ring' ? 9 : 5) * (1 - u * 0.6), 'stroke-opacity': 1 - u, 'stroke-linejoin': 'round' }, F); } }
+    if (n > 0 && !hide) { var end = path[path.length - 1], pulse = 0.5 + 0.5 * Math.sin(now / 240);
+      E.options().forEach(function (q) { var kind = E.preview(q), col = kind === 'ring' ? '#c8912e' : kind === 'go' ? '#2f6b4f' : '#9aa39b', c = cen(q);
+        mk('path', { d: sector(q), fill: 'none', stroke: col, 'stroke-width': kind === 'ring' ? 2.4 + 1.2 * pulse : kind === 'go' ? 1.8 : 1, 'pointer-events': 'none' }, O);
+        mk('text', { x: c[0].toFixed(1), y: (c[1] + 2.6).toFixed(1), 'text-anchor': 'middle', 'font-size': 7.5, fill: col, 'pointer-events': 'none' }, O).textContent = GLYPH[B.dir(end, q)]; });
+      var c = cen(end); mk('circle', { cx: c[0].toFixed(2), cy: c[1].toFixed(2), r: 3.6, fill: '#22302a', stroke: '#fbf9f2', 'stroke-width': 1.2, 'pointer-events': 'none' }, O); }
+    else if (n > 0) { var c2 = cen(path[n - 1]); mk('circle', { cx: c2[0].toFixed(2), cy: c2[1].toFixed(2), r: 3.6, fill: '#22302a', stroke: '#fbf9f2', 'stroke-width': 1.2 }, O); }
+    if (!path.length) { var c3 = cen(0); mk('path', { d: sector(0), fill: 'none', stroke: '#2f6b4f', 'stroke-width': 1.8, 'pointer-events': 'none' }, O);
+      mk('text', { x: c3[0].toFixed(1), y: (c3[1] + 2.6).toFixed(1), 'text-anchor': 'middle', 'font-size': 7, fill: '#2f6b4f', 'pointer-events': 'none' }, O).textContent = '처음'; }
+  }
+  function frame() {
+    try {
+      if (E) { var t = HS.audio.now();
+        tileEl.forEach(function (e, p) { if (B.gone[p]) return; var on = 0;
+          lit.forEach(function (l) { if (l[0] === p && t >= l[1] && t < l[2]) on = Math.max(on, 1 - (t - l[1]) / (l[2] - l[1]) * 0.5); });
+          e.setAttribute('fill-opacity', (0.42 + 0.5 * on).toFixed(2)); });
+        var DT = $('#dots'); DT.innerHTML = '';
+        E.state.rings.forEach(function (r, k) { var a = ringAt[k]; if (!a || t < a[1]) return; var c = cen(a[0]); mk('circle', { cx: c[0].toFixed(2), cy: c[1].toFixed(2), r: 4.2, fill: RC[k % RC.length], stroke: '#fff', 'stroke-width': 1.2 }, DT); });
+        if (dirty || flash || performance.now() < reveal + 50 || E.options().some(function (q) { return E.preview(q) === 'ring'; })) { overlay(); dirty = false; } }
+    } finally { requestAnimationFrame(frame); }
+  }
+
+  // ── 조작 ───────────────────────────────────────────────────────────────
+  HS.keys(function (code) {
+    if (!E) return;
+    if (DIRK[code]) { var S = E.state; if (!S.path.length) { press(0); return; }
+      var e = S.path[S.path.length - 1], q = B.nb[e].filter(function (x) { return B.dir(e, x) === DIRK[code]; })[0];
+      if (q >= 0) press(q); return; }
+    if (code === 'Backspace') { if (E.undo()) { ringsUI(); dirty = true; } }
+    else if (code === 'Escape') { E.state.path = []; E.state.by = []; dirty = true; }
+    else if (/^Digit[1-9]$/.test(code)) { if (E.unring(+code.slice(5) - 1)) { ringsUI(); dirty = true; } }
+  });
+  $('#undo').addEventListener('click', function () { if (E && E.undo()) { ringsUI(); dirty = true; } });
+
+  // ── 시작 ───────────────────────────────────────────────────────────────
+  fetch('./data/relay_clock.json').then(function (r) { return r.json(); }).then(function (J) {
+    D = J; B = HSRelay.clockBoard(D); E = HSRelay.create(B, { seed: 20261001 }); build(); requestAnimationFrame(frame);
+  }).catch(function (e) { $('#err').style.display = 'block'; $('#err').textContent = '자료를 읽지 못했어요: ' + e.message; });
+
+  HS.hook({ press: function (code) { var ev = new KeyboardEvent('keydown', { code: code }); dispatchEvent(ev); dispatchEvent(new KeyboardEvent('keyup', { code: code })); return E && E.state.path.slice(); },
+    place: press, advance: function (n) { for (var i = 0; i < (n || 1); i++) { clock.when = Math.min(clock.when, HS.audio.now() + 0.05); pump(); } },
+    probe: function () { return E && { path: E.state.path.slice(), by: E.state.by.slice(), rings: E.state.rings.map(function (r) { return r.places.length; }), options: E.options(), calls: HS.audio.calls.length }; },
+    engine: function () { return E; } });
+})();
+</script>
+</body>
+</html>
