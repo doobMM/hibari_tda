@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>hibari 지도</title>
+<!--
+  hibari 지도 — 종달새와 문어 (2026-10-01, 처음부터 다시)
+  사용자: "UI가 별로야. map 상에서 상호작용하는 게 나을 것 같아; 레퍼런스 없이 생각했을 때 지금까지의 나의 요구사항을 가장 잘 구현할 수 있는 형태를 from scratch"
+  지도    hibari 오른손 모듈을 한 장에 편다. 옆(칸) = 화음 — 베이스가 미→파→솔→라→시→도 로 오르는 hibari 의 계단(같은 베이스면 아래 성부가 늘 같다).
+          위아래(줄) = 선율 — 화음의 맨 윗음이자 단음(파4 … 라5). 그래서 모든 자리에서 hibari 의 화음·음만 난다.
+  길      모듈 32박 = 지도 위의 닫힌 길(박마다 한 점). 짝수 박은 그 칸의 화음, 홀수 박은 그 줄의 단음, 12–15·28–31 은 쉼(길이 점선).
+          처음 길 = 원곡. 종달새가 이 길을 32박마다 날면 원곡 오른손, 문어가 같은 길을 33박마다 돌면 원곡 왼손이다(불러올 때 음 하나하나 대조).
+  나      누른 채 움직이면 종달새가 손을 따라 날며 그 자리를 부르고, 지나간 박이 길에 칠해진다. 손을 떼면 다음 바퀴부터 그 길을 되풀이한다.
+          문어는 같은 길을 한 바퀴에 한 박씩 늦게 부른다 — 내 움직임이 시간차를 두고 모듈의 다른 박과 겹친다.
+  꽃      종달새와 문어가 같은 박에 같은 칸에서 부르면(만남) 그 칸에 꽃이 핀다. 원곡 길에서는 한 곡(32×33박) 동안 42번 — 대부분 두 반 구절이 포개지는 16박 늦음과 다시 나란해질 때(미리 잰 값).
+  소리는 누른 뒤에만. ?silent 무음(호출만 기록). 그린 길과 꽃은 이 브라우저에 남는다.
+  한계    H_1 고리는 쓰지 않았다(원곡 결에서 고리 41개가 8박 창에 평균 25.7개 켜져 고르는 신호가 되지 못한다 — canon.html 측정).
+-->
+<style>
+ :root{--bg:#f3f0e6;--paper:#fbf9f2;--ink:#22302a;--dim:#7d877f;--line:#d6d2c2;--green:#2f6b4f}
+ *{box-sizing:border-box}
+ html,body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans KR",sans-serif;-webkit-tap-highlight-color:transparent}
+ main{max-width:1000px;margin:0 auto;padding:10px 16px 24px}
+ header{display:flex;align-items:baseline;gap:10px;padding:4px 2px 6px}
+ header h1{font-size:13px;font-weight:500;color:var(--dim);letter-spacing:.08em;margin:0}
+ header a{margin-left:auto;font-size:12px;color:var(--dim);text-decoration:none}
+ #stage{position:relative;width:100%;height:min(78vh,720px);min-height:420px;border-radius:16px;overflow:hidden;background:var(--paper)}
+ #cv{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:crosshair}
+ #bar{position:absolute;left:50%;bottom:12px;transform:translateX(-50%);display:flex;gap:10px}
+ button{font:inherit;color:inherit;min-height:44px;padding:0 18px;white-space:nowrap;border:1px solid var(--line);border-radius:22px;background:var(--paper);cursor:pointer}
+ button.main{background:var(--ink);color:#fff;border-color:var(--ink)}
+ button:focus-visible{outline:2px solid var(--green);outline-offset:2px}
+ button[hidden]{display:none}
+ #tag{position:absolute;left:14px;top:10px;font-size:12.5px;color:var(--dim);pointer-events:none;max-width:55%}
+ #now{position:absolute;right:14px;top:8px;font-size:15px;pointer-events:none;text-align:right;line-height:1.45}
+ #now small{display:block;font-size:12px;color:var(--dim)}
+ #legend{font-size:12.5px;color:var(--dim);padding:8px 2px;line-height:1.6}
+</style>
+</head>
+<body>
+<main>
+ <header><h1>hibari 지도 — 종달새와 문어</h1><a href="./index.html">스케치</a></header>
+ <div id="stage">
+  <canvas id="cv" role="img" aria-label="hibari 의 화음(옆)과 선율(위아래)을 편 지도. 누른 채 움직이면 종달새가 그 자리를 부르며 길을 그리고, 문어가 같은 길을 한 바퀴에 한 박씩 늦게 따라 부른다."></canvas>
+  <div id="tag">예시</div>
+  <div id="now"></div>
+  <div id="bar"><button id="listen" class="main">▶ 예시 듣기</button><button id="play">직접 그리기</button><button id="undo" hidden>되돌리기</button><button id="reset" hidden>원곡으로</button></div>
+ </div>
+ <div id="legend">누른 채 움직이면 종달새가 그 자리를 불러요 — <b>옆으로</b> 가면 화음(베이스 미·파·솔·라·시·도), <b>위아래</b>로 가면 선율 · 지나간 박이 길에 칠해져 다음 바퀴부터 되풀이돼요 · 문어는 같은 길을 33박마다 불러서 한 바퀴에 한 박씩 늦어져요 · 둘이 같은 칸에서 같이 부르면 꽃 · 마우스·손가락·방향키 · ⌫ 되돌리기</div>
+</main>
+<script src="./common.js"></script>
+<script>
+(function () {
+  'use strict';
+  var $ = function (s) { return document.querySelector(s); };
+  var cv = $('#cv'), cx = cv.getContext('2d'), SEC = HS.SEC, TAU = Math.PI * 2, KEY = 'hibari.map.v1';
+  var ROWS = [65, 67, 69, 71, 72, 74, 76, 77, 79, 81], NR = ROWS.length, NC = 6, BASS = [4, 5, 7, 9, 11, 0];   // 줄 = 파4…라5 · 칸 = 베이스 미 파 솔 라 시 도
+  var LOW = [], ROLE = [], DUR = [], ORIG = [], Wp = [], undo = [], flowers = {};
+  var auto = true, sound = false, pressing = false, ptr = null, hover = null, kb = null, held = {}, touched = false, clock = null;
+  var onsets = [], ev = [], lastL = [], lastO = [], link = null, lark = { x: 0.5, y: 2 }, last = 0, G = null, lastCell = '', lastPluck = 0;
+
+  // ── 자리 → 소리 ───────────────────────────────────────────────────────────
+  function cellOf(p) { return [Math.max(0, Math.min(NC - 1, Math.floor(p.x))), Math.max(0, Math.min(NR - 1, Math.round(p.y)))]; }
+  function notesAt(b, p) {                                    // 박 b 의 몫(화음·단음·쉼) × 자리 p 의 칸·줄
+    if (ROLE[b] === 'r') return []; var c = cellOf(p), top = ROWS[c[1]], d = DUR[b];
+    if (ROLE[b] === 's') return [{ p: top, dur: d[0] }];
+    var out = LOW[c[0]].map(function (q, i) { return { p: q, dur: d[Math.min(i, d.length - 2)] }; });
+    if (LOW[c[0]].indexOf(top) < 0) out.push({ p: top, dur: d[d.length - 1] });
+    return out;
+  }
+  function sing(who, b, p, when) {
+    var ns = notesAt(b, p); if (!ns.length) return null; var chord = ns.length > 1, k = who ? 0.75 : 1;
+    if (sound) ns.forEach(function (n, i) { HS.audio.voice(n.p, when + i * 0.012, n.dur * SEC * 1.05, (chord ? 0.15 : 0.3) * k); });
+    (who ? lastO : lastL)[b] = when; ev.push({ who: who, b: b, when: when, ns: ns }); if (ev.length > 400) ev.splice(0, 150);
+    return cellOf(p).join(',');
+  }
+  // 박마다: 종달새는 박 t mod 32 를, 문어는 박 (t mod 33) − 1 을(0 이면 숨) — 같은 길 위에서
+  function onStep(t, when) {
+    onsets.push([t, when]); if (onsets.length > 8) onsets.shift();
+    var m = t % 32, j = t % 33 - 1;
+    if (auto) demo(t, m); else if (pressing) Wp[m] = { x: lark.x, y: lark.y };
+    var a = sing(0, m, Wp[m], when), b = j >= 0 ? sing(1, j, Wp[j], when) : null;
+    if (a && b) { link = when; if (a === b) bloom(a, when); }
+  }
+  function bloom(key, when) { var f = flowers[key] || (flowers[key] = { n: 0, t: 0 }); f.n++; f.t = when; if (!auto) save(); }
+
+  // ── 시각: 종달새 자리 u(연속 박), 문어 자리 v(숨 칸에선 제자리 → 한 바퀴에 한 박씩 밀린다) ─────────────
+  function U(now) { for (var i = onsets.length - 1; i >= 0; i--) if (onsets[i][1] <= now + 1e-4) return onsets[i][0] + Math.min(1, (now - onsets[i][1]) / SEC);
+    return onsets.length ? onsets[0][0] : 0; }
+  function V(u) { var q = u % 33; return q < 1 ? 0 : q - 1; }
+  function lagOf(u) { return Math.round(((u - V(u)) % 32 + 32) % 32); }
+  function along(x) { var i0 = Math.floor(x), f = x - i0, g = f * f * (3 - 2 * f), a = Wp[((i0 % 32) + 32) % 32], b = Wp[(((i0 + 1) % 32) + 32) % 32];
+    return { x: a.x + (b.x - a.x) * g, y: a.y + (b.y - a.y) * g }; }
+
+  // ── 예시: 원곡 한 바퀴 → 앞 구절을 새로 그림 → 두 바퀴 듣기 → 뒤 구절 → 듣기 → 원곡으로 ──────────────
+  function demo(t, m) {
+    var lap = Math.floor(t / 32), ph = lap % 7, half = ph === 1 ? 0 : ph === 4 ? 16 : -1;
+    if (ph === 6 && m === 0) Wp = ORIG.map(function (p) { return { x: p.x, y: p.y }; });
+    if (half >= 0 && m >= half && m < half + 12) { var k = m - half, c = (2 + Math.floor(k / 2) + lap) % NC;
+      Wp[m] = { x: c + (ROLE[m] === 'c' ? 0.5 : 0.85), y: Math.max(0, Math.min(NR - 1, Math.round(4.5 + 3.6 * Math.sin(TAU * k / 12 + lap)))) }; G = m; }
+    else G = null;
+    $('#tag').textContent = ph === 0 ? '예시 — 원곡 그대로' : G != null ? '예시 — 길을 새로 그리는 중' : ph === 6 ? '예시 — 원곡으로' : '예시 — 듣는 중';
+  }
+
+  // ── 조작 ─────────────────────────────────────────────────────────────────
+  function unlock() { HS.audio.wake(); sound = true; $('#listen').textContent = '듣는 중…'; $('#listen').disabled = true; if (!auto) $('#listen').hidden = true; }
+  // 넘겨받으면 내 지도는 원곡 길에서 시작한다(예시가 그린 길·꽃은 지운다)
+  function takeOver() { if (!auto) return; auto = false; G = null; Wp = ORIG.map(function (p) { return { x: p.x, y: p.y }; }); flowers = {}; undo = []; $('#tag').textContent = ''; $('#listen').hidden = $('#play').hidden = true; $('#undo').hidden = $('#reset').hidden = false; }
+  function stroke() { undo.push(Wp.map(function (p) { return { x: p.x, y: p.y }; })); if (undo.length > 40) undo.shift(); touched = true; }
+  function save() { try { localStorage.setItem(KEY, JSON.stringify({ w: Wp.map(function (p) { return [+p.x.toFixed(3), +p.y.toFixed(3)]; }), f: flowers })); } catch (x) {} }
+  function curStep() { return ((Math.floor(U(HS.audio.now())) % 32) + 32) % 32; }
+  function pluck(p, force) {                                  // 누른 그 호출 안에서 — 박을 기다리지 않는다
+    var c = cellOf(p), key = c.join(','); if (!force && key === lastCell) return; var col = !force && lastCell.split(',')[0] !== String(c[0]); lastCell = key;
+    var now = performance.now(); if (!sound || now - lastPluck < 60) return; lastPluck = now;
+    if (col || force) LOW[c[0]].forEach(function (q, i) { HS.audio.voice(q, HS.audio.now() + 0.005 + i * 0.02, 0.5, 0.07); });
+    HS.audio.voice(ROWS[c[1]], null, 0.45, 0.13);
+  }
+  function setLark(p, force) { lark = { x: Math.max(0, Math.min(NC - 0.001, p.x)), y: Math.max(0, Math.min(NR - 1, p.y)) }; if (pressing && !auto) Wp[curStep()] = { x: lark.x, y: lark.y }; pluck(lark, force); }
+  function toMap(e) { var r = cv.getBoundingClientRect(), L = layout(); return { x: (e.clientX - r.left - L.x0) / L.cw, y: NR - 0.5 - (e.clientY - r.top - L.y0) / L.rh }; }
+  cv.addEventListener('pointerdown', function (e) { e.preventDefault(); unlock(); takeOver(); try { cv.setPointerCapture(e.pointerId); } catch (x) {}
+    stroke(); pressing = true; ptr = e.pointerId; setLark(toMap(e), true); });
+  cv.addEventListener('pointermove', function (e) { hover = toMap(e); if (pressing && ptr === e.pointerId) setLark(hover); });
+  cv.addEventListener('pointerleave', function () { hover = null; });
+  function up(e) { if (ptr == null || (e && e.pointerId !== ptr)) return; ptr = null; pressing = !!kb; save(); }
+  cv.addEventListener('pointerup', up); cv.addEventListener('pointercancel', up);
+  var DIR = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, 1], ArrowDown: [0, -1] };
+  HS.keys(function (code) {
+    if (DIR[code]) { unlock(); takeOver(); if (!kb) { stroke(); var c = cellOf(lark); kb = { c: c[0], r: c[1] }; }
+      held[code] = 1; kb.c = Math.max(0, Math.min(NC - 1, kb.c + DIR[code][0])); kb.r = Math.max(0, Math.min(NR - 1, kb.r + DIR[code][1]));
+      pressing = true; setLark({ x: kb.c + 0.5, y: kb.r }, true); }
+    else if (code === 'Backspace') doUndo();
+  }, function (code) { if (!held[code]) return; delete held[code]; if (!Object.keys(held).length) { kb = null; if (ptr == null) { pressing = false; save(); } } });
+  function doUndo() { if (!undo.length) return; Wp = undo.pop(); save(); }
+  function doReset() { stroke(); Wp = ORIG.map(function (p) { return { x: p.x, y: p.y }; }); save(); }
+  $('#listen').addEventListener('click', unlock);
+  $('#play').addEventListener('click', function () { unlock(); takeOver(); });
+  $('#undo').addEventListener('click', doUndo);
+  $('#reset').addEventListener('click', doReset);
+
+  // ── 그리기 ───────────────────────────────────────────────────────────────
+  function layout() { var w = cv.clientWidth, h = cv.clientHeight, x0 = 46, x1 = w - 12, y0 = 86, y1 = h - 108;
+    return { w: w, h: h, x0: x0, y0: y0, cw: (x1 - x0) / NC, rh: (y1 - y0) / NR }; }
+  function hsl(pc, s, l, a) { return 'hsla(' + HS.hue(pc) + ',' + s + '%,' + l + '%,' + (a == null ? 1 : a) + ')'; }
+  function dot(x, y, r, col) { cx.fillStyle = col; cx.beginPath(); cx.arc(x, y, Math.max(0.5, r), 0, TAU); cx.fill(); }
+  function SX(L, p) { return [L.x0 + p.x * L.cw, L.y0 + (NR - 0.5 - p.y) * L.rh]; }
+  function drawLark(x, y, s, now) {
+    var r = s, f = Math.max(0, 1 - (now - Math.max.apply(null, lastL)) / 0.35), w = 0.55 + 0.9 * f;
+    cx.fillStyle = '#c98a12'; [-1, 1].forEach(function (sg) { cx.beginPath(); cx.moveTo(x - r * 0.2, y);
+      cx.quadraticCurveTo(x - r * 1.4, y + sg * r * 1.6 * w, x - r * 2.1, y + sg * r * 0.5 * w); cx.closePath(); cx.globalAlpha = 0.75; cx.fill(); cx.globalAlpha = 1; });
+    dot(x, y, r, '#c98a12'); cx.beginPath(); cx.moveTo(x + r * 0.85, y - r * 0.25); cx.lineTo(x + r * 1.6, y); cx.lineTo(x + r * 0.85, y + r * 0.25); cx.fillStyle = '#8a5a06'; cx.fill();
+    dot(x + r * 0.35, y - r * 0.3, r * 0.17, '#22302a');
+  }
+  function drawOcto(x, y, s, now) {
+    var r = s, f = Math.max(0, 1 - (now - Math.max.apply(null, lastO)) / 0.35);
+    cx.strokeStyle = '#d2556f'; cx.lineWidth = Math.max(1.5, r * 0.28); cx.lineCap = 'round';
+    for (var k = 0; k < 6; k++) { var bx = x + (k - 2.5) * r * 0.36; cx.beginPath(); cx.moveTo(bx, y + r * 0.5);
+      for (var q = 1; q <= 4; q++) cx.lineTo(bx + Math.sin(now * 3 + k + q * 0.9) * r * 0.32 * (1 + f), y + r * 0.5 + q * r * 0.42); cx.stroke(); }
+    dot(x, y, r * (1 + 0.15 * f), '#d2556f'); dot(x - r * 0.35, y - r * 0.12, r * 0.16, '#fff'); dot(x + r * 0.35, y - r * 0.12, r * 0.16, '#fff');
+    dot(x - r * 0.33, y - r * 0.1, r * 0.08, '#22302a'); dot(x + r * 0.37, y - r * 0.1, r * 0.08, '#22302a');
+  }
+  function flower(x, y, n, age, pc) {
+    var r = Math.min(13, 4 + 2.6 * Math.sqrt(n)) * (age < 0.5 ? 0.4 + 1.2 * age : 1);
+    for (var k = 0; k < 5; k++) { var a = k * TAU / 5 - Math.PI / 2; cx.beginPath(); cx.ellipse(x + Math.cos(a) * r * 0.55, y + Math.sin(a) * r * 0.55, r * 0.42, r * 0.26, a, 0, TAU);
+      cx.fillStyle = hsl(pc, 70, 78, 0.9); cx.fill(); }
+    dot(x, y, r * 0.24, '#f2c14e');
+  }
+  function draw(now, dt) {
+    var L = layout(), u = U(now), v = V(u), m = ((Math.floor(u) % 32) + 32) % 32, lag = lagOf(u), i, b;
+    cx.clearRect(0, 0, L.w, L.h);
+    // 칸(화음) · 줄(선율)
+    cx.textAlign = 'center';
+    for (i = 0; i < NC; i++) { var X = L.x0 + i * L.cw, hv = hover && cellOf(hover)[0] === i;
+      cx.fillStyle = hsl(BASS[i], 45, 70, hv ? 0.2 : i % 2 ? 0.09 : 0.14); cx.fillRect(X, L.y0, L.cw, NR * L.rh);
+      cx.fillStyle = '#22302a'; cx.font = '600 16px -apple-system,"Noto Sans KR",sans-serif'; cx.fillText(HS.noteName(LOW[i][0]).replace(/\d+$/, ''), X + L.cw / 2, L.y0 + NR * L.rh + 20);
+      cx.fillStyle = '#7d877f'; cx.font = '11px -apple-system,"Noto Sans KR",sans-serif'; cx.fillText(LOW[i].map(function (q) { return HS.noteName(q).replace(/\d+$/, ''); }).join(' '), X + L.cw / 2, L.y0 + NR * L.rh + 35); }
+    cx.textAlign = 'right'; cx.font = '11px -apple-system,"Noto Sans KR",sans-serif';
+    for (i = 0; i < NR; i++) { var Y = L.y0 + (NR - 0.5 - i) * L.rh, hr = hover && cellOf(hover)[1] === i;
+      cx.strokeStyle = hr ? 'rgba(34,48,42,0.35)' : 'rgba(34,48,42,0.12)'; cx.setLineDash([2, 5]); cx.lineWidth = 1; cx.beginPath(); cx.moveTo(L.x0, Y); cx.lineTo(L.x0 + NC * L.cw, Y); cx.stroke(); cx.setLineDash([]);
+      cx.fillStyle = hr ? '#22302a' : '#7d877f'; cx.fillText(HS.noteName(ROWS[i]), L.x0 - 8, Y + 4); }
+    // 꽃 — 만남이 남긴 것
+    Object.keys(flowers).forEach(function (key) { var c = key.split(',').map(Number), f = flowers[key], q = SX(L, { x: c[0] + 0.5, y: c[1] });
+      flower(q[0], q[1], f.n, Math.max(0, now - f.t), ROWS[c[1]] % 12); });
+    // 모듈 띠 — 32박(큰 칸 화음 · 작은 칸 단음 · 빈칸 쉼), 바꾼 박은 초록
+    var bw = (NC * L.cw) / 32, j = ((Math.floor(v) % 32) + 32) % 32;
+    cx.textAlign = 'right'; cx.fillStyle = '#7d877f'; cx.font = '11px -apple-system,"Noto Sans KR",sans-serif'; cx.fillText('32박', L.x0 - 8, L.y0 - 16);
+    for (b = 0; b < 32; b++) { if (ROLE[b] === 'r') continue; var hh = ROLE[b] === 'c' ? 12 : 7, ch = Math.abs(Wp[b].x - ORIG[b].x) > 0.01 || Math.abs(Wp[b].y - ORIG[b].y) > 0.01;
+      cx.fillStyle = b === m ? '#c98a12' : b === j ? '#d2556f' : ch ? 'rgba(47,107,79,0.55)' : 'rgba(34,48,42,0.18)'; cx.fillRect(L.x0 + b * bw + 1, L.y0 - 14 - hh, bw - 2, hh); }
+    // 길 — 32박을 지나는 닫힌 선 (쉼 구간은 점선)
+    var P = Wp.map(function (p) { return SX(L, p); }); cx.lineJoin = cx.lineCap = 'round';
+    for (b = 0; b < 32; b++) { var p1 = P[b], p2 = P[(b + 1) % 32], rest = ROLE[b] === 'r' || ROLE[(b + 1) % 32] === 'r';
+      cx.beginPath(); cx.moveTo(p1[0], p1[1]); cx.lineTo(p2[0], p2[1]);
+      cx.strokeStyle = rest ? 'rgba(34,48,42,0.16)' : 'rgba(34,48,42,0.38)'; cx.lineWidth = rest ? 1.2 : 2.6; cx.setLineDash(rest ? [3, 6] : []); cx.stroke(); }
+    cx.setLineDash([]);
+    for (b = 0; b < 32; b++) { if (ROLE[b] === 'r') continue; var q = P[b], c2 = cellOf(Wp[b]), big = ROLE[b] === 'c';
+      if (big) dot(q[0], q[1], 8.5, 'rgba(251,249,242,0.95)'); dot(q[0], q[1], big ? 6.5 : 4, hsl(ROWS[c2[1]] % 12, 58, big ? 52 : 46));
+      [[lastL[b], '201,138,18'], [lastO[b], '210,85,111']].forEach(function (z) { var a = 1 - (now - z[0]) / 0.7; if (!(a > 0) || now < z[0]) return;
+        cx.beginPath(); cx.arc(q[0], q[1], 8 + 12 * (1 - a), 0, TAU); cx.strokeStyle = 'rgba(' + z[1] + ',' + a * 0.8 + ')'; cx.lineWidth = 2; cx.stroke(); }); }
+    // 종달새 · 문어 + 같은 박에 함께 부를 때의 실
+    var tgt = pressing && !auto ? lark : along(u); if (!(pressing && !auto)) { lark.x += (tgt.x - lark.x) * (1 - Math.exp(-dt * 18)); lark.y += (tgt.y - lark.y) * (1 - Math.exp(-dt * 18)); }
+    var lp = SX(L, lark), op = SX(L, along(v)), s = Math.max(9, Math.min(14, L.cw * 0.14));
+    if (link != null && now >= link && now - link < 0.45) { cx.strokeStyle = 'rgba(34,48,42,' + (0.45 - (now - link)) + ')'; cx.lineWidth = 1.2; cx.beginPath(); cx.moveTo(lp[0], lp[1]); cx.lineTo(op[0], op[1]); cx.stroke(); }
+    drawOcto(op[0], op[1], s * 1.05, now); drawLark(lp[0], lp[1], s, now);
+    if (G != null) { cx.beginPath(); cx.arc(lp[0] + 16, lp[1] + 14, 10, 0, TAU); cx.fillStyle = 'rgba(34,48,42,0.12)'; cx.fill(); cx.strokeStyle = 'rgba(34,48,42,0.4)'; cx.lineWidth = 1.5; cx.stroke(); }
+    if (!touched) { var hx = L.x0 + NC * L.cw / 2, hy = L.y0 + 22; cx.font = '15px -apple-system,"Noto Sans KR",sans-serif'; var tw = cx.measureText('누른 채 움직여 보세요').width + 28;
+      cx.fillStyle = 'rgba(34,48,42,0.78)'; cx.beginPath(); cx.roundRect ? cx.roundRect(hx - tw / 2, hy - 16, tw, 30, 15) : cx.rect(hx - tw / 2, hy - 16, tw, 30); cx.fill();
+      cx.textAlign = 'center'; cx.fillStyle = '#fff'; cx.fillText('누른 채 움직여 보세요', hx, hy + 4); }
+    for (i = ev.length - 1; i >= 0; i--) if (!ev[i].who && ev[i].when <= now) {
+      var nf = Object.keys(flowers).reduce(function (a, k) { return a + flowers[k].n; }, 0);
+      $('#now').innerHTML = ev[i].ns.map(function (n) { return HS.noteName(n.p); }).join(' ') + '<small>문어 ' + (lag ? lag + '박 늦게' : '나란히') + ' · 꽃 ' + nf + '</small>'; break; }
+  }
+  function frame(t) {
+    try { var dt = last ? Math.min(0.05, (t - last) / 1000) : 0; last = t;
+      var dpr = Math.min(2, devicePixelRatio || 1), w = cv.clientWidth, h = cv.clientHeight; if (!w || !h || !LOW.length) return;
+      if (cv.width !== Math.round(w * dpr) || cv.height !== Math.round(h * dpr)) { cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr); }
+      cx.setTransform(dpr, 0, 0, dpr, 0, 0); if (pressing && !auto) Wp[curStep()] = { x: lark.x, y: lark.y };
+      draw(HS.audio.now(), dt);
+    } finally { requestAnimationFrame(frame); }
+  }
+
+  // ── 자료: 오른손 모듈 → 칸의 아래 성부 · 박의 몫과 길이 · 원곡 길 ─────────────────────────────
+  HS.load().then(function (D) {
+    var S = HS.derive(D), st = S.mod[0].steps, row = function (p) { return ROWS.indexOf(p); }, ok = true, colAt = -1;
+    for (var t = 0; t < 32; t++) { var ns = st[t].map(function (li) { return S.notes[li]; }).sort(function (a, b) { return a.pitch - b.pitch; });
+      lastL.push(-9); lastO.push(-9); ROLE.push(!ns.length ? 'r' : ns.length > 1 ? 'c' : 's'); DUR.push(ns.map(function (n) { return n.dur; }));
+      if (!ns.length) { ORIG.push(null); continue; }
+      var top = ns[ns.length - 1].pitch; if (row(top) < 0) ok = false;
+      if (ns.length > 1) { colAt = BASS.indexOf(ns[0].pitch % 12); var low = ns.slice(0, -1).map(function (n) { return n.pitch; });
+        if (!LOW[colAt]) LOW[colAt] = low; else if (String(LOW[colAt]) !== String(low)) ok = false;
+        ORIG.push({ x: colAt + 0.5, y: row(top) }); } else ORIG.push({ x: colAt + 0.85, y: row(top) }); }
+    for (t = 0; t < 32; t++) if (!ORIG[t]) { var a = t, z = t; while (!ORIG[(a + 31) % 32]) a--; while (!ORIG[(z + 1) % 32]) z++;   // 쉼 = 앞뒤 점 사이를 잇는다
+      var A = ORIG[(a + 31) % 32], B = ORIG[(z + 1) % 32], f = (t - a + 1) / (z - a + 2); ORIG[t] = { x: A.x + (B.x - A.x) * f, y: A.y + (B.y - A.y) * f, rest: 1 }; }
+    // 두 손이 같은 무늬인지: 지도에서 다시 낸 음 = 원곡 음
+    for (t = 0; t < 32; t++) { var want = st[t].map(function (li) { return S.notes[li].pitch; }).sort(function (x, y) { return x - y; }).join(),
+      got = notesAt(t, ORIG[t]).map(function (n) { return n.p; }).sort(function (x, y) { return x - y; }).join(); if (want !== got) ok = false; }
+    if (!ok || LOW.length !== NC) console.warn('지도가 원곡을 그대로 다시 내지 못한다');
+    Wp = ORIG.map(function (p) { return { x: p.x, y: p.y }; });
+    try { var sv = JSON.parse(localStorage.getItem(KEY) || 'null'); if (sv && Array.isArray(sv.w) && sv.w.length === 32) {
+      Wp = sv.w.map(function (p) { return { x: Math.max(0, Math.min(NC - 0.001, +p[0] || 0)), y: Math.max(0, Math.min(NR - 1, +p[1] || 0)) }; });
+      if (sv.f && typeof sv.f === 'object') Object.keys(sv.f).forEach(function (k) { if (/^\d,\d$/.test(k)) flowers[k] = { n: Math.max(1, +sv.f[k].n || 1), t: -99 }; });
+      auto = false; touched = true; $('#tag').textContent = '지난번에 그린 길'; $('#listen').textContent = '▶ 듣기'; $('#play').hidden = true; $('#undo').hidden = $('#reset').hidden = false; } } catch (x) {}
+    clock = HS.clock(onStep); clock.start();
+    document.addEventListener('visibilitychange', function () { if (!document.hidden) clock.start(); });
+    requestAnimationFrame(frame);
+  }).catch(function (e) { $('#tag').textContent = '자료를 읽지 못했어요: ' + e.message; });
+
+  HS.hook({
+    probe: function () { var u = U(HS.audio.now()); return { auto: auto, sound: sound, step: clock ? clock.step : 0, lag: lagOf(u), pressing: pressing,
+      flowers: Object.keys(flowers).reduce(function (a, k) { return a + flowers[k].n; }, 0), calls: HS.audio.calls.length, route: Wp.map(function (p) { return [p.x, p.y]; }) }; },
+    take: function () { takeOver(); }, unlock: unlock, stop: function () { clock.stop(); }, start: function () { clock.start(); },
+    press: function (x, y) { unlock(); takeOver(); stroke(); pressing = true; setLark({ x: x, y: y }, true); }, move: function (x, y) { setLark({ x: x, y: y }); },
+    release: function () { pressing = false; save(); }, advance: function (n) { clock.advance(n); }, undo: doUndo, reset: doReset,
+    clearFlowers: function () { flowers = {}; }, events: function () { return ev; }, notesAt: notesAt, orig: function () { return ORIG; }
+  });
+})();
+</script>
+</body>
+</html>
