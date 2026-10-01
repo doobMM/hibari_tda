@@ -13,3 +13,4 @@
 - 2026-10-01: `project_sketches_1001.md` — 살리기 세 스케치(sketch/ A 흐름 그물·B 두 바퀴·C 고리 합주) 배포 4ad3d29. ⛔ 거절(판 12: 한 번 누름이 연쇄를 낳는다 — CLAUDE.md 판 12 규칙). 정본 intra 는 순서를 담지 않는다.
 - 2026-10-01: `project_relay_clock_1001.md` — 잇기(③ 주고받기) 모듈 시계 판. 몸 위 그물 1안은 판 13 거절. 큰 구멍은 악보 주기 32(PH 아님), 검증 8/9(Q8 실패).
 - 2026-10-01: `project_metro_greybox_1001.md` — hibari 노선도(Mini Metro 뼈대) 회색 시제품. 판 14 거절(모듈 시계 '재미가 없어') 뒤 규칙·시각 먼저.
+- 2026-10-01: `project_swarm_1001.md` — hibari 무리(particle-life, 종달새를 직접 움직이며 음악). 노선도는 판 15 거절.

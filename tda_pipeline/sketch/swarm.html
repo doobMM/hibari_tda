@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>hibari 무리</title>
+<!--
+  hibari 무리 — particle-life 위에서 직접 움직이며 음악 만들기 (2026-10-01)
+  사용자: "플레이어가 직접 움직이면서 음악을 생성" · "이런 식의 시각적 구현(가닥 당기고 밀기 · 끌림 행렬에서 모양이 떠오름 …)이 내가 음악을 만들기 위해 하고 싶은 상호작용" ·
+          "플레이하는 모습을 예시로, 음악까지 들리게".
+  입자   hibari 의 일곱 음(도레미파솔라시). 음높이는 그 음이름이 hibari 에서 나오는 높이 중 하나.
+  끌림   a 가 b 를 끌어당기는 세기 = hibari(오른손)에서 a 가 울린 다음 박에 b 가 울린 횟수(가장 많은 쌍 = 1) − 0.25. 그래서 미는 파를 쫓는다.
+         (연구의 정본 intra 는 대칭이라 순서가 없다 — 여기 끌림은 모듈의 박 순서에서 센 것이다.)
+  나     종달새 하나. 마우스·손가락을 따라가고(방향키도 된다), 가까운 입자를 살짝 끌어당긴다.
+  소리   hibari 의 8분음표(66 BPM). 짝수 박 = 종달새 둘레의 가장 가까운 입자들로 화음(서로 다른 음 넷까지), 홀수 박 = 가장 가까운 입자 하나,
+         모듈의 쉼 자리(12–15 · 28–31)는 쉰다. 아무것도 안 건드리면 예시 비행이 돈다. 소리는 누른 뒤에만 난다. ?silent 무음.
+-->
+<style>
+ :root{--bg:#f3f0e6;--paper:#fbf9f2;--ink:#22302a;--dim:#7d877f;--line:#d6d2c2;--green:#2f6b4f}
+ *{box-sizing:border-box}
+ html,body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans KR",sans-serif;-webkit-tap-highlight-color:transparent}
+ main{max-width:1000px;margin:0 auto;padding:10px 16px 24px}
+ header{display:flex;align-items:baseline;gap:10px;padding:4px 2px 6px}
+ header h1{font-size:13px;font-weight:500;color:var(--dim);letter-spacing:.08em;margin:0}
+ header a{margin-left:auto;font-size:12px;color:var(--dim);text-decoration:none}
+ #stage{position:relative;width:100%;height:min(72vh,680px);min-height:360px;border-radius:16px;overflow:hidden;background:#F6F3EA}
+ #cv{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:none}
+ #start{position:absolute;left:50%;bottom:18px;transform:translateX(-50%);display:flex;gap:10px}
+ button{font:inherit;color:inherit;min-height:44px;padding:0 18px;white-space:nowrap;border:1px solid var(--line);border-radius:22px;background:var(--paper);cursor:pointer}
+ button.main{background:var(--ink);color:#fff;border-color:var(--ink)}
+ button:focus-visible{outline:2px solid var(--green);outline-offset:2px}
+ #tag{position:absolute;left:16px;top:12px;font-size:13px;color:var(--dim);pointer-events:none}
+ #now{position:absolute;right:16px;top:12px;font-size:15px;pointer-events:none;text-align:right}
+ #keys{display:flex;flex-wrap:wrap;gap:12px;padding:10px 2px 2px;font-size:13px;color:var(--dim)}
+ #keys span{display:inline-flex;align-items:center;gap:6px}
+ #keys i{display:inline-block;width:12px;height:12px;border-radius:50%}
+ #legend{font-size:12.5px;color:var(--dim);padding:6px 2px;line-height:1.6}
+</style>
+</head>
+<body>
+<main>
+ <header><h1>hibari 무리</h1><a href="./index.html">스케치</a></header>
+ <div id="stage">
+  <canvas id="cv"></canvas>
+  <div id="tag">예시 비행 중</div>
+  <div id="now"></div>
+  <div id="start"><button id="listen" class="main">▶ 예시 듣기</button><button id="play">직접 날기</button></div>
+ </div>
+ <div id="keys"></div>
+ <div id="legend">종달새를 움직이면 가까이 모인 음이 hibari 의 박으로 노래해요 · 마우스·손가락·방향키 · 같은 색끼리, 그리고 hibari 에서 이어지는 음끼리 서로 쫓아다녀요</div>
+</main>
+<script src="./common.js"></script>
+<script>
+(function () {
+  'use strict';
+  var $ = function (s) { return document.querySelector(s); };
+  var cv = $('#cv'), cx = cv.getContext('2d'), stage = $('#stage');
+  var PCS = [0, 2, 4, 5, 7, 9, 11], NAME = ['도', '레', '미', '파', '솔', '라', '시'], K = 7;
+  var COL = PCS.map(function (pc) { return 'hsl(' + HS.hue(pc) + ',58%,' + (pc === 7 ? 40 : 47) + '%)'; });
+  var EIGHTH = 60 / 66 / 2, RMAX = 78, BETA = 0.3, FORCE = 9, HALF = 0.05, HALO = 104, PULL = 0.38;
+  var A = [], pitches = [], P = [], W = 0, H = 0, lark = { x: 0, y: 0, vx: 0, vy: 0, tx: 0, ty: 0 }, auto = true, sound = false, keys = {}, clock = { t: 0, when: 0 }, lit = [], last = 0, demoT = 0;
+
+  // ── hibari 에서 끌림과 음높이를 센다 ───────────────────────────────────
+  function load(N) {
+    var at = {}, i, a, b; for (i = 0; i < N.node.length; i++) if (N.voice[i] === 0) (at[N.node[i]] = at[N.node[i]] || []).push(N.pitch[i]);
+    var C = []; for (a = 0; a < K; a++) { C.push(new Array(K).fill(0)); pitches.push([]); }
+    var steps = Object.keys(at).map(Number).sort(function (x, y) { return x - y; });
+    steps.forEach(function (t) { at[t].forEach(function (p) { var k = PCS.indexOf(p % 12); if (k >= 0 && pitches[k].indexOf(p) < 0) pitches[k].push(p); }); });
+    for (i = 0; i + 1 < steps.length; i++) if (steps[i + 1] - steps[i] <= 2)
+      at[steps[i]].forEach(function (p) { at[steps[i + 1]].forEach(function (q) { var x = PCS.indexOf(p % 12), y = PCS.indexOf(q % 12); if (x >= 0 && y >= 0) C[x][y]++; }); });
+    var m = 0; C.forEach(function (r) { r.forEach(function (v) { m = Math.max(m, v); }); });
+    for (a = 0; a < K; a++) { A.push([]); for (b = 0; b < K; b++) A[a].push(a === b ? 0.35 : C[a][b] / m * 1.25 - 0.25); }
+  }
+  function seed() {
+    W = cv.clientWidth; H = cv.clientHeight; HALO = Math.max(64, Math.min(104, Math.min(W, H) * 0.17)); var n = Math.round(Math.min(700, W * H / 900)), rng = HS.rng(20261001);
+    P = []; for (var i = 0; i < n; i++) { var s = i % K; P.push({ x: rng() * W, y: rng() * H, vx: 0, vy: 0, s: s, p: pitches[s][rng() * pitches[s].length | 0], lit: -9 }); }
+    lark.x = lark.tx = W * 0.5; lark.y = lark.ty = H * 0.5;
+  }
+
+  // ── 물리 (particle-life: 가까우면 밀고, 끌림 행렬만큼 당긴다) ────────────────
+  function physics(dt) {
+    var cs = RMAX, cols = Math.max(1, Math.floor(W / cs)), rows = Math.max(1, Math.floor(H / cs)), grid = new Array(cols * rows), i, fr = Math.pow(0.5, dt / HALF);
+    for (i = 0; i < grid.length; i++) grid[i] = [];
+    function gi(q) { return Math.min(rows - 1, Math.floor(q.y / H * rows)) * cols + Math.min(cols - 1, Math.floor(q.x / W * cols)); }
+    P.forEach(function (q, k) { grid[gi(q)].push(k); });
+    for (i = 0; i < P.length; i++) { var q = P[i], gx = Math.min(cols - 1, Math.floor(q.x / W * cols)), gy = Math.min(rows - 1, Math.floor(q.y / H * rows)), fx = 0, fy = 0;
+      for (var oy = -1; oy <= 1; oy++) for (var ox = -1; ox <= 1; ox++) { var cell = grid[((gy + oy + rows) % rows) * cols + ((gx + ox + cols) % cols)];
+        for (var c = 0; c < cell.length; c++) { var o = P[cell[c]]; if (o === q) continue;
+          var dx = o.x - q.x, dy = o.y - q.y; if (dx > W / 2) dx -= W; else if (dx < -W / 2) dx += W; if (dy > H / 2) dy -= H; else if (dy < -H / 2) dy += H;
+          var d = Math.hypot(dx, dy); if (d <= 0 || d >= RMAX) continue; var x = d / RMAX, f = x < BETA ? x / BETA - 1 : A[q.s][o.s] * (1 - Math.abs(2 * x - 1 - BETA) / (1 - BETA));
+          fx += dx / d * f; fy += dy / d * f; } }
+      var lx = lark.x - q.x, ly = lark.y - q.y, ld = Math.hypot(lx, ly);                       // 종달새가 살짝 끌어당긴다(너무 가까우면 민다)
+      if (ld > 0 && ld < HALO * 1.5) { var g = ld < 26 ? -1 : PULL * (1 - ld / (HALO * 1.5)); fx += lx / ld * g; fy += ly / ld * g; }
+      q.vx = q.vx * fr + fx * RMAX * FORCE * dt; q.vy = q.vy * fr + fy * RMAX * FORCE * dt;
+      var sp = Math.hypot(q.vx, q.vy); if (sp > 400) { q.vx *= 400 / sp; q.vy *= 400 / sp; } }
+    P.forEach(function (q) { q.x = (((q.x + q.vx * dt) % W) + W) % W; q.y = (((q.y + q.vy * dt) % H) + H) % H; });
+  }
+  function fly(dt, now) {
+    if (auto) { demoT += dt;                                                            // 예시 비행: 2.6초마다 무리 하나를 골라 그쪽으로, 가는 길은 살짝 흔들리게
+      if (!fly.goal || demoT > fly.next) { var far = P.filter(function (q) { return Math.hypot(q.x - lark.x, q.y - lark.y) > HALO * 1.6; }); fly.goal = far.length ? far[(demoT * 7919 | 0) % far.length] : null; fly.next = demoT + 2.6; }
+      if (fly.goal) { lark.tx = fly.goal.x + Math.sin(demoT * 2.1) * 30; lark.ty = fly.goal.y + Math.cos(demoT * 1.7) * 30; } }
+    else { var kx = (keys.ArrowRight ? 1 : 0) - (keys.ArrowLeft ? 1 : 0), ky = (keys.ArrowDown ? 1 : 0) - (keys.ArrowUp ? 1 : 0);
+      if (kx || ky) { lark.tx = Math.max(10, Math.min(W - 10, lark.tx + kx * 260 * dt)); lark.ty = Math.max(10, Math.min(H - 10, lark.ty + ky * 260 * dt)); } }
+    var ax = (lark.tx - lark.x) * 40 - lark.vx * 11, ay = (lark.ty - lark.y) * 40 - lark.vy * 11;
+    lark.vx += ax * dt; lark.vy += ay * dt; lark.x += lark.vx * dt; lark.y += lark.vy * dt;
+  }
+
+  // ── 소리: hibari 의 박 ─────────────────────────────────────────────────
+  function near() { return P.map(function (q) { var d = Math.hypot(q.x - lark.x, q.y - lark.y); return [d, q]; }).filter(function (e) { return e[0] < HALO; }).sort(function (a, b) { return a[0] - b[0]; }); }
+  function beat(when) {
+    var pos = clock.t % 32, rest = (pos >= 12 && pos < 16) || pos >= 28, list = near(), out = [], seen = {};
+    clock.t++; if (rest || !list.length) return;
+    if (pos % 2 === 0) { for (var i = 0; i < list.length && out.length < 4; i++) if (!seen[list[i][1].p]) { seen[list[i][1].p] = 1; out.push(list[i]); } }
+    else out.push(list[0]);
+    out.forEach(function (e, k) { var q = e[1], v = (pos % 2 === 0 ? 0.22 : 0.3) * (1 - 0.5 * e[0] / HALO);
+      if (sound) HS.audio.voice(q.p, when + k * 0.012, pos % 2 === 0 ? 1.1 : 0.7, v);
+      q.lit = when; lit.push([q, when]); });
+    if (lit.length > 60) lit.splice(0, lit.length - 60);
+    $('#now').textContent = out.map(function (e) { return NAME[e[1].s]; }).join(' ');
+  }
+  function pump() { var now = HS.audio.now(); if (clock.when < now - 0.3) clock.when = now + 0.03; while (clock.when < now + 0.1) { beat(clock.when); clock.when += EIGHTH; } }
+  setInterval(pump, 25);
+
+  // ── 그리기 ─────────────────────────────────────────────────────────────
+  function resize() { var dpr = Math.min(2, devicePixelRatio || 1), w = cv.clientWidth, h = cv.clientHeight;
+    if (cv.width !== Math.round(w * dpr)) { cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr); } cx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    if (!w || !h) return false; if (!P.length || !W || !H) { seed(); return true; }
+    if (Math.abs(w - W) > 1 || Math.abs(h - H) > 1) { var sx = w / W, sy = h / H; P.forEach(function (q) { q.x *= sx; q.y *= sy; }); lark.x *= sx; lark.y *= sy; lark.tx *= sx; lark.ty *= sy; W = w; H = h; } return true; }
+  function paint() {
+    var t = HS.audio.now(); cx.clearRect(0, 0, W, H);
+    cx.beginPath(); cx.arc(lark.x, lark.y, HALO, 0, 7); cx.fillStyle = 'rgba(34,48,42,0.035)'; cx.fill(); cx.strokeStyle = 'rgba(34,48,42,0.12)'; cx.lineWidth = 1; cx.stroke();
+    lit.forEach(function (e) { var a = 1 - (t - e[1]) / 0.6; if (a <= 0 || t < e[1]) return; cx.beginPath(); cx.moveTo(lark.x, lark.y); cx.lineTo(e[0].x, e[0].y);
+      cx.strokeStyle = COL[e[0].s]; cx.globalAlpha = 0.5 * a; cx.lineWidth = 1.6; cx.stroke(); cx.globalAlpha = 1; });
+    P.forEach(function (q) { var a = q.lit <= t ? Math.max(0, 1 - (t - q.lit) / 0.6) : 0; cx.beginPath(); cx.arc(q.x, q.y, 2.6 + 4 * a, 0, 7); cx.fillStyle = COL[q.s]; cx.fill();
+      if (a > 0) { cx.beginPath(); cx.arc(q.x, q.y, 6 + 14 * (1 - a), 0, 7); cx.strokeStyle = COL[q.s]; cx.globalAlpha = a * 0.6; cx.lineWidth = 1.5; cx.stroke(); cx.globalAlpha = 1; } });
+    var ang = Math.atan2(lark.vy, lark.vx), flap = Math.sin(t * 9) * 0.5;                    // 종달새
+    cx.save(); cx.translate(lark.x, lark.y); cx.rotate(ang); cx.fillStyle = '#2C2C2A';
+    cx.beginPath(); cx.ellipse(0, 0, 11, 6, 0, 0, 7); cx.fill(); cx.beginPath(); cx.arc(9, -2, 4.5, 0, 7); cx.fill();
+    cx.beginPath(); cx.moveTo(13, -2); cx.lineTo(19, -1); cx.lineTo(13, 0.5); cx.fillStyle = '#BA7517'; cx.fill();
+    cx.fillStyle = '#444441'; cx.beginPath(); cx.moveTo(-3, -1); cx.lineTo(3, -14 * (0.6 + flap)); cx.lineTo(7, -1); cx.fill();
+    cx.beginPath(); cx.moveTo(-10, 0); cx.lineTo(-18, -4); cx.lineTo(-17, 4); cx.fillStyle = '#2C2C2A'; cx.fill(); cx.restore();
+  }
+  function frame(now) { try { var dt = last ? Math.min(0.05, (now - last) / 1000) : 0; last = now; if (!resize()) return; fly(dt, now); physics(dt); paint(); } finally { requestAnimationFrame(frame); } }
+
+  // ── 조작 ───────────────────────────────────────────────────────────────
+  function takeOver() { if (!auto) return; auto = false; $('#tag').textContent = ''; $('#start').style.display = 'none'; }
+  function unlock() { HS.audio.wake(); sound = true; }   // ?silent 이면 HS.audio 가 소리를 내지 않고 호출만 센다
+  cv.addEventListener('pointermove', function (e) { if (auto && e.pointerType === 'mouse' && !cv.dataset.armed) return; var r = cv.getBoundingClientRect(); lark.tx = e.clientX - r.left; lark.ty = e.clientY - r.top; });
+  cv.addEventListener('pointerdown', function (e) { unlock(); cv.dataset.armed = 1; takeOver(); var r = cv.getBoundingClientRect(); lark.tx = e.clientX - r.left; lark.ty = e.clientY - r.top; });
+  $('#listen').addEventListener('click', function () { unlock(); $('#listen').textContent = '듣는 중…'; $('#listen').disabled = true; });
+  $('#play').addEventListener('click', function () { unlock(); cv.dataset.armed = 1; takeOver(); });
+  addEventListener('keydown', function (e) { if (/^Arrow/.test(e.code)) { e.preventDefault(); keys[e.code] = 1; unlock(); if (auto) { lark.tx = lark.x; lark.ty = lark.y; } cv.dataset.armed = 1; takeOver(); } });
+  addEventListener('keyup', function (e) { delete keys[e.code]; });
+
+  var box = $('#keys'); NAME.forEach(function (n, k) { var s = document.createElement('span'), i = document.createElement('i'); i.style.background = COL[k]; s.appendChild(i); s.appendChild(document.createTextNode(n)); box.appendChild(s); });
+  fetch('../shape/data/hibari.notes.json').then(function (r) { return r.json(); }).then(function (N) { load(N); requestAnimationFrame(frame); })
+    .catch(function (e) { $('#tag').textContent = '자료를 읽지 못했어요: ' + e.message; });
+  HS.hook({ probe: function () { return { auto: auto, sound: sound, n: P.length, calls: HS.audio.calls.length, near: near().length, A: A.map(function (r) { return r.map(function (v) { return +v.toFixed(2); }); }) }; },
+    take: function () { cv.dataset.armed = 1; takeOver(); }, moveTo: function (x, y) { lark.tx = x; lark.ty = y; } });
+})();
+</script>
+</body>
+</html>
