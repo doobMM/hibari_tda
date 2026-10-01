@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>hibari 가닥</title>
+<!--
+  hibari 가닥 — differential-line 위에서 직접 그리고 당기며 음악 만들기 (2026-10-01)
+  사용자: "가닥, 접기도 구현해보자. 지금 버전(무리)은 map·territory 처럼 작용해서 개입할 여지가 많지 않다".
+  가닥   이웃끼리 당기고 남남끼리 미는 한 가닥(differential-line). 저절로 조금씩 자라며 굽고 접힌다.
+  그리기 머리가 마우스·손가락·방향키를 따라간다. 22px 갈 때마다 음 하나가 붙는다 — 음높이 = 그때의 높이(hibari 오른손에 나오는 음높이 15개를 위→아래로).
+  당기기 가닥의 몸 아무 데나 눌러 끌면 그 자리를 잡아당긴다. 접혀서 가닥끼리 닿은 음들은 함께 운다(화음).
+  소리   hibari 의 8분음표(66 BPM). 재생 머리가 꼬리 → 머리 순서로 음을 하나씩 지난다: 짝수 박 = 그 음 + 그 음에 닿아 있는 음들(셋까지), 홀수 박 = 그 음만.
+         음은 48개까지(넘으면 꼬리부터 잊는다). 들어오면 예시 그리기가 돈다. 소리는 누른 뒤에만. ?silent 무음.
+-->
+<style>
+ :root{--bg:#f3f0e6;--paper:#fbf9f2;--ink:#22302a;--dim:#7d877f;--line:#d6d2c2;--green:#2f6b4f}
+ *{box-sizing:border-box}
+ html,body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans KR",sans-serif;-webkit-tap-highlight-color:transparent}
+ main{max-width:1000px;margin:0 auto;padding:10px 16px 24px}
+ header{display:flex;align-items:baseline;gap:10px;padding:4px 2px 6px}
+ header h1{font-size:13px;font-weight:500;color:var(--dim);letter-spacing:.08em;margin:0}
+ header a{margin-left:auto;font-size:12px;color:var(--dim);text-decoration:none}
+ #stage{position:relative;width:100%;height:min(72vh,680px);min-height:360px;border-radius:16px;overflow:hidden;background:#F6F3EA}
+ #cv{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
+ #start{position:absolute;left:50%;bottom:18px;transform:translateX(-50%);display:flex;gap:10px}
+ button{font:inherit;color:inherit;min-height:44px;padding:0 18px;white-space:nowrap;border:1px solid var(--line);border-radius:22px;background:var(--paper);cursor:pointer}
+ button.main{background:var(--ink);color:#fff;border-color:var(--ink)}
+ button:focus-visible{outline:2px solid var(--green);outline-offset:2px}
+ #tag{position:absolute;left:44px;top:12px;font-size:13px;color:var(--dim);pointer-events:none}
+ #now{position:absolute;right:16px;top:12px;font-size:15px;pointer-events:none;text-align:right}
+ #legend{font-size:12.5px;color:var(--dim);padding:8px 2px;line-height:1.6}
+</style>
+</head>
+<body>
+<main>
+ <header><h1>hibari 가닥</h1><a href="./index.html">스케치</a></header>
+ <div id="stage">
+  <canvas id="cv"></canvas>
+  <div id="tag">예시 그리기 중</div>
+  <div id="now"></div>
+  <div id="start"><button id="listen" class="main">▶ 예시 듣기</button><button id="play">직접 그리기</button></div>
+ </div>
+ <div id="legend">움직이면 가닥이 자라고, 높이가 곧 음이에요 · 가닥의 몸을 눌러 끌면 잡아당겨요 — 접혀서 닿은 음끼리 함께 울려요 · 마우스·손가락·방향키</div>
+</main>
+<script src="./common.js"></script>
+<script>
+(function () {
+  'use strict';
+  var $ = function (s) { return document.querySelector(s); };
+  var cv = $('#cv'), cx = cv.getContext('2d');
+  var SOL = ['도', '도#', '레', '레#', '미', '파', '파#', '솔', '솔#', '라', '라#', '시'];
+  var EIGHTH = 60 / 66 / 2, STEP = 22, L0 = 11, R = 20, TOUCH = 34, MAXNOTE = 48, MAXNODE = 650;
+  var PITCH = [], W = 0, H = 0, N = [], head = { tx: 0, ty: 0 }, auto = true, sound = false, keys = {}, grab = -1, ptr = null, clock = { k: 0, when: 0, t: 0 }, lastNote = null, demo = { t: 0, grab: 0, until: 0 }, last = 0, play = [];
+  function col(p) { return 'hsl(' + HS.hue(p % 12) + ',58%,' + ((p % 12) === 7 ? 40 : 46) + '%)'; }
+  function pitchAt(y) { var u = Math.max(0, Math.min(0.9999, (y - 34) / (H - 68))); return PITCH[PITCH.length - 1 - Math.floor(u * PITCH.length)]; }
+  function seed() { W = cv.clientWidth; H = cv.clientHeight; N = []; var y = H * 0.5;
+    for (var i = 0; i < 3; i++) N.push({ x: W * 0.12 + i * STEP, y: y, vx: 0, vy: 0, p: pitchAt(y), lit: -9 });
+    lastNote = N[N.length - 1]; N.push({ x: lastNote.x + 6, y: y, vx: 0, vy: 0, p: 0, lit: -9 }); head.tx = lastNote.x + 6; head.ty = y; }   // 맨 끝 = 머리(소리 없음), 그 뒤에 음이 붙는다
+  function notes() { return N.filter(function (n) { return n.p; }); }
+
+  // ── 가닥 물리 (differential-line) ───────────────────────────────────────
+  function physics(dt) {
+    var i, n = N.length, cs = R, cols = Math.max(1, Math.ceil(W / cs)), rows = Math.max(1, Math.ceil(H / cs)), grid = {}, fr = Math.pow(0.5, dt / 0.06);
+    for (i = 0; i < n; i++) { var g = Math.floor(N[i].y / cs) * cols + Math.floor(N[i].x / cs); (grid[g] = grid[g] || []).push(i); }
+    for (i = 0; i < n; i++) { var a = N[i], fx = 0, fy = 0, gx = Math.floor(a.x / cs), gy = Math.floor(a.y / cs);
+      for (var oy = -1; oy <= 1; oy++) for (var ox = -1; ox <= 1; ox++) { var cell = grid[(gy + oy) * cols + gx + ox]; if (!cell) continue;
+        for (var c = 0; c < cell.length; c++) { var j = cell[c]; if (Math.abs(j - i) < 2) continue; var b = N[j], dx = a.x - b.x, dy = a.y - b.y, d = Math.hypot(dx, dy);
+          if (d > 0 && d < R) { var f = (1 - d / R) * 900; fx += dx / d * f; fy += dy / d * f; } } }
+      [i - 1, i + 1].forEach(function (j) { if (j < 0 || j >= n) return; var b = N[j], dx = b.x - a.x, dy = b.y - a.y, d = Math.hypot(dx, dy) || 1, f = (d - L0) * 60; fx += dx / d * f; fy += dy / d * f; });
+      if (i > 0 && i < n - 1) { fx += ((N[i - 1].x + N[i + 1].x) / 2 - a.x) * 30; fy += ((N[i - 1].y + N[i + 1].y) / 2 - a.y) * 30; }
+      if (a.x < 16) fx += (16 - a.x) * 80; if (a.x > W - 16) fx -= (a.x - W + 16) * 80; if (a.y < 16) fy += (16 - a.y) * 80; if (a.y > H - 16) fy -= (a.y - H + 16) * 80;
+      a.vx = a.vx * fr + fx * dt; a.vy = a.vy * fr + fy * dt; }
+    var hd = N[n - 1]; hd.vx = (head.tx - hd.x) * 7; hd.vy = (head.ty - hd.y) * 7;                 // 머리는 손을 따른다
+    if (grab >= 0 && grab < n && ptr) { N[grab].vx = (ptr[0] - N[grab].x) * 9; N[grab].vy = (ptr[1] - N[grab].y) * 9; }
+    for (i = 0; i < n; i++) { var s = Math.hypot(N[i].vx, N[i].vy); if (s > 700) { N[i].vx *= 700 / s; N[i].vy *= 700 / s; } N[i].x += N[i].vx * dt; N[i].y += N[i].vy * dt; }
+    for (i = 0; i + 1 < N.length && N.length < MAXNODE + 200; i++) { var p = N[i], q = N[i + 1];                      // 늘어난 마디는 나눈다(소리 없는 살)
+      if (Math.hypot(q.x - p.x, q.y - p.y) > L0 * 1.7) { N.splice(i + 1, 0, { x: (p.x + q.x) / 2, y: (p.y + q.y) / 2, vx: 0, vy: 0, p: 0, lit: -9 }); if (grab > i) grab++; i++; } }
+    if (Math.random() < dt * 2 && N.length < Math.min(MAXNODE, 10 + notes().length * 6) && N.length > 4) { var k = 1 + Math.floor(Math.random() * (N.length - 3)), u = N[k], v = N[k + 1];   // 저절로 조금씩 자란다
+      N.splice(k + 1, 0, { x: (u.x + v.x) / 2 + (Math.random() - 0.5), y: (u.y + v.y) / 2 + (Math.random() - 0.5), vx: 0, vy: 0, p: 0, lit: -9 }); if (grab > k) grab++; }
+  }
+  function grow() { var hd = N[N.length - 1];
+    if (Math.hypot(hd.x - lastNote.x, hd.y - lastNote.y) >= STEP) { var nn = { x: hd.x, y: hd.y, vx: 0, vy: 0, p: pitchAt(hd.y), lit: -9 }; N.splice(N.length - 1, 0, nn); lastNote = nn;
+      var ns = notes(); if (ns.length > MAXNOTE) { var cut = N.indexOf(ns[ns.length - MAXNOTE]); N.splice(0, cut); grab = grab >= cut ? grab - cut : -1; } } }
+
+  // ── 소리 ───────────────────────────────────────────────────────────────
+  function touching(a) { var out = [], idx = N.indexOf(a); N.forEach(function (b, j) { if (!b.p || b === a || Math.abs(j - idx) < 6) return; if (Math.hypot(a.x - b.x, a.y - b.y) < TOUCH) out.push(b); }); return out; }
+  function beat(when) {
+    var ns = notes(); if (!ns.length) return; var k = clock.k % ns.length, a = ns[k], even = clock.t % 2 === 0, out = [a]; clock.k++; clock.t++;
+    if (even) { var seen = {}; seen[a.p] = 1; touching(a).forEach(function (b) { if (out.length < 4 && !seen[b.p]) { seen[b.p] = 1; out.push(b); } }); }
+    out.forEach(function (b, i) { if (sound) HS.audio.voice(b.p, when + i * 0.012, even ? 1.0 : 0.6, i ? 0.17 : 0.3); b.lit = when; });
+    play.push([a, out.slice(1), when]); if (play.length > 12) play.shift();
+    $('#now').textContent = out.map(function (b) { return SOL[b.p % 12]; }).join(' ');
+  }
+  function pump() { var now = HS.audio.now(); if (clock.when < now - 0.3) clock.when = now + 0.03; while (clock.when < now + 0.1) { beat(clock.when); clock.when += EIGHTH; } }
+  setInterval(pump, 25);
+
+  // ── 예시 그리기 ────────────────────────────────────────────────────────
+  function autopilot(dt) {
+    demo.t += dt; var t = demo.t;
+    head.tx = W * (0.5 + 0.38 * Math.sin(t * 0.21 + 1.2) * Math.cos(t * 0.07)); head.ty = H * (0.5 + 0.33 * Math.sin(t * 0.53) * Math.sin(t * 0.17 + 0.6));
+    if (t > demo.until && grab >= 0) { grab = -1; ptr = null; }
+    if (t > demo.grab && notes().length > 16) { var ns = notes(), a = ns[Math.floor((t * 977 % 1) * (ns.length - 8))], b = ns[Math.min(ns.length - 1, ns.indexOf(a) + 8 + Math.floor((t * 613 % 1) * (ns.length - ns.indexOf(a) - 8)))];
+      grab = N.indexOf(a); ptr = [b.x, b.y]; demo.grab = t + 6; demo.until = t + 2.4; }                     // 예시: 음이 있는 두 곳을 끌어 붙인다 → 화음
+  }
+
+  // ── 그리기 ─────────────────────────────────────────────────────────────
+  function paint() {
+    var t = HS.audio.now(); cx.clearRect(0, 0, W, H);
+    cx.font = '11px -apple-system,"Noto Sans KR",sans-serif'; cx.textAlign = 'left'; cx.fillStyle = '#b4b2a9';
+    PITCH.forEach(function (p, i) { var y = 34 + (PITCH.length - 1 - i + 0.5) * (H - 68) / PITCH.length; cx.fillText(SOL[p % 12], 10, y + 4);
+      cx.fillRect(28, y, 6, 1); });
+    play.forEach(function (e) { var a = 1 - (t - e[2]) / 0.7; if (a <= 0 || t < e[2]) return; e[1].forEach(function (b) { cx.beginPath(); cx.moveTo(e[0].x, e[0].y); cx.lineTo(b.x, b.y); cx.strokeStyle = col(b.p); cx.globalAlpha = 0.7 * a; cx.lineWidth = 2.5; cx.stroke(); cx.globalAlpha = 1; }); });
+    cx.beginPath(); N.forEach(function (n, i) { if (i) cx.lineTo(n.x, n.y); else cx.moveTo(n.x, n.y); }); cx.strokeStyle = '#2C2C2A'; cx.lineWidth = 2.2; cx.lineJoin = cx.lineCap = 'round'; cx.stroke();
+    N.forEach(function (n) { if (!n.p) return; var a = n.lit <= t ? Math.max(0, 1 - (t - n.lit) / 0.6) : 0;
+      cx.beginPath(); cx.arc(n.x, n.y, 3.6 + 4 * a, 0, 7); cx.fillStyle = col(n.p); cx.fill();
+      if (a > 0) { cx.beginPath(); cx.arc(n.x, n.y, 7 + 12 * (1 - a), 0, 7); cx.strokeStyle = col(n.p); cx.globalAlpha = a * 0.6; cx.lineWidth = 1.5; cx.stroke(); cx.globalAlpha = 1; } });
+    var hd = N[N.length - 1]; cx.beginPath(); cx.arc(hd.x, hd.y, 8, 0, 7); cx.fillStyle = '#2C2C2A'; cx.fill(); cx.beginPath(); cx.arc(hd.x, hd.y, 3, 0, 7); cx.fillStyle = '#fff'; cx.fill();
+    if (grab >= 0 && grab < N.length) { var g = N[grab]; cx.beginPath(); cx.arc(g.x, g.y, 12, 0, 7); cx.strokeStyle = '#BA7517'; cx.lineWidth = 2; cx.stroke(); }
+  }
+  function frame(now) {
+    try { var dt = last ? Math.min(0.033, (now - last) / 1000) : 0; last = now;
+      var dpr = Math.min(2, devicePixelRatio || 1), w = cv.clientWidth, h = cv.clientHeight; if (!w || !h || !PITCH.length) return;
+      if (cv.width !== Math.round(w * dpr) || cv.height !== Math.round(h * dpr)) { cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr); }
+      cx.setTransform(dpr, 0, 0, dpr, 0, 0); if (!N.length) seed(); W = w; H = h;
+      if (auto) autopilot(dt); else { var kx = (keys.ArrowRight ? 1 : 0) - (keys.ArrowLeft ? 1 : 0), ky = (keys.ArrowDown ? 1 : 0) - (keys.ArrowUp ? 1 : 0);
+        if (kx || ky) { head.tx = Math.max(20, Math.min(W - 20, head.tx + kx * 200 * dt)); head.ty = Math.max(30, Math.min(H - 30, head.ty + ky * 200 * dt)); } }
+      for (var s = 0; s < 2; s++) physics(dt / 2); grow(); paint();
+    } finally { requestAnimationFrame(frame); }
+  }
+
+  // ── 조작 ───────────────────────────────────────────────────────────────
+  function takeOver() { if (!auto) return; auto = false; grab = -1; ptr = null; $('#tag').textContent = ''; $('#start').style.display = 'none'; }
+  function unlock() { HS.audio.wake(); sound = true; }
+  function at(e) { var r = cv.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; }
+  cv.addEventListener('pointerdown', function (e) { unlock(); takeOver(); try { cv.setPointerCapture(e.pointerId); } catch (x) {} var p = at(e), best = -1, bd = e.pointerType === 'touch' ? 26 : 16;
+    N.forEach(function (n, i) { if (i >= N.length - 3) return; var d = Math.hypot(n.x - p[0], n.y - p[1]); if (d < bd) { bd = d; best = i; } });
+    if (best >= 0) { grab = best; ptr = p; } else { head.tx = p[0]; head.ty = p[1]; } cv.dataset.down = 1; });
+  cv.addEventListener('pointermove', function (e) { var p = at(e); if (grab >= 0) { ptr = p; return; } if (auto) return; if (e.pointerType === 'mouse' || cv.dataset.down) { head.tx = p[0]; head.ty = p[1]; } });
+  function up() { grab = -1; ptr = null; delete cv.dataset.down; }
+  cv.addEventListener('pointerup', up); cv.addEventListener('pointercancel', up);
+  $('#listen').addEventListener('click', function () { unlock(); $('#listen').textContent = '듣는 중…'; $('#listen').disabled = true; });
+  $('#play').addEventListener('click', function () { unlock(); takeOver(); });
+  addEventListener('keydown', function (e) { if (/^Arrow/.test(e.code)) { e.preventDefault(); keys[e.code] = 1; unlock(); if (auto) { var hd = N[N.length - 1]; head.tx = hd.x; head.ty = hd.y; } takeOver(); } });
+  addEventListener('keyup', function (e) { delete keys[e.code]; });
+  fetch('../shape/data/hibari.notes.json').then(function (r) { return r.json(); }).then(function (D) {
+    var s = {}; D.node.forEach(function (n, i) { if (D.voice[i] === 0) s[D.pitch[i]] = 1; }); PITCH = Object.keys(s).map(Number).sort(function (a, b) { return a - b; });
+    requestAnimationFrame(frame); }).catch(function (e) { $('#tag').textContent = '자료를 읽지 못했어요: ' + e.message; });
+  HS.hook({ probe: function () { var ns = notes(); return { auto: auto, sound: sound, nodes: N.length, notes: ns.length, touches: ns.reduce(function (a, n) { return a + touching(n).length; }, 0), calls: HS.audio.calls.length }; },
+    take: function () { takeOver(); }, steer: function (x, y) { head.tx = x; head.ty = y; },
+    advance: function (sec) { if (!N.length) seed(); for (var i = 0; i < sec * 60; i++) { if (auto) autopilot(1 / 60); physics(1 / 120); physics(1 / 120); grow(); } paint(); } });
+})();
+</script>
+</body>
+</html>

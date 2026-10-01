@@ -11,3 +11,4 @@ metadata:
 - 종달새 = 마우스/손가락/방향키, 가까운 입자를 살짝 끈다. 소리 = 둘레 안 입자로 짝수 박 화음·홀수 박 단음·모듈 쉼.
 - 첫 화면 = 예시 비행(무리를 찾아감) + "▶ 예시 듣기"(8초에 음 35개, 음역 52~79) + "직접 날기".
 - 아직 규칙·목표 없음. 다음 후보: 가닥(differential-line) — 종달새가 지나간 길이 자라며 접히는 몸, 접기(origami) 막대. 관련 [[feedback-game-rules-visual-first-1001]] [[project-metro-greybox-1001]]
+- 사용자 판정: "swarm 이 map·territory 처럼 작용해서 개입할 여지가 많지 않다" → 가닥(strand.html, 그리기 + 당기기 = 접힌 곳 화음) 지음, 접기(fold) 다음.
