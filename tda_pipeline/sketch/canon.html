@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>종달새와 문어</title>
+<!--
+  종달새와 문어 — 한 박 늦게 (2026-10-01)
+  사용자: "hibari도 결국엔 같은 모듈이 시간차를 두고 반복되는 거니까 내가 특정한 기간동안 조작해서 움직인 어떤 움직임을
+          시간 차이를 두고 그 모듈과 상호작용하게 하는 거야" · "한참 전에 만들었던 문어, 종달새가 지금 유일하게 괜찮게 생각이 난다"
+  목걸이  hibari 오른손 모듈 32박(짝수 박 화음 · 홀수 박 단음 · 12–15·28–31 쉼). 한 바퀴 = 한 모듈(약 14.5초). 목걸이가 돌고 종달새는 꼭대기에 있다.
+  종달새  = 나. 누른 채 위아래로 움직이면 지금 박의 hibari 음이 그 높이만큼 흰 건반 위로·아래로 옮겨 울리고, 그 박에 그 높이가 칠해진다.
+          손을 떼면 칠한 대로 한 바퀴(32박)마다 다시 부른다.
+  문어    같은 목걸이를 33박마다 부른다(hibari 왼손 = 같은 무늬 + 쉼 한 칸). 그래서 한 바퀴에 한 박씩 늦어진다 —
+          내가 칠한 움직임이 매번 모듈의 다른 자리와 겹친다. 32바퀴(약 7.7분, 원곡 한 곡 길이) 만에 다시 나란해진다.
+  몸      1판(lenia/tonnetz.html)처럼 각자 부른 음의 역사를 박자틀 32 로 접은 그림(각도 = 종달새 바퀴 안의 박, 반지름 = 나이).
+          박자틀과 맞는 종달새는 곧은 두 날개, 한 박씩 밀리는 문어는 말린 팔이 된다 — 그린 모양이 아니다. 점 빛깔 = 그 박 맨 윗음의 음이름.
+  자료    ../lenia/tonnetz.json (정본 경로에서 뽑은 두 손의 모듈). 두 손이 같은 무늬인지 불러올 때 확인한다.
+  한계    H_1 고리는 쓰지 않았다 — 원곡 결에서는 고리 41개가 8박 창에 평균 25.7개 켜져(음 집합 포함 기준) 고르는 신호가 되지 못한다.
+  소리는 누른 뒤에만. ?silent 무음(호출만 기록). 칠한 노래는 이 브라우저에 남는다.
+-->
+<style>
+ :root{--bg:#f3f0e6;--paper:#fbf9f2;--ink:#22302a;--dim:#7d877f;--line:#d6d2c2;--green:#2f6b4f}
+ *{box-sizing:border-box}
+ html,body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans KR",sans-serif;-webkit-tap-highlight-color:transparent}
+ main{max-width:1000px;margin:0 auto;padding:10px 16px 24px}
+ header{display:flex;align-items:baseline;gap:10px;padding:4px 2px 6px}
+ header h1{font-size:13px;font-weight:500;color:var(--dim);letter-spacing:.08em;margin:0}
+ header a{margin-left:auto;font-size:12px;color:var(--dim);text-decoration:none}
+ #stage{position:relative;width:100%;height:min(74vh,700px);min-height:380px;border-radius:16px;overflow:hidden;background:#F7F4EC}
+ #cv{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:ns-resize}
+ #bar{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);display:flex;gap:10px}
+ button{font:inherit;color:inherit;min-height:44px;padding:0 18px;white-space:nowrap;border:1px solid var(--line);border-radius:22px;background:var(--paper);cursor:pointer}
+ button.main{background:var(--ink);color:#fff;border-color:var(--ink)}
+ button:focus-visible{outline:2px solid var(--green);outline-offset:2px}
+ button[hidden]{display:none}
+ #tag{position:absolute;left:16px;top:12px;font-size:13px;color:var(--dim);pointer-events:none}
+ #now{position:absolute;right:16px;top:12px;font-size:15px;pointer-events:none;text-align:right;line-height:1.5}
+ #now small{display:block;font-size:12px;color:var(--dim)}
+ #legend{font-size:12.5px;color:var(--dim);padding:8px 2px;line-height:1.6}
+</style>
+</head>
+<body>
+<main>
+ <header><h1>종달새와 문어 — 한 박 늦게</h1><a href="./index.html">스케치</a></header>
+ <div id="stage">
+  <canvas id="cv" role="img" aria-label="hibari 의 한 모듈이 목걸이처럼 돈다. 누른 채 위아래로 움직이면 종달새가 그 높이로 부르고, 문어가 같은 노래를 한 바퀴에 한 박씩 늦게 따라 부른다."></canvas>
+  <div id="tag">예시</div>
+  <div id="now"></div>
+  <div id="bar"><button id="listen" class="main">▶ 예시 듣기</button><button id="play">직접 그리기</button><button id="undo" hidden>되돌리기</button><button id="reset" hidden>원곡으로</button></div>
+ </div>
+ <div id="legend">누른 채 위아래로 — 종달새가 그 높이로 hibari 를 부르고, 그 박에 칠해져요 · 칠한 노래는 한 바퀴(32박)마다 돌아와요 · 문어는 같은 노래를 33박마다 불러서 한 바퀴에 한 박씩 늦어져요 — 같은 움직임이 매번 모듈의 다른 자리와 겹쳐요 · 마우스·손가락·↑↓ · ⌫ 되돌리기</div>
+</main>
+<script src="./common.js"></script>
+<script>
+(function () {
+  'use strict';
+  var $ = function (s) { return document.querySelector(s); };
+  var cv = $('#cv'), cx = cv.getContext('2d'), SEC = HS.SEC, TAU = Math.PI * 2;
+  var WH = [0, 2, 4, 5, 7, 9, 11], LMAX = 5, AGE = 4, KEY = 'hibari.canon.paint.v1';
+  var M = null, paint = [], undo = [], auto = true, sound = false, pressing = false, level = 0, drag = null, held = {};
+  var onsets = [], ev = [], lastL = [], lastO = [], larkL = 0, last = 0, W = 0, H = 0, DL = 12, lastPluck = 0, touched = false, clock = null;
+  for (var i = 0; i < 32; i++) { paint.push(0); lastL.push(-9); lastO.push(-9); }
+
+  // ── 음: 흰 건반 위로 d 칸 옮기기 (hibari 는 흰 건반 일곱 음뿐이다) ─────────
+  function tr(p, d) { if (!d) return p; var i = WH.indexOf(p % 12); if (i < 0) return p; i += d;
+    var q = (Math.floor(p / 12) + Math.floor(i / 7)) * 12 + WH[((i % 7) + 7) % 7]; while (q < 36) q += 12; while (q > 96) q -= 12; return q; }
+  function at(s, d) { return M[s].map(function (n) { return { p: tr(n.p, d), dur: n.dur }; }); }
+  function top(ns) { return ns.reduce(function (a, n) { return n.p > a ? n.p : a; }, 0); }
+  function sing(who, s, d, when, t) {
+    var ns = at(s, d); if (!ns.length) return;
+    var chord = ns.length > 1, k = who ? 0.72 : 1;
+    if (sound) ns.forEach(function (n, i) { HS.audio.voice(n.p, when + i * 0.012, n.dur * SEC * 1.05, (chord ? 0.15 : 0.3) * k); });
+    (who ? lastO : lastL)[s] = when;
+    ev.push({ t: t, who: who, pc: top(ns) % 12, n: ns.length, when: when, ns: ns }); if (ev.length > 700) ev.splice(0, 250);
+  }
+  // 박마다: 종달새는 박 t mod 32 를, 문어는 박 (t mod 33) − 1 을 (0 이면 쉼) — 둘 다 내가 칠한 높이로
+  function onStep(t, when) {
+    onsets.push([t, when]); if (onsets.length > 8) onsets.shift();
+    if (auto) demo(t);
+    var s = t % 32; if (pressing) paint[s] = level;
+    sing(0, s, paint[s], when, t);
+    var j = t % 33 - 1; if (j >= 0) sing(1, j, paint[j], when, t);
+  }
+  // 그림 시각: 종달새 자리 u(연속 박), 문어 자리 v — 쉼 칸 동안은 제자리라 한 바퀴에 한 박씩 밀린다
+  function U(now) { for (var i = onsets.length - 1; i >= 0; i--) if (onsets[i][1] <= now + 1e-4) return onsets[i][0] + Math.min(1, (now - onsets[i][1]) / SEC);
+    return onsets.length ? onsets[0][0] : 0; }
+  function V(u) { var q = u % 33; return q < 1 ? 0 : q - 1; }
+  function sd(x) { return (((x % 32) + 48) % 32) - 16; }
+  function lagOf(u) { return Math.round(((u - V(u)) % 32 + 32) % 32); }
+  function lv(x) { var i0 = Math.floor(x), f = x - i0, g = f * f * (3 - 2 * f); return paint[((i0 % 32) + 32) % 32] * (1 - g) + paint[(((i0 + 1) % 32) + 32) % 32] * g; }
+
+  // ── 예시: 한 바퀴 칠하고 두 바퀴 듣는다 ─────────────────────────────────
+  function demo(t) {
+    if (t % 96 < 32) { pressing = true; level = Math.max(-LMAX, Math.min(LMAX, Math.round(2.8 * Math.sin(TAU * t / 64 + Math.floor(t / 96) * 2.1) + 0.7 * Math.sin(TAU * t / 8)))); }   // 한 바퀴에 큰 활 하나 + 잔물결
+    else pressing = false;
+    $('#tag').textContent = pressing ? '예시 — 칠하는 중' : '예시 — 듣는 중';
+  }
+
+  // ── 조작 ───────────────────────────────────────────────────────────────
+  function unlock() { HS.audio.wake(); sound = true; $('#listen').textContent = '듣는 중…'; $('#listen').disabled = true; if (!auto) $('#listen').hidden = true; }
+  function takeOver() { if (!auto) return; auto = false; pressing = false; $('#tag').textContent = ''; $('#listen').hidden = $('#play').hidden = true; $('#undo').hidden = $('#reset').hidden = false; }
+  function curStep() { return ((Math.floor(U(HS.audio.now())) % 32) + 32) % 32; }
+  function stroke() { undo.push(paint.slice()); if (undo.length > 40) undo.shift(); touched = true; }
+  function setLevel(l, force) {
+    l = Math.max(-LMAX, Math.min(LMAX, l)); if (l === level && !force) return; level = l; paint[curStep()] = l;
+    var now = performance.now(); if (!sound || now - lastPluck < 50) return; lastPluck = now;
+    for (var s = curStep(), k = 0; k < 6 && !M[s].length; k++) s = (s + 31) % 32;                 // 쉼 자리면 바로 앞 박의 음으로
+    if (M[s].length) HS.audio.voice(top(at(s, l)), null, 0.4, 0.13);                             // 누른 그 호출 안에서 맨 윗음 하나 — 박을 기다리지 않는다
+  }
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(paint)); } catch (x) {} }
+  function doUndo() { if (!undo.length) return; paint = undo.pop(); save(); }
+  function doReset() { stroke(); for (var i = 0; i < 32; i++) paint[i] = 0; save(); }
+  function xy(e) { var r = cv.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; }
+  cv.addEventListener('pointerdown', function (e) {
+    e.preventDefault(); unlock(); takeOver(); try { cv.setPointerCapture(e.pointerId); } catch (x) {}
+    stroke(); drag = { y0: xy(e)[1], l0: Math.round(larkL), px: Math.max(12, DL) }; pressing = true; setLevel(drag.l0, true);
+  });
+  cv.addEventListener('pointermove', function (e) { if (drag) setLevel(drag.l0 + Math.round((drag.y0 - xy(e)[1]) / drag.px)); });
+  function up() { if (!drag) return; drag = null; pressing = !!(held.ArrowUp || held.ArrowDown); save(); }
+  cv.addEventListener('pointerup', up); cv.addEventListener('pointercancel', up);
+  HS.keys(function (code) {
+    if (code === 'ArrowUp' || code === 'ArrowDown') { unlock(); takeOver(); if (!pressing) { stroke(); level = Math.round(larkL); }
+      held[code] = 1; pressing = true; setLevel(level + (code === 'ArrowUp' ? 1 : -1), true); }
+    else if (code === 'Backspace') doUndo();
+  }, function (code) { if (!held[code]) return; delete held[code]; if (!held.ArrowUp && !held.ArrowDown && !drag) { pressing = false; save(); } });
+  $('#listen').addEventListener('click', unlock);
+  $('#play').addEventListener('click', function () { unlock(); takeOver(); });
+  $('#undo').addEventListener('click', doUndo);
+  $('#reset').addEventListener('click', doReset);
+
+  // ── 그리기 ─────────────────────────────────────────────────────────────
+  function hsl(pc, l, a) { return 'hsla(' + HS.hue(pc) + ',62%,' + (l || 48) + '%,' + (a == null ? 1 : a) + ')'; }
+  function dot(x, y, r, col) { cx.fillStyle = col; cx.beginPath(); cx.arc(x, y, Math.max(0.5, r), 0, TAU); cx.fill(); }
+  function body(who, x, y, u, R) {                                       // 1판의 몸: 부른 음의 역사를 박자틀 32 로 접는다
+    for (var i = ev.length - 1; i >= 0; i--) { var e = ev[i]; if (e.who !== who) continue;
+      var age = (u - e.t) / 32; if (age < 0) continue; if (age > AGE) break;
+      var th = -Math.PI / 2 - TAU * (e.t % 32) / 32, rr = R * (0.09 + age * 0.06), a = Math.pow(1 - age / AGE, 1.2);
+      dot(x + rr * Math.cos(th), y + rr * Math.sin(th), R * (0.005 + 0.002 * e.n), hsl(e.pc, 50, a * 0.85)); }
+  }
+  function lark(x, y, R, now) {
+    var r = R * 0.05, f = Math.max(0, 1 - (now - Math.max.apply(null, lastL)) / 0.35), w = 0.5 + 0.9 * f;
+    cx.fillStyle = '#c98a12'; [-1, 1].forEach(function (sg) { cx.beginPath(); cx.moveTo(x - r * 0.2, y);
+      cx.quadraticCurveTo(x - r * 1.4, y + sg * r * 1.6 * w, x - r * 2.1, y + sg * r * 0.5 * w); cx.closePath(); cx.globalAlpha = 0.75; cx.fill(); cx.globalAlpha = 1; });
+    dot(x, y, r, '#c98a12'); cx.beginPath(); cx.moveTo(x + r * 0.85, y - r * 0.25); cx.lineTo(x + r * 1.6, y); cx.lineTo(x + r * 0.85, y + r * 0.25); cx.fillStyle = '#8a5a06'; cx.fill();
+    dot(x + r * 0.35, y - r * 0.3, r * 0.17, '#22302a');
+  }
+  function octo(x, y, R, now) {
+    var r = R * 0.055, f = Math.max(0, 1 - (now - Math.max.apply(null, lastO)) / 0.35);
+    cx.strokeStyle = '#d2556f'; cx.lineWidth = Math.max(1.5, r * 0.28); cx.lineCap = 'round';
+    for (var k = 0; k < 6; k++) { var bx = x + (k - 2.5) * r * 0.36; cx.beginPath(); cx.moveTo(bx, y + r * 0.5);
+      for (var s = 1; s <= 4; s++) cx.lineTo(bx + Math.sin(now * 3 + k + s * 0.9) * r * 0.32 * (1 + f), y + r * 0.5 + s * r * 0.42); cx.stroke(); }
+    dot(x, y, r * (1 + 0.15 * f), '#d2556f'); dot(x - r * 0.35, y - r * 0.12, r * 0.16, '#fff'); dot(x + r * 0.35, y - r * 0.12, r * 0.16, '#fff');
+    dot(x - r * 0.33, y - r * 0.1, r * 0.08, '#22302a'); dot(x + r * 0.37, y - r * 0.1, r * 0.08, '#22302a');
+  }
+  function draw(now, dt) {
+    var u = U(now), v = V(u), lag = lagOf(u), c0 = W / 2, c1 = H * 0.52, R = Math.min((W / 2 - 14) / 1.33, (H * 0.5 - 56) / 1.33), D = R * 0.062; DL = D;
+    var ang = function (b) { return -Math.PI / 2 + sd(b - u) * TAU / 32; }, pos = function (b, l) { var th = ang(b), r = R + l * D; return [c0 + r * Math.cos(th), c1 + r * Math.sin(th)]; };
+    larkL += ((pressing ? level : lv(u)) - larkL) * (1 - Math.exp(-dt * 16));
+    cx.clearRect(0, 0, W, H);
+    cx.beginPath(); cx.arc(c0, c1, R, 0, TAU); cx.strokeStyle = 'rgba(34,48,42,0.13)'; cx.lineWidth = 1; cx.setLineDash([2, 5]); cx.stroke(); cx.setLineDash([]);
+    // 목걸이 — 칠한 높이를 지나는 닫힌 곡선
+    var P = []; for (var b = 0; b < 32; b++) P.push(pos(b, paint[b]));
+    cx.beginPath(); cx.moveTo(P[0][0], P[0][1]);
+    for (b = 0; b < 32; b++) { var p0 = P[(b + 31) % 32], p1 = P[b], p2 = P[(b + 1) % 32], p3 = P[(b + 2) % 32];
+      cx.bezierCurveTo(p1[0] + (p2[0] - p0[0]) / 6, p1[1] + (p2[1] - p0[1]) / 6, p2[0] - (p3[0] - p1[0]) / 6, p2[1] - (p3[1] - p1[1]) / 6, p2[0], p2[1]); }
+    cx.strokeStyle = 'rgba(34,48,42,0.5)'; cx.lineWidth = 2.2; cx.stroke();
+    // 구슬 = 모듈의 박 (큰 구슬 화음 · 작은 구슬 단음 · 빈 자리 쉼). 빛깔 = 그 박 맨 윗음
+    cx.font = Math.round(Math.max(10, R * 0.058)) + 'px -apple-system,"Noto Sans KR",sans-serif'; cx.textAlign = 'center';
+    for (b = 0; b < 32; b++) { if (!M[b].length) continue; var ns = at(b, paint[b]), q = P[b], big = ns.length > 1;
+      dot(q[0], q[1], R * (big ? 0.034 : 0.021), hsl(top(ns) % 12, 50));
+      [[lastL[b], '201,138,18'], [lastO[b], '210,85,111']].forEach(function (z) { var a = 1 - (now - z[0]) / 0.7; if (a <= 0 || now < z[0]) return;
+        cx.beginPath(); cx.arc(q[0], q[1], R * (0.045 + 0.06 * (1 - a)), 0, TAU); cx.strokeStyle = 'rgba(' + z[1] + ',' + a * 0.8 + ')'; cx.lineWidth = 2; cx.stroke(); });
+      if (big) { var th = ang(b), rb = R + (paint[b] - 1.9) * D; cx.fillStyle = 'rgba(125,135,127,0.75)';
+        cx.fillText(HS.noteName(Math.min.apply(null, ns.map(function (n) { return n.p; }))).replace(/\d+$/, ''), c0 + rb * Math.cos(th), c1 + rb * Math.sin(th) + 4); } }
+    // 시간차 — 문어가 종달새보다 몇 박 늦나
+    var tho = -Math.PI / 2 - ((u - v) % 32 + 32) % 32 * TAU / 32, ra = R - (LMAX + 2.2) * D;
+    if (lag > 0) { cx.beginPath(); cx.arc(c0, c1, ra, tho, -Math.PI / 2); cx.strokeStyle = 'rgba(210,85,111,0.5)'; cx.lineWidth = 2; cx.setLineDash([3, 4]); cx.stroke(); cx.setLineDash([]);
+      var tm = (tho - Math.PI / 2) / 2; cx.fillStyle = '#b04a5f'; cx.font = '600 ' + Math.round(Math.max(12, R * 0.07)) + 'px -apple-system,"Noto Sans KR",sans-serif';
+      cx.fillText(lag + '박 늦게', c0 + (ra - R * 0.13) * Math.cos(tm), c1 + (ra - R * 0.13) * Math.sin(tm) + 4); }
+    // 문어 · 종달새 (몸 = 노래의 역사)
+    var lo = lv(v), ox = c0 + (R + lo * D) * Math.cos(tho), oy = c1 + (R + lo * D) * Math.sin(tho), ly = c1 - (R + larkL * D);
+    body(1, ox, oy, u, R); body(0, c0, ly, u, R);
+    octo(ox, oy, R, now); lark(c0, ly, R, now);
+    cx.font = '11px -apple-system,"Noto Sans KR",sans-serif'; cx.fillStyle = 'rgba(125,135,127,0.9)';
+    cx.fillText('종달새', c0, ly - R * 0.1); cx.fillText('문어', ox, oy + R * 0.2);
+    if (auto && pressing) { cx.beginPath(); cx.arc(c0 + R * 0.16, ly, R * 0.06, 0, TAU); cx.fillStyle = 'rgba(34,48,42,0.12)'; cx.fill(); cx.strokeStyle = 'rgba(34,48,42,0.35)'; cx.lineWidth = 1.5; cx.stroke(); }
+    if (!touched) { cx.fillStyle = 'rgba(34,48,42,0.55)'; cx.font = '15px -apple-system,"Noto Sans KR",sans-serif'; cx.fillText('누른 채 위아래로', c0, c1 + 6); }
+    for (var i = ev.length - 1; i >= 0; i--) if (!ev[i].who && ev[i].when <= now) {                                   // 지금 종달새가 부르는 음
+      $('#now').innerHTML = ev[i].ns.map(function (n) { return HS.noteName(n.p); }).join(' ') + '<small>문어 ' + (lag ? lag + '박 늦게' : '나란히') + ' · ' + (Math.floor(u / 32) + 1) + '바퀴째</small>'; break; }
+  }
+  function frame(t) {
+    try { var dt = last ? Math.min(0.05, (t - last) / 1000) : 0; last = t;
+      var dpr = Math.min(2, devicePixelRatio || 1), w = cv.clientWidth, h = cv.clientHeight; if (!w || !h || !M) return;
+      if (cv.width !== Math.round(w * dpr) || cv.height !== Math.round(h * dpr)) { cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr); }
+      cx.setTransform(dpr, 0, 0, dpr, 0, 0); W = w; H = h;
+      if (pressing && !auto) paint[curStep()] = level;
+      draw(HS.audio.now(), dt);
+    } finally { requestAnimationFrame(frame); }
+  }
+
+  HS.load().then(function (D) {
+    var S = HS.derive(D), L = S.mod[0], O = S.mod[1];
+    M = L.steps.map(function (st) { return st.map(function (li) { return { p: S.notes[li].pitch, dur: S.notes[li].dur }; }); });
+    var same = L.period === 32 && O.period === 33 && !O.steps[0].length && L.steps.every(function (st, j) { return String(st) === String(O.steps[j + 1]); });
+    if (!same) console.warn('두 손이 같은 무늬가 아니다 — 문어는 종달새 무늬로 부른다');
+    try { var sv = JSON.parse(localStorage.getItem(KEY) || 'null'); if (Array.isArray(sv) && sv.length === 32 && sv.some(function (x) { return x; })) {
+      paint = sv.map(function (x) { return Math.max(-LMAX, Math.min(LMAX, Math.round(+x) || 0)); }); auto = false; touched = true;
+      $('#tag').textContent = '지난번에 칠한 노래'; $('#listen').textContent = '▶ 듣기'; $('#play').hidden = true; $('#undo').hidden = $('#reset').hidden = false; } } catch (x) {}
+    clock = HS.clock(onStep); clock.start();
+    document.addEventListener('visibilitychange', function () { if (!document.hidden) clock.start(); });
+    requestAnimationFrame(frame);
+  }).catch(function (e) { $('#tag').textContent = '자료를 읽지 못했어요: ' + e.message; });
+
+  HS.hook({
+    probe: function () { var u = U(HS.audio.now()); return { auto: auto, sound: sound, step: clock ? clock.step : 0, lag: lagOf(u), pressing: pressing, level: level, paint: paint.slice(), calls: HS.audio.calls.length, ev: ev.length }; },
+    take: function () { takeOver(); }, unlock: unlock, stop: function () { clock.stop(); }, start: function () { clock.start(); },
+    press: function (l) { unlock(); takeOver(); stroke(); pressing = true; setLevel(l, true); }, release: function () { pressing = false; save(); },
+    advance: function (n) { clock.advance(n); }, undo: doUndo, reset: doReset, events: function () { return ev; }, M: function () { return M; }
+  });
+})();
+</script>
+</body>
+</html>

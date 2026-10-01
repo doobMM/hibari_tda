@@ -14,3 +14,4 @@
 - 2026-10-01: `project_relay_clock_1001.md` — 잇기(③ 주고받기) 모듈 시계 판. 몸 위 그물 1안은 판 13 거절. 큰 구멍은 악보 주기 32(PH 아님), 검증 8/9(Q8 실패).
 - 2026-10-01: `project_metro_greybox_1001.md` — hibari 노선도(Mini Metro 뼈대) 회색 시제품. 판 14 거절(모듈 시계 '재미가 없어') 뒤 규칙·시각 먼저.
 - 2026-10-01: `project_swarm_1001.md` — hibari 무리(particle-life, 종달새를 직접 움직이며 음악). 노선도는 판 15 거절.
+- 2026-10-01: `project_canon_lark_octopus_1001.md` — 종달새와 문어 — 한 박 늦게(sketch/canon.html): 무리·가닥 거절(판 16·17), 접기 취소 뒤 사용자 제안(내 움직임 × 시간차 × 모듈). 칠한 hibari 를 종달새 32박·문어 33박. 판정 대기.
