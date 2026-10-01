@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>hibari 노선도</title>
+<!--
+  hibari 노선도 — 회색 시제품 ③ (2026-10-01). 규칙 한 장·장면 한 장은 사용자 승인. 규칙은 metro-core.js(Mini Metro 뼈대).
+  조작   역에서 역으로 끌기 = 새 노선 · 노선 끝 역에서 끌기 = 늘리기(끝을 첫 역에 대면 고리) · 노선 위에서 역으로 끌기 = 끼워 넣기 ·
+         아래 색 점 두 번 = 그 노선 지우기 · 열차/객차 단추 → 색 점 = 그 노선에 더하기 · Space = 멈춤.
+  소리   없음(③ 은 규칙이 재밌는지만 본다). 첫 노선을 긋기 전에는 시간이 흐르지 않는다.
+-->
+<style>
+ :root{--bg:#f3f0e6;--paper:#fbf9f2;--ink:#22302a;--dim:#7d877f;--line:#d6d2c2;--green:#2f6b4f}
+ *{box-sizing:border-box}
+ html,body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans KR",sans-serif;-webkit-tap-highlight-color:transparent}
+ main{max-width:1000px;margin:0 auto;padding:10px 16px 24px}
+ header{display:flex;align-items:baseline;gap:10px;padding:4px 2px 6px}
+ header h1{font-size:13px;font-weight:500;color:var(--dim);letter-spacing:.08em;margin:0}
+ header a{margin-left:auto;font-size:12px;color:var(--dim);text-decoration:none}
+ #stage{position:relative;width:100%;height:min(70vh,660px);min-height:360px;border-radius:16px;overflow:hidden;background:#F4F1E8}
+ #cv{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
+ #hint{position:absolute;left:0;right:0;bottom:14px;text-align:center;font-size:14px;color:var(--dim);pointer-events:none;transition:opacity .5s}
+ .panel{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:18px 20px;text-align:center;min-width:240px;max-width:88%}
+ .panel b{display:block;font-size:20px;font-weight:600;margin-bottom:6px}
+ .panel p{margin:0 0 12px;font-size:14px;color:var(--dim)}
+ .panel .row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+ button{font:inherit;color:inherit;min-width:44px;min-height:44px;padding:0 14px;border:1px solid var(--line);border-radius:22px;background:var(--paper);cursor:pointer}
+ button.on{border-color:var(--green);box-shadow:0 0 0 2px var(--green) inset}
+ button:focus-visible{outline:2px solid var(--green);outline-offset:2px}
+ #bar{display:flex;align-items:center;gap:8px;padding:10px 0 4px;flex-wrap:wrap}
+ #dots{display:flex;gap:6px}
+ #dots button{width:44px;padding:0;display:flex;align-items:center;justify-content:center}
+ #dots i{display:block;width:20px;height:20px;border-radius:50%}
+ #legend{font-size:12.5px;color:var(--dim);padding:4px 2px;line-height:1.6}
+ [hidden]{display:none!important}
+</style>
+</head>
+<body>
+<main>
+ <header><h1>hibari 노선도 · 회색 시제품</h1><a href="./index.html">스케치</a></header>
+ <div id="stage">
+  <canvas id="cv"></canvas>
+  <div id="hint">역에서 역으로 끌어 보세요</div>
+  <div id="gift" class="panel" hidden><b>새 주</b><p>열차 하나가 왔어요. 하나 더 고르세요</p><div class="row"><button data-k="0"></button><button data-k="1"></button></div></div>
+  <div id="over" class="panel" hidden><b>역이 넘쳤어요</b><p id="sum"></p><div class="row"><button id="again">다시 하기</button></div></div>
+ </div>
+ <div id="bar"><div id="dots"></div><button id="bt">열차 ×0</button><button id="bc">객차 ×0</button><span id="bb" style="font-size:14px;color:var(--dim)">다리 ×2</span><button id="pause" style="margin-left:auto">멈춤</button></div>
+ <div id="legend">○ △ □ 승객은 자기 모양의 역으로 가요 · 한 역에 여섯 넘게 쌓이면 시계가 돌고, 다 돌면 끝 · 노선 끝 역에서 끌면 늘어나요 · 색 점을 두 번 누르면 그 노선을 지워요</div>
+</main>
+<script src="./common.js"></script>
+<script src="./metro-core.js"></script>
+<script>
+(function () {
+  'use strict';
+  var $ = function (s) { return document.querySelector(s); };
+  var cv = $('#cv'), cx = cv.getContext('2d'), stage = $('#stage');
+  var COL = ['#1D9E75', '#D85A30', '#BA7517', '#7F77DD', '#378ADD', '#D4537E'], DARK = ['#0F6E56', '#993C1D', '#854F0B', '#534AB7', '#185FA5', '#993556'];
+  var DAYS = ['월요일', '화요일', '수요일', '목요일', '금요일', '토요일', '일요일'], GIFT = { line: '새 노선', car: '객차', bridge: '다리' };
+  var E = null, S = null, view = { k: 1, ox: 0, oy: 0 }, drag = null, ptr = null, paused = false, assign = null, armed = null, last = 0, seed = 20261001;
+
+  function start() {
+    var r = stage.getBoundingClientRect();
+    E = HSMetro.create({ seed: seed++, W: Math.max(320, Math.round(r.width)), H: Math.max(320, Math.round(r.height)) }); S = E.state;
+    paused = false; assign = null; armed = null; drag = null; $('#over').hidden = true; $('#gift').hidden = true; $('#hint').style.opacity = 1; $('#hint').textContent = '역에서 역으로 끌어 보세요';
+    ui();
+  }
+  function resize() { var dpr = Math.min(2, devicePixelRatio || 1), w = cv.clientWidth, h = cv.clientHeight;
+    if (cv.width !== Math.round(w * dpr) || cv.height !== Math.round(h * dpr)) { cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr); }
+    var k = Math.min(w / E.P.W, h / E.P.H); view = { k: k, ox: (w - E.P.W * k) / 2, oy: (h - E.P.H * k) / 2, dpr: dpr }; }
+  function toWorld(e) { var r = cv.getBoundingClientRect(); return [(e.clientX - r.left - view.ox) / view.k, (e.clientY - r.top - view.oy) / view.k]; }
+  function stationAt(p, R) { var best = -1, bd = R; S.stations.forEach(function (s, i) { var d = Math.hypot(s.x - p[0], s.y - p[1]); if (d < bd) { bd = d; best = i; } }); return best; }
+  function segAt(p) { var best = null, bd = 14; S.lines.forEach(function (L) { E.pairs(L).forEach(function (pr, k) { var q = E.seg(pr[0], pr[1]);
+    for (var i = 0; i < 2; i++) { var a = q[i], b = q[i + 1], dx = b[0] - a[0], dy = b[1] - a[1], u = Math.max(0, Math.min(1, ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / (dx * dx + dy * dy || 1)));
+      var d = Math.hypot(p[0] - a[0] - u * dx, p[1] - a[1] - u * dy); if (d < bd) { bd = d; best = { L: L, k: k }; } } }); }); return best; }
+  function say(t) { $('#hint').textContent = t; $('#hint').style.opacity = 1; clearTimeout(say.t); say.t = setTimeout(function () { if (S.started) $('#hint').style.opacity = 0; }, 1600); }
+
+  // ── 끌기 ───────────────────────────────────────────────────────────────
+  cv.addEventListener('pointerdown', function (e) {
+    if (!E || S.over || S.gift) return; try { cv.setPointerCapture(e.pointerId); } catch (x) {}
+    var p = toWorld(e), R = e.pointerType === 'touch' ? 34 : 24, s = stationAt(p, R); ptr = p;
+    if (s >= 0) { var L = S.lines.filter(function (l) { return !l.loop && (l.stations[0] === s || l.stations[l.stations.length - 1] === s); })[0];
+      if (L) drag = { kind: 'extend', L: L, end: L.stations[L.stations.length - 1] === s ? 'tail' : 'head', from: s, ids: [] };
+      else if (S.spare.lines > 0) drag = { kind: 'new', ids: [s] };
+      else say('노선이 모자라요 — 다음 주 선물을 기다리세요'); return; }
+    var sg = segAt(p); if (sg) drag = { kind: 'insert', L: sg.L, k: sg.k };
+  });
+  cv.addEventListener('pointermove', function (e) {
+    if (!drag) return; var p = toWorld(e), R = e.pointerType === 'touch' ? 30 : 22, t = stationAt(p, R); ptr = p;
+    if (t < 0 || drag.kind === 'insert') return;
+    var ids = drag.ids, lastId = ids.length ? ids[ids.length - 1] : drag.from;
+    if (t === lastId) return;
+    if (ids.length >= 2 && t === ids[ids.length - 2]) { ids.pop(); return; }            // 되짚으면 지운다
+    if (ids.indexOf(t) >= 0) return;
+    if (drag.kind === 'extend') { var L = drag.L, other = drag.end === 'tail' ? L.stations[0] : L.stations[L.stations.length - 1];
+      if (L.stations.indexOf(t) >= 0 && t !== other) return; }
+    var need = E.crossings(lastId, t), used = 0; for (var i = 1; i < ids.length; i++) used += E.crossings(ids[i - 1], ids[i]);
+    if (drag.kind === 'extend' && ids.length) used += E.crossings(drag.from, ids[0]);
+    if (need && used + need > S.spare.bridges) { say('다리가 모자라요'); return; }
+    ids.push(t);
+  });
+  function up(e) {
+    if (!drag) return; var d = drag; drag = null; var ok = false;
+    if (d.kind === 'new' && d.ids.length >= 2) ok = E.newLine(d.ids);
+    else if (d.kind === 'extend' && d.ids.length) ok = E.extend(d.L, d.end, d.ids);
+    else if (d.kind === 'insert' && e && e.type === 'pointerup') { var t = stationAt(toWorld(e), e.pointerType === 'touch' ? 30 : 22); if (t >= 0) ok = E.insert(d.L, d.k, t); }
+    if (ok) { $('#hint').style.opacity = 0; ui(); } else if (d.kind !== 'insert' && (d.ids || []).length) say('그렇게는 못 이어요');
+  }
+  cv.addEventListener('pointerup', up); cv.addEventListener('pointercancel', function () { drag = null; });
+
+  // ── 아래 줄 ────────────────────────────────────────────────────────────
+  function ui() {
+    var box = $('#dots'); box.innerHTML = '';
+    for (var c = 0; c < E.P.maxLines; c++) { var L = S.lines.filter(function (l) { return l.color === c; })[0], free = !L && c < S.lines.length + S.spare.lines;
+      if (!L && !free) continue;
+      var b = document.createElement('button'), i = document.createElement('i');
+      i.style.background = L ? COL[c] : 'transparent'; i.style.border = L ? 'none' : '3px solid ' + COL[c]; b.appendChild(i);
+      b.setAttribute('aria-label', L ? '노선 ' + (c + 1) + (armed === L ? ' — 한 번 더 누르면 지워요' : '') : '빈 노선');
+      if (armed === L && L) b.classList.add('on');
+      (function (L) { b.addEventListener('click', function () {
+        if (!L) return;
+        if (assign) { var ok = assign === 'train' ? E.addTrain(L) : E.addCar(L); assign = null; say(ok ? (S.started ? '더했어요' : '') : '못 더해요'); ui(); return; }
+        if (armed === L) { E.removeLine(L); armed = null; ui(); return; }
+        armed = L; say('한 번 더 누르면 이 노선을 지워요'); ui(); setTimeout(function () { if (armed === L) { armed = null; ui(); } }, 2000); }); })(L);
+      box.appendChild(b); }
+    $('#bt').textContent = '열차 ×' + S.spare.trains; $('#bc').textContent = '객차 ×' + S.spare.cars; $('#bb').textContent = '다리 ×' + S.spare.bridges;
+    $('#bt').classList.toggle('on', assign === 'train'); $('#bc').classList.toggle('on', assign === 'car');
+    $('#pause').textContent = paused ? '이어 하기' : '멈춤';
+  }
+  $('#bt').addEventListener('click', function () { if (S.spare.trains) { assign = assign === 'train' ? null : 'train'; if (assign) say('열차를 더할 노선의 색 점을 누르세요'); ui(); } });
+  $('#bc').addEventListener('click', function () { if (S.spare.cars) { assign = assign === 'car' ? null : 'car'; if (assign) say('객차를 더할 노선의 색 점을 누르세요'); ui(); } });
+  $('#pause').addEventListener('click', function () { paused = !paused; ui(); });
+  $('#again').addEventListener('click', start);
+  [].forEach.call(document.querySelectorAll('#gift button'), function (b) { b.addEventListener('click', function () { E.chooseGift(+b.dataset.k); $('#gift').hidden = true; ui(); }); });
+  HS.keys(function (code) { if (code === 'Space' && E && S.started && !S.over) { paused = !paused; ui(); } });
+  document.addEventListener('visibilitychange', function () { if (document.hidden && E && S.started && !S.over) { paused = true; ui(); } });
+
+  // ── 그리기 ─────────────────────────────────────────────────────────────
+  function shape(type, x, y, r, fill, stroke, lw) {
+    cx.beginPath();
+    if (type === 0) cx.arc(x, y, r, 0, 7);
+    else if (type === 1) { cx.moveTo(x, y - r * 1.15); cx.lineTo(x + r * 1.05, y + r * 0.75); cx.lineTo(x - r * 1.05, y + r * 0.75); cx.closePath(); }
+    else if (type === 2) { cx.rect(x - r * 0.9, y - r * 0.9, r * 1.8, r * 1.8); }
+    else { for (var i = 0; i < 10; i++) { var a = -Math.PI / 2 + i * Math.PI / 5, q = i % 2 ? r * 0.5 : r * 1.2; cx.lineTo(x + q * Math.cos(a), y + q * Math.sin(a)); } cx.closePath(); }
+    if (fill) { cx.fillStyle = fill; cx.fill(); } if (stroke) { cx.strokeStyle = stroke; cx.lineWidth = lw; cx.stroke(); }
+  }
+  function linePath(L) { cx.beginPath(); E.pairs(L).forEach(function (pr, k) { var q = E.seg(pr[0], pr[1]); if (!k) cx.moveTo(q[0][0], q[0][1]); cx.lineTo(q[1][0], q[1][1]); cx.lineTo(q[2][0], q[2][1]); }); }
+  function paint(now) {
+    resize(); var w = cv.clientWidth, h = cv.clientHeight; if (!w || !h) return;
+    cx.setTransform(view.dpr, 0, 0, view.dpr, 0, 0); cx.clearRect(0, 0, w, h);
+    cx.translate(view.ox, view.oy); cx.scale(view.k, view.k); cx.lineCap = cx.lineJoin = 'round';
+    cx.beginPath(); S.river.forEach(function (p, i) { if (i) cx.lineTo(p[0], p[1]); else cx.moveTo(p[0], p[1]); }); cx.strokeStyle = '#D5E4EF'; cx.lineWidth = 40; cx.stroke();
+    S.lines.forEach(function (L) { linePath(L); cx.strokeStyle = COL[L.color]; cx.lineWidth = 9; cx.stroke();
+      if (!L.loop) [[L.stations[0], L.stations[1]], [L.stations[L.stations.length - 1], L.stations[L.stations.length - 2]]].forEach(function (pr) {   // 끝 손잡이
+        var a = S.stations[pr[0]], q = E.seg(pr[1], pr[0]), b = q[1][0] === a.x && q[1][1] === a.y ? q[0] : q[1], dx = a.x - b[0], dy = a.y - b[1], l = Math.hypot(dx, dy) || 1, ux = dx / l, uy = dy / l;
+        cx.beginPath(); cx.moveTo(a.x, a.y); cx.lineTo(a.x + ux * 22, a.y + uy * 22); cx.stroke();
+        cx.beginPath(); cx.moveTo(a.x + ux * 22 - uy * 9, a.y + uy * 22 + ux * 9); cx.lineTo(a.x + ux * 22 + uy * 9, a.y + uy * 22 - ux * 9); cx.stroke(); }); });
+    if (drag && drag.kind !== 'insert' && ptr) { var col = drag.kind === 'extend' ? COL[drag.L.color] : COL[(function () { for (var c = 0; c < 6; c++) if (!S.lines.some(function (l) { return l.color === c; })) return c; return 0; })()];
+      var chain = (drag.kind === 'extend' ? [drag.from] : []).concat(drag.ids);
+      cx.beginPath(); chain.forEach(function (id, i) { var s = S.stations[id]; if (i) cx.lineTo(s.x, s.y); else cx.moveTo(s.x, s.y); }); cx.lineTo(ptr[0], ptr[1]);
+      cx.setLineDash([2, 14]); cx.strokeStyle = col; cx.lineWidth = 9; cx.stroke(); cx.setLineDash([]); }
+    if (drag && drag.kind === 'insert' && ptr) { cx.beginPath(); cx.arc(ptr[0], ptr[1], 10, 0, 7); cx.strokeStyle = COL[drag.L.color]; cx.lineWidth = 3; cx.stroke(); }
+    S.lines.forEach(function (L) { L.trains.forEach(function (tr) { var p = E.trainPos(tr); cx.save(); cx.translate(p.x, p.y); cx.rotate(p.a);
+      var len = 30 + (tr.cap > 6 ? 16 : 0); cx.fillStyle = DARK[L.color]; cx.beginPath(); cx.roundRect ? cx.roundRect(-len / 2, -8, len, 16, 4) : cx.rect(-len / 2, -8, len, 16); cx.fill();
+      tr.pax.slice(0, 12).forEach(function (q, i) { shape(q.dest, -len / 2 + 6 + (i % 6) * (len - 8) / 6 + 1, i < 6 ? -2.5 : 3.5, 2.2, '#fff'); }); cx.restore(); }); });
+    S.stations.forEach(function (s, i) {
+      var age = Math.min(1, (S.t - s.born) / 0.5 + (S.started ? 0 : 1)), r = 11 * (0.4 + 0.6 * age);
+      if (s.crowd > 0) { cx.beginPath(); cx.arc(s.x, s.y, 26, 0, 7); cx.strokeStyle = '#D3D1C7'; cx.lineWidth = 5; cx.stroke();
+        cx.beginPath(); cx.arc(s.x, s.y, 26, -Math.PI / 2, -Math.PI / 2 + s.crowd * Math.PI * 2); cx.strokeStyle = '#D85A30'; cx.stroke(); }
+      shape(s.type, s.x, s.y, r, '#ffffff', '#2C2C2A', 3);
+      s.q.slice(0, 18).forEach(function (q, k) { shape(q.dest, s.x + 18 + (k % 6) * 9, s.y - 6 + Math.floor(k / 6) * 9, 3, '#6b6b66'); });
+      cx.fillStyle = '#7d877f'; cx.font = '12px -apple-system,"Noto Sans KR",sans-serif'; cx.textAlign = 'center'; cx.fillText(s.name, s.x, s.y - 18); });
+    cx.setTransform(view.dpr, 0, 0, view.dpr, 0, 0);
+    var day = Math.floor((S.t % E.P.week) / (E.P.week / 7)), u = (S.t % E.P.week) / E.P.week;
+    cx.fillStyle = '#2C2C2A'; cx.font = '15px -apple-system,"Noto Sans KR",sans-serif'; cx.textAlign = 'left'; cx.fillText(DAYS[day] + (S.week ? ' · ' + (S.week + 1) + '주' : ''), 18, 30);
+    cx.fillStyle = '#D3D1C7'; cx.fillRect(18, 38, 90, 4); cx.fillStyle = '#5F5E5A'; cx.fillRect(18, 38, 90 * u, 4);
+    cx.textAlign = 'right'; cx.fillStyle = '#2C2C2A'; cx.fillText(S.score + '명', w - 18, 30);
+    if (paused && !S.over) { cx.fillStyle = 'rgba(244,241,232,.6)'; cx.fillRect(0, 0, w, h); cx.fillStyle = '#5F5E5A'; cx.textAlign = 'center'; cx.fillText('멈춤 — Space 또는 이어 하기', w / 2, h / 2); }
+  }
+  function frame(now) {
+    try { var dt = last ? Math.min(0.1, (now - last) / 1000) : 0; last = now;
+      if (E) { if (!paused) E.step(dt);
+        if (S.gift && $('#gift').hidden) { var bs = document.querySelectorAll('#gift button'); S.gift.options.forEach(function (g, k) { bs[k].textContent = GIFT[g]; }); $('#gift').hidden = false; ui(); }
+        if (S.over && $('#over').hidden) { var best = 0; try { best = +localStorage.getItem('metro-best') || 0; if (S.score > best) localStorage.setItem('metro-best', S.score); } catch (x) {}
+          $('#sum').textContent = S.score + '명을 날랐어요 · ' + (S.week + 1) + '주 ' + DAYS[Math.floor((S.t % E.P.week) / (E.P.week / 7))] + (best ? ' · 최고 ' + Math.max(best, S.score) + '명' : ''); $('#over').hidden = false; }
+        if (Math.floor(now / 500) !== frame.ui) { frame.ui = Math.floor(now / 500); ui(); }
+        paint(now); }
+    } finally { requestAnimationFrame(frame); }
+  }
+  start(); requestAnimationFrame(frame);
+  HS.hook({ engine: function () { return E; }, probe: function () { return E && { t: S.t, score: S.score, stations: S.stations.length, lines: S.lines.length, over: S.over, gift: !!S.gift, started: S.started }; },
+    advance: function (sec) { for (var i = 0; i < sec * 10; i++) { E.step(0.1); if (S.gift) E.chooseGift(0); } } });
+})();
+</script>
+</body>
+</html>
