@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>고리판</title>
+<!--
+  sketch/rings.html — 고리판. 사용자가 보여 준 그림(루빅스 큐브의 스티커를 세 무리 둥근 선의 교점에 편 것) 그대로, "원이 돌아가면서 나는 소리가 달라진다".
+  엔진 sketch/rings-core.js (칸표·소리·사건은 sketch/cube-core.js 그대로) · 판정기 tools/verify_rings.mjs
+
+  판      원 9개(세 무리 × 셋), 점 54개 = 원과 원이 만나는 곳. 점 = hibari 오른손 한 모듈의 음(59개 중 두 구절이 같이 쓰는 베이스 다섯을 한 번씩).
+          가운데 육각의 세 송이 = 자리 미·파·솔, 바깥 세 꽃잎 = 라·시·도. 송이 가운데 큰 점 = 그 자리의 베이스.
+  갱신    8분음표마다 두 손이 판을 읽는다(오른손 32박 · 왼손 33박 = 한 박씩 어긋난다). 울리는 점이 빛난다(금빛 오른손 · 산호빛 왼손).
+          빛은 미→파→솔(가운데 한 바퀴) → 라→시→도(바깥 한 바퀴) → 쉼.
+  조작    원을 끌면 그 원이 돈다 — 그 원 위의 점 12개만 원을 따라 미끄러진다. 놓으면 가장 가까운 사분(90°)에 멈춘다.
+          돌리는 동안 바늘(원의 가장 바깥 자리)을 지나는 점이 울린다. 점을 누르면 그 음. 멈춘 자리에서 음들이 다른 송이로 옮겨 가 화음이 바뀐다.
+  사건    송이가 다시 제 음으로 차면(9점 모두) 그 송이가 초록으로 빛나며 원래 화음 · 여섯 송이가 다 차면 "다시 hibari".
+  단추    ▶ 예시 듣기 · 직접 하기 · 되돌리기 · 처음으로.  키: 1~9 = 원 돌리기(Shift = 반대) · ⌫ = 되돌리기.  ?silent = 무음
+  들어오면 예시가 소리 없이 돈다(원을 하나씩 돌렸다가 되돌려 hibari 로). 소리는 누른 뒤에만.
+-->
+<style>
+ html,body{margin:0;height:100%;overflow:hidden;background:#f3f0e6;color:#22302a;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans KR",sans-serif}
+ #wrap{position:absolute;inset:0;display:flex;flex-direction:column}
+ header{display:flex;align-items:baseline;gap:10px;padding:10px 16px 0}
+ header b{font-size:17px;font-weight:600}
+ header span{font-size:13px;color:#7d877f}
+ header a{margin-left:auto;font-size:12px;color:#7d877f;text-decoration:none}
+ #stage{position:relative;flex:1;min-height:0}
+ canvas{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent}
+ #say{position:absolute;left:0;right:0;top:6px;text-align:center;font-size:14px;color:#22302a;pointer-events:none;transition:opacity .5s;opacity:0}
+ #say i{font-style:normal;background:#fbf9f2;border:1px solid #d6d2c2;border-radius:16px;padding:5px 12px}
+ #tag{position:absolute;left:16px;top:8px;font-size:12px;color:#7d877f;pointer-events:none}
+ #seats{position:absolute;right:12px;top:6px;display:flex;gap:4px;pointer-events:none}
+ #seats span{width:24px;height:24px;border-radius:12px;font-size:12px;display:flex;align-items:center;justify-content:center;border:1px solid #d6d2c2;background:#fbf9f2;color:#7d877f}
+ #seats span.home{background:#2f6b4f;border-color:#2f6b4f;color:#fff}
+ #seats span.now{font-weight:700;box-shadow:0 0 0 2px #c98a12}
+ #bar{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;padding:6px 12px 14px}
+ button{font:inherit;font-size:14px;color:inherit;min-width:44px;min-height:44px;padding:0 14px;border:1px solid #d6d2c2;border-radius:22px;background:#fbf9f2;cursor:pointer}
+ button.on{background:#22302a;color:#fbf9f2;border-color:#22302a}
+ button:focus-visible{outline:2px solid #2f6b4f;outline-offset:2px}
+</style>
+</head>
+<body>
+<div id="wrap">
+ <header><b>고리판</b><span>원을 끌어 돌려 보세요</span><a href="./">스케치</a></header>
+ <div id="stage"><canvas id="c" role="application" aria-label="고리판 — 원을 끌어 돌리면 그 원 위의 음들이 자리를 옮겨 hibari 가 달라집니다. 숫자 키 1부터 9까지로도 돌립니다."></canvas><div id="tag">예시</div><div id="seats" aria-hidden="true"></div><div id="say"><i></i></div></div>
+ <div id="bar"><button id="listen" class="on">▶ 예시 듣기</button><button id="play">직접 하기</button><button id="undo">되돌리기</button><button id="reset">처음으로</button></div>
+</div>
+<script src="./common.js?v=2"></script>
+<script src="./cube-core.js?v=1"></script>
+<script src="./rings-core.js?v=1"></script>
+<script>
+(function () {
+  'use strict';
+  var $ = function (s) { return document.querySelector(s); }, RG = HSRings, TH = HS.theme;
+  var cv = $('#c'), ctx = cv.getContext('2d'), W = 0, Hh = 0, CX = 0, CY = 0, SC = 1, DOT = 10;
+  var GOLD = [201, 138, 18], CORAL = [210, 85, 111], GREEN = [47, 107, 79];
+  var B = null, H = null, clock = null, sound = false, auto = true, CUR = RG.curves(240);
+  var lit = {}, glowFace = {}, say = { t: 0, text: '' }, drag = null, anim = null, demo = { k: 0, t0: 0, moves: [] }, lastStep = -1, curStep = 0, curL = -1;
+  var NAMES = ['미', '파', '솔', '라', '시', '도'];
+  function rgba(c, a) { return 'rgba(' + c[0] + ',' + c[1] + ',' + c[2] + ',' + a + ')'; }
+  function now() { return performance.now(); }
+  function glow(t, ms) { return t ? Math.max(0, 1 - (now() - t) / ms) : 0; }
+
+  // ── 자리 ────────────────────────────────────────────────────────────────
+  function layout() { var dpr = Math.min(2, devicePixelRatio || 1), r = cv.getBoundingClientRect(); W = r.width; Hh = r.height;
+    cv.width = Math.round(W * dpr); cv.height = Math.round(Hh * dpr); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    CX = W / 2; CY = Hh / 2 + 6; SC = Math.min(W - 24, Hh - 34) / 2 / 2.95; DOT = Math.max(8, Math.min(15, SC * 0.17)); }
+  function scr(p) { return [CX + p[0] * SC, CY - p[1] * SC]; }
+  /** 칸 i 가 지금 그려질 공 위 점 — 끌거나 돌아가는 중인 고리 위면 그만큼 돌린다 */
+  function qOf(i) { var c = RG.CELLS[i], m = drag && drag.ring != null ? drag : anim;
+    if (m && m.ring != null && RG.RINGS[m.ring].cells.indexOf(i) >= 0 && m.th) return RG.spin(c.q, RG.RINGS[m.ring], m.th);
+    return c.q; }
+  function posOf(i) { return scr(RG.flat(qOf(i))); }
+
+  // ── 소리 ────────────────────────────────────────────────────────────────
+  function unlock() { if (!sound) { HS.audio.wake(); sound = true; } $('#listen').classList.toggle('on', auto); }
+  function voice(n, when) { if (sound) HS.audio.voice(n.pitch, when, Math.max(0.12, (n.dur || 1) * HS.SEC * 1.05), n.vel); }
+  function onStep(g, when) {
+    var notes = B.sound(g), dl = Math.max(0, (when - HS.audio.now()) * 1000), t = now() + dl;
+    notes.forEach(function (n) { voice(n, when); lit[n.cell] = { t: t, hand: n.hand }; });
+    curStep = g % 32; curL = B.table.lmap[g % 33];
+    if (auto) demoStep(g);
+  }
+  function say1(text) { say = { t: now(), text: text }; $('#say i').textContent = text; $('#say').style.opacity = 1; }
+  function events(ev) { if (!ev) return;
+    ev.faces.forEach(function (f) { glowFace[f] = now(); });
+    if (ev.all) { for (var f = 0; f < 6; f++) glowFace[f] = now(); say1('다시 hibari'); }
+    else if (ev.faces.length) say1(ev.faces.map(function (f) { return NAMES[f]; }).join('·') + ' 송이가 hibari 로');
+    var t0 = HS.audio.now(); ev.notes.forEach(function (n) { voice({ pitch: n.pitch, dur: n.dur, vel: n.vel }, t0 + (n.at || 0)); });
+  }
+
+  // ── 돌리기 ──────────────────────────────────────────────────────────────
+  function needleCross(R, th0, th1) {                                 // th0 → th1 동안 바늘을 지난 점들을 울린다
+    var nd = CUR[R.id].needle, out = [];
+    R.cells.forEach(function (i) { var a = RG.CELLS[i].ang[R.axis], d0 = RG.wrap(a + th0 - nd), d1 = RG.wrap(a + th1 - nd);
+      if (Math.abs(th1 - th0) < Math.PI && d0 !== d1 && (d0 < 0) !== (d1 < 0) && Math.abs(d0 - d1) < Math.PI) out.push(i); });
+    out.forEach(function (i, k) { voice({ pitch: B.pitchAt(i), dur: 1, vel: 0.2 }, HS.audio.now() + 0.005 + k * 0.03); lit[i] = { t: now(), hand: 2 }; });
+  }
+  /** 그림만 미끄러진다: 상태는 이미 바뀌었고, 그 고리 위 점들을 from(남은 각)에서 0 으로 돌려 그린다 */
+  function animate(ring, from) { anim = from ? { ring: ring, th: from, from: from, t0: now(), dur: 140 + 110 * Math.abs(from) / (Math.PI / 2) } : null; }
+  function stepAnim() { if (!anim) return; var u = Math.min(1, (now() - anim.t0) / anim.dur), e = u * u * (3 - 2 * u), th = anim.from * (1 - e);
+    needleCross(RG.RINGS[anim.ring], anim.th, th); anim.th = th; if (u >= 1) anim = null; }
+  /** 고리를 k 사분 — **상태는 곧바로** 바꾸고(소리가 다음 박부터 바뀐다) 그림은 손이 놓은 각(th)에서 새 자리로 미끄러진다 */
+  function turnRing(ring, k, th, autoMove) { anim = null; var x = k ? B.move(ring, k, autoMove) : null; if (x) events(x.events);
+    animate(ring, (th || 0) - k * Math.PI / 2); return x; }
+
+  // ── 누르기·끌기 ────────────────────────────────────────────────────────
+  function nearestDot(x, y) { var best = -1, bd = DOT + 8; for (var i = 0; i < 54; i++) { var p = posOf(i), d = Math.hypot(p[0] - x, p[1] - y); if (d < bd) { bd = d; best = i; } } return best; }
+  function nearestRing(x, y, only) { var best = null, bd = 14;
+    CUR.forEach(function (C) { if (only != null && C.ring !== only) return; for (var s = 0; s < C.pts.length; s++) { var p = scr(C.pts[s]), d = Math.hypot(p[0] - x, p[1] - y);
+      if (d < bd) { bd = d; best = { ring: C.ring, phi: 2 * Math.PI * s / C.pts.length }; } } });
+    return best; }
+  function phiAt(ring, x, y) { var C = CUR[ring], best = 0, bd = 1e9; for (var s = 0; s < C.pts.length; s++) { var p = scr(C.pts[s]), d = Math.hypot(p[0] - x, p[1] - y); if (d < bd) { bd = d; best = s; } }
+    return 2 * Math.PI * best / C.pts.length; }
+  function takeOver() { if (auto) { auto = false; $('#tag').style.display = 'none'; $('#listen').classList.remove('on'); } }
+  cv.addEventListener('pointerdown', function (e) {
+    if (e.button > 0) return; e.preventDefault(); unlock(); takeOver(); try { cv.setPointerCapture(e.pointerId); } catch (x) {}
+    anim = null;
+    var r = cv.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top, dot = nearestDot(x, y), rg = dot < 0 ? nearestRing(x, y) : null;
+    drag = { id: e.pointerId, x0: x, y0: y, dot: dot, ring: rg ? rg.ring : null, phi0: rg ? rg.phi : 0, th: 0 };
+    if (dot >= 0) { voice({ pitch: B.pitchAt(dot), dur: 2, vel: 0.24 }); lit[dot] = { t: now(), hand: 2 }; }                 // 누른 그 호출에서 곧바로
+    else if (rg) { var R = RG.RINGS[rg.ring], i = R.cells.reduce(function (b, j) { return Math.abs(RG.wrap(RG.CELLS[j].ang[R.axis] - rg.phi)) < Math.abs(RG.wrap(RG.CELLS[b].ang[R.axis] - rg.phi)) ? j : b; }, R.cells[0]);
+      voice({ pitch: B.pitchAt(i), dur: 2, vel: 0.2 }); lit[i] = { t: now(), hand: 2 }; }
+  });
+  cv.addEventListener('pointermove', function (e) {
+    if (!drag || e.pointerId !== drag.id) { if (!drag) hover(e); return; }
+    var r = cv.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top;
+    if (drag.ring == null) { if (drag.dot < 0 || Math.hypot(x - drag.x0, y - drag.y0) < 8) return;   // 점을 잡았으면 끈 쪽으로 고리를 고른다
+      var pk = RG.pick(drag.dot, x - drag.x0, -(y - drag.y0)); if (!pk) return;
+      drag.ring = pk.ring; drag.phi0 = RG.CELLS[drag.dot].ang[RG.RINGS[pk.ring].axis]; }
+    var th = RG.wrap(phiAt(drag.ring, x, y) - drag.phi0), prev = drag.th;
+    if (Math.abs(th - prev) > Math.PI) th = prev + RG.wrap(th - prev);                                // 한 바퀴 넘게 돌려도 이어지게
+    needleCross(RG.RINGS[drag.ring], prev, th); drag.th = th;
+  });
+  function up(e) { if (!drag || e.pointerId !== drag.id) return; var d = drag; drag = null;
+    if (d.ring == null) return; var k = RG.snap(d.th); turnRing(d.ring, k, d.th, false); }
+  cv.addEventListener('pointerup', up); cv.addEventListener('pointercancel', up);
+  var hov = null; function hover(e) { var r = cv.getBoundingClientRect(), g = nearestRing(e.clientX - r.left, e.clientY - r.top); hov = g ? g.ring : null; cv.style.cursor = g ? 'grab' : 'default'; }
+
+  // ── 단추·키 ───────────────────────────────────────────────────────────
+  $('#listen').addEventListener('click', function () { unlock(); if (!auto) { auto = true; demo.k = 0; demo.moves = []; $('#tag').style.display = ''; } $('#listen').classList.add('on'); });
+  $('#play').addEventListener('click', function () { unlock(); takeOver(); });
+  $('#undo').addEventListener('click', function () { unlock(); takeOver(); doUndo(); });
+  $('#reset').addEventListener('click', function () { unlock(); takeOver(); var before = B.mask(); B.reset(); events(B.engine.events(before)); });
+  function doUndo() { var x = B.undo(); if (!x) return; events(x.events); animate(x.ring, RG.wrap((4 - x.k) * Math.PI / 2)); }   // 점들이 있던 자리에서 짧은 쪽으로 되돌아간다
+  HS.keys(function (code, ev) { var m = /^Digit([1-9])$/.exec(code);
+    if (m) { unlock(); takeOver(); turnRing(+m[1] - 1, ev && ev.shiftKey ? -1 : 1, 0, false); }
+    else if (code === 'Backspace') { unlock(); takeOver(); doUndo(); } });
+
+  // ── 예시: 쉼마다 원 하나를 사분 돌리고, 셋을 돌린 뒤 거꾸로 되돌려 hibari 로 ─────────────────────────────
+  var DEMO = [[1, 1], [3, 1], [7, -1]];                               // [고리, 사분] — 위층 띠 · 가운데 띠 · 바깥 띠
+  function demoStep(g) { var r = g % 32; if (r !== 12 && r !== 28) return;
+    var k = demo.k++ % 8;
+    if (k < 3) turnRing(DEMO[k][0], DEMO[k][1], 0, true);
+    else if (k < 6) doUndo(); }
+
+  // ── 그리기 ──────────────────────────────────────────────────────────────
+  function draw() {
+    stepAnim();
+    ctx.fillStyle = TH.bg; ctx.fillRect(0, 0, W, Hh);
+    var act = drag && drag.ring != null ? drag.ring : anim ? anim.ring : hov;
+    // 원(띠): 지금 돌리는 원은 굵고 초록
+    CUR.forEach(function (C) { ctx.beginPath(); C.pts.forEach(function (p, s) { var q = scr(p); if (s) ctx.lineTo(q[0], q[1]); else ctx.moveTo(q[0], q[1]); }); ctx.closePath();
+      var on = C.ring === act; ctx.strokeStyle = on ? rgba(GREEN, 0.85) : 'rgba(125,135,127,0.42)'; ctx.lineWidth = on ? 2.4 : 1.1; ctx.stroke();
+      if (on) { var nd = scr(RG.flat(RG.onRing(RG.RINGS[C.ring], C.needle))); ctx.beginPath(); ctx.arc(nd[0], nd[1], 4, 0, 6.283); ctx.fillStyle = rgba(GREEN, 0.9); ctx.fill(); } });
+    // 송이: 지금 오른손이 읽는 자리(범례에 진하게) · 제 음으로 다시 찬 송이는 잠시 초록 후광
+    var tab = B.table, seatNow = -1; for (var f = 0; f < 6; f++) if (tab.ch1[f] === curStep || tab.ch1[f] + 1 === curStep || (tab.ch1[f] + 16) % 32 === curStep || (tab.ch1[f] + 17) % 32 === curStep) seatNow = f;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    for (f = 0; f < 6; f++) { var gl = glow(glowFace[f], 1800); if (!(gl > 0)) continue; var cp = scr(RG.flat(RG.CELLS[f * 9 + 4].q));
+      ctx.beginPath(); ctx.arc(cp[0], cp[1], DOT * 3.4, 0, 6.283); ctx.fillStyle = rgba(GREEN, 0.14 * gl); ctx.fill(); }
+    legend(seatNow);
+    // 점: 음이름 빛깔(옥타브가 높을수록 밝게) · 가운데(베이스)는 크게 · 울리면 빛
+    for (var i = 0; i < 54; i++) { var p = posOf(i), pitch = B.pitchAt(i), pc = pitch % 12, oct = Math.floor(pitch / 12) - 1, L = 38 + (oct - 3) * 14, ctr = RG.CELLS[i].center, rad = ctr ? DOT * 1.18 : DOT;
+      var l = lit[i], gv = l ? glow(l.t, l.hand === 2 ? 500 : 420) : 0;
+      if (gv > 0) { ctx.beginPath(); ctx.arc(p[0], p[1], rad + 3 + 7 * gv, 0, 6.283); ctx.fillStyle = rgba(l.hand === 1 ? CORAL : l.hand === 2 ? GREEN : GOLD, 0.45 * gv); ctx.fill(); }
+      ctx.beginPath(); ctx.arc(p[0], p[1], rad, 0, 6.283); ctx.fillStyle = 'hsl(' + HS.hue(pc) + ',52%,' + L + '%)'; ctx.fill();
+      ctx.lineWidth = ctr ? 1.6 : 1; ctx.strokeStyle = 'rgba(34,48,42,' + (ctr ? 0.65 : 0.35) + ')'; ctx.stroke();
+      if (DOT >= 10) { ctx.font = '600 ' + Math.round(rad * 0.78) + 'px system-ui,"Noto Sans KR",sans-serif'; ctx.fillStyle = L > 55 ? 'rgba(34,48,42,0.85)' : 'rgba(255,253,243,0.95)';
+        ctx.fillText(HS.noteName(pitch), p[0], p[1] + 0.5); } }
+    if (say.t && now() - say.t > 1600) { $('#say').style.opacity = 0; say.t = 0; }
+  }
+  var seatEls = null, seatKey = '';
+  /** 범례: 미 파 솔 라 시 도 — 제 음으로 찬 송이는 초록, 지금 오른손이 읽는 송이는 금빛 테 */
+  function legend(seatNow) { var m = B.mask(), k = m + ':' + seatNow; if (k === seatKey) return; seatKey = k;
+    if (!seatEls) { var box = $('#seats'); seatEls = NAMES.map(function (n) { var e = document.createElement('span'); e.textContent = n; box.appendChild(e); return e; }); }
+    seatEls.forEach(function (e, f) { e.className = (m & 1 << f ? 'home' : '') + (f === seatNow ? ' now' : ''); }); }
+  function frame() { try { draw(); } finally { requestAnimationFrame(frame); } }
+
+  HS.load().then(function (D) {
+    H = HS.derive(D); B = RG.create(H);
+    layout(); addEventListener('resize', layout);
+    clock = HS.clock(onStep); clock.start();                         // 예시는 소리 없이 곧바로 (소리는 누른 뒤에만)
+    document.addEventListener('visibilitychange', function () { if (!document.hidden) clock.start(); });
+    HS.hook({ probe: function () { var m = B.mask(), f = []; for (var k = 0; k < 6; k++) if (m & 1 << k) f.push(k);
+                return { mode: auto ? 'demo' : 'play', sound: sound, step: clock.step, faces: f, solved: m === 63, moves: B.hist.length, calls: HS.audio.calls.length, anim: !!anim }; },
+              turn: function (ring, k) { takeOver(); turnRing(ring, k, 0, false); }, settle: function () { if (anim) { var a = anim; anim = null; if (a.done) a.done(); } },
+              undo: function () { takeOver(); doUndo(); }, advance: function (n) { clock.advance(n); }, at: function (i) { return posOf(i); },
+              ring: function (i) { return CUR[i]; }, scr: scr, engine: function () { return B; }, demo: function (on) { if (on) { auto = true; demo.k = 0; } else takeOver(); } });
+    requestAnimationFrame(frame);
+  }).catch(function (e) { $('#say i').textContent = '자료를 읽지 못했어요: ' + e.message; $('#say').style.opacity = 1; });
+})();
+</script>
+</body>
+</html>
