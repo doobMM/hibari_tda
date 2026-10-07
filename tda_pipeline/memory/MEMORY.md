@@ -15,4 +15,5 @@
 - 2026-10-01: `project_metro_greybox_1001.md` — hibari 노선도(Mini Metro 뼈대) 회색 시제품. 판 14 거절(모듈 시계 '재미가 없어') 뒤 규칙·시각 먼저.
 - 2026-10-01: `project_swarm_1001.md` — hibari 무리(particle-life, 종달새를 직접 움직이며 음악). 노선도는 판 15 거절.
 - 2026-10-01: `project_canon_lark_octopus_1001.md` — 종달새와 문어 — 한 박 늦게(sketch/canon.html): 무리·가닥 거절(판 16·17), 접기 취소 뒤 사용자 제안(내 움직임 × 시간차 × 모듈). 칠한 hibari 를 종달새 32박·문어 33박. 판정 대기.
-- 2026-10-01: `project_lenia_game_tda_1001.md` — 살아 있는 고리(sketch/lifeloop.html): Lenia 오비움 몸의 구멍(H1)이 hibari 지도 고리를 켜면 그 고리가 연주된다. 내 고리 먼저. 소리 규칙을 같은 판 두 갈래로 네 번 고침(0/120 → 7/7). 판정 대기.
+- 2026-10-01: `project_lenia_game_tda_1001.md` — 살아 있는 고리(sketch/lifeloop.html): Lenia 오비움 몸의 구멍(H1)이 hibari 지도 고리를 켜면 그 고리가 연주된다. 내 고리 먼저. 소리 규칙을 같은 판 두 갈래로 네 번 고침(0/120 → 7/7). ⛔ 판 20 거절(2026-10-07).
+- 2026-10-07: `project_flight_cube_1007.md` — 판 20 뒤 처음부터: 날갯짓(나비처럼 날면 높이가 hibari 음, 날갯길 H1 고리가 한 박 늦게 되풀이) · 큐브(hibari 오른손 한 모듈 = 루빅스 큐브 54칸). 에이전트 둘 동시 구현 + 독립 검산.

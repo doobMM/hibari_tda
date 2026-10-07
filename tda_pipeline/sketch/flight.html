@@ -1,0 +1,329 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>날갯짓</title>
+<!--
+  날갯짓 — 유리 큐브 안을 나비처럼 나는 빛 한 점 (2026-10-07). 엔진 sketch/flight-core.js · 판정기 tools/verify_flight.mjs
+  사용자: "생명체가 없어도 돼 … 사용자가 조작함으로써 자신이 원하는 음악 … ryuichi sakamoto 스타일이자 TDA 에 기반 … 사건은 있었으면" ·
+          "나비나 벌이 어떻게 날아다니는지 … 3차원 공간 상에서 그 움직임을 구현 … 생명체 자체를 베끼는 게 아니라 그 움직임을".
+
+  상태   빛 한 점(자리·방향·누르는 중인가) · 지나간 길 · 고리 셋까지(구간·구절·주기·점·수명). 몸은 그리지 않는다.
+  갱신   엔진이 1/120초 걸음으로 돈다(엔진 시각 = 소리 시각 + 0.06초 — 박의 음을 미리 예약하려고). 박(8분음표 0.4545초)마다:
+         날갯짓 격자의 내리치기·올리기 → 표본(자리 + 그 박의 음) → 고리 되풀이 → 되돌아옴 찾기(VR H₁).
+         높이 = 여섯 칸(아래부터 hibari 의 여섯 자리). 누르고 있으면 날갯짓 한 번(2박)에 한 칸씩 오르고, 떼면 소리 없이 떨어지며 점점 빨라진다.
+         방향은 누름과 상관없이 목표점으로 돈다 — 가만히 두면 목표를 가운데 두고 반지름 0.46(한 바퀴 16박 = 한 구절)으로 맴돈다.
+  소리   누른 그 호출 안에서 곧바로 내리치기 화음(when 없이). 그 뒤는 박자 격자: 내리치기 = 그 칸의 hibari 화음, 올리기 = 같은 자리의 단음, 활공 = 쉼.
+         2박 넘게 활공한 뒤 다시 날면 1구절 ↔ 2구절. 같은 자리로 돌아와 길이 구멍을 감싸면(H₁ 지속 ≥ 0.3) 고리가 생기고,
+         고리는 [쉼 + 그 구간의 음] 을 주기 L+1 로 되풀이한다 — hibari 왼손처럼 한 바퀴에 한 박씩 늦어진다. 카메라에 가까운 음이 조금 크다(±20%).
+         소리는 누른 뒤에만. ?silent 무음(호출만 기록).
+  조작   누르고 있기(마우스·손가락·Space) = 날갯짓 · 떼기 = 활공 · 포인터(손가락) = 목표점 · ←→↑↓ = 목표점을 화면 기준으로 옮기기.
+         목표점 = 화면 좌표 → 광선 → 큐브 가운데 높이(y=0) 평면. ⚠ 명세는 '빛의 지금 높이' 평면이었다 — 이 카메라(31°로 내려다봄)에선 빛이
+         4박 떨어지는 1.73 만큼 목표가 시선 방향으로 2.8 미끄러져 큐브 밖으로 잘린다 → 포인터를 가만히 둬도 맴돌 수 없었다. 그래서 높이를 고정했다.
+  사건   고리 생김(아래→위 펼침화음 + "고리 — P박마다 돌아와요") · 고리 지남(여린 화음, 번쩍) · 다시 그림(밝아짐) · 사라짐(낮은 음 하나) · 맞물림.
+  예시   들어오면 소리 없이 돈다: 32박 원을 날갯짓 6번 → 4박 활공 ×2 로 돌면 첫 바퀴가 hibari 오른손, 닫히는 박에 생긴 고리가 hibari 왼손(33박).
+-->
+<style>
+ :root{--bg:#f3f0e6;--paper:#fbf9f2;--ink:#22302a;--dim:#7d877f;--line:#d6d2c2;--green:#2f6b4f;--gold:#c98a12}
+ *{box-sizing:border-box}
+ html,body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans KR",sans-serif;-webkit-tap-highlight-color:transparent}
+ main{max-width:1000px;margin:0 auto;padding:10px 16px 24px}
+ header{display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 12px;padding:4px 2px 8px}
+ header h1{font-size:18px;font-weight:600;margin:0;letter-spacing:.02em}
+ #hint{font-size:14px;color:var(--dim)}
+ header a{margin-left:auto;font-size:12px;color:var(--dim);text-decoration:none}
+ #stage{position:relative;width:100%;height:min(80vh,720px);min-height:440px;border-radius:16px;overflow:hidden;background:var(--bg)}
+ #cv{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:crosshair;user-select:none;-webkit-user-select:none}
+ #tag{position:absolute;left:14px;top:12px;font-size:13px;color:var(--dim);pointer-events:none;display:flex;align-items:center;gap:6px}
+ #tag i{display:inline-block;width:9px;height:9px;border-radius:50%;border:1.5px solid var(--gold)}
+ #tag i.on{background:var(--gold)}
+ #tag[hidden]{display:none}
+ #now{position:absolute;right:14px;top:10px;font-size:15px;pointer-events:none;text-align:right;line-height:1.45;max-width:60%}
+ #now small{display:block;font-size:12.5px;color:var(--green)}
+ #say{position:absolute;left:50%;top:44px;transform:translateX(-50%);font-size:15px;color:var(--ink);background:rgba(251,249,242,.85);padding:4px 12px;border-radius:14px;
+      pointer-events:none;white-space:nowrap;opacity:0;transition:opacity .25s}
+ #say.on{opacity:1}
+ #bar{position:absolute;left:12px;right:12px;bottom:12px;display:flex;flex-wrap:wrap;justify-content:center;gap:8px}
+ button{font:inherit;font-size:14.5px;color:inherit;min-height:44px;min-width:44px;padding:0 15px;white-space:nowrap;border:1px solid var(--line);border-radius:22px;background:var(--paper);cursor:pointer}
+ button.main{background:var(--ink);color:#fff;border-color:var(--ink)}
+ button:disabled{opacity:.75;cursor:default}
+ button:focus-visible{outline:2px solid var(--green);outline-offset:2px}
+ button[hidden]{display:none}
+</style>
+</head>
+<body>
+<main>
+ <header><h1>날갯짓</h1><span id="hint">누르면 날갯짓, 떼면 활공</span><a href="./index.html">스케치</a></header>
+ <div id="stage">
+  <canvas id="cv" role="application" aria-label="유리 큐브 안을 나는 빛 한 점. 누르고 있으면 날갯짓하며 한 칸씩 오르고 hibari 의 화음과 단음이 울린다. 떼면 소리 없이 떨어진다. 같은 자리로 돌아와 길이 고리를 이루면 그 고리가 들은 음을 한 박 늦게 되풀이한다. Space 날갯짓, 방향키로 가는 곳을 옮긴다."></canvas>
+  <div id="tag"><i id="holdDot"></i><span>예시</span></div>
+  <div id="now" aria-live="off"></div>
+  <div id="say" aria-live="polite"></div>
+  <div id="bar"><button id="listen" class="main">▶ 예시 듣기</button><button id="play">직접 하기</button><button id="clear" hidden>고리 지우기</button></div>
+ </div>
+</main>
+<script src="./common.js?v=2"></script>
+<script src="./flight-core.js?v=2"></script>
+<script>
+(function () {
+  'use strict';
+  var $ = function (s) { return document.querySelector(s); };
+  var cv = $('#cv'), cx = cv.getContext('2d'), TH = HS.theme, SEC = HS.SEC, TAU = Math.PI * 2;
+  var GOLD = [201, 138, 18], GREEN = [47, 107, 79], CORAL = [210, 85, 111];
+  var FONT = '-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans KR",sans-serif';
+  var LEAD = 0.06, TRAIL = 7, PLANE = 0;              // 엔진이 소리보다 앞서는 시간 · 길이 남는 초 · 목표점 평면의 높이
+  var H = null, E = null, sound = false, demoOn = true, t0 = 0, clk = false, W = 0, Hh = 0, cam = null, lastFrame = 0;
+  var srcs = {}, arrows = {}, ptr = null, mark = null, trail = [], sparks = [], fading = [], queue = [], meShow = { at: -1, names: [] }, ringShow = { at: -1, names: [] }, downT = -1e9, sayT = -1e9;
+
+  function rgba(c, a) { return 'rgba(' + c[0] + ',' + c[1] + ',' + c[2] + ',' + (a < 0 ? 0 : a > 1 ? 1 : a).toFixed(3) + ')'; }
+  function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
+  function dt3(a, b) { return a[0] * b[0] + a[1] * b[1] + a[2] * b[2]; }
+  function crs(a, b) { return [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]]; }
+  function nrm(a) { var l = Math.hypot(a[0], a[1], a[2]) || 1; return [a[0] / l, a[1] / l, a[2] / l]; }
+
+  // ── 카메라: 고정된 3/4 시점(앞-오른쪽-위), 아주 느린 흔들림. 큐브 꼭짓점 여덟이 화면에 들어가게 맞춘다 ─────────
+  var CORN = []; for (var i = 0; i < 8; i++) CORN.push([i & 1 ? 1 : -1, i & 2 ? 1 : -1, i & 4 ? 1 : -1]);
+  var EDGES = [[0, 1], [2, 3], [4, 5], [6, 7], [0, 2], [1, 3], [4, 6], [5, 7], [0, 4], [1, 5], [2, 6], [3, 7]];
+  function camera(t) {
+    var yaw = 0.62 + 0.05 * Math.sin(t * 0.07), pitch = 0.54, D = 4.6, cp = Math.cos(pitch);
+    var eye = [D * cp * Math.sin(yaw), D * Math.sin(pitch), D * cp * Math.cos(yaw)], f = nrm([-eye[0], -eye[1], -eye[2]]), r = nrm(crs(f, [0, 1, 0])), u = crs(r, f);
+    var c = { eye: eye, f: f, r: r, u: u, k: 1, ox: 0, oy: 0, D: D }, x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9;
+    CORN.forEach(function (p) { var q = P(c, p); x0 = Math.min(x0, q[0]); x1 = Math.max(x1, q[0]); y0 = Math.min(y0, q[1]); y1 = Math.max(y1, q[1]); });
+    var top = 60, bot = Hh - 70, left = 18, right = W - 18, k = Math.min((right - left) / (x1 - x0), (bot - top) / (y1 - y0));
+    c.k = k; c.ox = (left + right) / 2 - (x0 + x1) / 2 * k; c.oy = (top + bot) / 2 - (y0 + y1) / 2 * k;
+    return c;
+  }
+  function P(c, p) { var d = [p[0] - c.eye[0], p[1] - c.eye[1], p[2] - c.eye[2]], z = dt3(d, c.f), s = c.k / z; return [c.ox + dt3(d, c.r) * s, c.oy - dt3(d, c.u) * s, z, c.D / z]; }   // [x, y, 깊이, 가까움 배율]
+  function toPlane(c, sx, sy) {                        // 화면 → 광선 → y = PLANE 평면 (명세와 다른 곳 — 머리 주석)
+    var a = (sx - c.ox) / c.k, b = -(sy - c.oy) / c.k, d = [c.f[0] + a * c.r[0] + b * c.u[0], c.f[1] + a * c.r[1] + b * c.u[1], c.f[2] + a * c.r[2] + b * c.u[2]];
+    if (d[1] > -1e-3) return null;
+    var s = (PLANE - c.eye[1]) / d[1]; return [clamp(c.eye[0] + d[0] * s, -0.9, 0.9), clamp(c.eye[2] + d[2] * s, -0.9, 0.9)];
+  }
+  function loud(p) { if (!cam || !p) return 1; var z = dt3([p[0] - cam.eye[0], p[1] - cam.eye[1], p[2] - cam.eye[2]], cam.f); return 1 + 0.2 * clamp((cam.D - z) / 1.7, -1, 1); }   // 가까울수록 ±20%
+
+  // ── 소리: 이 함수만 voice 를 부른다. 제스처 전엔 아무것도 울리지 않는다 ─────────────────────────────
+  function sing(n, now) {
+    if (!sound) return;
+    var v = n.vel * loud(n.pos);
+    if (now) { HS.audio.voice(n.pitch, undefined, n.dur, v); return; }          // 누른 그 호출 안에서 곧바로
+    var when = t0 + n.at + n.off, a = HS.audio.now();
+    if (HS.audio.on && when < a - 0.12) return;                                   // 가려졌던 창에서 밀린 음은 몰아 울리지 않는다
+    HS.audio.voice(n.pitch, Math.max(when, a + 0.002), n.dur, v);
+  }
+  function unlock() { HS.audio.wake(); sound = true; sync(); buttons(); }
+  function sync() { if (HS.audio.on !== clk) { clk = HS.audio.on; t0 = HS.audio.now() - (E.state.time - LEAD); } }   // 소리 시계가 바뀌면(첫 wake) 엔진 시각이 이어지게
+  function pump() {
+    if (!E) return;
+    sync();
+    if (document.hidden) { t0 = HS.audio.now() - (E.state.time - LEAD); return; }  // 가려진 창 — 멈췄다가 이어서
+    var want = HS.audio.now() - t0 + LEAD, d = want - E.state.time;
+    if (d > 0.5) { t0 += d - 0.05; d = 0.05; }                                    // 오래 멈췄다 — 따라잡지 않는다
+    if (d > 0) E.advance(d);
+    flush();
+  }
+  function flush() {
+    var o = E.drain();
+    o.notes.forEach(function (n) { sing(n, false); queue.push({ t: n.at + n.off, n: n }); });
+    o.events.forEach(function (e) { queue.push({ t: e.at, e: e }); });
+  }
+  function press() {                                    // 내리치기 — 누른 이 호출 안에서 울린다
+    var ns = E.press(); ns.forEach(function (n) { sing(n, true); queue.push({ t: n.at, n: n }); });
+    return ns;
+  }
+
+  // ── 누르기: 누르고 있는 것(손가락·마우스·Space)이 하나라도 있으면 날갯짓 ───────────────────────────
+  function holdOn(key) { var first = !Object.keys(srcs).length; srcs[key] = 1; if (first) press(); }
+  function holdOff(key) { if (!srcs[key]) return; delete srcs[key]; if (!Object.keys(srcs).length) E.release(); }
+  function takeOver() { if (!demoOn) return; demoOn = false; E.demo(false); E.clearRings(); flush(); $('#tag').hidden = true; buttons(); }
+  function startDemo() { srcs = {}; demoOn = true; E.demo(true); trail = []; flush(); $('#tag').hidden = false; buttons(); }
+  function buttons() {
+    var L = $('#listen'); L.hidden = false;
+    if (demoOn && sound) { L.textContent = '♪ 듣는 중'; L.disabled = true; } else { L.textContent = '▶ 예시 듣기'; L.disabled = false; }
+    $('#play').hidden = !demoOn; $('#clear').hidden = demoOn;
+  }
+  function xy(e) { var r = cv.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; }
+  function aim(p) { if (!cam) return; var q = toPlane(cam, p[0], p[1]); if (q) { mark = q; E.target(q[0], q[1]); } }
+  function onPointerDown(e) {
+    if (e.button > 0 || !E) return; e.preventDefault(); unlock(); takeOver();
+    try { cv.setPointerCapture(e.pointerId); } catch (x) {}
+    ptr = { id: e.pointerId, at: xy(e), mouse: e.pointerType === 'mouse' }; aim(ptr.at); holdOn('p' + e.pointerId);
+  }
+  function onPointerMove(e) {
+    if (e.pointerType === 'mouse' || srcs['p' + e.pointerId]) { ptr = { id: e.pointerId, at: xy(e), mouse: e.pointerType === 'mouse' }; if (!demoOn) aim(ptr.at); }
+  }
+  function onPointerUp(e) { holdOff('p' + e.pointerId); if (ptr && !ptr.mouse && ptr.id === e.pointerId) ptr = null; }
+  var ARROW = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, 1], ArrowDown: [0, -1] };
+  function onKeyDown(code) {
+    if (code === 'Space') { unlock(); takeOver(); holdOn('Space'); }
+    else if (ARROW[code]) { unlock(); takeOver(); arrows[code] = 1; ptr = null; if (!mark) mark = [E.state.tx, E.state.tz]; }
+  }
+  function onKeyUp(code) { if (code === 'Space') holdOff('Space'); else delete arrows[code]; }
+  function onListen() { if (!E) return; unlock(); startDemo(); }          // 자료를 읽기 전에 누르면 아무것도 하지 않는다
+  function onPlay() { if (!E) return; unlock(); takeOver(); }
+  function onClear() { if (!E) return; unlock(); E.clearRings(); flush(); }
+  cv.addEventListener('pointerdown', onPointerDown);
+  cv.addEventListener('pointermove', onPointerMove);
+  cv.addEventListener('pointerup', onPointerUp);
+  cv.addEventListener('pointercancel', onPointerUp);
+  cv.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+  $('#listen').addEventListener('click', onListen);
+  $('#play').addEventListener('click', onPlay);
+  $('#clear').addEventListener('click', onClear);
+  function moveArrows(dt) {                             // 방향키: 목표점을 화면의 좌우·앞뒤로 (초당 0.9)
+    var dx = 0, dz = 0; for (var k in arrows) { dx += ARROW[k][0]; dz += ARROW[k][1]; }
+    if ((!dx && !dz) || !cam || !mark) return;
+    var rh = nrm([cam.r[0], 0, cam.r[2]]), fh = nrm([cam.f[0], 0, cam.f[2]]), s = 0.9 * dt;
+    mark = [clamp(mark[0] + (rh[0] * dx + fh[0] * dz) * s, -0.9, 0.9), clamp(mark[1] + (rh[2] * dx + fh[2] * dz) * s, -0.9, 0.9)]; E.target(mark[0], mark[1]);
+  }
+
+  // ── 소리 시각이 된 것을 그림에 ───────────────────────────────────────────────────────
+  var SAY = { born: function (e) { return '고리 — ' + e.P + '박마다 돌아와요'; }, pass: function () { return '고리를 지나요'; }, redraw: function () { return '고리를 다시 그렸어요'; },
+              fade: function () { return '고리가 사라져요'; }, mesh: function () { return '두 고리가 맞물려요'; } };
+  function apply(q, vis) {
+    if (q.n) { var n = q.n;
+      if (n.src !== 'event' && n.pos) sparks.push({ p: n.pos, t: q.t, pc: n.pc, ring: n.src === 'ring' });
+      if (n.src === 'me') { if (meShow.at !== n.at) meShow = { at: n.at, names: [] }; meShow.names.push(n.name); if (meShow.names.length > 1) downT = q.t; nowText(); }
+      else if (n.src === 'ring') { if (ringShow.at !== n.at) ringShow = { at: n.at, names: [] }; ringShow.names.push(n.name); nowText(); }
+      return; }
+    var e = q.e;
+    if (e.type === 'fade' && e.pts && e.pts.length > 2) fading.push({ pts: e.pts, t: q.t });
+    if (e.type === 'mesh') e.rings.forEach(function (id) { meshT[id] = q.t; });
+    if (SAY[e.type] && (e.type !== 'fade' || !demoOn || vis - sayT > 1.5)) { var s = $('#say'); s.textContent = SAY[e.type](e); s.classList.add('on'); sayT = vis; }
+  }
+  var meshT = {};
+  function nowText() {
+    var t = E.state.time - LEAD, me = t - meShow.at < 1.2 ? meShow.names.join(' ') : '', rg = t - ringShow.at < 1.2 ? ringShow.names.join(' ') : '';
+    $('#now').innerHTML = (me || '&nbsp;') + (rg ? '<small>고리 ' + rg + '</small>' : '');
+  }
+
+  // ── 그리기 ───────────────────────────────────────────────────────────────────────
+  function quad(c, a, b, d, e) { var A = P(c, a), B = P(c, b), D = P(c, d), F = P(c, e); cx.beginPath(); cx.moveTo(A[0], A[1]); cx.lineTo(B[0], B[1]); cx.lineTo(D[0], D[1]); cx.lineTo(F[0], F[1]); cx.closePath(); }
+  function seg(c, a, b) { var A = P(c, a), B = P(c, b); cx.beginPath(); cx.moveTo(A[0], A[1]); cx.lineTo(B[0], B[1]); cx.stroke(); }
+  function room(c, vis) {
+    var S = E.state, nowBand = E.band(S.y), k;
+    quad(c, [-1, -1, -1], [1, -1, -1], [1, -1, 1], [-1, -1, 1]); cx.fillStyle = '#ebe5d4'; cx.fill();          // 바닥
+    cx.strokeStyle = 'rgba(125,135,127,0.16)'; cx.lineWidth = 1;
+    for (var g = -0.5; g <= 0.51; g += 0.5) { seg(c, [g, -1, -1], [g, -1, 1]); seg(c, [-1, -1, g], [1, -1, g]); }
+    for (k = 0; k < 6; k++) { var y0 = -1 + k / 3, y1 = y0 + 1 / 3, on = k === nowBand;                          // 뒷벽 두 장의 여섯 칸 — 지금 칸은 진하게
+      cx.fillStyle = on ? 'rgba(201,138,18,0.13)' : k % 2 ? 'rgba(251,249,242,0.6)' : 'rgba(232,226,210,0.45)';
+      quad(c, [-1, y0, -1], [1, y0, -1], [1, y1, -1], [-1, y1, -1]); cx.fill(); quad(c, [-1, y0, 1], [-1, y0, -1], [-1, y1, -1], [-1, y1, 1]); cx.fill(); }
+    cx.strokeStyle = 'rgba(125,135,127,0.2)';
+    for (k = 1; k < 6; k++) { var yy = -1 + k / 3; seg(c, [-1, yy, 1], [-1, yy, -1]); seg(c, [-1, yy, -1], [1, yy, -1]); }
+    var ph = Math.max(0, S.ph), fs = W < 420 ? 11.5 : 12.5;                                                       // 칸 이름 = 그 자리 화음의 베이스(지금 구절)
+    cx.textAlign = 'right'; cx.textBaseline = 'middle';
+    for (k = 0; k < 6; k++) { var q = P(c, [1, -1 + (k + 0.5) / 3, -1]), lo = E.PH[ph].chord[k].reduce(function (m, li) { return H.notes[li].pitch < H.notes[m].pitch ? li : m; });
+      cx.font = (k === nowBand ? '700 ' : '500 ') + fs + 'px ' + FONT; cx.fillStyle = k === nowBand ? TH.ink : TH.dim; cx.fillText(H.notes[lo].name, q[0] - 7, q[1]); }
+  }
+  function crPoint(pr, s) {                             // 닫힌 Catmull-Rom 위의 점 (매개변수 s = 점 번호)
+    var n = pr.length, i = Math.floor(s), t = s - i, a = pr[((i - 1) % n + n) % n], b = pr[(i % n + n) % n], d = pr[((i + 1) % n + n) % n], e = pr[((i + 2) % n + n) % n], t2 = t * t, t3 = t2 * t;
+    return [0, 1].map(function (j) { return 0.5 * (2 * b[j] + (-a[j] + d[j]) * t + (2 * a[j] - 5 * b[j] + 4 * d[j] - e[j]) * t2 + (-a[j] + 3 * b[j] - 3 * d[j] + e[j]) * t3); });
+  }
+  function spline(pr) { var n = pr.length; cx.moveTo(pr[0][0], pr[0][1]);
+    for (var i = 0; i < n; i++) { var a = pr[(i - 1 + n) % n], b = pr[i], d = pr[(i + 1) % n], e = pr[(i + 2) % n];
+      cx.bezierCurveTo(b[0] + (d[0] - a[0]) / 6, b[1] + (d[1] - a[1]) / 6, d[0] - (e[0] - b[0]) / 6, d[1] - (e[1] - b[1]) / 6, d[0], d[1]); } cx.closePath(); }
+  function rings(c, vis) {
+    var vb = vis / SEC;
+    fading = fading.filter(function (f) { var a = 1 - (vis - f.t) / 1.5; if (a <= 0) return false; if (a > 1) return true;
+      cx.beginPath(); spline(f.pts.map(function (p) { return P(c, p); })); cx.strokeStyle = rgba(GREEN, 0.5 * a); cx.lineWidth = 2; cx.stroke(); return true; });
+    E.rings().forEach(function (R) {
+      if (R.L < 3) return;
+      var pr = R.pts.slice(0, R.L).map(function (p) { return P(c, p); }), life = clamp(R.life / 8, 0.3, 1);
+      var gb = vis >= R.tBorn ? Math.exp(-(vis - R.tBorn) / 0.9) : 0, gr = vis >= R.tRedraw ? Math.exp(-(vis - R.tRedraw) / 0.5) : 0,
+          gp = vis >= R.tPass ? Math.exp(-(vis - R.tPass) / 0.45) : 0, gm = meshT[R.id] != null && vis >= meshT[R.id] ? Math.exp(-(vis - meshT[R.id]) / 0.4) : 0;
+      cx.lineJoin = 'round'; cx.beginPath(); spline(pr);
+      if (gp > 0.02) { cx.fillStyle = rgba(CORAL, 0.12 * gp); cx.fill(); }
+      cx.strokeStyle = rgba(GREEN, (0.08 + 0.3 * gb + 0.18 * gr) * life); cx.lineWidth = 10 + 12 * gb; cx.stroke();                     // 은은한 빛
+      cx.strokeStyle = gp > 0.08 ? rgba(CORAL, 0.6 + 0.4 * gp) : gm > 0.08 ? rgba(GOLD, 0.6 + 0.4 * gm) : rgba(GREEN, (0.5 + 0.45 * Math.max(gb, gr)) * life);
+      cx.lineWidth = 2.2 + 3 * gb + 1.5 * Math.max(gp, gm); cx.stroke();
+      var u = vb - R.start;                                 // 산호빛 점 = 고리가 지금 되풀이하는 자리 (쉼 박엔 첫 점에서 기다린다)
+      if (u >= 0) { var m = u % R.P, k0 = Math.floor(m), q = k0 === 0 ? pr[0] : crPoint(pr, k0 - 1 + (m - k0)), dfq = k0 === 0 ? 0.6 : 1;
+        cx.fillStyle = rgba(CORAL, 0.25 * dfq); cx.beginPath(); cx.arc(q[0], q[1], 9, 0, TAU); cx.fill();
+        cx.fillStyle = rgba(CORAL, 0.95 * dfq); cx.beginPath(); cx.arc(q[0], q[1], 4, 0, TAU); cx.fill(); }
+    });
+  }
+  function shadow(c, p) {
+    var f = P(c, [p[0], -1, p[2]]), q = P(c, p), h = (p[1] + 1) / 2, s = (6 + 6 * h) * f[3];
+    cx.strokeStyle = 'rgba(34,48,42,0.22)'; cx.lineWidth = 1; cx.setLineDash([3, 4]); cx.beginPath(); cx.moveTo(q[0], q[1]); cx.lineTo(f[0], f[1]); cx.stroke(); cx.setLineDash([]);
+    cx.fillStyle = 'rgba(34,48,42,' + (0.24 - 0.13 * h).toFixed(3) + ')'; cx.beginPath(); cx.ellipse(f[0], f[1], s, s * 0.5, 0, 0, TAU); cx.fill();
+  }
+  function pole(c) {                                     // 목표점: 큐브 가운데 높이의 점과 그 아래위로 옅은 기둥
+    if (demoOn || !mark) return;
+    var a = P(c, [mark[0], -1, mark[1]]), b = P(c, [mark[0], 1, mark[1]]), m = P(c, [mark[0], PLANE, mark[1]]);
+    cx.strokeStyle = 'rgba(47,107,79,0.18)'; cx.lineWidth = 1; cx.beginPath(); cx.moveTo(a[0], a[1]); cx.lineTo(b[0], b[1]); cx.stroke();
+    cx.beginPath(); cx.ellipse(a[0], a[1], 10 * a[3], 5 * a[3], 0, 0, TAU); cx.stroke();
+    cx.fillStyle = 'rgba(47,107,79,0.45)'; cx.beginPath(); cx.arc(m[0], m[1], 3, 0, TAU); cx.fill();
+  }
+  function path(c, vis) {                               // 지나간 길 — 옅어지는 금빛 띠, 가까울수록 굵게
+    cx.lineCap = 'round';
+    for (var i = 1; i < trail.length; i++) { var a = trail[i - 1], b = trail[i], age = vis - b.t; if (age > TRAIL || b.cut) continue;
+      var A = P(c, a.p), B = P(c, b.p), f = 1 - age / TRAIL; cx.strokeStyle = rgba(GOLD, 0.6 * f * f); cx.lineWidth = (0.8 + 3.4 * f) * B[3];
+      cx.beginPath(); cx.moveTo(A[0], A[1]); cx.lineTo(B[0], B[1]); cx.stroke(); }
+  }
+  function glints(c, vis) {                             // 음이 난 자리 — 그 음 빛깔의 작은 반짝임
+    sparks = sparks.filter(function (s) { var age = vis - s.t; if (age > 0.9) return false; if (age < 0) return true;
+      var q = P(c, s.p), f = 1 - age / 0.9; cx.strokeStyle = 'hsla(' + HS.hue(s.pc) + ',62%,' + (s.ring ? 38 : 46) + '%,' + (0.85 * f).toFixed(3) + ')';
+      cx.lineWidth = 1.6; cx.beginPath(); cx.arc(q[0], q[1], (3 + 13 * age) * q[3], 0, TAU); cx.stroke(); return true; });
+  }
+  function light(c, p, vis) {                           // 빛 한 점 + 후광 (내리칠 때 부푼다)
+    var q = P(c, p), g = vis >= downT ? Math.exp(-(vis - downT) / 0.22) : 0, r = (18 + 12 * g) * q[3], gr = cx.createRadialGradient(q[0], q[1], 0, q[0], q[1], r);
+    gr.addColorStop(0, rgba(GOLD, 0.5 + 0.3 * g)); gr.addColorStop(1, rgba(GOLD, 0)); cx.fillStyle = gr; cx.beginPath(); cx.arc(q[0], q[1], r, 0, TAU); cx.fill();
+    cx.fillStyle = '#c98a12'; cx.beginPath(); cx.arc(q[0], q[1], (4.6 + 1.6 * g) * q[3], 0, TAU); cx.fill();
+    cx.fillStyle = 'rgba(255,250,232,0.9)'; cx.beginPath(); cx.arc(q[0] - 1.3 * q[3], q[1] - 1.3 * q[3], 1.6 * q[3], 0, TAU); cx.fill();
+  }
+  function glass(c) { cx.strokeStyle = 'rgba(34,48,42,0.2)'; cx.lineWidth = 1; EDGES.forEach(function (e) { seg(c, CORN[e[0]], CORN[e[1]]); }); }
+  function draw() {
+    if (!W || !Hh) return;
+    var S = E.state, vis = S.time - LEAD, p = [S.x, S.y, S.z];
+    cam = camera(vis);
+    queue = queue.filter(function (q) { if (q.t > vis) return true; apply(q, vis); return false; });
+    cx.fillStyle = TH.bg; cx.fillRect(0, 0, W, Hh);
+    room(cam, vis); pole(cam); rings(cam, vis); shadow(cam, p); path(cam, vis); glints(cam, vis); light(cam, p, vis); glass(cam);
+    if (vis - sayT > 1.5) $('#say').classList.remove('on');
+    $('#holdDot').className = S.hold ? 'on' : '';
+    if (meShow.at > -1 && vis - meShow.at > 1.2 && vis - ringShow.at > 1.2) { meShow.at = -1; nowText(); }
+  }
+  function size() {
+    var dpr = Math.min(2, window.devicePixelRatio || 1), w = cv.clientWidth, h = cv.clientHeight; if (!w || !h) return false;
+    if (cv.width !== Math.round(w * dpr) || cv.height !== Math.round(h * dpr)) { cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr); }
+    W = w; Hh = h; cx.setTransform(dpr, 0, 0, dpr, 0, 0); return true;
+  }
+  function frame(ts) {
+    try {
+      var dt = lastFrame ? Math.min(0.05, (ts - lastFrame) / 1000) : 0; lastFrame = ts;
+      if (!E || !size()) return;
+      pump(); moveArrows(dt);
+      if (ptr && ptr.mouse && !demoOn && cam) aim(ptr.at);           // 카메라가 천천히 흔들려도 포인터 아래가 목표
+      var S = E.state, last = trail[trail.length - 1];
+      if (!last || S.time - last.t > 1 / 40) trail.push({ p: [S.x, S.y, S.z], t: S.time - LEAD, cut: last && Math.hypot(S.x - last.p[0], S.y - last.p[1], S.z - last.p[2]) > 0.3 });
+      while (trail.length && S.time - LEAD - trail[0].t > TRAIL) trail.shift();
+      draw();
+    } finally { requestAnimationFrame(frame); }
+  }
+
+  HS.load().then(function (D) {
+    H = HS.derive(D); E = HSFlight.create(H);
+    t0 = HS.audio.now() + LEAD; clk = HS.audio.on;               // 엔진 시각 0 = 지금
+    startDemo();
+    HS.keys(onKeyDown, onKeyUp);
+    setInterval(pump, 25);                                        // 그리기가 느려도 박은 제때
+    requestAnimationFrame(frame);
+  }).catch(function (e) { $('#say').textContent = '자료를 읽지 못했어요: ' + e.message; $('#say').classList.add('on'); });
+
+  // ── 검증의 문: 가려진 창에선 rAF 가 멈추므로 검증이 시간을 감는다. press 는 소리를 켜되 wake 는 부르지 않는다(제스처가 아니다) ──
+  HS.hook({
+    probe: function () { var p = E.probe(); return { mode: demoOn ? 'demo' : 'play', sound: sound, step: p.beat, pos: p.pos, band: p.band, hold: p.hold, phrase: p.phrase,
+      rings: p.rings.map(function (r) { return { L: r.L, P: r.P, life: r.life, pers: +r.pers.toFixed(4), lap: r.lap }; }), calls: HS.audio.calls.length }; },
+    press: function () { takeOver(); sound = true; holdOn('hook'); return HS.audio.calls.length; },
+    release: function () { holdOff('hook'); },
+    target: function (x, z) { takeOver(); mark = [clamp(x, -0.9, 0.9), clamp(z, -0.9, 0.9)]; E.target(mark[0], mark[1]); },
+    advance: function (sec) { var n = Math.round(sec * 120); t0 -= n / 120;                // 시계를 먼저 당겨 둔다 — 감는 동안의 음은 '지난 음'(실제 소리면 건너뛰고, ?silent 면 호출로만 남는다)
+      for (var i = 0; i < n; i++) { E.advance(1 / 120); flush(); }
+      var S = E.state; trail.push({ p: [S.x, S.y, S.z], t: S.time - LEAD, cut: true }); if (size()) draw(); },
+    demo: function (on) { if (on) startDemo(); else takeOver(); },
+    engine: function () { return E; }
+  });
+})();
+</script>
+</body>
+</html>

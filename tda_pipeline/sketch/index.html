@@ -4,14 +4,17 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
 <title>hibari — 스케치</title>
-<!-- 만져 보고 고르기 위한 입구. 명세: docs/sketch_spec.md. 살아 있는 고리(lifeloop) = 판 19 뒤 Lenia × TDA · hibari 지도(map) = 판 19 거절 · 목걸이(canon) = 판 16·17 뒤 사용자 제안(시간차), 판 18 "UI가 별로". 노선도(회색 시제품) = §9 · 잇기(모듈 시계) = §8(판 14 거절). A·B·C "살리기" 는 판 12 에서 거절됐다(한 번 누름이 연쇄를 낳는다). -->
+<!-- 만져 보고 고르기 위한 입구. 명세: docs/sketch_spec.md. 판 20(2026-10-07) 뒤 처음부터: 날갯짓(flight) · 큐브(cube). 사용자가 "괜찮다" 고 남긴 것 = 흐름 그물(flow) · 곡의 모양(shape). 나머지는 지난 시안(살아 있는 고리 = 판 20 거절 · 지도 = 판 19 · 목걸이 = 판 18 · 가닥 = 판 17 · 무리 = 판 16 · 노선도 = 판 15 · 잇기 = 판 14 · 두 바퀴·고리 합주 = 판 12). -->
 <style>
  body{margin:0;background:#f3f0e6;color:#22302a;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans KR",sans-serif}
  main{max-width:560px;margin:0 auto;padding:12vh 16px 24px}
  h1{font-size:15px;font-weight:500;color:#7d877f;letter-spacing:.06em;margin:0 0 22px}
+ h2{font-size:13px;font-weight:500;color:#7d877f;margin:28px 2px 10px}
  a.k{display:block;padding:20px 18px;margin:0 0 12px;border:1px solid #d6d2c2;border-radius:14px;background:#fbf9f2;color:inherit;text-decoration:none}
  a.k:hover,a.k:focus{border-color:#2f6b4f}
+ a.k.old{padding:12px 18px}
  .k b{font-size:21px;font-weight:600;display:block;margin-bottom:4px}
+ .k.old b{font-size:16px}
  .k span{font-size:14px;color:#7d877f}
  p{font-size:13px;color:#7d877f;margin:22px 2px 0}
  p a{color:#2f6b4f}
@@ -20,17 +23,20 @@
 <body>
 <main>
  <h1>hibari · 스케치 — 10초씩 만져 보세요</h1>
- <a class="k" href="./lifeloop.html"><b>살아 있는 고리</b><span>Lenia 생명체 몸의 구멍이 hibari 고리를 켜면 그 고리가 연주된다 · 빈 곳을 끌어 생명체를 보내고, 음에서 음으로 그어 내 고리를 만든다</span></a>
- <a class="k" href="./map.html"><b>hibari 지도 (칸 × 줄)</b><span>지난 시안 · 배포 전 거절(꺾은선그래프 같다)</span></a>
- <a class="k" href="./canon.html"><b>한 박 늦게 (목걸이)</b><span>지난 시안 · 목걸이 위에서 위아래로 칠하기</span></a>
- <a class="k" href="./strand.html"><b>hibari 가닥</b><span>지난 시안 · 그리면 가닥이 자라고 높이가 음</span></a>
- <a class="k" href="./swarm.html"><b>hibari 무리</b><span>지난 시안 · 종달새 둘레의 음이 노래한다</span></a>
- <a class="k" href="./metro.html"><b>hibari 노선도</b><span>지난 시안 · 회색 시제품</span></a>
- <a class="k" href="./relay.html"><b>잇기 · 모듈 시계</b><span>지난 시안 · hibari 와 한 칸씩 주고받기</span></a>
- <a class="k" href="./flow.html"><b>A 흐름 그물</b><span>지난 시안 · 물을 붓는다 · 물이 닿은 음이 운다</span></a>
- <a class="k" href="./wheels.html"><b>B 두 바퀴</b><span>지난 시안 · 톱니가 지나가면 운다 · 음을 심는다</span></a>
- <a class="k" href="./loops.html"><b>C 고리 합주</b><span>지난 시안 · 고리를 켠다 · 겹친 곳에서 음이 난다</span></a>
+ <a class="k" href="./flight.html"><b>날갯짓</b><span>유리 큐브 안을 나비처럼 날면 높이가 음이 된다 · 길이 고리로 닫히면 그 구절이 한 박 늦게 되풀이된다</span></a>
+ <a class="k" href="./cube.html"><b>큐브</b><span>hibari 한 모듈이 루빅스 큐브 하나에 꼭 맞는다 · 돌리면 음이 자리를 옮기고, 되풀이하면 제자리로 돌아온다</span></a>
+ <a class="k" href="./flow.html"><b>흐름 그물</b><span>물을 붓는다 · 물이 닿은 음이 운다</span></a>
  <a class="k" href="../shape/"><b>곡의 모양</b><span>곡 하나가 몸 하나 · 누르면 그 대목이 운다</span></a>
+ <h2>지난 시안</h2>
+ <a class="k old" href="./lifeloop.html"><b>살아 있는 고리</b><span>Lenia 생명체 몸의 구멍이 고리를 켠다</span></a>
+ <a class="k old" href="./map.html"><b>hibari 지도 (칸 × 줄)</b><span>배포 전 거절(꺾은선그래프 같다)</span></a>
+ <a class="k old" href="./canon.html"><b>한 박 늦게 (목걸이)</b><span>목걸이 위에서 위아래로 칠하기</span></a>
+ <a class="k old" href="./strand.html"><b>hibari 가닥</b><span>그리면 가닥이 자라고 높이가 음</span></a>
+ <a class="k old" href="./swarm.html"><b>hibari 무리</b><span>종달새 둘레의 음이 노래한다</span></a>
+ <a class="k old" href="./metro.html"><b>hibari 노선도</b><span>회색 시제품</span></a>
+ <a class="k old" href="./relay.html"><b>잇기 · 모듈 시계</b><span>hibari 와 한 칸씩 주고받기</span></a>
+ <a class="k old" href="./wheels.html"><b>두 바퀴</b><span>톱니가 지나가면 운다</span></a>
+ <a class="k old" href="./loops.html"><b>고리 합주</b><span>고리를 켠다 · 겹친 곳에서 음이 난다</span></a>
  <p><a href="../">처음으로</a></p>
 </main>
 </body>

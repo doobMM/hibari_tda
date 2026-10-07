@@ -95,7 +95,7 @@
     // ── 시계: 8분음표마다 onStep(t, when). when = 그 스텝이 울릴 소리 시각(조금 앞서 부른다) ─────────
     HS.clock = function (onStep) {
       var t = 0, next = 0, running = false, C = { speed: 1 };
-      function pump() { if (!running) return; var n = now(); if (next < n - 1) next = n + 0.03;
+      function pump() { if (!running) return; var n = now(); if (next < n - 1 || next > n + 1 + SEC / C.speed) next = n + 0.03;   // 뒤처지거나, 소리를 깨워 시간 바탕이 페이지 시간 → AudioContext 시간(≈0)으로 바뀌면 다시 맞춘다
         while (next < n + 0.1) { onStep(t++, next); next += SEC / C.speed; } }
       setInterval(pump, 25);
       document.addEventListener('visibilitychange', function () { if (document.hidden) running = false; });

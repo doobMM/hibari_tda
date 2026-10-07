@@ -1,0 +1,321 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>큐브</title>
+<!--
+  큐브 — hibari 가 들어 있는 루빅스 큐브 (2026-10-07). 엔진 cube-core.js · 판정기 tools/verify_cube.mjs
+  사용자: "사용자가 조작함으로써 자신이 원하는 음악을 만들어내고 … TDA에 기반했으면 … 사건은 있었으면 좋겠어" ·
+          "flow를 보면서 느낀 건 큐브 같다는 것이야" · "위상수학이 큐브에 적용될 수 있다고 해서 저 아이디어를 우리 음악 생성에 적용할 수 있을지도"
+  상태    스티커 54장의 자리 (맞춘 큐브 = hibari 오른손 한 모듈 — 음 59개 중 두 구절이 같이 쓰는 베이스 다섯을 한 번씩 세면 54 = 6면 × 9)
+          · 박 g · 되풀이 공식(많아야 6수)과 그 차수·횟수 · 보기 각도 · 펴짐(0 = 큐브, 1 = 평면) · 줄 선 그림(돌아가는 층)
+  갱신    8분음표(HS.clock, 0.4545초)마다 engine.beat(): 오른손 = 스텝 g mod 32 의 칸, 왼손 = g mod 33 (오른손 + 쉼 한 칸) 의 칸에
+          지금 있는 스티커 음을 그 칸의 길이로. 소리를 정한 뒤, 쉼이 시작하는 박(오른손 12·28)이고 되풀이가 켜져 있으면 공식을 한 번 돌린다.
+          상태는 돌리는 순간 바뀌고 그림만 0.18초(공식은 움직임마다 0.15초) 동안 남은 각도를 줄여 가며 돈다.
+  소리    두 손이 같은 큐브를 읽는다 — 화음 맨 아래 0.2 · 위 음 0.14 · 단음 0.32 · 왼손 ×0.78 · 구절 첫 화음 ×1.25 (flow.html 관례).
+          울리는 스티커가 빛난다: 오른손 금빛 · 왼손 산호빛 (0.4초에 사그라짐) — 한 바퀴(32박)에 한 칸씩 벌어지는 hibari 의 어긋남이 큐브 위에 보인다.
+          돌리면 그 호출 안에서 곧바로 돌린 면의 새 1구절 화음(가운데 + 윗줄, 아래 면은 윗줄)을 0.22 로. 스티커를 누르면 그 음.
+  사건    ① 면이 돌아옴(9칸이 다 제 스티커) → 그 면이 초록으로, 원래 화음이 여리게, "파 자리가 hibari 로"
+          ② 여섯 면이 다 → "다시 hibari", 전체가 빛나고 hibari 첫 화음을 펼쳐서 ③ 되풀이로 시작 상태에 돌아옴 → "6번 만에 제자리"
+  되풀이  켜면 처음으로/지난번 켠 뒤 손으로 돌린 것(합친 뒤 마지막 6수, 없으면 지난 공식, 그것도 없으면 R U R′ U′)이 공식이 되어 곧바로 한 번 돌고,
+          그 뒤 쉼마다 한 번. 공식의 차수만큼 돌면 반드시 켠 순간의 상태로 돌아온다(유한군) — hibari 가 한 박 밀기를 33번 되풀이해 제자리로 오듯이.
+          손으로 돌리면 꺼진다.
+  예시    들어오면 소리 없이: 맞춘 큐브가 한 구절 → 공식 U 를 쉼마다 4번 → 제자리 → R U R′ U′ 를 6번 → 제자리 → 처음부터.
+          "▶ 예시 듣기" = 소리 켜고 예시(직접 하기 중이면 처음부터) · "직접 하기" = 예시 멈춤(지금 상태 그대로). 캔버스·키를 쓰면 직접 하기 + 소리.
+  펴기    큐브 겉면 = 위상적으로 공. 스티커 중심을 공으로 부풀려 화면 뒤쪽 극(펼 때 보이지 않는 뒤 모서리로 보기를 맞춘다)에서 입체 사영 → 층의 띠
+          아홉 개가 세 무리의 겹친 둥근 선, 스티커는 그 교점 위 색 점(3겹 대칭). 반지름은 2·atan(r) 로 줄인다(cube-core.js flat 머리말 — 예시 r/(1+0.25r) 에서 바꾼 까닭).
+          1.2초 동안 접고 편다. 펼친 뒤에도 소리·되풀이·키 회전은 그대로이고, 도는 층의 점은 같은 사상으로 옮겨 띠를 따라 미끄러진다. 펼친 화면의 끌기 = 보기만.
+  조작    스티커를 끌면 그 스티커의 층이 끈 쪽으로 돈다(가운데 층이나 큐브 밖을 끌면 보기 돌리기) · 아무도 안 만지면 아주 느리게 돈다
+          키(ev.code): U D L R F B = 그 면 시계 방향, Shift = 반대 · ⌫ 되돌리기 · ←↑→↓ 보기
+  소리는 누른 뒤에만. ?silent 무음(호출만 기록). 검증 훅 window.__sk: probe · move · undo · reset · repeat · advance · demo · unfold · at · view · listen
+-->
+<style>
+ :root{--bg:#f3f0e6;--paper:#fbf9f2;--ink:#22302a;--dim:#7d877f;--line:#d6d2c2;--green:#2f6b4f}
+ *{box-sizing:border-box}
+ html,body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans KR",sans-serif;-webkit-tap-highlight-color:transparent}
+ main{max-width:1000px;margin:0 auto;padding:8px 16px 20px}
+ header{display:flex;align-items:baseline;gap:10px;padding:4px 2px 6px}
+ header h1{font-size:17px;font-weight:600;margin:0}
+ header span{font-size:13.5px;color:var(--dim)}
+ header a{margin-left:auto;font-size:12px;color:var(--dim);text-decoration:none}
+ #stage{position:relative;width:100%;height:min(68vh,660px);min-height:340px;border-radius:16px;overflow:hidden;
+   background:radial-gradient(ellipse at 50% 44%,#fdfbf5 0%,#f6f2e7 60%,#ece6d6 100%)}
+ #cv{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:grab;user-select:none;-webkit-user-select:none}
+ #tag{position:absolute;left:14px;top:10px;font-size:12.5px;color:var(--dim);pointer-events:none;max-width:46%;line-height:1.4}
+ #seats{position:absolute;right:12px;top:9px;display:flex;gap:3px;pointer-events:none}
+ #seats i{font-style:normal;font-size:11px;width:22px;height:22px;border-radius:50%;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;color:var(--dim);background:var(--paper);transition:background .3s,color .3s}
+ #seats i.on{background:var(--green);border-color:var(--green);color:#fff}
+ #msg{position:absolute;left:8px;right:8px;top:40px;text-align:center;font-size:17px;font-weight:600;color:var(--green);pointer-events:none;opacity:0;transition:opacity .45s}
+ #msg.on{opacity:1}
+ #info{position:absolute;left:8px;right:8px;bottom:10px;text-align:center;font-size:13px;color:var(--dim);pointer-events:none}
+ #bar{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;padding:10px 0 2px}
+ button{font:inherit;font-size:14px;color:inherit;min-height:44px;min-width:44px;padding:0 12px;white-space:nowrap;border:1px solid var(--line);border-radius:22px;background:var(--paper);cursor:pointer}
+ button.main{background:var(--ink);color:#fff;border-color:var(--ink)}
+ button.on{background:var(--green);color:#fff;border-color:var(--green)}
+ button:disabled{opacity:.5;cursor:default}
+ button:focus-visible{outline:2px solid var(--green);outline-offset:2px}
+ #legend{font-size:12.5px;color:var(--dim);padding:8px 2px 0;line-height:1.6;text-align:center}
+</style>
+</head>
+<body>
+<main>
+ <header><h1>큐브</h1><span id="hint">끌어서 돌려 보세요</span><a href="./index.html">스케치</a></header>
+ <div id="stage">
+  <canvas id="cv" role="img" aria-label="hibari 오른손 한 모듈이 든 루빅스 큐브. 스티커 하나가 음 하나, 칸이 그 음이 울리는 때다. 스티커를 끌면 그 층이 돌고 음이 자리를 옮긴다. 키 U D L R F B 로 돌리고 Shift 와 함께 누르면 반대로."></canvas>
+  <div id="tag">예시</div>
+  <div id="seats" aria-label="hibari 로 돌아온 자리"><i>미</i><i>파</i><i>솔</i><i>라</i><i>시</i><i>도</i></div>
+  <div id="msg" aria-live="polite"></div>
+  <div id="info"></div>
+ </div>
+ <div id="bar"><button id="listen" class="main">▶ 예시 듣기</button><button id="play">직접 하기</button><button id="undo">되돌리기</button><button id="reset">처음으로</button><button id="rep" aria-pressed="false">되풀이</button><button id="unfold" aria-pressed="false">펴기</button></div>
+ <div id="legend">스티커 = 음 · 칸 = 그 음이 울리는 때 · 맞춘 큐브가 hibari · 금빛 오른손, 산호빛 왼손 · 키 U D L R F B (Shift = 반대) · ⌫ 되돌리기 · 되풀이 = 방금 돌린 것을 쉼마다</div>
+</main>
+<script src="./common.js?v=2"></script>
+<script src="./cube-core.js?v=1"></script>
+<script>
+(function () {
+  'use strict';
+  var $ = function (s) { return document.querySelector(s); };
+  var C = HSCube, SEC = HS.SEC, TAU = Math.PI * 2, DIST = 10;
+  var LIGHT = [-0.33, 0.78, 0.53], GOLD = '201,138,18', CORAL = '210,85,111', INK = '34,48,42', BANDC = ['176,122,40', '47,107,79', '96,104,168'];
+  var FONT = '-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans KR",sans-serif';
+  var cv = $('#cv'), cx = cv.getContext('2d'), CELLS = C.CELLS, BANDS = C.bands(), i;
+  var E = null, HOME = null, clock = null, L = null, M = null, dpr = 1;
+  var mode = 'demo', sound = false, spin = true, hinted = true;
+  var view = { yaw: -0.62, pitch: 0.5 }, vFrom = null, vTo = null, vT0 = 0, unf = 0, unfTo = 0;
+  var anims = [], glow = [], faceT = [-9, -9, -9, -9, -9, -9], allT = -9, skew = 0, lastTs = 0, ptr = null, lastMove = null, msg = { text: '', t0: -9 }, flatPts = [];
+  for (i = 0; i < 54; i++) glow.push([-9, -9, -9]);                     // 스티커마다 [오른손, 왼손, 돌림·누름] 마지막으로 운 시각
+  (function () { var l = Math.hypot(LIGHT[0], LIGHT[1], LIGHT[2]); LIGHT = LIGHT.map(function (v) { return v / l; }); })();
+  function tnow() { return performance.now() / 1000 + skew; }          // 그림의 시계 (소리 시계는 깨우면 바탕이 바뀐다 — 섞지 않는다)
+  function fade(dt, T) { return dt >= 0 && dt < T ? 1 - dt / T : 0; }
+  function ease(u) { return u <= 0 ? 0 : u >= 1 ? 1 : u * u * (3 - 2 * u); }
+  function clampP(p) { return Math.max(-1.45, Math.min(1.45, p)); }
+
+  // ── 소리: base = 시계가 준 소리 시각(없으면 지금). 빛은 소리와 같은 때 ─────────────────────────────
+  function play(notes, base) {
+    var lag = base == null ? 0 : Math.max(0, base - HS.audio.now()), t = tnow() + lag;
+    notes.forEach(function (n) { var at = n.at || 0;
+      if (sound) HS.audio.voice(n.pitch, base == null && !at ? null : (base == null ? HS.audio.now() : base) + at, n.dur * SEC, n.vel);
+      if (n.sticker != null) glow[n.sticker][n.hand == null ? 2 : n.hand] = t + at; });
+  }
+  function onStep(t, when) { if (!E) return; var o = E.beat(); play(o.notes, when); if (o.rep) repDone(o.rep, when); }
+  function evText(ev) { return ev.all ? '다시 hibari' : ev.faces.length ? ev.names.join(' · ') + ' 자리가 hibari 로' : ''; }
+  function mark(ev, t) { ev.faces.forEach(function (f) { faceT[f] = t; }); if (ev.all) allT = t; }
+  function say(text, delay) { msg = { text: text, t0: tnow() + (delay || 0) }; if (!delay) { $('#msg').textContent = text; $('#msg').classList.toggle('on', !!text); } }
+  /** 공식이 한 번 돌았다: 움직임마다 0.15초 그림·소리(여리게), 다 돈 뒤에 사건 */
+  function repDone(r, when) {
+    var base = when == null ? HS.audio.now() : when, lag = Math.max(0, base - HS.audio.now()), t0 = tnow() + lag, end = 0.15 * r.auto.length;
+    r.auto.forEach(function (x, k) { queue(x, t0 + 0.15 * k, 0.15); x.notes.forEach(function (n) { n.at = 0.15 * k; }); play(x.notes, base); });
+    r.events.notes.forEach(function (n) { n.at = (n.at || 0) + end; }); play(r.events.notes, base);
+    var txt = r.home ? r.order + '번 만에 제자리' + (r.events.all ? ' — 다시 hibari' : '') : evText(r.events);
+    if (txt) say(txt, lag + end);
+    mark(r.events, t0 + end); syncUI();
+  }
+
+  // ── 돌리기 ────────────────────────────────────────────────────────────────────────────
+  function queue(x, t0, dur) { anims.push({ f: x.f, ang: C.angleOf(x.name), before: x.before, after: x.after, t0: t0, dur: dur }); }
+  function afterTurn(x) { lastMove = x.name; play(x.notes, null); play(x.events.notes, null); mark(x.events, tnow());
+    var txt = evText(x.events); if (txt) say(txt, 0); if (hinted) { hinted = false; $('#hint').textContent = ''; } syncUI(); }
+  function doMove(name) { if (!E) return null; var x = E.move(name); if (!x) return null; anims = []; queue(x, tnow(), 0.18); afterTurn(x); return x; }
+  function doUndo() { if (!E) return; var x = E.undo(); if (!x) return; anims = []; queue(x, tnow(), 0.18); afterTurn(x); }
+  function restartClock() { if (clock) { clock.stop(); clock.start(); } }          // 다음 박이 0.03초 뒤 — 새 시간 바탕에서
+  function doReset() { if (!E) return; E.reset(true); anims = []; restartClock(); say('', 0); syncUI(); }
+  function setRep(on) { if (!E) return; anims = []; if (!on) { E.setRepeat(false); syncUI(); return; } E.setRepeat(true); repDone(E.repeatOnce(), null); }
+  function takeOver() { spin = false; if (mode === 'play' || !E) return; mode = 'play'; E.setDemo(false); syncUI(); }
+  function startDemo() { if (!E) return; mode = 'demo'; E.reset(true); E.setDemo(true); anims = []; restartClock(); say('', 0); syncUI(); }
+  function unlock() { HS.audio.wake(); spin = false; if (!sound) { sound = true; restartClock(); } syncUI(); }
+  function ping(i) { var sid = E.state[i]; play([{ pitch: HOME[sid], dur: 2, vel: 0.2, sticker: sid }], null); }
+  function cornerView() { var M0 = C.view(view.yaw, view.pitch), best = null, sx, sy, sz;   // 지금 눈에 가장 가까운 모서리를 정면으로 → 뒤 모서리가 극
+    for (sx = -1; sx <= 1; sx += 2) for (sy = -1; sy <= 1; sy += 2) for (sz = -1; sz <= 1; sz += 2) { var z = C.mul(M0, [sx, sy, sz])[2]; if (!best || z > best.z) best = { z: z, c: [sx, sy, sz] }; }
+    var c = best.c, yaw = Math.atan2(-c[0], c[2]); yaw += TAU * Math.round((view.yaw - yaw) / TAU); return { yaw: yaw, pitch: Math.atan(c[1] * Math.SQRT1_2) }; }
+  function setUnfold(on) { unfTo = on ? 1 : 0; spin = false; if (on) { vFrom = { yaw: view.yaw, pitch: view.pitch }; vTo = cornerView(); vT0 = tnow(); } else vTo = null; syncUI(); }
+
+  function syncUI() {
+    if (!E) return; var R = E.rep, p = E.probe(), lb = $('#listen'), demoOn = mode === 'demo';
+    lb.textContent = demoOn && sound ? '예시 듣는 중' : '▶ 예시 듣기'; lb.disabled = demoOn && sound; lb.classList.toggle('main', !(demoOn && sound) && !(mode === 'play'));
+    $('#play').disabled = mode === 'play'; $('#undo').disabled = !p.moves;
+    $('#rep').classList.toggle('on', !!R && !demoOn); $('#rep').setAttribute('aria-pressed', !!R && !demoOn);
+    $('#unfold').textContent = unfTo ? '접기' : '펴기'; $('#unfold').setAttribute('aria-pressed', !!unfTo);
+    var rec = C.reduce(p.rec).slice(-6).map(C.show).join(' ');
+    $('#tag').textContent = demoOn ? '예시' : rec ? '돌린 것 ' + rec : '';
+    $('#info').textContent = R ? '되풀이 ' + R.formula + ' · ' + R.count + '/' + R.order + ' · ' + R.order + '번이면 제자리' : '';
+    var seats = document.querySelectorAll('#seats i'); for (var k = 0; k < seats.length; k++) seats[k].classList.toggle('on', p.faces.indexOf(k) >= 0);
+  }
+
+  // ── 그림: 보기 공간 → 화면 ─────────────────────────────────────────────────────────────
+  function layout() { var w = cv.clientWidth, h = cv.clientHeight, m = Math.min(w, h - 40), cy = h / 2 + 8;   // 큐브 위 꼭짓점이 사건 글(위 40~62px)에 닿지 않게
+    return { w: w, h: h, cx: w / 2, cy: cy, s: Math.max(28, Math.min(112, m * 0.165, (cy - 70) / 2.75)), fs: Math.min(w, h - 64) * 0.46 / C.FLATMAX }; }
+  function sc(v) { var k = L.s * DIST / (DIST - v[2]); return [L.cx + v[0] * k, L.cy - v[1] * k]; }
+  function facing(nv, c) { return nv[0] * -c[0] + nv[1] * -c[1] + nv[2] * (DIST - c[2]) > 0; }
+  function mulT(A, v) { return [A[0] * v[0] + A[3] * v[1] + A[6] * v[2], A[1] * v[0] + A[4] * v[1] + A[7] * v[2], A[2] * v[0] + A[5] * v[1] + A[8] * v[2]]; }
+  function proj() { return C.projector(M, DIST, L.s, L.cx, L.cy); }
+  function poly(P) { cx.beginPath(); P.forEach(function (q, k) { if (k) cx.lineTo(q[0], q[1]); else cx.moveTo(q[0], q[1]); }); cx.closePath(); }
+  function inset(P, f) { var c0 = (P[0][0] + P[1][0] + P[2][0] + P[3][0]) / 4, c1 = (P[0][1] + P[1][1] + P[2][1] + P[3][1]) / 4;
+    return P.map(function (q) { return [c0 + (q[0] - c0) * f, c1 + (q[1] - c1) * f]; }); }
+  function noteCol(p, shade, lit) { var oct = Math.floor(p / 12) - 1, l = (50 + 12 * (oct - 3) + (p % 12) * 0.3) * shade + 10 * lit;
+    return 'hsl(' + HS.hue(p % 12) + ',' + (48 + 12 * lit).toFixed(0) + '%,' + Math.min(93, l).toFixed(1) + '%)'; }
+  /** 지금 보여 줄 상태: 줄 선 그림의 맨 앞 — 시작 전이면 그 앞 상태, 도는 중이면 뒤 상태에 남은 각도(법선 둘레) */
+  function display(now) {
+    while (anims.length && now >= anims[0].t0 + anims[0].dur) anims.shift();
+    if (!anims.length) return { st: E.state, an: null };
+    var a = anims[0]; if (now < a.t0) return { st: a.before, an: null };
+    var u = (now - a.t0) / a.dur; return { st: a.after, an: { n: C.FR[a.f][0], ang: -a.ang * Math.pow(1 - u, 2.2) } };
+  }
+  function sticker(i, st, Rf, now) {
+    var c = CELLS[i], nv = C.mul(M, Rf(c.n)), ctr = C.mul(M, Rf(c.pos)); if (!facing(nv, ctr)) return;
+    var h = 0.44, P = [[-h, h], [h, h], [h, -h], [-h, -h]].map(function (ab) { return sc(C.mul(M, Rf(C.axpy(C.axpy(c.pos, c.right, ab[0]), c.up, ab[1])))); });
+    var sid = st[i], p = HOME[sid], g = glow[sid], gr = fade(now - g[0], 0.4), gl = fade(now - g[1], 0.4), gt = fade(now - g[2], 0.35), lit = Math.max(gr, gl, gt);
+    var side = Math.hypot(P[1][0] - P[0][0], P[1][1] - P[0][1]), lam = Math.max(0, C.dot(nv, LIGHT));
+    poly(P); cx.fillStyle = noteCol(p, 0.88 + 0.16 * lam, lit); cx.fill();
+    cx.lineJoin = 'round'; cx.lineWidth = Math.max(1.5, side * 0.09); cx.strokeStyle = cx.fillStyle; cx.stroke();            // 둥근 모서리
+    if (c.center) { poly(inset(P, 1.06)); cx.lineWidth = Math.max(1.6, side * 0.05); cx.strokeStyle = 'rgba(34,48,42,0.42)'; cx.stroke(); }   // 가운데 = 베이스
+    if (gr > 0.02) { poly(inset(P, 1.1)); cx.lineWidth = 3.2; cx.strokeStyle = 'rgba(' + GOLD + ',' + gr.toFixed(3) + ')'; cx.stroke(); }
+    if (gl > 0.02) { poly(inset(P, 0.78)); cx.lineWidth = 3.2; cx.strokeStyle = 'rgba(' + CORAL + ',' + gl.toFixed(3) + ')'; cx.stroke(); }
+    if (gt > 0.02) { poly(inset(P, 0.94)); cx.lineWidth = 2; cx.strokeStyle = 'rgba(' + INK + ',' + (0.5 * gt).toFixed(3) + ')'; cx.stroke(); }
+    // 음 이름 — 면에 그려진 글씨처럼 (화면에서 본 그 면의 두 변으로 아핀 변환)
+    var ux = [(P[1][0] + P[2][0] - P[0][0] - P[3][0]) / 2, (P[1][1] + P[2][1] - P[0][1] - P[3][1]) / 2], uy = [(P[3][0] + P[2][0] - P[0][0] - P[1][0]) / 2, (P[3][1] + P[2][1] - P[0][1] - P[1][1]) / 2];
+    var det = ux[0] * uy[1] - ux[1] * uy[0]; if (det < 300) return;
+    var o = [(P[0][0] + P[1][0] + P[2][0] + P[3][0]) / 4, (P[0][1] + P[1][1] + P[2][1] + P[3][1]) / 4], k = dpr / 100;
+    cx.setTransform(ux[0] * k, ux[1] * k, uy[0] * k, uy[1] * k, o[0] * dpr, o[1] * dpr);
+    cx.font = (lit > 0.3 ? '700 ' : '500 ') + '30px ' + FONT; cx.textAlign = 'center'; cx.textBaseline = 'middle';
+    cx.fillStyle = 'rgba(34,48,42,' + (lit > 0.3 ? 0.95 : 0.74) + ')'; cx.fillText(HS.noteName(p), 0, 2);
+    cx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  /** 덩어리 하나(볼록한 상자) = 보이는 몸통 면 + 그 위 스티커. 볼록하니 덩어리 안에서는 순서가 필요 없다 */
+  function chunk(ch, st, now) {
+    var Rf = ch.R || function (p) { return p; }, ax, sg;
+    for (ax = 0; ax < 3; ax++) for (sg = -1; sg <= 1; sg += 2) {
+      var j = (ax + 1) % 3, k = (ax + 2) % 3, nn = [0, 0, 0]; nn[ax] = sg;
+      var q = [[0, 0], [1, 0], [1, 1], [0, 1]].map(function (ab) { var p = [0, 0, 0]; p[ax] = sg > 0 ? ch.hi[ax] : ch.lo[ax]; p[j] = ab[0] ? ch.hi[j] : ch.lo[j]; p[k] = ab[1] ? ch.hi[k] : ch.lo[k]; return C.mul(M, Rf(p)); });
+      var nv = C.mul(M, Rf(nn)), c3 = [(q[0][0] + q[2][0]) / 2, (q[0][1] + q[2][1]) / 2, (q[0][2] + q[2][2]) / 2]; if (!facing(nv, c3)) continue;
+      var inner = Math.abs(sg > 0 ? ch.hi[ax] : ch.lo[ax]) < 1, b = inner ? 0.78 : 0.9 + 0.1 * Math.max(0, C.dot(nv, LIGHT));   // 돌 때 드러나는 틈의 면은 어둡게
+      poly(q.map(sc)); cx.fillStyle = 'rgb(' + Math.round(251 * b) + ',' + Math.round(249 * b) + ',' + Math.round(242 * b) + ')'; cx.fill();
+      cx.lineJoin = 'round'; cx.lineWidth = 1; cx.strokeStyle = 'rgba(34,48,42,0.12)'; cx.stroke(); }
+    ch.cells.forEach(function (i) { sticker(i, st, Rf, now); });
+  }
+  /** 큐브: 돌아가는 층과 나머지를 두 덩어리로 — 둘은 평면 (법선·p = 0.5) 으로 갈리므로 눈 쪽 덩어리를 나중에 그리면 맞다 */
+  function drawCube(st, an, now) {
+    var all = { lo: [-1.5, -1.5, -1.5], hi: [1.5, 1.5, 1.5], R: null, cells: CELLS.map(function (c) { return c.id; }) }, chunks = [all];
+    if (an) { var n = an.n, ax = n[0] ? 0 : n[1] ? 1 : 2, s = n[ax], A = { lo: all.lo.slice(), hi: all.hi.slice(), R: function (p) { return C.rot(p, n, an.ang); }, cells: [] }, B = { lo: all.lo.slice(), hi: all.hi.slice(), R: null, cells: [] };
+      if (s > 0) { A.lo[ax] = 0.5; B.hi[ax] = 0.5; } else { A.hi[ax] = -0.5; B.lo[ax] = -0.5; }
+      CELLS.forEach(function (c) { (C.dot(c.pos, n) > 0.5 ? A : B).cells.push(c.id); });
+      chunks = C.dot(mulT(M, [0, 0, DIST]), n) > 0.5 ? [B, A] : [A, B]; }
+    var y = L.cy + 2.8 * L.s, g = cx.createRadialGradient(L.cx, y, 0, L.cx, y, 2.5 * L.s);     // 그림자
+    g.addColorStop(0, 'rgba(60,50,30,0.16)'); g.addColorStop(1, 'rgba(60,50,30,0)');
+    cx.save(); cx.translate(L.cx, y); cx.scale(1, 0.2); cx.translate(-L.cx, -y); cx.fillStyle = g; cx.beginPath(); cx.arc(L.cx, y, 2.5 * L.s, 0, TAU); cx.fill(); cx.restore();
+    var ka = fade(now - allT, 2.4); if (ka > 0) { var hl = cx.createRadialGradient(L.cx, L.cy, L.s, L.cx, L.cy, 3.6 * L.s);   // 다 맞춤: 큐브 둘레가 빛난다
+      hl.addColorStop(0, 'rgba(47,107,79,' + (0.3 * ka).toFixed(3) + ')'); hl.addColorStop(1, 'rgba(47,107,79,0)'); cx.fillStyle = hl; cx.fillRect(0, 0, L.w, L.h); }
+    chunks.forEach(function (ch) { chunk(ch, st, now); });
+    for (var f = 0; f < 6; f++) { var kf = Math.max(fade(now - faceT[f], 1.6), ka); if (kf <= 0.01) continue;          // 돌아온 면은 초록으로
+      var F = C.FR[C.FACES[f]], c0 = F[0].map(function (v) { return v * 1.5; }); if (!facing(C.mul(M, F[0]), C.mul(M, c0))) continue;
+      poly([[-1.5, 1.5], [1.5, 1.5], [1.5, -1.5], [-1.5, -1.5]].map(function (ab) { return sc(C.mul(M, C.axpy(C.axpy(c0, F[1], ab[0]), F[2], ab[1]))); }));
+      cx.fillStyle = 'rgba(47,107,79,' + (0.1 * kf).toFixed(3) + ')'; cx.fill(); cx.lineWidth = 3.5; cx.strokeStyle = 'rgba(47,107,79,' + (0.85 * kf).toFixed(3) + ')'; cx.stroke(); }
+  }
+  /** 펼친 그림: 띠 아홉(세 무리) + 교점 위 점 54. e = 펴짐 — 3차원 화면 자리와 평면 자리 사이를 보간한다 */
+  function drawFlat(st, an, now, e) {
+    var Rf = an ? function (p) { return C.rot(p, an.n, an.ang); } : null, hot = an ? [an.n[0] ? 0 : an.n[1] ? 1 : 2, an.n[0] + an.n[1] + an.n[2]] : null;
+    function place(p) { var a = sc(C.mul(M, p)), f = C.flat(p, M); return [a[0] + (L.cx + f[0] * L.fs - a[0]) * e, a[1] + (L.cy - f[1] * L.fs - a[1]) * e]; }
+    BANDS.forEach(function (b) { var on = hot && b.axis === hot[0] && b.v === hot[1];
+      poly(b.path.map(place)); cx.lineJoin = 'round'; cx.lineWidth = on ? 2.4 : 1.3; cx.strokeStyle = 'rgba(' + BANDC[b.axis] + ',' + (e * (on ? 0.8 : 0.34)).toFixed(3) + ')'; cx.stroke(); });
+    var fl = CELLS.map(function (c) { var f = C.flat(c.pos, M); return [f[0] * L.fs, f[1] * L.fs]; });
+    flatPts = CELLS.map(function (c, i) { var q = place(Rf && C.dot(c.pos, an.n) > 0.5 ? Rf(c.pos) : c.pos), d = 1e9;
+      for (var j = 0; j < 54; j++) if (j !== i) d = Math.min(d, Math.hypot(fl[i][0] - fl[j][0], fl[i][1] - fl[j][1]));
+      return [q[0], q[1], Math.max(3, Math.min(24, d * 0.44))]; });
+    cx.globalAlpha = e; cx.textAlign = 'center'; cx.textBaseline = 'middle';
+    flatPts.forEach(function (q, i) { var sid = st[i], p = HOME[sid], g = glow[sid], gr = fade(now - g[0], 0.4), gl = fade(now - g[1], 0.4), gt = fade(now - g[2], 0.35), lit = Math.max(gr, gl, gt), r = q[2] * (0.6 + 0.4 * e);
+      cx.beginPath(); cx.arc(q[0], q[1], r, 0, TAU); cx.fillStyle = noteCol(p, 1, lit); cx.fill();
+      if (CELLS[i].center) { cx.lineWidth = 1.6; cx.strokeStyle = 'rgba(34,48,42,0.5)'; cx.stroke(); }
+      [[gr, GOLD, 2.6, 3], [gl, CORAL, 5.6, 3], [gt, INK, 2.6, 2]].forEach(function (z) { if (z[0] <= 0.02) return; cx.beginPath(); cx.arc(q[0], q[1], r + z[2], 0, TAU); cx.lineWidth = z[3]; cx.strokeStyle = 'rgba(' + z[1] + ',' + (z[1] === INK ? 0.5 * z[0] : z[0]).toFixed(3) + ')'; cx.stroke(); });
+      if (r >= 7.5) { cx.font = (lit > 0.3 ? '700 ' : '500 ') + Math.round(Math.min(13, r * 1.05)) + 'px ' + FONT; cx.fillStyle = 'rgba(34,48,42,0.9)'; cx.fillText(HS.noteName(p), q[0], q[1] + 0.5); } });
+    cx.globalAlpha = 1;
+  }
+  function render(now) {
+    var w = cv.clientWidth, h = cv.clientHeight; if (!w || !h || !E) return;                 // 창이 가려져 크기가 0 이면 건너뛴다
+    dpr = Math.min(2, window.devicePixelRatio || 1);
+    if (cv.width !== Math.round(w * dpr) || cv.height !== Math.round(h * dpr)) { cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr); }
+    cx.setTransform(dpr, 0, 0, dpr, 0, 0); L = layout(); M = C.view(view.yaw, view.pitch); cx.clearRect(0, 0, w, h);
+    var d = display(now), e = ease(unf);
+    if (e < 1) { cx.globalAlpha = 1 - e; drawCube(d.st, d.an, now); cx.globalAlpha = 1; }
+    if (e > 0) drawFlat(d.st, d.an, now, e);
+    var m = $('#msg'), on = !!msg.text && now >= msg.t0 && now < msg.t0 + 2.8;
+    if (on && m.textContent !== msg.text) m.textContent = msg.text; if (m.classList.contains('on') !== on) m.classList.toggle('on', on);
+  }
+  function step(dt) {                                                                       // 그림 시간 dt 만큼: 저절로 돌기 · 펴짐 · 보기 맞추기
+    if (spin && !ptr) view.yaw += dt * 0.08;
+    if (unf !== unfTo) unf = unfTo > unf ? Math.min(1, unf + dt / 1.2) : Math.max(0, unf - dt / 1.2);
+    if (vTo) { var k = ease((tnow() - vT0) / 1.2); view.yaw = vFrom.yaw + (vTo.yaw - vFrom.yaw) * k; view.pitch = vFrom.pitch + (vTo.pitch - vFrom.pitch) * k; if (k >= 1) vTo = null; }
+  }
+  function frame(ts) { try { var dt = lastTs ? Math.min(0.05, (ts - lastTs) / 1000) : 0; lastTs = ts; step(dt); render(tnow()); } finally { requestAnimationFrame(frame); } }
+
+  // ── 고르기: 큐브면 보이는 칸(칸 전체 네모), 펼친 그림이면 점 ─────────────────────────────────────
+  function inPoly(x, y, P) { var c = false; for (var a = 0, b = P.length - 1; a < P.length; b = a++) { var p = P[a], q = P[b];
+    if ((p[1] > y) !== (q[1] > y) && x < (q[0] - p[0]) * (y - p[1]) / (q[1] - p[1]) + p[0]) c = !c; } return c; }
+  function pick(x, y) {
+    if (!L || !M) return -1; var best = -1, bz = -1e9;
+    if (unf >= 0.5) { flatPts.forEach(function (q, k) { var d = Math.hypot(q[0] - x, q[1] - y); if (d < q[2] + 8 && -d > bz) { bz = -d; best = k; } }); return best; }
+    CELLS.forEach(function (c) { var nv = C.mul(M, c.n), c3 = C.mul(M, c.pos); if (!facing(nv, c3)) return;
+      var P = [[-0.5, 0.5], [0.5, 0.5], [0.5, -0.5], [-0.5, -0.5]].map(function (ab) { return sc(C.mul(M, C.axpy(C.axpy(c.pos, c.right, ab[0]), c.up, ab[1]))); });
+      if (c3[2] > bz && inPoly(x, y, P)) { bz = c3[2]; best = c.id; } });
+    return best;
+  }
+
+  // ── 조작 ─────────────────────────────────────────────────────────────────────────────
+  function xy(e) { var r = cv.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; }
+  cv.addEventListener('pointerdown', function (e) {
+    e.preventDefault(); if (!E) return; unlock(); takeOver(); try { cv.setPointerCapture(e.pointerId); } catch (x) {}
+    var p = xy(e), hit = pick(p[0], p[1]);
+    ptr = { id: e.pointerId, s: p, at: p, cell: hit, mode: hit >= 0 && unf < 0.5 ? 'turn' : 'view' };
+    if (hit >= 0) ping(hit);                                                                // 누른 그 호출 안에서 그 음
+  });
+  cv.addEventListener('pointermove', function (e) {
+    if (!ptr || ptr.id !== e.pointerId) return; var p = xy(e), dx = p[0] - ptr.at[0], dy = p[1] - ptr.at[1]; ptr.at = p;
+    if (ptr.mode === 'turn') { var tx = p[0] - ptr.s[0], ty = p[1] - ptr.s[1]; if (Math.hypot(tx, ty) < 10) return;
+      var r = C.dragMove(ptr.cell, tx, ty, proj());
+      if (r && r.move) { doMove(r.move); ptr.mode = 'done'; return; }
+      ptr.mode = 'view'; dx = tx; dy = ty; }                                                // 가운데 층 → 보기 돌리기
+    if (ptr.mode === 'view') { view.yaw += dx * 0.008; view.pitch = clampP(view.pitch + dy * 0.008); vTo = null; }
+  });
+  function up(e) { if (ptr && (!e || ptr.id === e.pointerId)) ptr = null; }
+  cv.addEventListener('pointerup', function (e) { up(e); if (sound) HS.audio.wake(); });    // 터치는 손을 뗄 때에야 소리가 풀린다(iOS)
+  cv.addEventListener('touchend', function () { if (sound) HS.audio.wake(); });
+  cv.addEventListener('pointercancel', up);
+  var FKEY = { KeyU: 'U', KeyD: 'D', KeyL: 'L', KeyR: 'R', KeyF: 'F', KeyB: 'B' }, ARROW = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] };
+  HS.keys(function (code, ev) {
+    if (!E) return;
+    if (FKEY[code]) { unlock(); takeOver(); doMove(FKEY[code] + (ev && ev.shiftKey ? "'" : '')); }
+    else if (code === 'Backspace') { unlock(); takeOver(); doUndo(); }
+    else if (ARROW[code]) { unlock(); takeOver(); view.yaw += ARROW[code][0] * 0.3; view.pitch = clampP(view.pitch + ARROW[code][1] * 0.3); vTo = null; }
+  });
+  $('#listen').addEventListener('click', function () { if (!E) return; unlock(); if (mode !== 'demo') startDemo(); syncUI(); });
+  $('#play').addEventListener('click', function () { if (!E) return; unlock(); takeOver(); });
+  $('#undo').addEventListener('click', function () { if (!E) return; unlock(); takeOver(); doUndo(); });
+  $('#reset').addEventListener('click', function () { if (!E) return; unlock(); takeOver(); doReset(); });
+  $('#rep').addEventListener('click', function () { if (!E) return; unlock(); var on = !(mode === 'play' && E.rep); takeOver(); setRep(on); });
+  $('#unfold').addEventListener('click', function () { setUnfold(!unfTo); });
+  addEventListener('resize', function () { if (E) render(tnow()); });
+
+  HS.load().then(function (D) {
+    E = C.create(HS.derive(D)); HOME = E.home;
+    var seats = document.querySelectorAll('#seats i'); for (var k = 0; k < seats.length; k++) seats[k].textContent = E.table.seat[k];
+    E.setDemo(true); clock = HS.clock(onStep); clock.start();
+    document.addEventListener('visibilitychange', function () { if (!document.hidden) clock.start(); });
+    HS.hook({                                                                               // 가려진 창에선 그리기 루프가 멈춘다 — 검증이 시간을 감는다
+      probe: function () { var p = E.probe(); return { mode: mode, sound: sound, step: p.g, r: p.r, solvedFaces: p.solvedFaces, faces: p.faces, solved: p.solved,
+        formula: p.formula, order: p.order, count: p.count, moves: p.moves, last: lastMove, calls: HS.audio.calls.length, unfold: +unf.toFixed(3), yaw: view.yaw, pitch: view.pitch, anims: anims.length }; },
+      move: function (nm) { takeOver(); var x = doMove(nm); return x ? x.notes.length : 0; },
+      undo: function () { takeOver(); doUndo(); }, reset: function () { takeOver(); doReset(); },
+      repeat: function (on) { takeOver(); setRep(on !== false); },
+      advance: function (sec) { var n = Math.round(sec / SEC); for (var k = 0; k < n; k++) { clock.advance(1); skew += SEC; step(SEC); } render(tnow()); },
+      demo: function (on) { if (on === false) takeOver(); else startDemo(); },
+      unfold: function (on) { setUnfold(on !== false); },
+      at: function (i) { render(tnow()); return M ? sc(C.mul(M, CELLS[i].pos)) : null; },
+      view: function (y, p) { view.yaw = y; view.pitch = clampP(p); vTo = null; spin = false; render(tnow()); },
+      listen: function () { if (HS.audio.silent) { sound = true; syncUI(); } }             // ?silent 에서만: 소리 '켬'(호출만 기록) — 제스처 없이 깨우지 않는다
+    });
+    syncUI(); requestAnimationFrame(frame);
+  }).catch(function (e) { $('#info').textContent = '자료를 읽지 못했어요: ' + e.message; });
+})();
+</script>
+</body>
+</html>

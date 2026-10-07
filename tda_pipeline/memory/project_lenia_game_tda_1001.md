@@ -1,6 +1,6 @@
 ---
 name: project-lenia-game-tda-1001
-description: 살아 있는 고리(sketch/lifeloop.html) — Lenia 오비움 몸의 구멍(H1)이 hibari 지도의 고리를 켜면 그 고리가 연주된다. 내 고리를 그으면 먼저 운다. 소리 규칙을 같은 판 두 갈래로 네 번 고침. 판정 대기
+description: 살아 있는 고리(sketch/lifeloop.html) — Lenia 오비움 몸의 구멍(H1)이 hibari 지도의 고리를 켜면 그 고리가 연주된다. 내 고리를 그으면 먼저 운다. 소리 규칙을 같은 판 두 갈래로 네 번 고침. ⛔ 판 20 거절(2026-10-07)
 metadata:
   type: project
 ---
@@ -44,3 +44,5 @@ Lenia 사실:
 - 엔진 주소는 `lifeloop-core.js?v=N` 으로 판을 올린다(캐시).
 
 [[project-tonnetz-life-0930]] [[project-lenia-constellation-0928]] [[project-canon-lark-octopus-1001]]
+
+**판정 (2026-10-07, 판 20)**: "내가 원하는 방향성이 아니야. 다시 처음으로 돌아가자. 생명체가 없어도 돼. 그냥 사용자가 조작함으로써 자신이 원하는 음악을 만들어내고 그게 Sakamoto 스타일이자 TDA에 기반 … 사건은 있었으면". 생명체가 소리를 정해 작가의 몫을 빼앗았다 → [[project-flight-cube-1007]]
