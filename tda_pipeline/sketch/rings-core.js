@@ -74,6 +74,12 @@
     return best; }
   /** 돌린 각 → 사분 회전 수 (가장 가까운 90° 배수) */
   function snap(th) { return Math.round(th / (Math.PI / 2)); }
+  /** 키(→)가 쓰는 '화면에서 시계 방향' 사분의 부호 — 고리마다 그린 곡선의 넓이 부호로 (각이 늘 때 반시계(y 위로 +)면 시계 = −1) */
+  var CW = curves(240).map(function (C) { var a = 0, P = C.pts;
+    for (var s = 0; s < P.length; s++) { var p = P[s], q = P[(s + 1) % P.length]; a += p[0] * q[1] - q[0] * p[1]; } return a > 0 ? -1 : 1; });
+  /** 키(↑↓)로 고르는 차례: 보이는 송이 미·파·솔마다 그 송이를 감싼 원 → 허리 원(베이스를 지난다) → 맞은편 꽃잎을 감싼 원 */
+  var ORDER = [0, 1, 2].reduce(function (o, fi) { var n = FR[FACES[fi]][0], a = n.findIndex(function (x) { return x !== 0; });
+    return o.concat(RINGS.filter(function (R) { return R.axis === a; }).sort(function (x, y) { return (y.level - x.level) * n[a]; }).map(function (R) { return R.id; })); }, []);
 
   // ── 엔진: cube-core 의 칸표·소리·사건을 그대로 쓰고, 상태만 고리 회전으로 바꾼다 ───────────────────────────────
   function create(H) {
@@ -92,7 +98,7 @@
   }
 
   var API = { create: create, CELLS: CELLS, RINGS: RINGS, PERM: PERM, FACES: FACES, S: S, turn: turn, ident: ident, flat: flat, onRing: onRing,
-              spin: spin, curves: curves, pick: pick, snap: snap, wrap: wrap };
+              spin: spin, curves: curves, pick: pick, snap: snap, wrap: wrap, CW: CW, ORDER: ORDER };
   if (typeof module !== 'undefined' && module.exports) module.exports = API;
   root.HSRings = API;
 })(typeof globalThis !== 'undefined' ? globalThis : this);

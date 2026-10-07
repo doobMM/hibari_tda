@@ -10,6 +10,10 @@
 //  R8 되돌리기: 무작위 300수 뒤 되돌리기 300번 = 맞춤
 //  R9 들림: 원 9개 모두 사분 회전 한 번이 오른손 스텝 하나 이상의 음을 바꾼다
 //  R10 페이지: 인라인 스크립트 문법 · HS.audio.wake 는 unlock 안에서만 · unlock 은 제스처 처리기(pointerdown·click·keys)에서만 · 키는 ev.code
+// 추가 예측 (2026-10-07, 키보드 조작을 넣기 전에 적음):
+//  R11 →(RG.CW) 는 원마다 화면에서 시계 방향: 원 위 12점 모두, 조금 돌린 변위가 곡선 무게중심 둘레로 시계(외적 < 0, y 위로 +) — 108/108
+//  R12 ↑↓ 차례(RG.ORDER): 0..8 의 순열 · 셋씩 같은 축 · 셋마다 [보이는 송이를 감싼 원, 허리 원(L=0), 맞은편 꽃잎을 감싼 원] · 첫 원의 12점이 그 보이는 송이에 하나도 없다(감싼다)
+//      · 페이지가 Arrow 넷 + Backspace/KeyZ 를 ev.code 로 받고 숫자 키는 더 받지 않는다
 import { createRequire } from 'module';
 import { readFileSync } from 'fs';
 import { dataRight, dataLeft } from './verify/xcheck_cube_ref.mjs';
@@ -76,4 +80,17 @@ let syntax = true; try { new Function(inline); } catch (e) { syntax = false; con
 const wakeCalls = (inline.match(/HS\.audio\.wake\(/g) || []).length, wakeInUnlock = /function unlock\(\) \{ if \(!sound\) \{ HS\.audio\.wake\(\)/.test(inline);
 const unlockSites = [...inline.matchAll(/unlock\(\)/g)].length, keysByCode = !/\bev\.key\b/.test(inline);
 ok(syntax && wakeCalls === 1 && wakeInUnlock && keysByCode, `R10 페이지: 문법 · wake 1곳(unlock 안) · unlock 호출 ${unlockSites - 1}곳 · ev.key 없음`);
+// R11
+let r11 = 0;
+RG.RINGS.forEach(R => { const C = RG.curves(240)[R.id].pts, cx = C.reduce((s, p) => s + p[0], 0) / C.length, cy = C.reduce((s, p) => s + p[1], 0) / C.length;
+  R.cells.forEach(i => { const p0 = RG.flat(RG.CELLS[i].q), p1 = RG.flat(RG.spin(RG.CELLS[i].q, R, RG.CW[R.id] * 0.05));
+    if ((p0[0] - cx) * (p1[1] - p0[1]) - (p0[1] - cy) * (p1[0] - p0[0]) < 0) r11++; }); });
+ok(r11 === 108, `R11 → 는 화면에서 시계 방향: ${r11}/108 (CW = ${RG.CW.join(' ')})`);
+// R12
+const O = RG.ORDER, perm = O.slice().sort((a, b) => a - b).join() === '0,1,2,3,4,5,6,7,8';
+let r12 = perm && O.length === 9;
+for (let g = 0; g < 3 && r12; g++) { const T3 = O.slice(3 * g, 3 * g + 3).map(i => RG.RINGS[i]), n = HSCube.FR[RG.FACES[g]][0], a = n.findIndex(x => x !== 0);
+  if (!T3.every(R => R.axis === a) || T3[0].level * n[a] !== 1 || T3[1].level !== 0 || T3[2].level * n[a] !== -1 || T3[0].cells.some(i => RG.CELLS[i].face === g)) r12 = false; }
+const keysOk = /code === 'ArrowUp'/.test(inline) && /code === 'ArrowDown'/.test(inline) && /'ArrowLeft'/.test(inline) && /'ArrowRight'/.test(inline) && /'KeyZ'/.test(inline) && !/Digit/.test(inline);
+ok(r12 && keysOk, `R12 ↑↓ 차례 ${O.join(' ')} · 셋씩 [감싼 원 · 허리 · 맞은편] · 키 = 화살표 넷 + ⌫/Z (숫자 키 없음)`);
 console.log(fails ? `FAIL ${fails}개` : '전부 PASS');
