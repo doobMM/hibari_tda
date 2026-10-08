@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>고리판 rate</title>
+<!--
+  sketch/rings-rate.html — rate 를 바꿀 때 고리판의 원 9개가 각각 hibari 의 모양을 얼마나 흔드는가 (2026-10-08 사용자: "그 rate를 조절할 때 9개의 원에 나타나는 영향도 시각적으로").
+  자료 sketch/rings-rate.json ← experiments/export_rings_rate.py (정본 거리 dft α=0.25 · rate 0~1.5 · ripser H₁ · persim 1-Wasserstein)
+
+  판      고리판(rings.html)과 같은 그림. 점 = 다 맞춘 판(= hibari). 원의 굵기·붉기 = 다 맞춘 판에서 **그 원을 돌리면** 지금 rate 에서 hibari 의 H₁ 막대가 얼마나 바뀌나(W).
+  rate    정본 거리 = 같은 손 다음 박의 다른 화음(intra) + rate × 다른 손 한 박 뒤 화음(inter) → 25% 옥타브·길이 거리와 섞음.
+  오른쪽  위 = 원 9개의 W 를 rate 0 → 1.5 로 (0 은 떼어 그렸다 — 0 → 0.01 에서 거의 다 바뀐다) · 가운데 = 원 고르기(지금 W) · 아래 = 고른 원의 막대(회색 hibari · 주황 돌린 판).
+  키      ←→ rate ±0.01 (Shift ±0.1) · Home/End = 0 / 1.5 · ↑↓ 원 고르기. 원을 눌러도 고른다. 소리는 없다.
+-->
+<style>
+ html,body{margin:0;height:100%;overflow:hidden;background:#f3f0e6;color:#22302a;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans KR",sans-serif}
+ #wrap{position:absolute;inset:0;display:flex;flex-direction:column}
+ header{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 10px;padding:10px 16px 2px}
+ header b{font-size:17px;font-weight:600}
+ header span{font-size:13px;color:#7d877f}
+ header a{margin-left:auto;font-size:12px;color:#7d877f;text-decoration:none}
+ main{flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:6px 14px;padding:0 16px}
+ .cv{position:relative;min-height:0}
+ canvas{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:manipulation}
+ #side{display:flex;flex-direction:column;min-height:0;gap:6px}
+ #chart{flex:1 1 52%} #bars{flex:1 1 38%}
+ #chips{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px}
+ #chips button{font:inherit;font-size:12px;color:inherit;min-height:44px;padding:2px 6px;border:1px solid #d6d2c2;border-radius:10px;cursor:pointer;text-align:left;line-height:1.25}
+ #chips button b{display:block;font-weight:600;font-size:13px}
+ #chips button.on{border-color:#2f6b4f;box-shadow:0 0 0 2px #2f6b4f inset}
+ #bar{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:8px 12px;padding:8px 16px 14px}
+ #bar label{font-size:14px;display:flex;align-items:center;gap:8px}
+ #rate{width:min(46vw,420px);height:44px;accent-color:#D85A30}
+ #rv{font-variant-numeric:tabular-nums;min-width:3.2em;font-weight:600}
+ #ks{display:flex;gap:4px}
+ button.k{font:inherit;font-size:14px;color:inherit;min-width:44px;min-height:44px;padding:0 12px;border:1px solid #d6d2c2;border-radius:22px;background:#fbf9f2;cursor:pointer}
+ button.k.on{background:#22302a;color:#fbf9f2;border-color:#22302a}
+ button:focus-visible,input:focus-visible{outline:2px solid #2f6b4f;outline-offset:2px}
+ @media (max-width:760px){
+  html,body{overflow:auto;height:auto} #wrap{position:static}
+  main{grid-template-columns:1fr} #board{height:92vw} #chart{flex:none;height:210px} #bars{flex:none;height:170px}
+  #rate{width:70vw}
+ }
+</style>
+</head>
+<body>
+<div id="wrap">
+ <header><b>고리판 · rate</b><span>원이 굵고 붉을수록, 그 원을 돌리면 hibari 의 고리 모양이 크게 바뀐다</span><a href="./rings.html">고리판으로</a></header>
+ <main>
+  <div id="board" class="cv"><canvas id="cb" aria-label="고리판의 원 9개. 굵고 붉은 원일수록 그 원을 돌렸을 때 지금 rate 에서 hibari 의 고리 모양이 크게 바뀝니다. 원을 누르면 고릅니다."></canvas></div>
+  <div id="side">
+   <div id="chart" class="cv"><canvas id="cc" aria-label="원 9개의 막대 거리를 rate 0 부터 1.5 까지 그린 선"></canvas></div>
+   <div id="chips" role="group" aria-label="원 고르기"></div>
+   <div id="bars" class="cv"><canvas id="cr" aria-label="고른 원의 H₁ 막대 — 회색 hibari, 주황 그 원을 돌린 판"></canvas></div>
+  </div>
+ </main>
+ <div id="bar">
+  <label for="rate">rate <input id="rate" type="range" min="0" max="150" step="1" value="0"> <span id="rv">0.00</span></label>
+  <div id="ks" role="group" aria-label="돌리는 양"><button class="k" data-k="1">← 한 번</button><button class="k" data-k="2">두 번</button><button class="k on" data-k="3">→ 한 번</button></div>
+ </div>
+</div>
+<script src="./common.js?v=2"></script>
+<script src="./cube-core.js?v=1"></script>
+<script src="./rings-core.js?v=2"></script>
+<script>
+(function () {
+  'use strict';
+  var $ = function (s) { return document.querySelector(s); }, RG = HSRings, TH = HS.theme;
+  var NAME = { 0: '라를 감싼 원', 1: '파·라 허리 원', 2: '파를 감싼 원', 3: '시를 감싼 원', 4: '솔·시 허리 원', 5: '솔을 감싼 원', 6: '도를 감싼 원', 7: '미·도 허리 원', 8: '미를 감싼 원' };
+  var CORAL = [216, 90, 48], GREEN = [47, 107, 79], GRAY = [125, 135, 127];
+  var D = null, B = null, ri = 0, sel = RG.ORDER[0], k = 3, WMAX = 1, CUR = RG.curves(240);
+  function rgba(c, a) { return 'rgba(' + c[0] + ',' + c[1] + ',' + c[2] + ',' + a + ')'; }
+  function mix(t) { return [0, 1, 2].map(function (j) { return Math.round(GRAY[j] + (CORAL[j] - GRAY[j]) * t); }); }
+  function w(g, i) { return D.W[g + ':' + k][i == null ? ri : i]; }
+
+  function fit(cv) { var dpr = Math.min(2, devicePixelRatio || 1), r = cv.getBoundingClientRect(), x = cv.getContext('2d');
+    cv.width = Math.round(r.width * dpr); cv.height = Math.round(r.height * dpr); x.setTransform(dpr, 0, 0, dpr, 0, 0); return { x: x, W: r.width, H: r.height }; }
+
+  // ── 판: 원 굵기·붉기 = W ─────────────────────────────────────────────────
+  var bd = null, CX = 0, CY = 0, SC = 1, DOT = 8;
+  function scr(p) { return [CX + p[0] * SC, CY - p[1] * SC]; }
+  function drawBoard() { var c = bd = fit($('#cb')), x = c.x; CX = c.W / 2; CY = c.H / 2; SC = Math.min(c.W - 16, c.H - 16) / 2 / 2.95; DOT = Math.max(6, Math.min(12, SC * 0.13));
+    x.fillStyle = TH.bg; x.fillRect(0, 0, c.W, c.H);
+    var order = [0, 1, 2, 3, 4, 5, 6, 7, 8].sort(function (a, b) { return w(a) - w(b); });   // 약한 원부터 — 센 원이 위에
+    order.forEach(function (g) { var C = CUR[g], t = Math.min(1, w(g) / WMAX);
+      x.beginPath(); C.pts.forEach(function (p, s) { var q = scr(p); if (s) x.lineTo(q[0], q[1]); else x.moveTo(q[0], q[1]); }); x.closePath();
+      if (g === sel) { x.strokeStyle = rgba(GREEN, 0.28); x.lineWidth = 3 + 12 * t + 6; x.stroke(); }
+      x.strokeStyle = rgba(mix(t), 0.35 + 0.6 * t); x.lineWidth = 1 + 12 * t; x.stroke(); });
+    var on = RG.RINGS[sel].cells;
+    x.textAlign = 'center'; x.textBaseline = 'middle';
+    for (var i = 0; i < 54; i++) { var p = scr(RG.flat(RG.CELLS[i].q)), pitch = B.pitchAt(i), oct = Math.floor(pitch / 12) - 1, L = 38 + (oct - 3) * 14, ctr = RG.CELLS[i].center, rad = ctr ? DOT * 1.18 : DOT;
+      if (on.indexOf(i) >= 0) { x.beginPath(); x.arc(p[0], p[1], rad + 2.5, 0, 6.283); x.lineWidth = 2; x.strokeStyle = rgba(GREEN, 0.85); x.stroke(); }
+      x.beginPath(); x.arc(p[0], p[1], rad, 0, 6.283); x.fillStyle = 'hsl(' + HS.hue(pitch % 12) + ',52%,' + L + '%)'; x.fill();
+      x.lineWidth = ctr ? 1.4 : 0.8; x.strokeStyle = 'rgba(34,48,42,' + (ctr ? 0.6 : 0.3) + ')'; x.stroke();
+      if (DOT >= 9) { x.font = '600 ' + Math.round(rad * 0.78) + 'px system-ui,"Noto Sans KR",sans-serif'; x.fillStyle = L > 55 ? 'rgba(34,48,42,0.85)' : 'rgba(255,253,243,0.95)'; x.fillText(HS.noteName(pitch), p[0], p[1] + 0.5); } } }
+
+  // ── 선: 원 9개의 W(rate). rate 0 은 떼어 그린다 ─────────────────────────
+  function drawChart() { var c = fit($('#cc')), x = c.x, L = 34, R = 10, T = 22, Bm = 24, x0 = L + 8, x1 = L + 40, x2 = c.W - R, yb = c.H - Bm;
+    var X = function (i) { return i === 0 ? x0 : x1 + (x2 - x1) * (i - 1) / 149; }, Y = function (v) { return yb - (yb - T) * v / WMAX; };
+    x.clearRect(0, 0, c.W, c.H); x.font = '11px system-ui,"Noto Sans KR",sans-serif'; x.fillStyle = TH.dim; x.textBaseline = 'middle';
+    x.strokeStyle = TH.line; x.lineWidth = 1; x.beginPath(); x.moveTo(L, T - 6); x.lineTo(L, yb); x.lineTo(x2, yb); x.stroke();
+    [0, 0.2, 0.4].forEach(function (v) { if (v > WMAX) return; x.textAlign = 'right'; x.fillText(v.toFixed(1), L - 4, Y(v)); });
+    x.textAlign = 'center'; x.textBaseline = 'top'; x.fillText('0', x0, yb + 5); x.fillText('0.01', x1, yb + 5); x.fillText('0.5', X(50), yb + 5); x.fillText('1.0', X(100), yb + 5); x.fillText('1.5', x2 - 8, yb + 5);
+    x.fillText('//', (x0 + x1) / 2, yb - 7);
+    x.textAlign = 'left'; x.fillText('그 원을 돌리면 막대가 바뀌는 양 (W)', L + 4, 2);
+    var cx = X(ri); x.strokeStyle = rgba(CORAL, 0.5); x.lineWidth = 1.5; x.beginPath(); x.moveTo(cx, T - 6); x.lineTo(cx, yb); x.stroke();
+    [0, 1, 2, 3, 4, 5, 6, 7, 8].sort(function (a, b) { return (a === sel) - (b === sel); }).forEach(function (g) { var s = g === sel;
+      x.strokeStyle = s ? rgba(CORAL, 0.95) : rgba(GRAY, 0.45); x.lineWidth = s ? 2.4 : 1.1;
+      x.setLineDash([3, 3]); x.beginPath(); x.moveTo(X(0), Y(w(g, 0))); x.lineTo(X(1), Y(w(g, 1))); x.stroke(); x.setLineDash([]);
+      x.beginPath(); for (var i = 1; i <= 150; i++) { if (i === 1) x.moveTo(X(i), Y(w(g, i))); else x.lineTo(X(i), Y(w(g, i))); } x.stroke();
+      x.beginPath(); x.arc(X(0), Y(w(g, 0)), s ? 3.5 : 2, 0, 6.283); x.fillStyle = x.strokeStyle; x.fill();
+      if (s) { x.beginPath(); x.arc(cx, Y(w(g)), 4, 0, 6.283); x.fill(); } }); }
+
+  // ── 막대: 고른 원을 돌린 판 vs hibari, 지금 rate ─────────────────────────
+  function drawBars() { var c = fit($('#cr')), x = c.x, L = 72, R = 10, T = 22, yb = c.H - 18;
+    var hb = D.bars.hibari[ri], sb = D.bars[sel + ':' + k][ri], all = hb.concat(sb), mx = Math.max.apply(null, all.map(function (b) { return b[1]; }).concat([0.05])) * 1.08;
+    var X = function (v) { return L + (c.W - L - R) * v / mx; }, n = Math.max(hb.length, sb.length), half = (yb - T) / 2, gap = Math.min(9, (half - 6) / Math.max(1, n));
+    x.clearRect(0, 0, c.W, c.H); x.font = '11px system-ui,"Noto Sans KR",sans-serif'; x.textBaseline = 'middle';
+    x.fillStyle = TH.ink; x.textAlign = 'left';
+    x.fillText(NAME[sel] + '을 돌리면 — H₁ 막대 (rate ' + D.rates[ri].toFixed(2) + ', W ' + w(sel).toFixed(3) + ')', 0, 8);
+    [[hb, GRAY, 'hibari ' + hb.length], [sb, CORAL, '돌린 판 ' + sb.length]].forEach(function (g, j) { var y0 = T + j * half + 4, srt = g[0].slice().sort(function (a, b) { return a[0] - b[0] || a[1] - b[1]; });
+      x.fillStyle = TH.dim; x.textAlign = 'right'; x.fillText(g[2], L - 6, y0 + srt.length * gap / 2);
+      x.strokeStyle = rgba(g[1], 0.9); x.lineWidth = Math.max(2, gap - 3); x.lineCap = 'round';
+      srt.forEach(function (b, i) { var y = y0 + i * gap + gap / 2; x.beginPath(); x.moveTo(X(b[0]), y); x.lineTo(Math.max(X(b[1]), X(b[0]) + 1), y); x.stroke(); }); });
+    x.lineCap = 'butt'; x.strokeStyle = TH.line; x.lineWidth = 1; x.beginPath(); x.moveTo(L, yb); x.lineTo(c.W - R, yb); x.stroke();
+    x.fillStyle = TH.dim; x.textAlign = 'center'; x.textBaseline = 'top'; x.fillText('0', L, yb + 3); x.fillText(mx.toFixed(2), c.W - R - 12, yb + 3); x.fillText('거리 →', (L + c.W - R) / 2, yb + 3); }
+
+  // ── 고르기 칩: 원 이름 + 지금 W ───────────────────────────────────────────
+  var chips = {};
+  function makeChips() { var box = $('#chips'); RG.ORDER.forEach(function (g) { var b = document.createElement('button'); b.type = 'button';
+    b.addEventListener('click', function () { pick(g); }); box.appendChild(b); chips[g] = b; }); }
+  function drawChips() { RG.ORDER.forEach(function (g) { var b = chips[g], t = Math.round(100 * Math.min(1, w(g) / WMAX));
+    b.innerHTML = '<b>' + NAME[g] + '</b>' + w(g).toFixed(3); b.className = g === sel ? 'on' : ''; b.setAttribute('aria-pressed', g === sel);
+    b.style.background = 'linear-gradient(90deg,' + rgba(CORAL, 0.28) + ' ' + t + '%,#fbf9f2 ' + t + '%)'; }); }
+
+  function draw() { if (!D) return; $('#rv').textContent = D.rates[ri].toFixed(2); $('#rate').value = ri; drawBoard(); drawChart(); drawBars(); drawChips(); }
+  function setRate(i) { ri = Math.max(0, Math.min(150, i)); draw(); }
+  function pick(g) { sel = g; draw(); }
+
+  // ── 손 ──────────────────────────────────────────────────────────────────
+  $('#rate').addEventListener('input', function () { setRate(+this.value); });
+  [].forEach.call(document.querySelectorAll('button.k'), function (b) { b.addEventListener('click', function () {
+    k = +b.dataset.k; [].forEach.call(document.querySelectorAll('button.k'), function (o) { o.classList.toggle('on', o === b); }); draw(); }); });
+  $('#cb').addEventListener('pointerdown', function (e) { var r = this.getBoundingClientRect(), px = e.clientX - r.left, py = e.clientY - r.top, best = null, bd2 = 16;
+    CUR.forEach(function (C) { C.pts.forEach(function (p) { var q = scr(p), d = Math.hypot(q[0] - px, q[1] - py); if (d < bd2) { bd2 = d; best = C.ring; } }); });
+    if (best != null) pick(best); });
+  HS.keys(function (code, ev) { if (ev && ev.target && ev.target.id === 'rate' && /Arrow|Home|End/.test(code)) return;   // 슬라이더가 스스로 움직인다
+    var big = ev && ev.shiftKey ? 10 : 1;
+    if (code === 'ArrowRight') setRate(ri + big); else if (code === 'ArrowLeft') setRate(ri - big);
+    else if (code === 'Home') setRate(0); else if (code === 'End') setRate(150);
+    else if (code === 'ArrowDown' || code === 'ArrowUp') pick(RG.ORDER[(RG.ORDER.indexOf(sel) + (code === 'ArrowDown' ? 1 : 8)) % 9]); });
+  addEventListener('resize', draw);
+
+  Promise.all([fetch('./rings-rate.json').then(function (r) { return r.json(); }), HS.load()]).then(function (a) {
+    D = a[0]; B = RG.create(HS.derive(a[1]));
+    WMAX = Math.max.apply(null, Object.keys(D.W).map(function (key) { return Math.max.apply(null, D.W[key]); }));
+    makeChips(); draw();
+    HS.hook({ probe: function () { return { ri: ri, rate: D.rates[ri], sel: sel, k: k, W: [0, 1, 2, 3, 4, 5, 6, 7, 8].map(function (g) { return w(g); }), WMAX: WMAX,
+                bars: [D.bars.hibari[ri].length, D.bars[sel + ':' + k][ri].length] }; },
+              set: function (i, g, kk) { if (kk) k = kk; if (g != null) sel = g; setRate(i); }, at: function (g) { return CUR[g].pts.map(scr); } });
+  }).catch(function (e) { document.querySelector('header span').textContent = '자료를 읽지 못했어요: ' + e.message; });
+})();
+</script>
+</body>
+</html>

@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: fd94ced9-59f4-460a-a6bc-cca587246f8e
-  modified: 2026-10-08T06:04:53.044Z
+  modified: 2026-10-08T06:48:33.518Z
 ---
 
 2026-10-07 판 21: 날갯짓·큐브 둘 다 "직관적이지 않아서 별로" → "이전에 첨부했던 이미지 중에서 왼쪽에 있는 버전으로 … 원이 돌아가면서 나는 소리가 달라지는 거야".
@@ -38,4 +38,11 @@ metadata:
 - 같은 날 추가 요청 "조작을 함으로써 원본과 어떤 식으로 달라지는지를 한 눈에 … 곡의 모양이 어떻게 바뀌는 지" → 그림 후보 셋 tools/rings_diff_views.py
   (A 곡의 모양: 원본 몸에서 이어 접기, 대조 이동 0.037 vs 0.778 · B 모듈 꽃 · C 곡 전체 지도: 세로줄 오른손·비스듬한 줄 왼손). 고르기 대기.
 
-[[project-flight-cube-1007]] [[feedback-game-rules-visual-first-1001]]
+2026-10-08 사용자: "그 rate를 조절할 때 9개의 원에 나타나는 영향도 시각적으로 표현되었으면 좋겠다." → sketch/rings-rate.html (자료 experiments/export_rings_rate.py → sketch/rings-rate.json):
+- 원 굵기·붉기 = 다 맞춘 판에서 그 원을 돌렸을 때 지금 rate 의 W(hibari H₁ 막대와의 1-Wasserstein). 오른쪽에 W(rate) 선 · 원 고르기 · 고른 원의 막대.
+- 발견: **정본 rate 는 스위치**. rate 0 = 같은 손에서 안 이어지는 음 짝 46% 가 out_of_reach 벽(고리 9개, 원 모두 W 0.19~0.45). rate ≥ 0.01(0.001 에서도) inter 가 모든 짝을 이어 벽이 없어짐(고리 6개) →
+  허리 원 1·7 · 솔·시를 감싼 원 5·3 이 W 0.03 대로, 라를 감싼 원 0 만 0.31. 0.01 → 1.5 는 거의 평평(hibari 덩굴 길이의 81% 가 0 → 0.01).
+- 그래서 '파·라 허리 원 = 같은 모양 다른 음' 은 inter(사용자가 들리지 않을 만큼 sparse 하다고 의심한 관계)를 켤 때만 성립. rate 를 연속 손잡이로 만들려면 거리 정의를 바꿔야 함 — 사용자 결정.
+- 검증: 스크린샷이 시간 초과돼 페이지 캔버스를 로컬 수신기로 PNG 로 받아 확인(1280×800 · 375 폭, 가로 넘침 없음, 단추 44px).
+
+[[project-flight-cube-1007]] [[feedback-game-rules-visual-first-1001]] [[feedback-topology-is-a-tool]]
