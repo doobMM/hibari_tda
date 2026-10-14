@@ -1,6 +1,6 @@
 ---
 name: project-rings-board-1007
-description: "고리판(sketch/rings.html) — 사용자 그림의 왼쪽 판(세 무리 원 + 교점 점 54 = 큐브 = hibari 한 모듈). 원을 돌리면 점 12개가 미끄러져 hibari 가 달라진다. 판 22 \"나쁘지 않아\" → 키보드(↑↓←→) 배포 · 협력·경쟁 3안 제시 · 정본 H₁ 탐침"
+description: "⛔ 판 23 폐기(2026-10-14). 고리판(sketch/rings.html) — 사용자 그림의 왼쪽 판(세 무리 원 + 교점 점 54 = 큐브 = hibari 한 모듈). 원을 돌리면 점 12개가 미끄러져 hibari 가 달라진다. 판 22 \"나쁘지 않아\" → 키보드(↑↓←→) 배포 · 협력·경쟁 3안 제시 · 정본 H₁ 탐침"
 metadata:
   node_type: memory
   type: project
