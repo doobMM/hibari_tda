@@ -1,0 +1,81 @@
+{
+ "script": "tools/group_music.py",
+ "grammar": "docs/step3_data/group_grammar.json",
+ "variants": [
+  {
+   "name": "원곡",
+   "op": "항등원",
+   "notes": [
+    1947,
+    1888
+   ],
+   "same_as_original_frac": [
+    1.0,
+    1.0
+   ],
+   "unison_onsets": 176,
+   "seconds": 496.5,
+   "midi": "output\\group_music\\0_원곡.mid"
+  },
+  {
+   "name": "맞물림",
+   "op": "왼손 주기 66 → 64 · Z₃₂×Z₃₂",
+   "notes": [
+    1947,
+    1888
+   ],
+   "same_as_original_frac": [
+    1.0,
+    0.106
+   ],
+   "unison_onsets": 0,
+   "seconds": 482.4,
+   "midi": "output\\group_music\\1_맞물림.mid"
+  },
+  {
+   "name": "두 배 어긋남",
+   "op": "왼손 주기 66 → 68 · Z₃₂×Z₃₄",
+   "notes": [
+    1947,
+    1888
+   ],
+   "same_as_original_frac": [
+    1.0,
+    0.105
+   ],
+   "unison_onsets": 95,
+   "seconds": 510.6,
+   "midi": "output\\group_music\\2_두 배 어긋남.mid"
+  },
+  {
+   "name": "옥타브 아래",
+   "op": "왼손 -12",
+   "notes": [
+    1947,
+    1888
+   ],
+   "same_as_original_frac": [
+    1.0,
+    0.0
+   ],
+   "unison_onsets": 123,
+   "seconds": 496.5,
+   "midi": "output\\group_music\\3_옥타브 아래.mid"
+  },
+  {
+   "name": "거울",
+   "op": "오른손 반전 (축 67)",
+   "notes": [
+    1947,
+    1888
+   ],
+   "same_as_original_frac": [
+    0.085,
+    1.0
+   ],
+   "unison_onsets": 116,
+   "seconds": 496.5,
+   "midi": "output\\group_music\\4_거울.mid"
+  }
+ ]
+}

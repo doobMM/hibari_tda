@@ -24,3 +24,7 @@ metadata:
 - 제안 문법: 낱말 = 동기 획, 문장 = 낱말 + 옮김(COSIATEC), 옮김 ↔ 그림 움직임 군 준동형, 손짓 = 군 원소, 되돌리기 = 역원. 다음 = COSIATEC 분해 그림(사용자 진행 여부 대기).
 - 반지름 = 음높이 산점 그림은 동심 점선이라 버렸다.
 - 2026-10-15 COSIATEC 그림(tools/logogram_cosiatec.py, --draw = 그림만): 덮음 hibari 98%(음높이 섞은 대조 43%) · aqua 33%(대조 0%) · energy flow 40%(대조 0%). hibari = 22음 낱말 × 128 시간 옮김, aqua·energy flow = 조옮김 낱말. 그림 = 낱말 한 번 크게 + 고리 눈금(되돌아오는 자리, 안팎 = 조옮김). 다음: 이 문법을 만지는 가장 작은 판(사용자 답 대기).
+- 2026-10-15 1순위 전환("group theory를 적용해 음악을 생성할 수 있도록, 표현할 수 있도록", 디자인은 미룸 · 그림은 납작붓 판으로 되돌림):
+  tools/group_grammar.py(손마다 분해·realize·shift/transpose/invert/reperiod·to_midi) + tools/group_music.py(hibari 다섯 판 MIDI·WAV·그림).
+  hibari 손마다 낱말 둘 100%, 다시 만들기 = 원곡(길이는 되풀이마다 저장해야 정확). 맞물림(66→64)이면 두 손 같은 음 0, 두 배 어긋남(66→68) 95, 원곡 176.
+  그림: 가닥 사이 = 위상 차, 손 조옮김 = 가닥 안팎. 다음: 사용자가 듣고 판정 · 조작 가능한 판.

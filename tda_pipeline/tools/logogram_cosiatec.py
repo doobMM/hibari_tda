@@ -86,45 +86,17 @@ PX = 0.017                                                               # 반�
 
 NIB = np.deg2rad(35)                                                     # 납작붓 각도: 이 방향으로 그으면 가장 가늘고, 직각이면 가장 굵다
 
-def splat(F, x, y, wt):
-    """점들을 격자에 쌍선형으로 뿌린다 (털 한 가닥의 먹)."""
-    j = (np.asarray(x) + L) / (2 * L) * (G - 1); i = (np.asarray(y) + L) / (2 * L) * (G - 1)
-    i0, j0 = np.floor(i).astype(int), np.floor(j).astype(int); di, dj = i - i0, j - j0
-    for a, b, ww in ((0, 0, (1 - di) * (1 - dj)), (1, 0, di * (1 - dj)), (0, 1, (1 - di) * dj), (1, 1, di * dj)):
-        ii, jj = i0 + a, j0 + b; ok = (ii >= 0) & (ii < G) & (jj >= 0) & (jj < G)
-        np.add.at(F, (ii[ok], jj[ok]), (ww * wt)[ok])
-
-def brush(F, path, wmax, wmin=None, press=None, dry=0.5, pool=True):
-    """먹 붓획 = 털 여러 가닥. 굵기 = 방향(납작붓 각) × 누름 × press. 가닥마다 먹이 다르게 줄어 빠르고 가는 데서 비백이 난다."""
-    path = np.asarray(path, float); wmin = 0.15 * wmax if wmin is None else wmin
-    px = (G - 1) / (2 * L)
-    seg = np.cumsum(np.r_[0, np.hypot(*np.diff(path, axis=0).T)]); n = max(30, int(seg[-1] * px / 0.5))
-    u = np.linspace(0, seg[-1], n); sm = lambda v, s_=3: gaussian_filter1d(np.interp(u, seg, v), s_, mode='nearest')
+def brush(F, path, wmax, wmin=None, press=None, n=None):
+    """납작붓 획: 굵기 = 방향(붓 각도와 이루는 각) × 누름(시작에 눌렀다 끝에서 빠짐) × press(점마다 무게, 예: 화음 크기)."""
+    path = np.asarray(path, float); wmin = 0.16 * wmax if wmin is None else wmin
+    if len(path) < 2: stamp(F, *path[0], wmax, 0.9); return
+    seg = np.cumsum(np.r_[0, np.hypot(*np.diff(path, axis=0).T)]); n = n or max(40, int(seg[-1] / 0.0025))
+    u = np.linspace(0, seg[-1], n); sm = lambda v: gaussian_filter1d(np.interp(u, seg, v), 3, mode='nearest')
     x, y = sm(path[:, 0]), sm(path[:, 1]); pr = sm(np.ones(len(path)) if press is None else np.asarray(press, float))
-    dx, dy = np.gradient(x), np.gradient(y); d = np.arctan2(dy, dx); nrm = np.hypot(dx, dy) + 1e-12; nx, ny = -dy / nrm, dx / nrm
-    a = np.linspace(0, 1, n)
-    env = np.minimum(1, (a / 0.12) ** 0.5) * np.minimum(1, ((1 - a) / 0.35) ** 1.1)
-    w = (wmin + (wmax - wmin) * np.abs(np.sin(d - NIB)) ** 0.9) * (0.2 + 0.8 * env) * pr
-    thin = 1 - np.clip(w / wmax, 0, 1)
-    B = max(8, int(2.2 * wmax * px))
-    for b in range(B):
-        o = (b / (B - 1)) * 2 - 1 + rng.normal(0, 0.04)
-        rate = dry * rng.uniform(0.4, 1.6) * (0.6 + abs(o))              # 가장자리 털이 먼저 마른다
-        load = 1.05 - rate * a ** 1.4 * (0.5 + thin) + 0.25 * gaussian_filter1d(rng.normal(size=n), 6)
-        load = np.clip(load, 0, 1) * (rng.random(n) < np.clip(load * 1.6, 0, 1))  # 먹이 마르면 끊긴다 = 비백
-        splat(F, x + o * w * nx, y + o * w * ny, load * 0.9)
-    if pool:                                                             # 붓을 대는 자리에 먹이 고인다
-        for _ in range(3): stamp(F, x[0] + rng.normal(0, w[2] * .3), y[0] + rng.normal(0, w[2] * .3), max(w[:8].max(), wmin) * 0.9, 1.6)
-
-def flick(F, x0, y0, ang, length, w, bend):
-    """삐침: 굽으며 빨리 빠지는 획 + 끝에서 튀는 먹 방울."""
-    t = np.linspace(0, 1, 12); a = ang + bend * t ** 1.5
-    pts = np.c_[x0 + np.cumsum(np.cos(a)) * length / 12, y0 + np.cumsum(np.sin(a)) * length / 12]
-    brush(F, pts, w, w * 0.25, press=np.linspace(1.0, 0.35, 12), dry=1.1, pool=False)
-    ex, ey = pts[-1]
-    for _ in range(rng.integers(1, 4)):
-        r_ = rng.uniform(0.02, 0.09); da = rng.normal(0, 0.35)
-        stamp(F, ex + r_ * np.cos(a[-1] + da), ey + r_ * np.sin(a[-1] + da), rng.uniform(0.002, 0.007), 2.0)
+    d = np.arctan2(np.gradient(y), np.gradient(x)); a = np.linspace(0, 1, n)
+    env = np.minimum(1, (a / 0.18) ** 0.6) * np.minimum(1, ((1 - a) / 0.3) ** 0.9)   # 들어갈 때 누르고 나올 때 빠진다
+    w = (wmin + (wmax - wmin) * np.abs(np.sin(d - NIB)) ** 0.8) * (0.25 + 0.75 * env) * pr
+    for k in range(n): stamp(F, x[k], y[k], max(w[k], 0.0018), 0.9)
 
 def contour(P):
     """낱말의 선율 윤곽: 시각마다 가장 높은 음 → (0..1 시간, 반음)."""
@@ -132,19 +104,15 @@ def contour(P):
     x = (ts - ts.min()) / max(np.ptp(ts), 1); return x, top - top.mean(), chord
 
 def glyph(F, P, ups, n, at, frame, size):
-    """낱말 하나 = 먹 붓획 하나. 굵기 상한 = 되돌아온 횟수 · 점마다 무게 = 그 박의 화음 크기.
-       곁획 = 조옮김마다 삐침 하나(위로 옮김 = 바깥, 아래 = 안쪽, 길이 ∝ 음정, 굽음은 획을 따라 흐르는 쪽)."""
+    """낱말 하나 = 납작붓 획 하나. frame(x, y) → 그림 좌표 (x = 획 길이 방향, y = 바깥/위).
+       굵기 상한 = 되돌아온 횟수 · 점마다 무게 = 그 박의 화음 크기 · 곁획 = 조옮김(위 = 바깥, 아래 = 안쪽, 길이 ∝ 음정)."""
     x, y, chord = contour(P); amp = size * 0.55 / max(np.ptp(y), 7)
     path = [frame(at + (xi - 0.5) * size, yi * amp) for xi, yi in zip(x, y)]
-    w = min(0.017 + 0.0045 * np.log2(1 + n), 0.042)
-    brush(F, path, w, press=0.75 + 0.12 * chord, dry=0.7)
-    ds = sorted(set(ups) - {0})
-    for k, d in enumerate(ds):
-        sgn = 1 if d > 0 else -1; xs = at + ((k + 0.5) / len(ds) - 0.5) * size * 0.85
-        x0, y0 = frame(xs, np.interp((xs - at) / size + 0.5, x, y) * amp)
-        x1, y1 = frame(xs + 0.01, sgn * 1.0)
-        ang = np.arctan2(y1 - y0, x1 - x0) + rng.normal(0, 0.25)
-        flick(F, x0, y0, ang, 0.08 + 0.007 * abs(d), w * 0.9, sgn * rng.uniform(0.4, 1.0))
+    w = min(0.012 + 0.004 * np.log2(1 + n), 0.036)
+    brush(F, path, w, press=0.7 + 0.15 * chord)
+    for k, d in enumerate(sorted(set(ups) - {0})):
+        sgn = 1 if d > 0 else -1; off = sgn * (size * 0.16 + 0.011 * abs(d)); xs = at + (k / max(1, len(set(ups) - {0})) - 0.5) * size * 0.8
+        brush(F, [frame(xs, sgn * size * 0.08), frame(xs + size * 0.03, (sgn * size * 0.08 + off) / 2), frame(xs + size * 0.08, off)], w * 0.7)
 
 def draw(words, rest, Ttot, notes_t, closed):
     """원형문자 = 굵은 고리 하나 + 낱말 붓획 몇 개(큰 낱말부터 최대 5개, 처음 나온 자리에 한 번만).
@@ -157,7 +125,7 @@ def draw(words, rest, Ttot, notes_t, closed):
     tt = (((np.pi / 2 - th) % (2 * np.pi)) / (2 * np.pi) * Ttot).astype(int) % Ttot
     ring = np.c_[R * np.cos(th), R * np.sin(th)]
     if closed: ring = np.r_[ring, ring[:40]]; tt = np.r_[tt, tt[:40]]  # 닫힌 고리는 이음매 없이 겹쳐 잇는다
-    brush(F, ring, 0.058, 0.009, press=0.45 + 0.65 * dens[tt] ** 1.3, dry=0.45)
+    brush(F, ring, 0.052, 0.006, press=0.25 + 0.95 * dens[tt] ** 1.3)
     tot = sum(w['cover'] for w in words); placed = []
     for w in words[:5]:
         P = np.array(w['P']); T = np.array(w['T']); t0 = P[:, 0].min() + T[:, 0].min()
@@ -169,21 +137,12 @@ def draw(words, rest, Ttot, notes_t, closed):
         base = R + 0.07
         frame = lambda x, y, th=th: (base * np.cos(th) + x * np.sin(th) + (y + 0.0) * np.cos(th), base * np.sin(th) - x * np.cos(th) + y * np.sin(th))
         glyph(F, P, T[:, 1].tolist(), len(T), 0.0, frame, size)
-    return ink(F)
-
-def ink(F, paper=True):
-    """먹: 농담(1 − e^−k·밀도) · 종이로 번진 가장자리 · 종이 결이 먹을 먹는 정도."""
-    g = F.shape[0]; D = gaussian_filter(F, 0.7)
-    fib = gaussian_filter(rng.normal(size=F.shape), 0.8); fib = 0.85 + 0.15 * fib / (np.abs(fib).max() + 1e-9)
-    tone = 1 - np.exp(-1.9 * D * fib)
-    bleed = gaussian_filter(D, 2.2) * (0.6 + 0.4 * gaussian_filter(rng.normal(size=F.shape), 3) / 0.2)
-    bleed = np.clip(1 - np.exp(-0.5 * bleed), 0, 1) * 0.35
-    t = np.clip(np.maximum(tone, bleed), 0, 1)[..., None]
-    yy, xx = np.mgrid[0:g, 0:g].astype(float); r = np.hypot(xx - g / 2, yy - g / 2) / (g / 2)
-    base = np.array([241, 238, 231]) / 255 * ((1 - 0.07 * r[..., None] ** 2) if paper else 1)
-    inkc = np.array([16, 16, 18]) / 255; mid = np.array([92, 88, 84]) / 255       # 옅은 먹은 따뜻한 회색
-    col = mid * (1 - t) + inkc * t
-    return np.clip(base * (1 - t) + col * t, 0, 1)
+    B = gaussian_filter(F, 1.0); core = np.clip((B - 0.2) / 0.06, 0, 1)
+    yy, xx = np.mgrid[0:G, 0:G].astype(float); r = np.hypot(xx - G / 2, yy - G / 2) / (G / 2)
+    halo = gaussian_filter(B, 18); halo = np.clip(halo / (halo.max() + 1e-9) * (0.6 + 0.5 * fbm(((30, 1.0), (10, 0.6)))), 0, 1)
+    out = np.array([240, 238, 233]) / 255 * (1 - 0.08 * r[..., None] ** 2)
+    out = out * (1 - 0.28 * halo[..., None]) + np.array([150, 156, 160]) / 255 * (0.28 * halo[..., None])
+    return np.clip(out * (1 - core[..., None]) + np.array([14, 15, 17]) / 255 * core[..., None], 0, 1)
 
 def letters(words, H=150, W=1400):
     """낱자 표 (Wolfram sectionBreaking 처럼 원형문자의 조각을 떼어 세운 것): 낱말 붓획을 한 줄로."""
@@ -192,48 +151,50 @@ def letters(words, H=150, W=1400):
     for w in words[:5]:
         F = np.zeros((G, G)); T = np.array(w['T'])
         glyph(F, w['P'], T[:, 1].tolist(), len(T), 0.0, lambda x, y: (x, y - 0.05), 0.95)
-        cells.append(ink(F, paper=False)[::-1])
+        core = np.clip((gaussian_filter(F, 1.0) - 0.2) / 0.06, 0, 1)[::-1]
+        cells.append(np.array([240, 238, 233]) / 255 * (1 - core[..., None]) + np.array([14, 15, 17]) / 255 * core[..., None])
     G, L = G0, L0
     return cells
 
 def kind(T):
     ps = {p for t, p in T}; return '시간 옮김만' if ps == {0} else '조옮김 ' + ' '.join(f'{p:+d}' for p in sorted(ps) if p)
 
-import sys
-DRAW_ONLY = '--draw' in sys.argv                                         # 분해는 8분 걸린다 — 그림만 고칠 땐 JSON 의 낱말을 쓴다
-OLD = json.load(open(os.path.join(ROOT, 'docs', 'step3_data', 'logogram_cosiatec.json'), encoding='utf8')) if DRAW_ONLY else None
-SONGS = [('Ryuichi_Sakamoto_-_hibari.mid', 'hibari'), ('aqua-ryuichi-sakamoto-ryuichi-sakamoto.mid', 'aqua'), ('energy-flow-ryuichi-sakamoto.mid', 'energy flow')]
-fig = plt.figure(figsize=(16, 8.6), facecolor='#eeece6'); rec = {}
-for k, (f, name) in enumerate(SONGS):
-    D = points(f)
-    if DRAW_ONLY:
-        old = OLD['songs'][name]; words = [{'P': w['pattern'], 'T': [tuple(x) for x in w['translators']], 'cover': w['cover'], 'cr': w['cr']} for w in old['words']]
-        cov_k = set(); [cov_k.update((t + ut) * ENC + p + up for t, p in w['P'] for ut, up in w['T']) for w in words]
-        rest = D[~np.isin(D[:, 0] * ENC + D[:, 1], list(cov_k))]; wn, null = [None] * old['null_words'], old['null_pitch_shuffle_covered_frac']
-    else:
-        words, rest = cosiatec(D)
-    if not DRAW_ONLY:
-        Dn = D.copy(); Dn[:, 1] = np.random.default_rng(0).permutation(Dn[:, 1])     # 대조: 같은 시각, 음높이만 섞은 곡
-        wn, rn = cosiatec(Dn); null = 1 - len(rn) / len(Dn)
-    cov = sum(w['cover'] for w in words)
-    print(f'\n{name}: 점 {len(D)} · 낱말 {len(words)} 개가 {cov} 점({cov / len(D):.0%})을 덮는다 · 남은 점 {len(rest)}')
-    for i, w in enumerate(words[:8]):
-        print(f'  낱말 {i + 1}: 음 {len(w["P"])} × 옮김 {len(w["T"])} → {w["cover"]} 점, 압축 {w["cr"]} · {kind(w["T"])}')
-    rec[name] = {'points': int(len(D)), 'covered': int(cov), 'rest': int(len(rest)), 'null_pitch_shuffle_covered_frac': round(null, 3), 'null_words': len(wn), 'words': [{'notes': len(w['P']), 'translators': w['T'], 'cover': w['cover'], 'cr': w['cr'], 'pattern': w['P']} for w in words]}
-    Ttot = int(D[:, 0].max() + 1); big = words[0]
-    closed = max(ut for ut, up in big['T']) + max(t for t, p in big['P']) - min(t for t, p in big['P']) >= Ttot - 16 and all(up == 0 for ut, up in big['T'])
-    img = draw(words, rest, Ttot, D[:, 0], closed); cells = letters(words)
-    ax = fig.add_axes([0.005 + k * 0.333, 0.30, 0.325, 0.68]); ax.imshow(img, origin='lower'); ax.axis('off')
-    for c, (cell, w) in enumerate(zip(cells, words[:5])):
-        axc = fig.add_axes([0.012 + k * 0.333 + c * 0.062, 0.12, 0.058, 0.13]); axc.imshow(cell); axc.axis('off')
-        ups = sorted(set(u for t, u in w['T']) - {0})
-        axc.set_title(f'×{len(w["T"])}' + (' ' + ' '.join(f'{u:+d}' for u in ups[:3]) if ups else ''), fontsize=7.5, color='#5d655f', pad=1)
-    print(f'  고리 {"닫힘" if closed else "열림"}')
-    fig.text(0.02 + k * 0.333, 0.275, name, fontsize=14, color='#1d201e')
-    lines = [f'낱말 {len(words)}개가 음의 {cov / len(D):.0%} 를 쓴다 (음높이 섞은 곡 {null:.0%})']
-    for i, w in enumerate(words[:3]):
-        pass
-    fig.text(0.02 + k * 0.333, 0.05, '\n'.join(lines), fontsize=9.5, color='#5d655f', va='bottom')
-fig.savefig(os.path.join(ROOT, 'docs', 'figures', 'logogram_cosiatec.png'), dpi=100, facecolor='#eeece6')
-if not DRAW_ONLY: json.dump({'script': 'tools/logogram_cosiatec.py', 'unit': '16분음표', 'songs': rec}, open(os.path.join(ROOT, 'docs', 'step3_data', 'logogram_cosiatec.json'), 'w', encoding='utf8'), ensure_ascii=False)
-print('저장 docs/figures/logogram_cosiatec.png · docs/step3_data/logogram_cosiatec.json')
+if __name__ == '__main__':
+    import sys
+    DRAW_ONLY = '--draw' in sys.argv                                         # 분해는 8분 걸린다 — 그림만 고칠 땐 JSON 의 낱말을 쓴다
+    OLD = json.load(open(os.path.join(ROOT, 'docs', 'step3_data', 'logogram_cosiatec.json'), encoding='utf8')) if DRAW_ONLY else None
+    SONGS = [('Ryuichi_Sakamoto_-_hibari.mid', 'hibari'), ('aqua-ryuichi-sakamoto-ryuichi-sakamoto.mid', 'aqua'), ('energy-flow-ryuichi-sakamoto.mid', 'energy flow')]
+    fig = plt.figure(figsize=(16, 8.6), facecolor='#eeece6'); rec = {}
+    for k, (f, name) in enumerate(SONGS):
+        D = points(f)
+        if DRAW_ONLY:
+            old = OLD['songs'][name]; words = [{'P': w['pattern'], 'T': [tuple(x) for x in w['translators']], 'cover': w['cover'], 'cr': w['cr']} for w in old['words']]
+            cov_k = set(); [cov_k.update((t + ut) * ENC + p + up for t, p in w['P'] for ut, up in w['T']) for w in words]
+            rest = D[~np.isin(D[:, 0] * ENC + D[:, 1], list(cov_k))]; wn, null = [None] * old['null_words'], old['null_pitch_shuffle_covered_frac']
+        else:
+            words, rest = cosiatec(D)
+        if not DRAW_ONLY:
+            Dn = D.copy(); Dn[:, 1] = np.random.default_rng(0).permutation(Dn[:, 1])     # 대조: 같은 시각, 음높이만 섞은 곡
+            wn, rn = cosiatec(Dn); null = 1 - len(rn) / len(Dn)
+        cov = sum(w['cover'] for w in words)
+        print(f'\n{name}: 점 {len(D)} · 낱말 {len(words)} 개가 {cov} 점({cov / len(D):.0%})을 덮는다 · 남은 점 {len(rest)}')
+        for i, w in enumerate(words[:8]):
+            print(f'  낱말 {i + 1}: 음 {len(w["P"])} × 옮김 {len(w["T"])} → {w["cover"]} 점, 압축 {w["cr"]} · {kind(w["T"])}')
+        rec[name] = {'points': int(len(D)), 'covered': int(cov), 'rest': int(len(rest)), 'null_pitch_shuffle_covered_frac': round(null, 3), 'null_words': len(wn), 'words': [{'notes': len(w['P']), 'translators': w['T'], 'cover': w['cover'], 'cr': w['cr'], 'pattern': w['P']} for w in words]}
+        Ttot = int(D[:, 0].max() + 1); big = words[0]
+        closed = max(ut for ut, up in big['T']) + max(t for t, p in big['P']) - min(t for t, p in big['P']) >= Ttot - 16 and all(up == 0 for ut, up in big['T'])
+        img = draw(words, rest, Ttot, D[:, 0], closed); cells = letters(words)
+        ax = fig.add_axes([0.005 + k * 0.333, 0.30, 0.325, 0.68]); ax.imshow(img, origin='lower'); ax.axis('off')
+        for c, (cell, w) in enumerate(zip(cells, words[:5])):
+            axc = fig.add_axes([0.012 + k * 0.333 + c * 0.062, 0.12, 0.058, 0.13]); axc.imshow(cell); axc.axis('off')
+            ups = sorted(set(u for t, u in w['T']) - {0})
+            axc.set_title(f'×{len(w["T"])}' + (' ' + ' '.join(f'{u:+d}' for u in ups[:3]) if ups else ''), fontsize=7.5, color='#5d655f', pad=1)
+        print(f'  고리 {"닫힘" if closed else "열림"}')
+        fig.text(0.02 + k * 0.333, 0.275, name, fontsize=14, color='#1d201e')
+        lines = [f'낱말 {len(words)}개가 음의 {cov / len(D):.0%} 를 쓴다 (음높이 섞은 곡 {null:.0%})']
+        for i, w in enumerate(words[:3]):
+            pass
+        fig.text(0.02 + k * 0.333, 0.05, '\n'.join(lines), fontsize=9.5, color='#5d655f', va='bottom')
+    fig.savefig(os.path.join(ROOT, 'docs', 'figures', 'logogram_cosiatec.png'), dpi=100, facecolor='#eeece6')
+    if not DRAW_ONLY: json.dump({'script': 'tools/logogram_cosiatec.py', 'unit': '16분음표', 'songs': rec}, open(os.path.join(ROOT, 'docs', 'step3_data', 'logogram_cosiatec.json'), 'w', encoding='utf8'), ensure_ascii=False)
+    print('저장 docs/figures/logogram_cosiatec.png · docs/step3_data/logogram_cosiatec.json')
