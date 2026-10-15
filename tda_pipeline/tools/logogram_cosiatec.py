@@ -22,7 +22,7 @@ tools/logogram_cosiatec.py — 곡을 '낱말(동기) + 옮김(군 원소)' 으�
 """
 import os, json, warnings
 import numpy as np, pretty_midi
-from scipy.ndimage import gaussian_filter, map_coordinates
+from scipy.ndimage import gaussian_filter, gaussian_filter1d, map_coordinates
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
@@ -84,53 +84,76 @@ def line(F, a, b, s, w, n=None):
     for u in np.linspace(0, 1, n): stamp(F, a[0] + (b[0] - a[0]) * u, a[1] + (b[1] - a[1]) * u, s, w)
 PX = 0.017                                                               # 반음 하나 = 반지름 0.017 — 낱말 안의 음높이와 조옮김이 같은 자(정합성)
 
+def brush(F, path, w0, w1=None, n=None):
+    """붓획: 점들을 지나는 매끈한 선, 양끝이 가늘다."""
+    path = np.asarray(path, float); w1 = w0 if w1 is None else w1
+    if len(path) < 2: stamp(F, *path[0], w0, 0.9); return
+    seg = np.cumsum(np.r_[0, np.hypot(*np.diff(path, axis=0).T)]); n = n or max(30, int(seg[-1] / 0.003))
+    u = np.linspace(0, seg[-1], n); x = gaussian_filter1d(np.interp(u, seg, path[:, 0]), 2, mode='nearest'); y = gaussian_filter1d(np.interp(u, seg, path[:, 1]), 2, mode='nearest')
+    for k in range(n):
+        a = k / (n - 1); taper = np.sin(np.pi * min(1, 0.15 + 0.85 * a)) ** 0.5 if a > 0.5 else (0.35 + 0.65 * min(1, a * 4))
+        stamp(F, x[k], y[k], (w0 + (w1 - w0) * a) * taper, 0.9)
+
+def contour(P):
+    """낱말의 선율 윤곽: 시각마다 가장 높은 음 → (0..1 시간, 반음)."""
+    P = np.array(P); ts = np.unique(P[:, 0]); top = np.array([P[P[:, 0] == t, 1].max() for t in ts]); chord = np.array([(P[:, 0] == t).sum() for t in ts])
+    x = (ts - ts.min()) / max(np.ptp(ts), 1); return x, top - top.mean(), chord
+
+def glyph(F, P, ups, n, at, frame, size):
+    """낱말 하나 = 붓획 하나. frame(x, y) → 그림 좌표 (x = 획 길이 방향, y = 바깥/위). 굵기 = 되돌아온 횟수, 곁획 = 조옮김(위 = 바깥)."""
+    x, y, chord = contour(P); amp = size * 0.55 / max(np.ptp(y), 7)
+    path = [frame(at + (xi - 0.5) * size, yi * amp) for xi, yi in zip(x, y)]
+    w = min(0.010 + 0.0035 * np.log2(1 + n), 0.032)                     # 되돌아온 횟수 = 굵기 (너무 굵으면 고리에 묻힌다)
+    brush(F, path, w, w * 0.6)
+    for xi, yi, c in zip(x, y, chord):                                   # 화음 = 획 위의 먹 덩이
+        if c >= 3: stamp(F, *frame(at + (xi - 0.5) * size, yi * amp), w * (0.9 + 0.25 * c), 0.9)
+    for k, d in enumerate(sorted(set(ups) - {0})):                       # 조옮김마다 곁획: 위로 옮겼으면 바깥, 아래면 안쪽, 거리 ∝ 음정
+        sgn = 1 if d > 0 else -1; off = sgn * (size * 0.18 + 0.012 * abs(d)); xs = at + (k / max(1, len(set(ups) - {0})) - 0.5) * size * 0.8
+        brush(F, [frame(xs, sgn * size * 0.12), frame(xs + size * 0.06, off)], w * 0.55, w * 0.15)
+        stamp(F, *frame(xs + size * 0.07, off + sgn * 0.01), w * 0.75, 0.9)
+
 def draw(words, rest, Ttot, notes_t, closed):
-    """FlxB2/arrival_logograms 의 먹 결(겹친 열린 원호 · 디스크 덩이 · 굽는 촉수 → 두 번 흐림 → 문턱)에 우리 문법을 싣는다.
-       고리 = 곡 전체(각 = 시각) · 원호 겹의 굵기 = 음 밀도 · 낱말이 되돌아올 때마다 같은 모양의 획(자리 = 시간 옮김, 안팎 = 조옮김).
-       closed = 곡의 끝이 처음과 같은 위상이면 고리를 닫고, 아니면 이음매(처음 = 끝 자리)를 연다."""
-    ang = lambda t: np.pi / 2 - 2 * np.pi * t / Ttot
-    xy = lambda t, r: (r * np.cos(ang(t)), r * np.sin(ang(t)))
-    F = np.zeros((G, G))
+    """원형문자 = 굵은 고리 하나 + 낱말 붓획 몇 개(큰 낱말부터 최대 5개, 처음 나온 자리에 한 번만).
+       고리를 열고 닫기 = 가장 큰 낱말이 조옮김 없이 곡 끝까지 돌아오는가. 먹 결 = FlxB2(겹친 열린 원호 → 흐림 → 문턱)."""
+    F = np.zeros((G, G)); R = 1.0
     dens = np.bincount(np.clip(notes_t, 0, Ttot - 1), minlength=Ttot).astype(float)
-    dens = gaussian_filter(np.r_[dens, dens, dens], Ttot / 160)[Ttot:2 * Ttot]; dens /= dens.max() + 1e-9
-    gap = 0.0 if closed else 0.035 * Ttot
-    for c in range(5):                                                   # 겹친 열린 원호 (FlxB2 CircularStroke)
-        cx, cy, rr = rng.normal(0, .012), rng.normal(0, .012), 1.0 + rng.normal(0, .01)
-        t0 = gap * rng.uniform(.3, 1.0); t1 = Ttot - gap * rng.uniform(.3, 1.0) if gap else Ttot
-        for u in np.linspace(t0, t1, 1600):
-            x, y = xy(u, rr); stamp(F, x + cx, y + cy, (0.003 + 0.010 * dens[int(u) % Ttot]) * rng.uniform(.6, 1.4), 0.5)
-    for t, p in rest: stamp(F, *xy(t, 1.0 + rng.normal(0, .02)), 0.004 * rng.uniform(.5, 1.5), 0.5)
-    widths = [0.008, 0.007, 0.006]
-    for k, w in enumerate(words[:3]):
-        P = np.array(w['P']); P = P[np.lexsort((P[:, 1], P[:, 0]))]; base = int(np.median(P[:, 1]))
-        side = 1 if k != 1 else -1
-        for ut, up in w['T']:
-            pts = [(t + ut, 1.0 + side * (0.04 + PX * (p - base + up))) for t, p in P]
-            for (t0, r0), (t1, r1) in zip(pts[:-1], pts[1:]):
-                if t1 - t0 > 16: continue
-                for a in np.linspace(0, 1, 10): stamp(F, *xy(t0 + (t1 - t0) * a, r0 + (r1 - r0) * a), widths[k] * rng.uniform(.7, 1.3), 0.6)
-            for _ in range(5):                                            # 뿌리 덩이 (FlxB2 disks)
-                x, y = xy(pts[0][0] + rng.normal(0, Ttot / 900), 1.0 + rng.normal(0, .015)); stamp(F, x, y, rng.uniform(.004, .012), 0.6)
-            if abs(up) >= 7:                                              # 크게 옮긴 되풀이 = 굽는 촉수 (FlxB2 Tendril, 무작위 걸음)
-                x, y = xy(*pts[-1]); a = ang(pts[-1][0]) + (0 if side * up > 0 else np.pi); v = 0.0
-                for s_ in range(40):
-                    v = 0.9 * v + rng.uniform(-0.12, 0.12); a += v; x += 0.006 * np.cos(a); y += 0.006 * np.sin(a)
-                    stamp(F, x, y, 0.005 * (1 - s_ / 45), 0.6)
-    B = gaussian_filter(F, 1.6)                                          # 두 번 흐림 → 문턱 (FlxB2)
-    core = np.clip((B - 0.18) / 0.06, 0, 1)
-    yy, xx = np.mgrid[0:G, 0:G].astype(float)
+    dens = gaussian_filter(np.r_[dens, dens, dens], Ttot / 60)[Ttot:2 * Ttot]; dens /= dens.max() + 1e-9
+    gapa = 0.0 if closed else 0.22
+    for c in range(4):
+        cx, cy, rr = rng.normal(0, .01), rng.normal(0, .01), R + rng.normal(0, .008)
+        a0 = np.pi / 2 - gapa * rng.uniform(.4, 1.0); span = 2 * np.pi - 2 * gapa * rng.uniform(.4, 1.0) if gapa else 2 * np.pi
+        for th in np.linspace(a0, a0 - span, 1400):
+            t = int(((np.pi / 2 - th) % (2 * np.pi)) / (2 * np.pi) * Ttot) % Ttot
+            stamp(F, rr * np.cos(th) + cx, rr * np.sin(th) + cy, (0.010 + 0.022 * dens[t]) * rng.uniform(.7, 1.3), 0.5)
+    tot = sum(w['cover'] for w in words); placed = []
+    for w in words[:5]:
+        P = np.array(w['P']); T = np.array(w['T']); t0 = P[:, 0].min() + T[:, 0].min()
+        th = np.pi / 2 - 2 * np.pi * t0 / Ttot
+        while any(abs(((th - q + np.pi) % (2 * np.pi)) - np.pi) < 0.75 for q in placed): th -= 0.25   # 획끼리 겹치지 않게
+        placed.append(th)
+        size = 0.35 + 0.55 * np.sqrt(w['cover'] / tot)
+        tx, ty, rx, ry = np.sin(th), -np.cos(th), np.cos(th), np.sin(th)   # 고리 접선(시계 방향) · 바깥
+        base = R + 0.07
+        frame = lambda x, y, th=th: (base * np.cos(th) + x * np.sin(th) + (y + 0.0) * np.cos(th), base * np.sin(th) - x * np.cos(th) + y * np.sin(th))
+        glyph(F, P, T[:, 1].tolist(), len(T), 0.0, frame, size)
+    B = gaussian_filter(F, 1.4); core = np.clip((B - 0.16) / 0.05, 0, 1)
+    yy, xx = np.mgrid[0:G, 0:G].astype(float); r = np.hypot(xx - G / 2, yy - G / 2) / (G / 2)
     halo = gaussian_filter(B, 18); halo = np.clip(halo / (halo.max() + 1e-9) * (0.6 + 0.5 * fbm(((30, 1.0), (10, 0.6)))), 0, 1)
-    r = np.hypot(xx - G / 2, yy - G / 2) / (G / 2)
     out = np.array([240, 238, 233]) / 255 * (1 - 0.08 * r[..., None] ** 2)
-    out = out * (1 - 0.30 * halo[..., None]) + np.array([150, 156, 160]) / 255 * (0.30 * halo[..., None])
+    out = out * (1 - 0.28 * halo[..., None]) + np.array([150, 156, 160]) / 255 * (0.28 * halo[..., None])
     return np.clip(out * (1 - core[..., None]) + np.array([14, 15, 17]) / 255 * core[..., None], 0, 1)
 
-def unwrap(img, r0=0.62, r1=1.38, W=1400, H=150):
-    """Wolfram unwrapping-01.nb 의 ImageTransformation[i, {ArcTan @@ #, Norm @ #} &] — 고리를 펴면 악보 띠(가로 = 시각, 세로 = 바깥쪽이 위)."""
-    th = np.pi / 2 - 2 * np.pi * np.arange(W) / W; rr = np.linspace(r1, r0, H)
-    X = rr[:, None] * np.cos(th)[None]; Y = rr[:, None] * np.sin(th)[None]
-    j = (X + L) / (2 * L) * (G - 1); i = (Y + L) / (2 * L) * (G - 1)
-    return np.stack([map_coordinates(img[..., c], [i, j], order=1) for c in range(3)], -1)
+def letters(words, H=150, W=1400):
+    """낱자 표 (Wolfram sectionBreaking 처럼 원형문자의 조각을 떼어 세운 것): 낱말 붓획을 한 줄로."""
+    global G, L
+    G0, L0 = G, L; G, L = 260, 0.9; cells = []
+    for w in words[:5]:
+        F = np.zeros((G, G)); T = np.array(w['T'])
+        glyph(F, w['P'], T[:, 1].tolist(), len(T), 0.0, lambda x, y: (x, y - 0.05), 0.95)
+        core = np.clip((gaussian_filter(F, 1.4) - 0.16) / 0.05, 0, 1)[::-1]
+        cells.append(np.array([240, 238, 233]) / 255 * (1 - core[..., None]) + np.array([14, 15, 17]) / 255 * core[..., None])
+    G, L = G0, L0
+    return cells
 
 def kind(T):
     ps = {p for t, p in T}; return '시간 옮김만' if ps == {0} else '조옮김 ' + ' '.join(f'{p:+d}' for p in sorted(ps) if p)
@@ -158,15 +181,18 @@ for k, (f, name) in enumerate(SONGS):
     rec[name] = {'points': int(len(D)), 'covered': int(cov), 'rest': int(len(rest)), 'null_pitch_shuffle_covered_frac': round(null, 3), 'null_words': len(wn), 'words': [{'notes': len(w['P']), 'translators': w['T'], 'cover': w['cover'], 'cr': w['cr'], 'pattern': w['P']} for w in words]}
     Ttot = int(D[:, 0].max() + 1); big = words[0]
     closed = max(ut for ut, up in big['T']) + max(t for t, p in big['P']) - min(t for t, p in big['P']) >= Ttot - 16 and all(up == 0 for ut, up in big['T'])
-    img = draw(words, rest, Ttot, D[:, 0], closed); strip = unwrap(img)
+    img = draw(words, rest, Ttot, D[:, 0], closed); cells = letters(words)
     ax = fig.add_axes([0.005 + k * 0.333, 0.30, 0.325, 0.68]); ax.imshow(img, origin='lower'); ax.axis('off')
-    ax2 = fig.add_axes([0.012 + k * 0.333, 0.205, 0.31, 0.07]); ax2.imshow(strip, aspect='auto'); ax2.axis('off')
+    for c, (cell, w) in enumerate(zip(cells, words[:5])):
+        axc = fig.add_axes([0.012 + k * 0.333 + c * 0.062, 0.12, 0.058, 0.13]); axc.imshow(cell); axc.axis('off')
+        ups = sorted(set(u for t, u in w['T']) - {0})
+        axc.set_title(f'×{len(w["T"])}' + (' ' + ' '.join(f'{u:+d}' for u in ups[:3]) if ups else ''), fontsize=7.5, color='#5d655f', pad=1)
     print(f'  고리 {"닫힘" if closed else "열림"}')
-    fig.text(0.02 + k * 0.333, 0.155, name, fontsize=14, color='#1d201e')
+    fig.text(0.02 + k * 0.333, 0.275, name, fontsize=14, color='#1d201e')
     lines = [f'낱말 {len(words)}개가 음의 {cov / len(D):.0%} 를 쓴다 (음높이 섞은 곡 {null:.0%})']
     for i, w in enumerate(words[:3]):
-        lines.append(f'{"바깥 획 · 안쪽 획 · 가는 획".split(" · ")[i]}: {len(w["P"])}음 × {len(w["T"])}번 — {kind(w["T"])}')
-    fig.text(0.02 + k * 0.333, 0.02, '\n'.join(lines), fontsize=9.5, color='#5d655f', va='bottom')
+        pass
+    fig.text(0.02 + k * 0.333, 0.05, '\n'.join(lines), fontsize=9.5, color='#5d655f', va='bottom')
 fig.savefig(os.path.join(ROOT, 'docs', 'figures', 'logogram_cosiatec.png'), dpi=100, facecolor='#eeece6')
 if not DRAW_ONLY: json.dump({'script': 'tools/logogram_cosiatec.py', 'unit': '16분음표', 'songs': rec}, open(os.path.join(ROOT, 'docs', 'step3_data', 'logogram_cosiatec.json'), 'w', encoding='utf8'), ensure_ascii=False)
 print('저장 docs/figures/logogram_cosiatec.png · docs/step3_data/logogram_cosiatec.json')
