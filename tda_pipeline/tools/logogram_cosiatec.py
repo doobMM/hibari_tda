@@ -84,15 +84,19 @@ def line(F, a, b, s, w, n=None):
     for u in np.linspace(0, 1, n): stamp(F, a[0] + (b[0] - a[0]) * u, a[1] + (b[1] - a[1]) * u, s, w)
 PX = 0.017                                                               # 반음 하나 = 반지름 0.017 — 낱말 안의 음높이와 조옮김이 같은 자(정합성)
 
-def brush(F, path, w0, w1=None, n=None):
-    """붓획: 점들을 지나는 매끈한 선, 양끝이 가늘다."""
-    path = np.asarray(path, float); w1 = w0 if w1 is None else w1
-    if len(path) < 2: stamp(F, *path[0], w0, 0.9); return
-    seg = np.cumsum(np.r_[0, np.hypot(*np.diff(path, axis=0).T)]); n = n or max(30, int(seg[-1] / 0.003))
-    u = np.linspace(0, seg[-1], n); x = gaussian_filter1d(np.interp(u, seg, path[:, 0]), 2, mode='nearest'); y = gaussian_filter1d(np.interp(u, seg, path[:, 1]), 2, mode='nearest')
-    for k in range(n):
-        a = k / (n - 1); taper = np.sin(np.pi * min(1, 0.15 + 0.85 * a)) ** 0.5 if a > 0.5 else (0.35 + 0.65 * min(1, a * 4))
-        stamp(F, x[k], y[k], (w0 + (w1 - w0) * a) * taper, 0.9)
+NIB = np.deg2rad(35)                                                     # 납작붓 각도: 이 방향으로 그으면 가장 가늘고, 직각이면 가장 굵다
+
+def brush(F, path, wmax, wmin=None, press=None, n=None):
+    """납작붓 획: 굵기 = 방향(붓 각도와 이루는 각) × 누름(시작에 눌렀다 끝에서 빠짐) × press(점마다 무게, 예: 화음 크기)."""
+    path = np.asarray(path, float); wmin = 0.16 * wmax if wmin is None else wmin
+    if len(path) < 2: stamp(F, *path[0], wmax, 0.9); return
+    seg = np.cumsum(np.r_[0, np.hypot(*np.diff(path, axis=0).T)]); n = n or max(40, int(seg[-1] / 0.0025))
+    u = np.linspace(0, seg[-1], n); sm = lambda v: gaussian_filter1d(np.interp(u, seg, v), 3, mode='nearest')
+    x, y = sm(path[:, 0]), sm(path[:, 1]); pr = sm(np.ones(len(path)) if press is None else np.asarray(press, float))
+    d = np.arctan2(np.gradient(y), np.gradient(x)); a = np.linspace(0, 1, n)
+    env = np.minimum(1, (a / 0.18) ** 0.6) * np.minimum(1, ((1 - a) / 0.3) ** 0.9)   # 들어갈 때 누르고 나올 때 빠진다
+    w = (wmin + (wmax - wmin) * np.abs(np.sin(d - NIB)) ** 0.8) * (0.25 + 0.75 * env) * pr
+    for k in range(n): stamp(F, x[k], y[k], max(w[k], 0.0018), 0.9)
 
 def contour(P):
     """낱말의 선율 윤곽: 시각마다 가장 높은 음 → (0..1 시간, 반음)."""
@@ -100,31 +104,28 @@ def contour(P):
     x = (ts - ts.min()) / max(np.ptp(ts), 1); return x, top - top.mean(), chord
 
 def glyph(F, P, ups, n, at, frame, size):
-    """낱말 하나 = 붓획 하나. frame(x, y) → 그림 좌표 (x = 획 길이 방향, y = 바깥/위). 굵기 = 되돌아온 횟수, 곁획 = 조옮김(위 = 바깥)."""
+    """낱말 하나 = 납작붓 획 하나. frame(x, y) → 그림 좌표 (x = 획 길이 방향, y = 바깥/위).
+       굵기 상한 = 되돌아온 횟수 · 점마다 무게 = 그 박의 화음 크기 · 곁획 = 조옮김(위 = 바깥, 아래 = 안쪽, 길이 ∝ 음정)."""
     x, y, chord = contour(P); amp = size * 0.55 / max(np.ptp(y), 7)
     path = [frame(at + (xi - 0.5) * size, yi * amp) for xi, yi in zip(x, y)]
-    w = min(0.010 + 0.0035 * np.log2(1 + n), 0.032)                     # 되돌아온 횟수 = 굵기 (너무 굵으면 고리에 묻힌다)
-    brush(F, path, w, w * 0.6)
-    for xi, yi, c in zip(x, y, chord):                                   # 화음 = 획 위의 먹 덩이
-        if c >= 3: stamp(F, *frame(at + (xi - 0.5) * size, yi * amp), w * (0.9 + 0.25 * c), 0.9)
-    for k, d in enumerate(sorted(set(ups) - {0})):                       # 조옮김마다 곁획: 위로 옮겼으면 바깥, 아래면 안쪽, 거리 ∝ 음정
-        sgn = 1 if d > 0 else -1; off = sgn * (size * 0.18 + 0.012 * abs(d)); xs = at + (k / max(1, len(set(ups) - {0})) - 0.5) * size * 0.8
-        brush(F, [frame(xs, sgn * size * 0.12), frame(xs + size * 0.06, off)], w * 0.55, w * 0.15)
-        stamp(F, *frame(xs + size * 0.07, off + sgn * 0.01), w * 0.75, 0.9)
+    w = min(0.012 + 0.004 * np.log2(1 + n), 0.036)
+    brush(F, path, w, press=0.7 + 0.15 * chord)
+    for k, d in enumerate(sorted(set(ups) - {0})):
+        sgn = 1 if d > 0 else -1; off = sgn * (size * 0.16 + 0.011 * abs(d)); xs = at + (k / max(1, len(set(ups) - {0})) - 0.5) * size * 0.8
+        brush(F, [frame(xs, sgn * size * 0.08), frame(xs + size * 0.03, (sgn * size * 0.08 + off) / 2), frame(xs + size * 0.08, off)], w * 0.7)
 
 def draw(words, rest, Ttot, notes_t, closed):
     """원형문자 = 굵은 고리 하나 + 낱말 붓획 몇 개(큰 낱말부터 최대 5개, 처음 나온 자리에 한 번만).
        고리를 열고 닫기 = 가장 큰 낱말이 조옮김 없이 곡 끝까지 돌아오는가. 먹 결 = FlxB2(겹친 열린 원호 → 흐림 → 문턱)."""
     F = np.zeros((G, G)); R = 1.0
     dens = np.bincount(np.clip(notes_t, 0, Ttot - 1), minlength=Ttot).astype(float)
-    dens = gaussian_filter(np.r_[dens, dens, dens], Ttot / 60)[Ttot:2 * Ttot]; dens /= dens.max() + 1e-9
-    gapa = 0.0 if closed else 0.22
-    for c in range(4):
-        cx, cy, rr = rng.normal(0, .01), rng.normal(0, .01), R + rng.normal(0, .008)
-        a0 = np.pi / 2 - gapa * rng.uniform(.4, 1.0); span = 2 * np.pi - 2 * gapa * rng.uniform(.4, 1.0) if gapa else 2 * np.pi
-        for th in np.linspace(a0, a0 - span, 1400):
-            t = int(((np.pi / 2 - th) % (2 * np.pi)) / (2 * np.pi) * Ttot) % Ttot
-            stamp(F, rr * np.cos(th) + cx, rr * np.sin(th) + cy, (0.010 + 0.022 * dens[t]) * rng.uniform(.7, 1.3), 0.5)
+    dens = gaussian_filter(np.r_[dens, dens, dens], Ttot / 90)[Ttot:2 * Ttot]; dens = (dens - dens.min()) / (np.ptp(dens) + 1e-9)
+    gapa = 0.0 if closed else 0.30                                      # 열린 곡은 이음매(처음 = 끝 자리)를 비운다
+    th = np.linspace(np.pi / 2 - gapa / 2, np.pi / 2 - 2 * np.pi + gapa / 2, 2600)
+    tt = (((np.pi / 2 - th) % (2 * np.pi)) / (2 * np.pi) * Ttot).astype(int) % Ttot
+    ring = np.c_[R * np.cos(th), R * np.sin(th)]
+    if closed: ring = np.r_[ring, ring[:40]]; tt = np.r_[tt, tt[:40]]  # 닫힌 고리는 이음매 없이 겹쳐 잇는다
+    brush(F, ring, 0.052, 0.006, press=0.25 + 0.95 * dens[tt] ** 1.3)
     tot = sum(w['cover'] for w in words); placed = []
     for w in words[:5]:
         P = np.array(w['P']); T = np.array(w['T']); t0 = P[:, 0].min() + T[:, 0].min()
@@ -136,7 +137,7 @@ def draw(words, rest, Ttot, notes_t, closed):
         base = R + 0.07
         frame = lambda x, y, th=th: (base * np.cos(th) + x * np.sin(th) + (y + 0.0) * np.cos(th), base * np.sin(th) - x * np.cos(th) + y * np.sin(th))
         glyph(F, P, T[:, 1].tolist(), len(T), 0.0, frame, size)
-    B = gaussian_filter(F, 1.4); core = np.clip((B - 0.16) / 0.05, 0, 1)
+    B = gaussian_filter(F, 1.0); core = np.clip((B - 0.2) / 0.06, 0, 1)
     yy, xx = np.mgrid[0:G, 0:G].astype(float); r = np.hypot(xx - G / 2, yy - G / 2) / (G / 2)
     halo = gaussian_filter(B, 18); halo = np.clip(halo / (halo.max() + 1e-9) * (0.6 + 0.5 * fbm(((30, 1.0), (10, 0.6)))), 0, 1)
     out = np.array([240, 238, 233]) / 255 * (1 - 0.08 * r[..., None] ** 2)
@@ -150,7 +151,7 @@ def letters(words, H=150, W=1400):
     for w in words[:5]:
         F = np.zeros((G, G)); T = np.array(w['T'])
         glyph(F, w['P'], T[:, 1].tolist(), len(T), 0.0, lambda x, y: (x, y - 0.05), 0.95)
-        core = np.clip((gaussian_filter(F, 1.4) - 0.16) / 0.05, 0, 1)[::-1]
+        core = np.clip((gaussian_filter(F, 1.0) - 0.2) / 0.06, 0, 1)[::-1]
         cells.append(np.array([240, 238, 233]) / 255 * (1 - core[..., None]) + np.array([14, 15, 17]) / 255 * core[..., None])
     G, L = G0, L0
     return cells
