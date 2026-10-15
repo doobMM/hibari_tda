@@ -574,6 +574,11 @@ best-practice 도입 커밋 시리즈(316e125 / 9c781ff / 1ca08d4) 이후 병렬
     ⚠ aqua 67%·energy flow 60% 는 정확한 옮김으로 설명되지 않는다(리듬 변형·늘이기·반전은 아직 군에 넣지 않았다).
     사용자 "이미지가 맘에 안 들어"(낱말 가운데 한 번 + 고리 눈금 = 도식) → 잉크 판으로 다시: 고리 굵기 = 음 밀도, 낱말이 되돌아올 때마다 **같은 모양의 획**이 고리에서 돋는다
     (자리 = 시간 옮김, 안팎 밀림 = 조옮김, 낱말 안 음높이와 같은 자 반음 0.017). hibari = 빽빽한 깃털 고리 · aqua = 고리 밖에 뜬 옮긴 조각 · energy flow = 몇 군데 뻗은 덩굴.
+    사용자 "그래. … Arrival-Movie-Live-Coding … arrival_logograms 도 참고하고" → 노트북 4개(scratchpad 에 받아 코드만 뽑음)와 FlxB2 소스를 읽었다:
+    Wolfram = `unwrap`(ImageTransformation {ArcTan, Norm} → 띠, 띠 돌리기 = 시간 옮김) · `sectionBreaking`(12조각) · `ca-01`(원형문자를 씨앗으로 2D 바깥 합 CA {rule, {2, {{2,2,2},{2,1,2},{2,2,2}}}, {1,1}}, 좋은 규칙 174826 등 = 잉크 번짐) · featureDetection(SkeletonTransform·ImageCorners·Radon).
+    FlxB2(MIT) = 겹친 열린 원호(중심·반지름 흔들림, 간격) · 디스크 덩이 · 무작위 걸음 촉수 → BLUR 두 번 → 문턱.
+    → 그림에 반영: FlxB2 먹 결 + 고리 열고 닫기(가장 큰 낱말이 조옮김 없이 끝까지 돌아오면 닫힘 = hibari, aqua·energy flow 는 열림) + 크게 옮긴 되풀이(|조옮김| ≥ 7)에만 촉수 + 아래에 Wolfram 식으로 편 띠(= 악보).
+    CA 번짐은 '문장이 닫히는 사건' 의 후보로 남겼다(아직 짓지 않음).
 
 ### 고리판 (2026-10-07, 판 21 뒤) — 배포 · 판 22 "나쁘지 않아" → ⛔ 판 23 "폐기하자" (2026-10-14)
 
