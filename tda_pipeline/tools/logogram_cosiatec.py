@@ -8,10 +8,10 @@ tools/logogram_cosiatec.py — 곡을 '낱말(동기) + 옮김(군 원소)' 으�
   옮김 u = (Δ시각, Δ음높이) 는 군 Z × Z 의 원소다. Δ음높이 ≠ 0 이면 조옮김.
 
 그림 규칙 (곡마다 같다 — 음악의 옮김 ↔ 그림의 움직임):
-  곡 전체가 고리 한 바퀴(각 = 시각, 처음과 끝이 만난다). 낱말(동기)은 처음 나온 자리 안쪽에 **한 번만** 크게 쓴다(가로 = 시간, 세로 = 음높이).
-  고리 위 눈금 = 그 낱말이 되돌아오는 자리(시간 옮김) · 눈금이 안팎으로 밀린 만큼 = 조옮김(반음 하나 = 0.012, 옥타브 = 0.144).
-  큰 낱말 셋까지 먹 빛 하나씩(짙은 먹 · 갈색 · 푸른 먹). 옮김으로 설명되지 않는 음 = 고리 바깥 옅은 점.
-  ⚠ 첫 그림(낱말이 나올 때마다 다 찍기)은 hibari 가 빗살, 다른 곡은 흩뿌림이라 읽히지 않았다.
+  잉크 고리 하나 = 곡 전체(각 = 시각, 처음과 끝이 만난다). 고리 굵기 = 그때 울리는 음의 밀도.
+  낱말이 되돌아올 때마다 **같은 모양의 획**이 고리에서 돋는다: 자리 = 시간 옮김, 안팎으로 밀린 거리 = 조옮김(낱말 안 음높이와 같은 자, 반음 = 0.017).
+  큰 낱말 셋까지(바깥 획 · 안쪽 획 · 가는 획). 작은 낱말·남은 음은 고리의 결.
+  ⚠ 버린 그림 둘: 낱말을 나올 때마다 점으로 다 찍기(빗살·흩뿌림, 읽히지 않음) · 낱말을 가운데 한 번 + 고리 눈금(규칙은 읽히나 도식 — "이미지가 맘에 안 들어").
 대조: 시각은 그대로 두고 음높이만 섞은 곡을 같은 분해에 넣는다 — 그 덮음이 우연의 바닥이다. 낱말은 5음 이상만(4음 이하는 우연히 맞기 쉽다).
 산출: docs/figures/logogram_cosiatec.png · docs/step3_data/logogram_cosiatec.json (낱말·옮김 목록)
 한계: 탐색이다(우연 대조 없음). 반전(거울)·늘이기는 넣지 않았다. COSIATEC 은 모든 MTP 를 보지만 여기서는 후보를 '자주 나는 옮김 60 + (횟수 × 거리) 큰 옮김 60 + 가장 멀리 뛰는 옮김 120' 으로 줄였다
@@ -79,37 +79,40 @@ def stamp(D, x, y, s, w):
 def line(F, a, b, s, w, n=None):
     n = n or max(4, int(np.hypot(b[0] - a[0], b[1] - a[1]) / 0.004))
     for u in np.linspace(0, 1, n): stamp(F, a[0] + (b[0] - a[0]) * u, a[1] + (b[1] - a[1]) * u, s, w)
-TONES = [(16, 18, 20), (110, 58, 34), (40, 70, 98)]
-PX = 0.012                                                               # 반음 하나 = 반지름 0.012 (옥타브 = 0.144)
-def draw(words, rest, Ttot):
+PX = 0.017                                                               # 반음 하나 = 반지름 0.017 — 낱말 안의 음높이와 조옮김이 같은 자(정합성)
+def draw(words, rest, Ttot, notes_t):
+    """잉크 고리 하나. 고리 굵기 = 그때 울리는 음의 밀도. 낱말이 되돌아올 때마다 같은 모양의 획이 고리에 붙는다:
+       자리(각) = 시간 옮김 · 안팎 밀림 = 조옮김(낱말 안 음높이와 같은 자). 큰 낱말 셋까지, 작은 낱말·남은 음은 고리의 결."""
     ang = lambda t: np.pi / 2 - 2 * np.pi * t / Ttot
-    polar = lambda a, r: (r * np.cos(a), r * np.sin(a))
-    layers = []
-    base = np.zeros((G, G))
-    for t, p in rest: stamp(base, *polar(ang(t), 1.02 + rng.normal(0, .01)), 0.006, 0.35)        # 옮김으로 설명되지 않는 음 = 옅은 점
+    xy = lambda t, r: (r * np.cos(ang(t)), r * np.sin(ang(t)))
+    F = np.zeros((G, G))
+    dens = np.bincount(np.clip(notes_t, 0, Ttot - 1), minlength=Ttot).astype(float)
+    dens = gaussian_filter(np.r_[dens, dens, dens], Ttot / 160)[Ttot:2 * Ttot]; dens /= dens.max() + 1e-9
+    for u in np.linspace(0, Ttot, 2400, endpoint=False):              # 고리: 음이 많을수록 굵다
+        stamp(F, *xy(u, 1.0), 0.006 + 0.018 * dens[int(u)], 0.5)
+    for t, p in rest: stamp(F, *xy(t, 1.0 + rng.normal(0, .025)), 0.005, 0.3)
+    widths = [0.009, 0.008, 0.007]
     for k, w in enumerate(words[:3]):
-        F = np.zeros((G, G)); P = np.array(w['P']); T = np.array(w['T']); t0 = P[:, 0].min()
-        for ut, up in T:                                                 # 되돌아오는 자리 = 고리 위 눈금 (조옮김이면 안팎으로 밀림)
-            a = ang(t0 + ut); r = 1.0 + 0.05 * k + PX * up
-            line(F, polar(a, r - 0.035), polar(a, r + 0.035), 0.0055, 0.55)
-        a0 = ang(t0 + T[:, 0].min()); Q = P - [t0, int(np.median(P[:, 1]))]  # 낱말 = 고리 안 세 자리(위·오른아래·왼아래)에 크게 한 번
-        slot = np.pi / 2 - 2 * np.pi * k / 3
-        span = max(Q[:, 0].max(), 1); sc_t = 0.42 / span; sc_p = 0.30 / max(np.ptp(Q[:, 1]), 6)
-        cx, cy = polar(slot, 0.52); tx, ty, rx, ry = 1.0, 0.0, 0.0, 1.0           # 낱말은 똑바로 선다(가로 = 시간, 세로 = 음높이)
-        pt = lambda q: (cx + (q[0] - span / 2) * sc_t * tx + q[1] * sc_p * rx, cy + (q[0] - span / 2) * sc_t * ty + q[1] * sc_p * ry)
-        Qs = Q[np.lexsort((Q[:, 1], Q[:, 0]))]
-        for q0, q1 in zip(Qs[:-1], Qs[1:]): line(F, pt(q0), pt(q1), 0.008 if q0[0] == q1[0] else 0.012, 0.6)
-        for q in Qs: stamp(F, *pt(q), 0.02, 0.9)
-        layers.append(F)
-    yy, xx = np.mgrid[0:G, 0:G].astype(float); wx, wy = fbm() * 5, fbm() * 5
-    warp = lambda A: map_coordinates(A, [yy + wy, xx + wx], order=1)
+        P = np.array(w['P']); P = P[np.lexsort((P[:, 1], P[:, 0]))]; base = int(np.median(P[:, 1]))
+        side = 1 if k != 1 else -1                                       # 둘째 낱말은 고리 안쪽으로 핀다
+        for ut, up in w['T']:
+            pts = [(t + ut, 1.0 + side * (0.04 + PX * (p - base + up))) for t, p in P]
+            for (t0, r0), (t1, r1) in zip(pts[:-1], pts[1:]):
+                if t1 - t0 > 16: continue
+                n = 10
+                for a in np.linspace(0, 1, n): stamp(F, *xy(t0 + (t1 - t0) * a, r0 + (r1 - r0) * a), widths[k] * (1.1 - 0.5 * a), 0.55)
+            stamp(F, *xy(pts[0][0], 1.0), widths[k] * 1.8, 0.6)          # 뿌리: 획이 고리에서 돋는다
+            stamp(F, *xy(*pts[-1]), widths[k] * 0.9, 0.7)
+            x, y = xy(*pts[-1]); stamp(F, x + rng.normal(0, .03), y + rng.normal(0, .03), 0.006, 0.8)  # 끝의 방울
+    yy, xx = np.mgrid[0:G, 0:G].astype(float); k_ = 11.0
+    wx, wy = fbm() * k_, fbm() * k_
+    Dw = map_coordinates(F, [yy + wy, xx + wx], order=1, mode='nearest'); tex = fbm(((3, 1.0), (1.2, 0.6)))
+    core = 1 / (1 + np.exp(-(Dw * (1 + 0.45 * tex) - 0.5) / 0.09))
+    halo = gaussian_filter(Dw, 20); halo = halo / (halo.max() + 1e-9) * np.clip(0.55 + 0.6 * fbm(((30, 1.0), (10, 0.6))), 0, 1.2)
     r = np.hypot(xx - G / 2, yy - G / 2) / (G / 2)
     out = np.array([238, 236, 230]) / 255 * (1 - 0.10 * r[..., None] ** 2)
-    halo = gaussian_filter(warp(sum(layers) + base), 14); halo /= halo.max() + 1e-9
-    out = out * (1 - 0.28 * halo[..., None]) + np.array([140, 148, 154]) / 255 * (0.28 * halo[..., None])
-    for F, col, a in [(base, (120, 126, 130), 0.6)] + [(layers[k], TONES[k], 0.95) for k in range(len(layers) - 1, -1, -1)]:
-        core = np.clip(1 - np.exp(-1.8 * warp(F)), 0, 1)[..., None]; out = out * (1 - a * core) + np.array(col) / 255 * (a * core)
-    return np.clip(out, 0, 1)
+    out = out * (1 - 0.42 * np.clip(halo, 0, 1)[..., None]) + np.array([140, 148, 154]) / 255 * (0.42 * np.clip(halo, 0, 1)[..., None])
+    return np.clip(out * (1 - core[..., None]) + np.array([18, 20, 22]) / 255 * core[..., None], 0, 1)
 
 def kind(T):
     ps = {p for t, p in T}; return '시간 옮김만' if ps == {0} else '조옮김 ' + ' '.join(f'{p:+d}' for p in sorted(ps) if p)
@@ -135,12 +138,12 @@ for k, (f, name) in enumerate(SONGS):
     for i, w in enumerate(words[:8]):
         print(f'  낱말 {i + 1}: 음 {len(w["P"])} × 옮김 {len(w["T"])} → {w["cover"]} 점, 압축 {w["cr"]} · {kind(w["T"])}')
     rec[name] = {'points': int(len(D)), 'covered': int(cov), 'rest': int(len(rest)), 'null_pitch_shuffle_covered_frac': round(null, 3), 'null_words': len(wn), 'words': [{'notes': len(w['P']), 'translators': w['T'], 'cover': w['cover'], 'cr': w['cr'], 'pattern': w['P']} for w in words]}
-    img = draw(words, rest, D[:, 0].max() + 1)
+    img = draw(words, rest, D[:, 0].max() + 1, D[:, 0])
     ax = fig.add_axes([0.005 + k * 0.333, 0.2, 0.325, 0.76]); ax.imshow(img, origin='lower'); ax.axis('off')
     fig.text(0.02 + k * 0.333, 0.155, name, fontsize=14, color='#1d201e')
     lines = [f'낱말 {len(words)}개가 음의 {cov / len(D):.0%} 를 쓴다 (음높이 섞은 곡 {null:.0%})']
     for i, w in enumerate(words[:3]):
-        lines.append(f'{"짙은 먹 · 갈색 · 푸른 먹".split(" · ")[i]}: {len(w["P"])}음 × {len(w["T"])}번 — {kind(w["T"])}')
+        lines.append(f'{"바깥 획 · 안쪽 획 · 가는 획".split(" · ")[i]}: {len(w["P"])}음 × {len(w["T"])}번 — {kind(w["T"])}')
     fig.text(0.02 + k * 0.333, 0.02, '\n'.join(lines), fontsize=9.5, color='#5d655f', va='bottom')
 fig.savefig(os.path.join(ROOT, 'docs', 'figures', 'logogram_cosiatec.png'), dpi=100, facecolor='#eeece6')
 if not DRAW_ONLY: json.dump({'script': 'tools/logogram_cosiatec.py', 'unit': '16분음표', 'songs': rec}, open(os.path.join(ROOT, 'docs', 'step3_data', 'logogram_cosiatec.json'), 'w', encoding='utf8'), ensure_ascii=False)
