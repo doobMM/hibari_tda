@@ -40,36 +40,80 @@ def tec(P, Dk):
     for t, p in P[1:]: cand = cand[np.isin(cand + t * ENC + p, Dk)]
     return cand
 
-def cosiatec(D, K=60, stop=2.0, minp=5):
-    """후보 옮김 = 자주 나는 K + 횟수×거리 K + 가장 멀리 뛰는 2K (멀리 뛰는 옮김 = 곡 앞머리만 남는 작은 낱말 × 많은 옮김)."""
+def tec_inv(P, Dk):
+    """반전 옮김 (Δt, s): 음 (t, p) ↦ (t + Δt, s − p). P 전체를 D 안으로 보내는 것 전부. 열쇠 = Δt·ENC + s (s ≥ 0)."""
+    Dt, Dp = np.floor_divide(Dk + ENC // 2, ENC), None
+    Dt = np.floor((Dk + ENC // 2) / ENC).astype(int); Dp = (Dk - Dt * ENC).astype(int)
+    cand = (Dt - P[0, 0]) * ENC + (Dp + P[0, 1])
+    for t, p in P[1:]:
+        dt = np.floor_divide(cand, ENC); sv = cand - dt * ENC
+        cand = cand[np.isin((t + dt) * ENC + (sv - p), Dk)]
+    return cand
+
+def cosiatec(D, K=60, stop=2.0, minp=5, mode='chrom'):
+    """후보 옮김 = 자주 나는 K + 횟수×거리 K + 가장 멀리 뛰는 2K (멀리 뛰는 옮김 = 곡 앞머리만 남는 작은 낱말 × 많은 옮김).
+       mode: 'time' = 시간 옮김만(Δ음높이 = 0) · 'chrom' = 시간 + 반음 옮김(Z × Z) · 'inv' = 여기에 반전(p ↦ s − p) 까지(T/I).
+       음계 자리(온음계 Z₇)는 점의 음높이를 음계 자리 번호로 바꿔 'chrom' 으로 부른다 (diatonic())."""
     words, D = [], np.asarray(D).copy()
     while len(D) > 8:
         Dk = D[:, 0] * ENC + D[:, 1]
         dt, dp = D[None, :, 0] - D[:, None, 0], D[None, :, 1] - D[:, None, 1]
         m = (dt > 0) | ((dt == 0) & (dp > 0))
+        if mode == 'time': m &= (dp == 0)
         v, c = np.unique(dt[m] * ENC + dp[m], return_counts=True)
         vt_all = np.floor((v + ENC // 2) / ENC); ok = np.where(c >= 4)[0]; best = None
-        cand = np.unique(np.r_[np.argsort(-c)[:K], ok[np.argsort(-(c[ok] * vt_all[ok]))][:K], ok[np.argsort(-vt_all[ok])][:2 * K]])
-        for k in cand:
-            vt = int(vt_all[k]); vp = int(v[k] - vt * ENC)
-            P = D[np.isin(Dk + vt * ENC + vp, Dk)]                        # MTP(v)
+        cands = [('T', k) for k in np.unique(np.r_[np.argsort(-c)[:K], ok[np.argsort(-(c[ok] * vt_all[ok]))][:K], ok[np.argsort(-vt_all[ok])][:2 * K]])]
+        if mode == 'inv':
+            sp = D[None, :, 1] + D[:, None, 1]; mi = (dt > 0) | ((dt == 0) & (dp != 0))
+            vi, ci = np.unique(dt[mi] * ENC + sp[mi], return_counts=True); oki = np.where(ci >= 4)[0]
+            cands += [('I', k) for k in np.unique(np.r_[np.argsort(-ci)[:K], oki[np.argsort(-(ci[oki] * (vi[oki] // ENC)))][:K]])]
+        for kind_, k in cands:
+            if kind_ == 'T':
+                if c[k] < 3: continue
+                vt = int(vt_all[k]); vp = int(v[k] - vt * ENC); P = D[np.isin(Dk + vt * ENC + vp, Dk)]   # MTP(v)
+            else:
+                if ci[k] < 3: continue
+                vt = int(vi[k] // ENC); s_ = int(vi[k] - vt * ENC); P = D[np.isin((D[:, 0] + vt) * ENC + (s_ - D[:, 1]), Dk)]
             if len(P) < minp: continue
-            T = tec(P, Dk); cov = np.unique((P[:, 0] * ENC + P[:, 1])[:, None] + T[None, :])
-            cr = len(cov) / (len(P) + len(T) - 1)
-            if best is None or cr > best[0]: best = (cr, P, T, cov)
+            T = tec(P, Dk)
+            if mode == 'time': T = T[(T - np.floor((T + ENC // 2) / ENC) * ENC) == 0]
+            Pk = P[:, 0] * ENC + P[:, 1]; cov = (Pk[:, None] + T[None, :]).ravel()
+            I = tec_inv(P, Dk) if mode == 'inv' else np.array([], int)
+            if len(I):
+                idt = np.floor_divide(I, ENC); isv = I - idt * ENC
+                cov = np.r_[cov, ((P[:, 0][:, None] + idt[None]) * ENC + (isv[None] - P[:, 1][:, None])).ravel()]
+            cov = np.unique(cov); cr = len(cov) / (len(P) + len(T) + len(I) - 1)
+            if best is None or cr > best[0]: best = (cr, P, T, I, cov)
         if best is None or best[0] < stop: break
-        cr, P, T, cov = best
+        cr, P, T, I, cov = best
         Tt = np.floor((T + ENC // 2) / ENC).astype(int); Tp = (T - Tt * ENC).astype(int)
-        words.append({'P': P.tolist(), 'T': sorted(zip(Tt.tolist(), Tp.tolist())), 'cover': int(len(cov)), 'cr': round(float(cr), 2)})
+        w = {'P': P.tolist(), 'T': sorted(zip(Tt.tolist(), Tp.tolist())), 'cover': int(len(cov)), 'cr': round(float(cr), 2)}
+        if len(I): idt = np.floor_divide(I, ENC); w['I'] = sorted(zip(idt.tolist(), (I - idt * ENC).tolist()))
+        words.append(w)
         D = D[~np.isin(Dk, cov)]
     return words, D.tolist()
 
-def decompose(f):
+def scale_of(ps):
+    """음높이들 → 가장 많은 음을 덮는 장음계(7음) 음이름 집합."""
+    pc = np.bincount(np.asarray(ps) % 12, minlength=12); major = np.array([0, 2, 4, 5, 7, 9, 11])
+    r = max(range(12), key=lambda r: pc[(major + r) % 12].sum()); return sorted(((major + r) % 12).tolist())
+
+def diatonic(D, scale):
+    """(t, p) → (t, 음계 자리 번호). 음계 밖의 음은 따로 돌려준다 (음계 자리 군으로는 옮길 수 없다)."""
+    deg = {}; k = 0
+    for p in range(0, 128):
+        if p % 12 in scale: deg[p] = k; k += 1
+    D = np.asarray(D); inn = np.array([p in deg for p in D[:, 1]])
+    return np.c_[D[inn, 0], [deg[p] for p in D[inn, 1]]], D[~inn]
+
+def decompose(f, mode='chrom'):
     """곡 → 문법: 손마다 낱말 목록(낱말 음에 길이를 붙인다) + 남은 음."""
     g = {'source': f, 'unit': '16분음표', 'voices': []}
     for notes in voices(f):
-        dur = dict(notes); D = np.array([k for k, _ in notes]); words, rest = cosiatec(D)
-        for w in words: w['durs'] = [[dur[(t + ut, p + up)] for t, p in w['P']] for ut, up in w['T']]   # 되풀이마다 길이(같은 낱말도 길이는 조금씩 다르다)
+        dur = dict(notes); D = np.array([k for k, _ in notes]); words, rest = cosiatec(D, mode=mode)
+        for w in words:
+            w['durs'] = [[dur[(t + ut, p + up)] for t, p in w['P']] for ut, up in w['T']]   # 되풀이마다 길이(같은 낱말도 길이는 조금씩 다르다)
+            if 'I' in w: w['idurs'] = [[dur[(t + ut, s_ - p)] for t, p in w['P']] for ut, s_ in w['I']]
         g['voices'].append({'notes': len(D), 'words': words, 'rest': [[t, p, dur[(t, p)]] for t, p in rest]})
     return g
 
@@ -81,6 +125,8 @@ def realize(g):
         for w in v['words']:
             for (ut, up), ds in zip(w['T'], w['durs']):
                 for (t, p), du in zip(w['P'], ds): d[(t + ut, p + up)] = max(d.get((t + ut, p + up), 0), du)
+            for (ut, s_), ds in zip(w.get('I', []), w.get('idurs', [])):
+                for (t, p), du in zip(w['P'], ds): d[(t + ut, s_ - p)] = max(d.get((t + ut, s_ - p), 0), du)
         for t, p, du in v['rest']: d[(t, p)] = max(d.get((t, p), 0), du)
         out.append(sorted((t, p, du) for (t, p), du in d.items() if t >= 0 and 21 <= p <= 108))
     return out

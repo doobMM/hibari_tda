@@ -28,3 +28,5 @@ metadata:
   tools/group_grammar.py(손마다 분해·realize·shift/transpose/invert/reperiod·to_midi) + tools/group_music.py(hibari 다섯 판 MIDI·WAV·그림).
   hibari 손마다 낱말 둘 100%, 다시 만들기 = 원곡(길이는 되풀이마다 저장해야 정확). 맞물림(66→64)이면 두 손 같은 음 0, 두 배 어긋남(66→68) 95, 원곡 176.
   그림: 가닥 사이 = 위상 차, 손 조옮김 = 가닥 안팎. 다음: 사용자가 듣고 판정 · 조작 가능한 판.
+- 2026-10-19 사용자 프롬프트(0 영상 · 1 원자료 · 2 MDL 군 고르기 · 3 검증 a~d · 4 상호작용) 중 0·2·3b·3c 실행: demo_g.mp4(20초, g 로 같은 음 17→3, 역원 뒤 12) ·
+  L: hibari time · aqua inv · energy flow chrom · 합성 40/40 · 뒤 절반 hibari 오른손 1.0 왼손 0.32. M3·M4·H 실패. 다음 = 옮김 집합을 생성원(격자)으로. 1·3a·3d·4 는 자료·허락 대기.

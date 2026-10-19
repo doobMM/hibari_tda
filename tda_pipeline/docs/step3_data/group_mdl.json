@@ -1,0 +1,236 @@
+{
+ "songs": {
+  "hibari": {
+   "notes": 3835,
+   "scale_pcs": [
+    0,
+    2,
+    4,
+    5,
+    7,
+    9,
+    11
+   ],
+   "L": {
+    "time": 183,
+    "diat": 269,
+    "chrom": 269,
+    "inv": 269
+   },
+   "compression": {
+    "time": 20.956,
+    "diat": 14.257,
+    "chrom": 14.257,
+    "inv": 14.257
+   },
+   "chosen": "time"
+  },
+  "aqua": {
+   "notes": 701,
+   "scale_pcs": [
+    0,
+    2,
+    4,
+    6,
+    7,
+    9,
+    11
+   ],
+   "L": {
+    "time": 637,
+    "diat": 469,
+    "chrom": 427,
+    "inv": 398
+   },
+   "compression": {
+    "time": 1.1,
+    "diat": 1.495,
+    "chrom": 1.642,
+    "inv": 1.761
+   },
+   "chosen": "inv"
+  },
+  "energy flow": {
+   "notes": 1207,
+   "scale_pcs": [
+    0,
+    2,
+    4,
+    5,
+    7,
+    9,
+    11
+   ],
+   "L": {
+    "time": 1053,
+    "diat": 894,
+    "chrom": 855,
+    "inv": 871
+   },
+   "compression": {
+    "time": 1.146,
+    "diat": 1.35,
+    "chrom": 1.412,
+    "inv": 1.386
+   },
+   "chosen": "chrom"
+  }
+ },
+ "synthetic": {
+  "time": {
+   "picks": [
+    "time",
+    "time",
+    "time",
+    "time",
+    "time",
+    "time",
+    "time",
+    "time",
+    "time",
+    "time"
+   ],
+   "correct": 10
+  },
+  "diat": {
+   "picks": [
+    "diat",
+    "diat",
+    "diat",
+    "diat",
+    "diat",
+    "diat",
+    "diat",
+    "diat",
+    "diat",
+    "diat"
+   ],
+   "correct": 10
+  },
+  "chrom": {
+   "picks": [
+    "chrom",
+    "chrom",
+    "chrom",
+    "chrom",
+    "chrom",
+    "chrom",
+    "chrom",
+    "chrom",
+    "chrom",
+    "chrom"
+   ],
+   "correct": 10
+  },
+  "inv": {
+   "picks": [
+    "inv",
+    "inv",
+    "inv",
+    "inv",
+    "inv",
+    "inv",
+    "inv",
+    "inv",
+    "inv",
+    "inv"
+   ],
+   "correct": 10
+  }
+ },
+ "half": {
+  "hibari": [
+   {
+    "hand": 0,
+    "second_half_notes": 974,
+    "grammar_recall_precision": [
+     1.0,
+     1.0
+    ],
+    "loop_recall_precision": [
+     1.0,
+     1.0
+    ],
+    "loop_period": 64
+   },
+   {
+    "hand": 1,
+    "second_half_notes": 944,
+    "grammar_recall_precision": [
+     0.322,
+     0.321
+    ],
+    "loop_recall_precision": [
+     1.0,
+     1.0
+    ],
+    "loop_period": 66
+   }
+  ],
+  "aqua": [
+   {
+    "hand": 0,
+    "second_half_notes": 207,
+    "grammar_recall_precision": [
+     0.005,
+     0.004
+    ],
+    "loop_recall_precision": [
+     0.019,
+     0.019
+    ],
+    "loop_period": 64
+   },
+   {
+    "hand": 1,
+    "second_half_notes": 210,
+    "grammar_recall_precision": [
+     0.0,
+     0.0
+    ],
+    "loop_recall_precision": [
+     0.086,
+     0.107
+    ],
+    "loop_period": 64
+   }
+  ],
+  "energy flow": [
+   {
+    "hand": 0,
+    "second_half_notes": 350,
+    "grammar_recall_precision": [
+     0.071,
+     0.027
+    ],
+    "loop_recall_precision": [
+     0.017,
+     0.023
+    ],
+    "loop_period": 8
+   },
+   {
+    "hand": 1,
+    "second_half_notes": 292,
+    "grammar_recall_precision": [
+     0.0,
+     0.0
+    ],
+    "loop_recall_precision": [
+     0.01,
+     0.019
+    ],
+    "loop_period": 80
+   }
+  ]
+ },
+ "verdict": {
+  "M1": true,
+  "M2": true,
+  "M3": false,
+  "M4": false,
+  "S": true,
+  "H": false
+ },
+ "script": "experiments/run_group_mdl.py"
+}
