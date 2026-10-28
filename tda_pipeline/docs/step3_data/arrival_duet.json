@@ -1,0 +1,36 @@
+{
+ "script": "tools/arrival_duet.py",
+ "moment_8th": 530,
+ "panels": [
+  {
+   "panel": "원곡",
+   "cells_RL": [
+    18,
+    2
+   ],
+   "overlap_near_needle": 0.7113
+  },
+  {
+   "panel": "g — 왼손 한 칸 늦춤",
+   "cells_RL": [
+    18,
+    1
+   ],
+   "overlap_near_needle": 0.5185
+  },
+  {
+   "panel": "g 의 역원 — 되돌림",
+   "cells_RL": [
+    18,
+    2
+   ],
+   "overlap_near_needle": 0.7113
+  }
+ ],
+ "oracle": {
+  "changed_px_g": 0.0477,
+  "changed_px_g_inverse_vs_original": 0.0,
+  "changed_px_null": 0.0,
+  "pass": true
+ }
+}
