@@ -1,0 +1,40 @@
+{
+ "script": "tools/group_g_views.py",
+ "window": [
+  515,
+  44
+ ],
+ "unison": [
+  47,
+  17
+ ],
+ "views": {
+  "가 펼친 두 줄": {
+   "changed_px_frac": 0.11119,
+   "seal_px_frac_before_after": [
+    0.07206,
+    0.0325
+   ],
+   "null_changed_px_frac": 0.0,
+   "pass": true
+  },
+  "나 한 고리": {
+   "changed_px_frac": 0.10666,
+   "seal_px_frac_before_after": [
+    0.06676,
+    0.03325
+   ],
+   "null_changed_px_frac": 0.0,
+   "pass": true
+  },
+  "다 두 먹 한 줄": {
+   "changed_px_frac": 0.04307,
+   "seal_px_frac_before_after": [
+    0.01559,
+    0.00562
+   ],
+   "null_changed_px_frac": 0.0,
+   "pass": true
+  }
+ }
+}
